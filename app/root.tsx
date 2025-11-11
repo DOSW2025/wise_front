@@ -6,8 +6,9 @@ import {
 	Scripts,
 	ScrollRestoration,
 } from 'react-router';
-
 import type { Route } from './+types/root';
+import { AppProviders } from './providers';
+
 import './app.css';
 
 export const links: Route.LinksFunction = () => [
@@ -42,7 +43,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-	return <Outlet />;
+	return (
+		<AppProviders>
+			<Outlet />
+		</AppProviders>
+	);
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
