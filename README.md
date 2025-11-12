@@ -1,61 +1,86 @@
-# Welcome to React Router!
+# ECIWISE+ Frontend
 
-A modern, production-ready template for building full-stack React applications using React Router.
+Plataforma de aprendizaje colaborativo para la Escuela Colombiana de Ingeniería Julio Garavito. Frontend desarrollado con React Router, TypeScript, Tailwind CSS y Hero UI.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## Descripción del Proyecto
 
-## Features
+ECIWISE+ es una plataforma que facilita la colaboración académica entre estudiantes y profesores. Permite compartir tutorías, materiales de estudio, formar grupos de trabajo y gestionar el progreso académico en un único ecosistema.
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+## Características
 
-## Getting Started
+- Server-side rendering con React Router v7
+- Hot Module Replacement (HMR) para desarrollo
+- TypeScript para type safety
+- Tailwind CSS v4 con nuevo syntax @theme
+- Hero UI v2 para componentes de interfaz
+- React Query para gestión de estado
+- Sistema de temas personalizado con colores institucionales
+- Tipografía personalizada (Poppins, Nunito, IBM Plex Sans, DM Sans)
+- Autenticación de usuarios con roles (Estudiante, Profesor/Tutor)
 
-### Installation
+## Estructura del Proyecto
 
-Install the dependencies:
-
-```bash
-npm install
+```
+app/
+  routes/
+    home/              # Landing page
+    login/             # Página de inicio de sesión
+    register/          # Página de registro
+  root.tsx             # Layout raíz
+  providers.tsx        # Providers globales (React Query, Temas)
+  hero.ts              # Configuración de tema Hero UI
+  app.css              # Estilos globales
+  routes.ts            # Configuración de rutas
 ```
 
-### Development
+## Requisitos Previos
 
-Start the development server with HMR:
+- Node.js 18+
+- pnpm 10+
 
-```bash
-npm run dev
-```
+## Instalación
 
-Your application will be available at `http://localhost:5173`.
-
-## Building for Production
-
-Create a production build:
+Instala las dependencias:
 
 ```bash
-npm run build
+pnpm install
 ```
 
-## Deployment
+## Desarrollo
 
-### Docker Deployment
-
-To build and run using Docker:
+Inicia el servidor de desarrollo:
 
 ```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
+pnpm run dev
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+La aplicación estará disponible en `http://localhost:5173`.
+
+## Construcción para Producción
+
+Crea una build de producción:
+
+```bash
+pnpm run build
+```
+
+## Despliegue
+
+### Docker
+
+Construye la imagen:
+
+```bash
+docker build -t eciwise-front .
+```
+
+Ejecuta el contenedor:
+
+```bash
+docker run -p 3000:3000 eciwise-front
+```
+
+La aplicación conteneurizada puede desplegarse en:
 
 - AWS ECS
 - Google Cloud Run
@@ -64,24 +89,41 @@ The containerized application can be deployed to any platform that supports Dock
 - Fly.io
 - Railway
 
-### DIY Deployment
+### Producción Manual
 
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
+El servidor integrado está listo para producción. Asegúrate de desplegar el output de `pnpm run build`:
 
 ```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
+build/
+  client/    # Activos estáticos
+  server/    # Código del servidor
 ```
 
-## Styling
+## Rutas Disponibles
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+- `/` - Landing page
+- `/login` - Inicio de sesión
+- `/register` - Registro de nuevos usuarios
 
----
+## Tecnologías
 
-Built with ❤️ using React Router.
+- React Router v7.9.5
+- Hero UI v2.8.5
+- Tailwind CSS v4
+- React Query v5.90.8
+- Lucide React v0.553.0
+- Framer Motion
+- TypeScript 5.9.3
+
+## Convenciones de Código
+
+- Tipografía: Poppins (logos), Nunito (encabezados), IBM Plex Sans (navegación), DM Sans (cuerpo)
+- Colores: Tema institucional con rojo primario #990000
+- Formato: ESLint y Biome configurados
+
+## Scripts Disponibles
+
+- `pnpm run dev` - Inicia servidor de desarrollo
+- `pnpm run build` - Construcción para producción
+- `pnpm run preview` - Vista previa de build
+- `pnpm run lint` - Ejecuta linter
