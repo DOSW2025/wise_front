@@ -12,6 +12,7 @@ import {
 import { GraduationCap, Lock, Mail } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
+import { AuthService } from '../../lib/services/auth.service';
 
 export function meta() {
 	return [
@@ -25,41 +26,36 @@ export default function Login() {
 	const [password, setPassword] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [rememberMe, setRememberMe] = useState(false);
+	const [error, setError] = useState('');
 
 	const handleEmailLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
+		setError('');
 
-		// Simulate login process
-		setTimeout(() => {
-			console.log('Login attempt:', { email, password, rememberMe });
+		try {
+			// Llamar al servicio de autenticación
+			const response = await AuthService.login({
+				email,
+				contraseña: password,
+			});
 
-			// Check credentials and redirect based on role
-			if (
-				email === 'estudiante@escuelaing.edu.co' &&
-				password === '123456789'
-			) {
-				// Student credentials - redirect to student dashboard
-				window.location.href = '/dashboard';
-			} else if (
-				email === 'tutor@escuelaing.edu.co' &&
-				password === '123456789'
-			) {
-				// Tutor credentials - redirect to tutor dashboard
-				window.location.href = '/dashboard';
-			} else if (
-				email === 'admin@escuelaing.edu.co' &&
-				password === '123456789'
-			) {
-				// Admin credentials - redirect to admin dashboard
+			console.log('Login exitoso:', response);
+
+			// Redirigir según el rol del usuario
+			if (response.user.role === 'admin') {
 				window.location.href = '/admin';
 			} else {
-				// Show error for invalid credentials
-				alert('Credenciales invalidas. Verifica tu email y contraseña.');
+				window.location.href = '/dashboard';
 			}
-
+		} catch (err: any) {
+			console.error('Error en login:', err);
+			setError(
+				err.message || 'Error al iniciar sesión. Verifica tus credenciales.',
+			);
+		} finally {
 			setIsLoading(false);
-		}, 2000);
+		}
 	};
 
 	return (
@@ -98,6 +94,13 @@ export default function Login() {
 				</CardHeader>
 
 				<CardBody className="space-y-5 px-6">
+					{/* Mostrar errores */}
+					{error && (
+						<div className="bg-danger-50 border border-danger-200 text-danger-800 px-4 py-3 rounded-lg">
+							<p className="text-sm font-medium">{error}</p>
+						</div>
+					)}
+
 					<Form onSubmit={handleEmailLogin} className="space-y-4">
 						<Input
 							type="email"
