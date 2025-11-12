@@ -2,28 +2,28 @@ import {
 	Button,
 	Card,
 	CardBody,
-	CardHeader,
 	CardFooter,
+	CardHeader,
+	Chip,
+	Divider,
+	Link,
 	Navbar,
 	NavbarBrand,
 	NavbarContent,
 	NavbarItem,
-	Link,
-	Chip,
-	Divider,
 } from '@heroui/react';
 import {
-	BookOpen,
-	Users,
-	Award,
-	Calendar,
-	MessageCircle,
-	TrendingUp,
-	Target,
-	Sparkles,
-	GraduationCap,
 	ArrowRight,
+	Award,
+	BookOpen,
+	Calendar,
 	CheckCircle,
+	GraduationCap,
+	MessageCircle,
+	Sparkles,
+	Target,
+	TrendingUp,
+	Users,
 } from 'lucide-react';
 
 export function meta() {
@@ -77,8 +77,7 @@ export default function Home() {
 		{
 			icon: TrendingUp,
 			title: 'Seguimiento de Progreso',
-			description:
-				'Visualiza tu progreso y mejora continua en tiempo real.',
+			description: 'Visualiza tu progreso y mejora continua en tiempo real.',
 			color: 'success' as const,
 		},
 	];
@@ -119,7 +118,9 @@ export default function Home() {
 			<Navbar isBordered maxWidth="xl">
 				<NavbarBrand>
 					<GraduationCap className="text-primary" size={32} />
-					<p className="font-logo font-bold text-xl text-primary ml-2">ECIWISE+</p>
+					<p className="font-logo font-bold text-xl text-primary ml-2">
+						ECIWISE+
+					</p>
 				</NavbarBrand>
 				<NavbarContent className="hidden sm:flex gap-4" justify="center">
 					<NavbarItem>
@@ -205,8 +206,8 @@ export default function Home() {
 							Caracteristicas Principales
 						</h2>
 						<p className="text-lg text-default-600 max-w-2xl mx-auto">
-							Descubre todas las herramientas que ECIWISE+ ofrece para
-							potenciar tu experiencia de aprendizaje
+							Descubre todas las herramientas que ECIWISE+ ofrece para potenciar
+							tu experiencia de aprendizaje
 						</p>
 					</div>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -229,9 +230,7 @@ export default function Home() {
 										</div>
 									</CardHeader>
 									<CardBody>
-										<p className="text-default-600">
-											{feature.description}
-										</p>
+										<p className="text-default-600">{feature.description}</p>
 									</CardBody>
 								</Card>
 							);
@@ -250,8 +249,8 @@ export default function Home() {
 							Objetivos y Beneficios
 						</h2>
 						<p className="text-lg text-default-600 max-w-2xl mx-auto">
-							ECIWISE+ transforma la experiencia educativa a traves de
-							la colaboracion y la tecnologia
+							ECIWISE+ transforma la experiencia educativa a traves de la
+							colaboracion y la tecnologia
 						</p>
 					</div>
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
@@ -278,18 +277,13 @@ export default function Home() {
 							Perfiles de Usuario
 						</h2>
 						<p className="text-lg text-default-600 max-w-2xl mx-auto">
-							ECIWISE+ esta diseñado para diferentes tipos de usuarios
-							en la comunidad educativa
+							ECIWISE+ esta diseñado para diferentes tipos de usuarios en la
+							comunidad educativa
 						</p>
 					</div>
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 						{userProfiles.map((profile, index) => (
-							<Card
-								key={index}
-								className="border-none"
-								shadow="md"
-								isPressable
-							>
+							<Card key={index} className="border-none" shadow="md" isPressable>
 								<CardHeader>
 									<h3 className="text-xl font-bold text-foreground font-heading">
 										{profile.title}
@@ -297,9 +291,7 @@ export default function Home() {
 								</CardHeader>
 								<Divider />
 								<CardBody>
-									<p className="text-default-600">
-										{profile.description}
-									</p>
+									<p className="text-default-600">{profile.description}</p>
 								</CardBody>
 								<CardFooter>
 									<Chip color={profile.color} variant="flat" size="sm">

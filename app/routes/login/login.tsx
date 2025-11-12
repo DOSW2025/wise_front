@@ -1,168 +1,163 @@
 import {
-    Button,
-    Card,
-    CardBody,
-    CardFooter,
-    CardHeader,
-    Checkbox,
-    Divider,
-    Form,
-    Input,
-    Link,
+	Button,
+	Card,
+	CardBody,
+	CardFooter,
+	CardHeader,
+	Checkbox,
+	Form,
+	Input,
+	Link,
 } from '@heroui/react';
-import { GraduationCap, Mail, Lock } from 'lucide-react';
+import { GraduationCap, Lock, Mail } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 
 export function meta() {
-    return [
-        { title: 'Iniciar Sesion - ECIWISE+' },
-        { name: 'description', content: 'Inicia sesion en ECIWISE+' },
-    ];
+	return [
+		{ title: 'Iniciar Sesion - ECIWISE+' },
+		{ name: 'description', content: 'Inicia sesion en ECIWISE+' },
+	];
 }
 
 export default function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
+	const [email, setEmail] = useState('');
+	const [password, setPassword] = useState('');
+	const [isLoading, setIsLoading] = useState(false);
+	const [rememberMe, setRememberMe] = useState(false);
 
-    const handleEmailLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
+	const handleEmailLogin = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setIsLoading(true);
 
-        // Simulate login process
-        setTimeout(() => {
-            console.log('Login attempt:', { email, password, rememberMe });
+		// Simulate login process
+		setTimeout(() => {
+			console.log('Login attempt:', { email, password, rememberMe });
 
-            // Check credentials and redirect based on role
-            if (
-                email === 'estudiante@escuelaing.edu.co' &&
-                password === '123456789'
-            ) {
-                // Student credentials - redirect to student dashboard
-                window.location.href = '/dashboard';
-            } else if (
-                email === 'tutor@escuelaing.edu.co' &&
-                password === '123456789'
-            ) {
-                // Tutor credentials - redirect to tutor dashboard
-                window.location.href = '/dashboard';
-            } else if (
-                email === 'admin@escuelaing.edu.co' &&
-                password === '123456789'
-            ) {
-                // Admin credentials - redirect to admin dashboard
-                window.location.href = '/admin';
-            } else {
-                // Show error for invalid credentials
-                alert('Credenciales invalidas. Verifica tu email y contraseña.');
-            }
+			// Check credentials and redirect based on role
+			if (
+				email === 'estudiante@escuelaing.edu.co' &&
+				password === '123456789'
+			) {
+				// Student credentials - redirect to student dashboard
+				window.location.href = '/dashboard';
+			} else if (
+				email === 'tutor@escuelaing.edu.co' &&
+				password === '123456789'
+			) {
+				// Tutor credentials - redirect to tutor dashboard
+				window.location.href = '/dashboard';
+			} else if (
+				email === 'admin@escuelaing.edu.co' &&
+				password === '123456789'
+			) {
+				// Admin credentials - redirect to admin dashboard
+				window.location.href = '/admin';
+			} else {
+				// Show error for invalid credentials
+				alert('Credenciales invalidas. Verifica tu email y contraseña.');
+			}
 
-            setIsLoading(false);
-        }, 2000);
-    };
+			setIsLoading(false);
+		}, 2000);
+	};
 
-    return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-content1 to-content3 p-4">
-            {/* Logo Card */}
-            <Card className="w-full max-w-md container mx-auto bg-content2 shadow-lg">
-                <CardHeader className="flex flex-col items-center pb-2 mt-5">
-                    <div className="p-4 rounded-full bg-primary/10 mb-4">
-                        <GraduationCap className="text-primary" size={48} />
-                    </div>
-                </CardHeader>
-                <CardBody className="flex flex-col items-center text-center px-8">
-                    <h1 className="text-3xl font-bold text-foreground mb-2 font-logo">
-                        ECIWISE+
-                    </h1>
-                    <p className="text-lg text-primary font-semibold mb-1">
-                        Aprender, conectar y compartir sin limites
-                    </p>
-                </CardBody>
-                <CardFooter className="flex justify-center mb-5">
-                    <p className="text-base text-default-600 font-medium text-center">
-                        Plataforma de Aprendizaje Colaborativo
-                    </p>
-                </CardFooter>
-            </Card>
+	return (
+		<div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-content1 to-content3 p-4">
+			{/* Logo Card */}
+			<Card className="w-full max-w-md container mx-auto bg-content2 shadow-lg">
+				<CardHeader className="flex flex-col items-center pb-2 mt-5">
+					<div className="p-4 rounded-full bg-primary/10 mb-4">
+						<GraduationCap className="text-primary" size={48} />
+					</div>
+				</CardHeader>
+				<CardBody className="flex flex-col items-center text-center px-8">
+					<h1 className="text-3xl font-bold text-foreground mb-2 font-logo">
+						ECIWISE+
+					</h1>
+					<p className="text-lg text-primary font-semibold mb-1">
+						Aprender, conectar y compartir sin limites
+					</p>
+				</CardBody>
+				<CardFooter className="flex justify-center mb-5">
+					<p className="text-base text-default-600 font-medium text-center">
+						Plataforma de Aprendizaje Colaborativo
+					</p>
+				</CardFooter>
+			</Card>
 
-            {/* Login Form Card */}
-            <Card className="w-full max-w-md shadow-lg container mx-auto bg-content1 mt-6">
-                <CardHeader className="flex flex-col items-center pb-2 mt-5">
-                    <h1 className="text-2xl font-bold text-foreground mb-2 font-heading">
-                        Inicia Sesion en Tu Cuenta
-                    </h1>
-                    <p className="text-base text-default-600 text-center">
-                        Ingresa tus credenciales institucionales para acceder
-                    </p>
-                </CardHeader>
+			{/* Login Form Card */}
+			<Card className="w-full max-w-md shadow-lg container mx-auto bg-content1 mt-6">
+				<CardHeader className="flex flex-col items-center pb-2 mt-5">
+					<h1 className="text-2xl font-bold text-foreground mb-2 font-heading">
+						Inicia Sesion en Tu Cuenta
+					</h1>
+					<p className="text-base text-default-600 text-center">
+						Ingresa tus credenciales institucionales para acceder
+					</p>
+				</CardHeader>
 
-                <CardBody className="space-y-5 px-6">
-                    <Form onSubmit={handleEmailLogin} className="space-y-4">
-                        <Input
-                            type="email"
-                            label="Correo Institucional"
-                            placeholder="tu.nombre@escuelaing.edu.co"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            isRequired
-                            size="lg"
-                            color="primary"
-                            variant="bordered"
-                            className="w-full"
-                            startContent={
-                                <Mail className="text-default-400" size={20} />
-                            }
-                        />
+				<CardBody className="space-y-5 px-6">
+					<Form onSubmit={handleEmailLogin} className="space-y-4">
+						<Input
+							type="email"
+							label="Correo Institucional"
+							placeholder="tu.nombre@escuelaing.edu.co"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							isRequired
+							size="lg"
+							color="primary"
+							variant="bordered"
+							className="w-full"
+							startContent={<Mail className="text-default-400" size={20} />}
+						/>
 
-                        <Input
-                            type="password"
-                            label="Contraseña"
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            isRequired
-                            size="lg"
-                            color="primary"
-                            variant="bordered"
-                            className="w-full"
-                            startContent={
-                                <Lock className="text-default-400" size={20} />
-                            }
-                        />
+						<Input
+							type="password"
+							label="Contraseña"
+							placeholder="••••••••"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							isRequired
+							size="lg"
+							color="primary"
+							variant="bordered"
+							className="w-full"
+							startContent={<Lock className="text-default-400" size={20} />}
+						/>
 
-                        <div className="flex justify-between items-center text-small w-full">
-                            <Checkbox
-                                size="sm"
-                                isSelected={rememberMe}
-                                onValueChange={setRememberMe}
-                            >
-                                Recordarme
-                            </Checkbox>
-                            <Link
-                                href="#"
-                                className="text-primary hover:text-primary-600"
-                                size="sm"
-                            >
-                                ¿Olvidaste tu contraseña?
-                            </Link>
-                        </div>
+						<div className="flex justify-between items-center text-small w-full">
+							<Checkbox
+								size="sm"
+								isSelected={rememberMe}
+								onValueChange={setRememberMe}
+							>
+								Recordarme
+							</Checkbox>
+							<Link
+								href="#"
+								className="text-primary hover:text-primary-600"
+								size="sm"
+							>
+								¿Olvidaste tu contraseña?
+							</Link>
+						</div>
 
-                        <Button
-                            type="submit"
-                            color="primary"
-                            size="lg"
-                            className="w-full font-semibold font-nav"
-                            isLoading={isLoading}
-                            isDisabled={isLoading}
-                        >
-                            {isLoading ? 'Iniciando sesion...' : 'Iniciar sesion'}
-                        </Button>
-                    </Form>
+						<Button
+							type="submit"
+							color="primary"
+							size="lg"
+							className="w-full font-semibold font-nav"
+							isLoading={isLoading}
+							isDisabled={isLoading}
+						>
+							{isLoading ? 'Iniciando sesion...' : 'Iniciar sesion'}
+						</Button>
+					</Form>
 
-                    {/* Google OAuth - TODO: Implementar en futuras versiones */}
-                    {/* 
+					{/* Google OAuth - TODO: Implementar en futuras versiones */}
+					{/* 
                     <div className="flex items-center gap-3">
                         <Divider className="flex-1" />
                         <span className="text-sm text-default-500 font-medium">
@@ -210,23 +205,23 @@ export default function Login() {
                         {isLoading ? 'Conectando...' : 'Continuar con Google'}
                     </Button>
                     */}
-                </CardBody>
+				</CardBody>
 
-                <CardFooter className="flex justify-center mb-5 px-6">
-                    <p className="text-base text-default-600 text-center">
-                        ¿No tienes cuenta?{' '}
-                        <Link
-                            href="/register"
-                            className="text-primary font-semibold hover:text-primary-600"
-                        >
-                            Registrate aqui
-                        </Link>
-                    </p>
-                </CardFooter>
-            </Card>
+				<CardFooter className="flex justify-center mb-5 px-6">
+					<p className="text-base text-default-600 text-center">
+						¿No tienes cuenta?{' '}
+						<Link
+							href="/register"
+							className="text-primary font-semibold hover:text-primary-600"
+						>
+							Registrate aqui
+						</Link>
+					</p>
+				</CardFooter>
+			</Card>
 
-            {/* Demo Credentials - TODO: Solo visible durante desarrollo, ocultar en producción */}
-            {/* 
+			{/* Demo Credentials - TODO: Solo visible durante desarrollo, ocultar en producción */}
+			{/* 
             <Card className="w-full max-w-md container mx-auto bg-content2 mt-6 shadow-md">
                 <CardHeader className="flex flex-col items-start pb-2">
                     <h3 className="text-lg font-semibold text-foreground font-heading">
@@ -263,15 +258,15 @@ export default function Login() {
             </Card>
             */}
 
-            {/* Back to Home Link */}
-            <div className="mt-6">
-                <Link
-                    href="/"
-                    className="text-default-600 hover:text-primary font-medium font-nav"
-                >
-                    ← Volver al inicio
-                </Link>
-            </div>
-        </div>
-    );
+			{/* Back to Home Link */}
+			<div className="mt-6">
+				<Link
+					href="/"
+					className="text-default-600 hover:text-primary font-medium font-nav"
+				>
+					← Volver al inicio
+				</Link>
+			</div>
+		</div>
+	);
 }
