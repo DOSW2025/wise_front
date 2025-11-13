@@ -18,29 +18,57 @@ export class AuthService {
 	 */
 	static async login(credentials: LoginRequest): Promise<LoginResponse> {
 		try {
-			const response = await apiClient.post<ApiResponse<LoginResponse>>(
+			const response = await apiClient.post(
 				API_ENDPOINTS.AUTH.LOGIN,
 				credentials,
 			);
 
-			if (response.data.success && response.data.data) {
-				const { token, refreshToken, user, expiresIn } = response.data.data;
+			const data = response.data as any;
 
+			// Soportar dos formas de respuesta:
+			// 1) { success: true, data: { token|accessToken, user|usuario, refreshToken?, expiresIn|metadata.expiresIn } }
+			// 2) { mensaje, accessToken|token, usuario|user, metadata.expiresIn|expiresIn, refreshToken? }
+
+			let token: string | undefined;
+			let refreshToken: string = '';
+			let user: UserDto | undefined;
+			let expiresIn: number = 0;
+
+			if (data?.success && data?.data) {
+				token = data.data.token ?? data.data.accessToken;
+				refreshToken = data.data.refreshToken ?? '';
+				user = data.data.user ?? data.data.usuario;
+				expiresIn =
+					typeof data.data.expiresIn === 'number'
+						? data.data.expiresIn
+						: (data.data.metadata?.expiresIn ?? 0);
+			} else if (data) {
+				token = data.token ?? data.accessToken;
+				refreshToken = data.refreshToken ?? '';
+				user = data.user ?? data.usuario;
+				expiresIn =
+					typeof data.expiresIn === 'number'
+						? data.expiresIn
+						: (data.metadata?.expiresIn ?? 0);
+			}
+
+			if (token && user) {
 				// Guardar en localStorage
 				localStorage.setItem('token', token);
 				localStorage.setItem('refreshToken', refreshToken);
 				localStorage.setItem('user', JSON.stringify(user));
 				localStorage.setItem('expiresIn', expiresIn.toString());
 
-				return response.data.data;
-			} else {
-				throw new Error(response.data.message || 'Error en el login');
+				return { token, refreshToken, user, expiresIn } as LoginResponse;
 			}
+
+			throw new Error(data?.message || 'Error en el login');
 		} catch (error: any) {
-			// Manejar errores de la API
 			if (error.response?.data) {
 				const apiError = error.response.data;
-				throw new Error(apiError.message || 'Error al iniciar sesión');
+				const message =
+					apiError?.message || apiError?.error || 'Error al iniciar sesión';
+				throw new Error(message);
 			}
 			throw new Error('Error de conexión con el servidor');
 		}
