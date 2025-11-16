@@ -8,12 +8,12 @@ import {
 	Form,
 	Input,
 	Link,
-	Select,
-	SelectItem,
 } from '@heroui/react';
+import type { AxiosError } from 'axios';
 import { GraduationCap, Lock, Mail, Phone, User } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
+import { authService } from '../../lib/api/auth';
 
 export function meta() {
 	return [
@@ -24,16 +24,17 @@ export function meta() {
 
 export default function Register() {
 	const [formData, setFormData] = useState({
-		firstName: '',
-		lastName: '',
+		nombre: '',
+		apellido: '',
 		email: '',
-		phone: '',
-		password: '',
+		telefono: '',
+		contraseña: '',
 		confirmPassword: '',
-		role: '',
+		semestre: '',
 	});
 	const [isLoading, setIsLoading] = useState(false);
 	const [acceptTerms, setAcceptTerms] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	const handleChange = (field: string, value: string) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
@@ -41,44 +42,75 @@ export default function Register() {
 
 	const handleRegister = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setError(null);
 
 		// Validations
 		if (!acceptTerms) {
-			alert('Debes aceptar los términos y condiciones');
+			setError('Debes aceptar los términos y condiciones');
 			return;
 		}
 
-		if (formData.password !== formData.confirmPassword) {
-			alert('Las contraseñas no coinciden');
+		if (formData.contraseña !== formData.confirmPassword) {
+			setError('Las contraseñas no coinciden');
 			return;
 		}
 
-		if (formData.password.length < 8) {
-			alert('La contraseña debe tener al menos 8 caracteres');
+		if (formData.contraseña.length < 6) {
+			setError('La contraseña debe tener al menos 6 caracteres');
+			return;
+		}
+
+		// Validar formato de contraseña
+		const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).+$/;
+		if (!passwordRegex.test(formData.contraseña)) {
+			setError(
+				'La contraseña debe contener al menos una letra minúscula, una mayúscula y un carácter especial',
+			);
 			return;
 		}
 
 		if (!formData.email.endsWith('@escuelaing.edu.co')) {
-			alert('Debes usar un correo institucional (@escuelaing.edu.co)');
+			setError('Debes usar un correo institucional (@escuelaing.edu.co)');
 			return;
 		}
 
 		setIsLoading(true);
 
-		// Simulate registration process
-		setTimeout(() => {
-			console.log('Register attempt:', formData);
-			alert('¡Cuenta creada exitosamente! Redirigiendo al login...');
+		try {
+			// Preparar datos para enviar al backend
+			const registroData = {
+				nombre: formData.nombre,
+				apellido: formData.apellido,
+				email: formData.email,
+				contraseña: formData.contraseña,
+				...(formData.telefono && { telefono: formData.telefono }),
+				...(formData.semestre && { semestre: Number(formData.semestre) }),
+			};
+
+			// Llamar al servicio de registro
+			const response = await authService.registro(registroData);
+
+			// Guardar tokens y usuario en localStorage
+			localStorage.setItem('token', response.access_token);
+			localStorage.setItem('refreshToken', response.refresh_token);
+			localStorage.setItem('user', JSON.stringify(response.user));
+
+			// Redirigir al login o dashboard
 			window.location.href = '/login';
+		} catch (err) {
+			const axiosError = err as AxiosError<{
+				message?: string;
+				error?: string;
+			}>;
+			const errorMessage =
+				axiosError.response?.data?.message ||
+				axiosError.response?.data?.error ||
+				'Error al crear la cuenta. Por favor, intenta de nuevo.';
+			setError(errorMessage);
+		} finally {
 			setIsLoading(false);
-		}, 2000);
+		}
 	};
-
-	const roles = [
-		{ key: 'estudiante', label: 'Estudiante' },
-		{ key: 'profesor', label: 'Docente/Tutor' },
-	];
-
 	return (
 		<div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-content1 to-content3 p-4 py-12">
 			<div className="w-full max-w-2xl container mx-auto text-center mb-6">
@@ -103,14 +135,21 @@ export default function Register() {
 
 				<CardBody className="space-y-4 px-6 py-4">
 					<Form onSubmit={handleRegister} className="space-y-4">
+						{/* Mensaje de error */}
+						{error && (
+							<div className="bg-danger-50 border border-danger-200 text-danger-800 px-4 py-3 rounded-lg text-sm">
+								{error}
+							</div>
+						)}
+
 						{/* Nombres y Apellidos */}
 						<div className="grid grid-cols-2 gap-4 w-full">
 							<Input
 								type="text"
 								label="Nombres"
 								placeholder="Ingresa tus nombres"
-								value={formData.firstName}
-								onChange={(e) => handleChange('firstName', e.target.value)}
+								value={formData.nombre}
+								onChange={(e) => handleChange('nombre', e.target.value)}
 								isRequired
 								size="lg"
 								color="primary"
@@ -122,8 +161,8 @@ export default function Register() {
 								type="text"
 								label="Apellidos"
 								placeholder="Ingresa tus apellidos"
-								value={formData.lastName}
-								onChange={(e) => handleChange('lastName', e.target.value)}
+								value={formData.apellido}
+								onChange={(e) => handleChange('apellido', e.target.value)}
 								isRequired
 								size="lg"
 								color="primary"
@@ -153,50 +192,47 @@ export default function Register() {
 								type="tel"
 								label="Teléfono"
 								placeholder="3001234567"
-								value={formData.phone}
-								onChange={(e) => handleChange('phone', e.target.value)}
+								value={formData.telefono}
+								onChange={(e) => handleChange('telefono', e.target.value)}
 								size="lg"
 								color="primary"
 								variant="bordered"
 								className="w-full"
+								description="Opcional"
 								startContent={<Phone className="text-default-400" size={20} />}
 							/>
 						</div>
 
-						{/* Rol */}
-						<Select
-							label="Selecciona tu Rol"
-							placeholder="¿Cómo te identificas?"
-							selectedKeys={formData.role ? [formData.role] : []}
-							onSelectionChange={(keys) => {
-								const selected = Array.from(keys)[0] as string;
-								handleChange('role', selected);
-							}}
-							isRequired
+						{/* Semestre */}
+						<Input
+							type="number"
+							label="Semestre"
+							placeholder="¿En qué semestre estás?"
+							value={formData.semestre}
+							onChange={(e) => handleChange('semestre', e.target.value)}
 							size="lg"
 							color="primary"
 							variant="bordered"
 							className="w-full"
-						>
-							{roles.map((role) => (
-								<SelectItem key={role.key}>{role.label}</SelectItem>
-							))}
-						</Select>
+							description="Opcional - Solo para estudiantes"
+							min="1"
+							max="12"
+						/>
 
 						{/* Contraseñas */}
 						<div className="grid grid-cols-2 gap-4 w-full">
 							<Input
 								type="password"
 								label="Contraseña"
-								placeholder="Mínimo 8 caracteres"
-								value={formData.password}
-								onChange={(e) => handleChange('password', e.target.value)}
+								placeholder="Mínimo 6 caracteres"
+								value={formData.contraseña}
+								onChange={(e) => handleChange('contraseña', e.target.value)}
 								isRequired
 								size="lg"
 								color="primary"
 								variant="bordered"
 								className="w-full"
-								description="Mínimo 8 caracteres"
+								description="Debe incluir mayúscula, minúscula y carácter especial"
 								startContent={<Lock className="text-default-400" size={20} />}
 							/>
 							<Input
