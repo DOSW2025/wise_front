@@ -1,8 +1,15 @@
 import { Button, Card, CardBody } from '@heroui/react';
-import { Link } from 'react-router';
+import { Link, Outlet, useLocation } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
 
 export default function TutorDashboard() {
+	const location = useLocation();
+	const isMainDashboard = location.pathname === '/dashboard/tutor';
+
+	if (!isMainDashboard) {
+		return <Outlet />;
+	}
+
 	return (
 		<div className="space-y-6">
 			{/* Header */}
@@ -113,29 +120,29 @@ export default function TutorDashboard() {
 						<div className="flex flex-col gap-2">
 							<Button
 								as={Link}
-								to="/dashboard/my-tutoring/schedule"
+								to="/dashboard/tutor/scheduled"
 								color="primary"
 								fullWidth
 							>
-								Configurar Disponibilidad
+								Ver Sesiones Programadas
 							</Button>
 							<Button
 								as={Link}
-								to="/dashboard/materials/upload"
+								to="/dashboard/tutor/materials"
 								color="default"
 								variant="bordered"
 								fullWidth
 							>
-								Subir Material
+								Gestionar Materiales
 							</Button>
 							<Button
 								as={Link}
-								to="/dashboard/stats"
+								to="/dashboard/tutor/reports"
 								color="default"
 								variant="bordered"
 								fullWidth
 							>
-								Ver Estadísticas Completas
+								Ver Reportes
 							</Button>
 						</div>
 					</CardBody>
@@ -260,7 +267,7 @@ export default function TutorDashboard() {
 						<h2 className="text-xl font-semibold">Reseñas Recientes</h2>
 						<Button
 							as={Link}
-							to="/dashboard/stats"
+							to="/dashboard/tutor/reports"
 							size="sm"
 							variant="light"
 							color="primary"
