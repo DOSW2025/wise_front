@@ -8,6 +8,7 @@ export default [
 	// Dashboard routes with layout
 	route('dashboard', 'routes/dashboard/dashboard.tsx', [
 		index('routes/dashboard/student/index.tsx'),
+		route('tutoring', 'routes/dashboard/student/tutoring.tsx'),
 		route('tutor', 'routes/dashboard/tutor/index.tsx'),
 		route('admin', 'routes/dashboard/admin/index.tsx'),
 	]),
