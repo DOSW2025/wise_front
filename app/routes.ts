@@ -17,6 +17,8 @@ export default [
 			route('help', 'routes/dashboard/tutor/help.tsx'),
 			route('profile', 'routes/dashboard/tutor/profile.tsx'),
 		]),
+		route('tutoring', 'routes/dashboard/student/tutoring.tsx'),
+		route('tutor', 'routes/dashboard/tutor/index.tsx'),
 		route('admin', 'routes/dashboard/admin/index.tsx'),
 	]),
 ] satisfies RouteConfig;
