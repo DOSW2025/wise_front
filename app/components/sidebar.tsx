@@ -70,34 +70,16 @@ export function Sidebar({
 					path: '/dashboard/student/materials',
 				},
 				{
-					key: 'planning',
-					label: 'Planificación',
-					icon: <Calendar className="w-5 h-5" />,
-					path: '/dashboard/student/planning',
+					key: 'progress',
+					label: 'Mi Progreso',
+					icon: <TrendingUp className="w-5 h-5" />,
+					path: '/dashboard/student/progress',
 				},
 				{
 					key: 'community',
 					label: 'Comunidad',
 					icon: <Users className="w-5 h-5" />,
 					path: '/dashboard/student/community',
-				},
-				{
-					key: 'reputation',
-					label: 'Reputación',
-					icon: <Star className="w-5 h-5" />,
-					path: '/dashboard/student/reputation',
-				},
-				{
-					key: 'help',
-					label: 'Centro de Ayuda',
-					icon: <HelpCircle className="w-5 h-5" />,
-					path: '/dashboard/student/help',
-				},
-				{
-					key: 'profile',
-					label: 'Perfil',
-					icon: <UserCheck className="w-5 h-5" />,
-					path: '/dashboard/student/profile',
 				},
 			];
 		}

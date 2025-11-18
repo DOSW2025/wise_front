@@ -11,9 +11,9 @@ export default function Dashboard() {
 	// const { user, logout } = useAuth();
 
 	// Datos de prueba - reemplazar con datos del contexto de autenticación
-	const userRole = 'tutor' as 'student' | 'tutor' | 'admin';
-	const userName = 'Tutor Demo';
-	const userEmail = 'tutor@eci.edu';
+	const userRole = 'student' as 'student' | 'tutor' | 'admin';
+	const userName = 'Estudiante Demo';
+	const userEmail = 'estudiante@eci.edu';
 	const userAvatar = undefined;
 
 	const handleLogout = () => {
