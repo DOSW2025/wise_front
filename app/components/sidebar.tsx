@@ -70,34 +70,16 @@ export function Sidebar({
 					path: '/dashboard/student/materials',
 				},
 				{
-					key: 'planning',
-					label: 'Planificación',
-					icon: <Calendar className="w-5 h-5" />,
-					path: '/dashboard/student/planning',
+					key: 'progress',
+					label: 'Mi Progreso',
+					icon: <TrendingUp className="w-5 h-5" />,
+					path: '/dashboard/student/progress',
 				},
 				{
 					key: 'community',
 					label: 'Comunidad',
 					icon: <Users className="w-5 h-5" />,
 					path: '/dashboard/student/community',
-				},
-				{
-					key: 'reputation',
-					label: 'Reputación',
-					icon: <Star className="w-5 h-5" />,
-					path: '/dashboard/student/reputation',
-				},
-				{
-					key: 'help',
-					label: 'Centro de Ayuda',
-					icon: <HelpCircle className="w-5 h-5" />,
-					path: '/dashboard/student/help',
-				},
-				{
-					key: 'profile',
-					label: 'Perfil',
-					icon: <UserCheck className="w-5 h-5" />,
-					path: '/dashboard/student/profile',
 				},
 			];
 		}
@@ -227,14 +209,6 @@ export function Sidebar({
 		navigate('/login');
 	};
 
-	const handleNavigation = (key: string) => {
-		const item = menuItems.find((item) => item.key === key);
-		if (item) {
-			navigate(item.path);
-			setIsMobileMenuOpen(false);
-		}
-	};
-
 	return (
 		<>
 			{/* Mobile menu toggle button */}
@@ -312,34 +286,28 @@ export function Sidebar({
 				</div>
 
 				{/* Menú de navegación */}
-				<nav className="flex-1 overflow-y-auto py-4 scrollbar-hide">
-					<Listbox
-						aria-label="Menú de navegación"
-						variant="flat"
-						selectionMode="single"
-						selectedKeys={[
-							menuItems.find((item) => location.pathname === item.path)?.key ||
-								'',
-						]}
-						onAction={(key) => handleNavigation(key as string)}
-						classNames={{
-							base: 'p-0 gap-0',
-							list: 'gap-1 px-3',
-						}}
-					>
-						{menuItems.map((item) => (
-							<ListboxItem
+				<nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+					{menuItems.map((item) => {
+						const isActive = location.pathname === item.path;
+						return (
+							<Link
 								key={item.key}
-								startContent={item.icon}
-								classNames={{
-									base: 'rounded-lg px-3 py-2.5 data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground data-[hover=true]:bg-default-100 transition-colors',
-									title: 'text-sm font-medium',
-								}}
+								to={item.path}
+								onClick={() => setIsMobileMenuOpen(false)}
+								className={`
+									flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+									${
+										isActive
+											? 'bg-primary text-primary-foreground'
+											: 'text-default-700 hover:bg-default-100'
+									}
+								`}
 							>
+								{item.icon}
 								{item.label}
-							</ListboxItem>
-						))}
-					</Listbox>
+							</Link>
+						);
+					})}
 				</nav>
 
 				{/* Botón de cerrar sesión */}
