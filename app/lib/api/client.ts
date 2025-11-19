@@ -30,18 +30,20 @@ apiClient.interceptors.request.use(
 	},
 );
 
-// Response interceptor - Manejo de errores y refresh token
+// Response interceptor - Manejo de errores
 apiClient.interceptors.response.use(
 	(response) => response,
 	async (error: AxiosError) => {
-		// Si el error es 401 y no es la ruta de login, intentar refresh
+		// Si el error es 401, limpiar sesión y redirigir a login
 		if (error.response?.status === 401) {
-			// Limpiar sesión y redirigir a login
+			// Limpiar sesión
 			localStorage.removeItem('token');
-			localStorage.removeItem('refreshToken');
 			localStorage.removeItem('user');
 
-			if (window.location.pathname !== '/login') {
+			if (
+				window.location.pathname !== '/login' &&
+				window.location.pathname !== '/register'
+			) {
 				window.location.href = '/login';
 			}
 		}
