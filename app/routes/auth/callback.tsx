@@ -1,7 +1,7 @@
 import { Card, CardBody, Spinner } from '@heroui/react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import type { AuthResponse } from '../../lib/api/auth';
+import type { AuthResponse, UserResponse } from '../../lib/api/auth';
 import { authService } from '../../lib/api/auth';
 
 export function meta() {
@@ -11,12 +11,30 @@ export function meta() {
 	];
 }
 
+/**
+ * Validar que el objeto user tenga la estructura esperada
+ */
+function isValidUserResponse(user: unknown): user is UserResponse {
+	if (!user || typeof user !== 'object') return false;
+
+	const u = user as Record<string, unknown>;
+	return (
+		typeof u.id === 'string' &&
+		typeof u.email === 'string' &&
+		typeof u.nombre === 'string' &&
+		typeof u.apellido === 'string' &&
+		typeof u.rol === 'string'
+	);
+}
+
 export default function AuthCallback() {
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
+		let timeoutId: NodeJS.Timeout | null = null;
+
 		const handleCallback = async () => {
 			try {
 				// Obtener el token del query parameter
@@ -25,12 +43,34 @@ export default function AuthCallback() {
 
 				if (!token || !userParam) {
 					setError('No se recibieron las credenciales de autenticación');
-					setTimeout(() => navigate('/login'), 3000);
+					timeoutId = setTimeout(() => {
+						navigate('/login', { replace: true });
+					}, 3000);
 					return;
 				}
 
-				// Decodificar y parsear la información del usuario
-				const user = JSON.parse(decodeURIComponent(userParam));
+				// Decodificar y parsear la información del usuario con validación
+				let user: unknown;
+				try {
+					user = JSON.parse(decodeURIComponent(userParam));
+				} catch (parseError) {
+					console.error('Error al parsear datos del usuario:', parseError);
+					setError('Datos de usuario inválidos');
+					timeoutId = setTimeout(() => {
+						navigate('/login', { replace: true });
+					}, 3000);
+					return;
+				}
+
+				// Validar estructura del usuario
+				if (!isValidUserResponse(user)) {
+					console.error('Estructura de usuario inválida:', user);
+					setError('Datos de usuario inválidos');
+					timeoutId = setTimeout(() => {
+						navigate('/login', { replace: true });
+					}, 3000);
+					return;
+				}
 
 				// Crear el objeto de respuesta de autenticación
 				const authResponse: AuthResponse = {
@@ -41,18 +81,25 @@ export default function AuthCallback() {
 				// Guardar los datos de autenticación
 				authService.saveAuthData(authResponse);
 
-				// Redirigir al dashboard
-				setTimeout(() => {
-					window.location.href = '/dashboard';
-				}, 1000);
+				// Redirigir al dashboard usando navigate
+				navigate('/dashboard', { replace: true });
 			} catch (err) {
 				console.error('Error en callback de autenticación:', err);
 				setError('Error al procesar la autenticación. Redirigiendo...');
-				setTimeout(() => navigate('/login'), 3000);
+				timeoutId = setTimeout(() => {
+					navigate('/login', { replace: true });
+				}, 3000);
 			}
 		};
 
 		handleCallback();
+
+		// Cleanup para limpiar timeout si el componente se desmonta
+		return () => {
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+			}
+		};
 	}, [searchParams, navigate]);
 
 	return (
