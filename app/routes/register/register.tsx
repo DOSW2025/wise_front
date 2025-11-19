@@ -4,15 +4,10 @@ import {
 	CardBody,
 	CardFooter,
 	CardHeader,
-	Checkbox,
-	Form,
-	Input,
+	Divider,
 	Link,
 } from '@heroui/react';
-import type { AxiosError } from 'axios';
-import { GraduationCap, Lock, Mail, Phone, User } from 'lucide-react';
-import type React from 'react';
-import { useState } from 'react';
+import { GraduationCap } from 'lucide-react';
 import { authService } from '../../lib/api/auth';
 
 export function meta() {
@@ -23,97 +18,13 @@ export function meta() {
 }
 
 export default function Register() {
-	const [formData, setFormData] = useState({
-		nombre: '',
-		apellido: '',
-		email: '',
-		telefono: '',
-		contraseña: '',
-		confirmPassword: '',
-		semestre: '',
-	});
-	const [isLoading, setIsLoading] = useState(false);
-	const [acceptTerms, setAcceptTerms] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-
-	const handleChange = (field: string, value: string) => {
-		setFormData((prev) => ({ ...prev, [field]: value }));
+	const handleGoogleSignup = () => {
+		authService.loginWithGoogle();
 	};
 
-	const handleRegister = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setError(null);
-
-		// Validations
-		if (!acceptTerms) {
-			setError('Debes aceptar los términos y condiciones');
-			return;
-		}
-
-		if (formData.contraseña !== formData.confirmPassword) {
-			setError('Las contraseñas no coinciden');
-			return;
-		}
-
-		if (formData.contraseña.length < 6) {
-			setError('La contraseña debe tener al menos 6 caracteres');
-			return;
-		}
-
-		// Validar formato de contraseña
-		const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).+$/;
-		if (!passwordRegex.test(formData.contraseña)) {
-			setError(
-				'La contraseña debe contener al menos una letra minúscula, una mayúscula y un carácter especial',
-			);
-			return;
-		}
-
-		if (!formData.email.endsWith('@escuelaing.edu.co')) {
-			setError('Debes usar un correo institucional (@escuelaing.edu.co)');
-			return;
-		}
-
-		setIsLoading(true);
-
-		try {
-			// Preparar datos para enviar al backend
-			const registroData = {
-				nombre: formData.nombre,
-				apellido: formData.apellido,
-				email: formData.email,
-				contraseña: formData.contraseña,
-				...(formData.telefono && { telefono: formData.telefono }),
-				...(formData.semestre && { semestre: Number(formData.semestre) }),
-			};
-
-			// Llamar al servicio de registro
-			const response = await authService.registro(registroData);
-
-			// Guardar tokens y usuario en localStorage
-			localStorage.setItem('token', response.access_token);
-			localStorage.setItem('refreshToken', response.refresh_token);
-			localStorage.setItem('user', JSON.stringify(response.user));
-
-			// Redirigir al login o dashboard
-			window.location.href = '/login';
-		} catch (err) {
-			const axiosError = err as AxiosError<{
-				message?: string;
-				error?: string;
-			}>;
-			const errorMessage =
-				axiosError.response?.data?.message ||
-				axiosError.response?.data?.error ||
-				'Error al crear la cuenta. Por favor, intenta de nuevo.';
-			setError(errorMessage);
-		} finally {
-			setIsLoading(false);
-		}
-	};
 	return (
 		<div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-content1 to-content3 p-4 py-12">
-			<div className="w-full max-w-2xl container mx-auto text-center mb-6">
+			<div className="w-full max-w-md container mx-auto text-center mb-6">
 				<div className="flex items-center justify-center gap-2 mb-2">
 					<GraduationCap className="text-primary" size={32} />
 					<h1 className="text-2xl font-bold text-foreground font-logo">
@@ -121,173 +32,98 @@ export default function Register() {
 					</h1>
 				</div>
 				<p className="text-sm text-primary font-semibold">
-					Aprender, conectar y compartir sin limites
+					Aprender, conectar y compartir sin límites
 				</p>
 			</div>
 
-			{/* Register Form Card */}
-			<Card className="w-full max-w-2xl shadow-lg container mx-auto bg-content1">
-				<CardHeader className="flex flex-col items-center pb-2 pt-4">
-					<h1 className="text-xl font-bold text-foreground font-heading">
+			{/* Register Card */}
+			<Card className="w-full max-w-md shadow-lg container mx-auto bg-content1">
+				<CardHeader className="flex flex-col items-center pb-2 pt-6">
+					<h1 className="text-2xl font-bold text-foreground font-heading mb-2">
 						Crea Tu Cuenta
 					</h1>
+					<p className="text-base text-default-600 text-center">
+						Únete a la comunidad de aprendizaje colaborativo
+					</p>
 				</CardHeader>
 
-				<CardBody className="space-y-4 px-6 py-4">
-					<Form onSubmit={handleRegister} className="space-y-4">
-						{/* Mensaje de error */}
-						{error && (
-							<div className="bg-danger-50 border border-danger-200 text-danger-800 px-4 py-3 rounded-lg text-sm">
-								{error}
-							</div>
-						)}
-
-						{/* Nombres y Apellidos */}
-						<div className="grid grid-cols-2 gap-4 w-full">
-							<Input
-								type="text"
-								label="Nombres"
-								placeholder="Ingresa tus nombres"
-								value={formData.nombre}
-								onChange={(e) => handleChange('nombre', e.target.value)}
-								isRequired
-								size="lg"
-								color="primary"
-								variant="bordered"
-								className="w-full"
-								startContent={<User className="text-default-400" size={20} />}
-							/>
-							<Input
-								type="text"
-								label="Apellidos"
-								placeholder="Ingresa tus apellidos"
-								value={formData.apellido}
-								onChange={(e) => handleChange('apellido', e.target.value)}
-								isRequired
-								size="lg"
-								color="primary"
-								variant="bordered"
-								className="w-full"
-								startContent={<User className="text-default-400" size={20} />}
-							/>
-						</div>
-
-						{/* Email y Teléfono */}
-						<div className="grid grid-cols-2 gap-4 w-full">
-							<Input
-								type="email"
-								label="Correo Institucional"
-								placeholder="tu.nombre@escuelaing.edu.co"
-								value={formData.email}
-								onChange={(e) => handleChange('email', e.target.value)}
-								isRequired
-								size="lg"
-								color="primary"
-								variant="bordered"
-								className="w-full"
-								description="Debe ser un correo @escuelaing.edu.co"
-								startContent={<Mail className="text-default-400" size={20} />}
-							/>
-							<Input
-								type="tel"
-								label="Teléfono"
-								placeholder="3001234567"
-								value={formData.telefono}
-								onChange={(e) => handleChange('telefono', e.target.value)}
-								size="lg"
-								color="primary"
-								variant="bordered"
-								className="w-full"
-								description="Opcional"
-								startContent={<Phone className="text-default-400" size={20} />}
-							/>
-						</div>
-
-						{/* Semestre */}
-						<Input
-							type="number"
-							label="Semestre"
-							placeholder="¿En qué semestre estás?"
-							value={formData.semestre}
-							onChange={(e) => handleChange('semestre', e.target.value)}
-							size="lg"
-							color="primary"
-							variant="bordered"
-							className="w-full"
-							description="Opcional - Solo para estudiantes"
-							min="1"
-							max="12"
-						/>
-
-						{/* Contraseñas */}
-						<div className="grid grid-cols-2 gap-4 w-full">
-							<Input
-								type="password"
-								label="Contraseña"
-								placeholder="Mínimo 6 caracteres"
-								value={formData.contraseña}
-								onChange={(e) => handleChange('contraseña', e.target.value)}
-								isRequired
-								size="lg"
-								color="primary"
-								variant="bordered"
-								className="w-full"
-								description="Debe incluir mayúscula, minúscula y carácter especial"
-								startContent={<Lock className="text-default-400" size={20} />}
-							/>
-							<Input
-								type="password"
-								label="Confirmar Contraseña"
-								placeholder="Repite tu contraseña"
-								value={formData.confirmPassword}
-								onChange={(e) =>
-									handleChange('confirmPassword', e.target.value)
-								}
-								isRequired
-								size="lg"
-								color="primary"
-								variant="bordered"
-								className="w-full"
-								startContent={<Lock className="text-default-400" size={20} />}
-							/>
-						</div>
-
-						{/* Términos y Condiciones */}
-						<div className="flex items-start gap-2">
-							<Checkbox
-								size="sm"
-								isSelected={acceptTerms}
-								onValueChange={setAcceptTerms}
-								className="mt-1"
+				<CardBody className="space-y-6 px-8 py-6">
+					{/* Google Sign Up Button */}
+					<Button
+						onClick={handleGoogleSignup}
+						size="lg"
+						className="w-full font-semibold font-nav bg-white hover:bg-gray-50 text-gray-800 border border-gray-300"
+						startContent={
+							<svg
+								className="w-5 h-5"
+								viewBox="0 0 24 24"
+								aria-label="Google logo"
+								role="img"
 							>
-								<span className="text-sm text-default-600">
-									Acepto los{' '}
-									<Link href="#" className="text-primary" size="sm">
-										términos y condiciones
-									</Link>{' '}
-									y la{' '}
-									<Link href="#" className="text-primary" size="sm">
-										política de privacidad
-									</Link>
-								</span>
-							</Checkbox>
-						</div>
+								<title>Google</title>
+								<path
+									fill="#4285F4"
+									d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+								/>
+								<path
+									fill="#34A853"
+									d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+								/>
+								<path
+									fill="#FBBC05"
+									d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+								/>
+								<path
+									fill="#EA4335"
+									d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+								/>
+							</svg>
+						}
+					>
+						Continuar con Google
+					</Button>
 
-						{/* Submit Button */}
-						<Button
-							type="submit"
-							color="primary"
-							size="lg"
-							className="w-full font-semibold font-nav mt-6"
-							isLoading={isLoading}
-							isDisabled={isLoading || !acceptTerms}
-						>
-							{isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
-						</Button>
-					</Form>
+					<Divider />
+
+					{/* Beneficios */}
+					<div className="space-y-3">
+						<h3 className="text-sm font-semibold text-foreground text-center">
+							Al registrarte tendrás acceso a:
+						</h3>
+						<ul className="space-y-2 text-sm text-default-600">
+							<li className="flex items-start gap-2">
+								<span className="text-primary mt-0.5">✓</span>
+								<span>Foros de discusión y resolución de dudas</span>
+							</li>
+							<li className="flex items-start gap-2">
+								<span className="text-primary mt-0.5">✓</span>
+								<span>Conexión con tutores y compañeros</span>
+							</li>
+							<li className="flex items-start gap-2">
+								<span className="text-primary mt-0.5">✓</span>
+								<span>Recursos educativos compartidos</span>
+							</li>
+							<li className="flex items-start gap-2">
+								<span className="text-primary mt-0.5">✓</span>
+								<span>Sistema de seguimiento académico</span>
+							</li>
+						</ul>
+					</div>
+
+					{/* Términos */}
+					<p className="text-xs text-default-500 text-center">
+						Al continuar, aceptas nuestros{' '}
+						<Link href="#" className="text-primary" size="sm">
+							términos y condiciones
+						</Link>{' '}
+						y{' '}
+						<Link href="#" className="text-primary" size="sm">
+							política de privacidad
+						</Link>
+					</p>
 				</CardBody>
 
-				<CardFooter className="flex justify-center py-3 px-6">
+				<CardFooter className="flex justify-center py-4 px-6">
 					<p className="text-sm text-default-600 text-center">
 						¿Ya tienes cuenta?{' '}
 						<Link
@@ -301,7 +137,7 @@ export default function Register() {
 			</Card>
 
 			{/* Back to Home Link */}
-			<div className="mt-3">
+			<div className="mt-4">
 				<Link
 					href="/"
 					className="text-default-600 hover:text-primary font-medium font-nav text-sm"

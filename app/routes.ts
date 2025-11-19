@@ -4,6 +4,7 @@ export default [
 	index('routes/home/home.tsx'),
 	route('login', 'routes/login/login.tsx'),
 	route('register', 'routes/register/register.tsx'),
+	route('auth/callback', 'routes/auth/callback.tsx'),
 
 	// Dashboard routes with layout
 	route('dashboard', 'routes/dashboard/dashboard.tsx', [
