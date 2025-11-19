@@ -14,6 +14,7 @@ import {
 } from '@heroui/react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
+import NotificationBell from './notifications/NotificationBell';
 
 interface NavbarProps {
 	userRole?: 'student' | 'tutor' | 'admin';
@@ -138,6 +139,9 @@ export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
 			</NavbarContent>
 
 			<NavbarContent justify="end">
+				<NavbarItem>
+					<NotificationBell />
+				</NavbarItem>
 				<NavbarItem>
 					<Dropdown placement="bottom-end">
 						<DropdownTrigger>
