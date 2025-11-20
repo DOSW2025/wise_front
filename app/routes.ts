@@ -16,6 +16,7 @@ export default [
 		route('materials', 'routes/dashboard/student/materials.tsx'),
 		route('progress', 'routes/dashboard/student/progress.tsx'),
 		route('community', 'routes/dashboard/student/community.tsx'),
+		route('profile', 'routes/dashboard/student/profile.tsx'),
 	]),
 
 	// Tutor dashboard
@@ -31,5 +32,13 @@ export default [
 	]),
 
 	// Admin dashboard
-	route('dashboard/admin', 'routes/dashboard/admin/index.tsx'),
+	route('dashboard/admin', 'routes/dashboard/admin/dashboard.tsx', [
+		index('routes/dashboard/admin/index.tsx'),
+		route('users', 'routes/dashboard/admin/users.tsx'),
+		route('validation', 'routes/dashboard/admin/validation.tsx'),
+		route('reports', 'routes/dashboard/admin/reports.tsx'),
+		route('settings', 'routes/dashboard/admin/settings.tsx'),
+		route('help', 'routes/dashboard/admin/help.tsx'),
+		route('profile', 'routes/dashboard/admin/profile.tsx'),
+	]),
 ] satisfies RouteConfig;

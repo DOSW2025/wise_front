@@ -10,7 +10,6 @@ import {
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
-	Progress,
 	Textarea,
 	useDisclosure,
 } from '@heroui/react';
@@ -52,92 +51,43 @@ export default function TutorReports() {
 	const [responseText, setResponseText] = useState('');
 	const [mainTab, setMainTab] = useState<'stats' | 'history'>('stats');
 	const [activeTab, setActiveTab] = useState<'history' | 'ratings'>('history');
-	const [chartType, setChartType] = useState<'sessions' | 'ratings'>(
+	const [_chartType, _setChartType] = useState<'sessions' | 'ratings'>(
 		'sessions',
 	);
 
-	// Datos para gráficos
-	const monthlyData = [
-		{ month: 'Sep', sessions: 12, rating: 4.2 },
-		{ month: 'Oct', sessions: 18, rating: 4.5 },
-		{ month: 'Nov', sessions: 15, rating: 4.7 },
-		{ month: 'Dic', sessions: 22, rating: 4.8 },
-		{ month: 'Ene', sessions: 25, rating: 4.9 },
+	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
+	const _monthlyData: { month: string; sessions: number; rating: number }[] = [
+		{ month: 'Ejemplo', sessions: -1, rating: -1 },
 	];
 
-	const subjectData = [
-		{ subject: 'Cálculo I', sessions: 35, percentage: 40 },
-		{ subject: 'Álgebra Lineal', sessions: 28, percentage: 32 },
-		{ subject: 'Física I', sessions: 15, percentage: 17 },
-		{ subject: 'Otros', sessions: 10, percentage: 11 },
-	];
+	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
+	const subjectData: {
+		subject: string;
+		sessions: number;
+		percentage: number;
+	}[] = [{ subject: 'Sin datos de API', sessions: -1, percentage: -1 }];
 
-	const modalityData = [
-		{ type: 'Virtual', sessions: 52, percentage: 59 },
-		{ type: 'Presencial', sessions: 36, percentage: 41 },
-	];
+	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
+	const modalityData: { type: string; sessions: number; percentage: number }[] =
+		[{ type: 'Sin conexión', sessions: -1, percentage: -1 }];
 
+	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
 	const [completedSessions, setCompletedSessions] = useState<
 		CompletedSession[]
 	>([
 		{
-			id: '1',
-			studentName: 'Ana García',
-			subject: 'Cálculo I',
-			topic: 'Límites y continuidad',
-			date: '2024-01-10',
-			time: '14:00',
-			duration: 120,
+			id: '-1',
+			studentName: 'Estudiante Ejemplo (Sin conexión)',
+			subject: 'Sin datos de API',
+			topic: 'Esperando conexión',
+			date: '1900-01-01',
+			time: '00:00',
+			duration: -1,
 			modality: 'virtual',
 			status: 'completed',
-			rating: 5,
-			comment:
-				'Excelente tutor, muy claro en sus explicaciones y paciente. Me ayudó mucho a entender los conceptos.',
+			rating: -1,
+			comment: 'Comentario de ejemplo. Conectar con API para ver datos reales.',
 			hasResponse: false,
-		},
-		{
-			id: '2',
-			studentName: 'Carlos Rodríguez',
-			subject: 'Álgebra Lineal',
-			topic: 'Matrices y determinantes',
-			date: '2024-01-08',
-			time: '10:00',
-			duration: 90,
-			modality: 'presencial',
-			location: 'Aula 205',
-			status: 'completed',
-			rating: 4,
-			comment: 'Muy buena sesión, aunque me gustaría más ejemplos prácticos.',
-			hasResponse: true,
-			responseText:
-				'Gracias por tu feedback. En la próxima sesión incluiré más ejercicios prácticos.',
-		},
-		{
-			id: '3',
-			studentName: 'María López',
-			subject: 'Física I',
-			topic: 'Cinemática',
-			date: '2024-01-05',
-			time: '16:00',
-			duration: 60,
-			modality: 'virtual',
-			status: 'completed',
-			rating: 5,
-			comment:
-				'Perfecto, resolvió todas mis dudas sobre movimiento rectilíneo.',
-			hasResponse: false,
-		},
-		{
-			id: '4',
-			studentName: 'Pedro Ramírez',
-			subject: 'Cálculo I',
-			topic: 'Derivadas',
-			date: '2024-01-03',
-			time: '09:00',
-			duration: 90,
-			modality: 'presencial',
-			location: 'Aula 101',
-			status: 'completed',
 		},
 	]);
 
@@ -276,7 +226,7 @@ export default function TutorReports() {
 						</CardHeader>
 						<CardBody>
 							<div className="flex items-end justify-center gap-8 h-64 p-4">
-								{subjectData.map((data, index) => {
+								{subjectData.map((data, _index) => {
 									const height = (data.sessions / 35) * 180;
 									return (
 										<div
@@ -325,7 +275,11 @@ export default function TutorReports() {
 									>
 										{(() => {
 											let cumulativePercentage = 0;
-											const colors = ['#17C964', '#006FEE'];
+											// Usando colores semánticos del tema: success y info (definidos en brand theme)
+											const colors = [
+												'hsl(var(--heroui-success))',
+												'hsl(var(--heroui-info) / 1)',
+											];
 											return modalityData.map((data, index) => {
 												const startAngle = cumulativePercentage * 3.6;
 												cumulativePercentage += data.percentage;
@@ -355,15 +309,18 @@ export default function TutorReports() {
 								{/* Leyenda */}
 								<div className="space-y-3">
 									{modalityData.map((data, index) => {
-										const colors = ['#17C964', '#006FEE'];
+										// Clases Tailwind para colores semánticos
+										const colorClasses = [
+											'bg-success',
+											'bg-[hsl(var(--heroui-info))]',
+										];
 										return (
 											<div
 												key={data.type}
 												className="flex items-center gap-3 hover:bg-default-50 p-2 rounded-lg transition-colors cursor-pointer"
 											>
 												<div
-													className="w-4 h-4 rounded"
-													style={{ backgroundColor: colors[index] }}
+													className={`w-4 h-4 rounded ${colorClasses[index]}`}
 												/>
 												<div className="flex-1">
 													<div className="font-medium text-sm">{data.type}</div>

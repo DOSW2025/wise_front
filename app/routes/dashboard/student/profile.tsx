@@ -19,7 +19,6 @@ import { Camera, Mail, MapPin, Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { StatsCard } from '~/components/stats-card';
 import { useAuth } from '~/contexts/auth-context';
-import { updateProfile } from '~/lib/services/tutor.service';
 
 interface ProfileData {
 	name: string;
@@ -28,17 +27,9 @@ interface ProfileData {
 	location: string;
 	description: string;
 	avatar?: string;
-	availability: {
-		monday: boolean;
-		tuesday: boolean;
-		wednesday: boolean;
-		thursday: boolean;
-		friday: boolean;
-		saturday: boolean;
-		sunday: boolean;
-	};
-	subjects: string[];
-	hourlyRate: string;
+	interests: string[];
+	career: string;
+	semester: string;
 }
 
 interface FormErrors {
@@ -49,7 +40,7 @@ interface FormErrors {
 	description?: string;
 }
 
-export default function TutorProfile() {
+export default function StudentProfile() {
 	const { user } = useAuth();
 	const [isEditing, setIsEditing] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
@@ -66,29 +57,15 @@ export default function TutorProfile() {
 		location: '',
 		description: '',
 		avatar: user?.avatar,
-		availability: {
-			monday: false,
-			tuesday: false,
-			wednesday: false,
-			thursday: false,
-			friday: false,
-			saturday: false,
-			sunday: false,
-		},
-		subjects: [],
-		hourlyRate: '',
+		interests: [],
+		career: '',
+		semester: '',
 	});
 
 	const {
 		isOpen: isPasswordModalOpen,
 		onOpen: onPasswordModalOpen,
 		onClose: onPasswordModalClose,
-	} = useDisclosure();
-
-	const {
-		isOpen: isAvailabilityModalOpen,
-		onOpen: onAvailabilityModalOpen,
-		onClose: onAvailabilityModalClose,
 	} = useDisclosure();
 
 	const [passwordData, setPasswordData] = useState({
@@ -206,14 +183,8 @@ export default function TutorProfile() {
 		setIsSaving(true);
 
 		try {
-			// Guardar los cambios del perfil en el backend
-			await updateProfile({
-				name: profile.name,
-				email: profile.email,
-				phone: profile.phone,
-				location: profile.location,
-				description: profile.description,
-			});
+			// Simular llamada a API para guardar perfil
+			await new Promise((resolve) => setTimeout(resolve, 1000));
 
 			setIsEditing(false);
 			setSuccess('Perfil actualizado exitosamente');
@@ -244,26 +215,6 @@ export default function TutorProfile() {
 			}));
 		}
 	};
-
-	const toggleDay = (day: keyof ProfileData['availability']) => {
-		setProfile({
-			...profile,
-			availability: {
-				...profile.availability,
-				[day]: !profile.availability[day],
-			},
-		});
-	};
-
-	const daysOfWeek = [
-		{ key: 'monday', label: 'Lunes' },
-		{ key: 'tuesday', label: 'Martes' },
-		{ key: 'wednesday', label: 'Miércoles' },
-		{ key: 'thursday', label: 'Jueves' },
-		{ key: 'friday', label: 'Viernes' },
-		{ key: 'saturday', label: 'Sábado' },
-		{ key: 'sunday', label: 'Domingo' },
-	] as const;
 
 	return (
 		<div className="space-y-6">
@@ -362,31 +313,21 @@ export default function TutorProfile() {
 									label="Nombre Completo"
 									placeholder="Ingresa tu nombre completo"
 									value={profile.name}
-									onValueChange={(value) => {
-										setProfile({ ...profile, name: value });
-										setFormErrors({ ...formErrors, name: undefined });
-									}}
-									isReadOnly={!isEditing}
-									variant={isEditing ? 'bordered' : 'flat'}
-									isInvalid={!!formErrors.name}
-									errorMessage={formErrors.name}
+									isReadOnly={true}
+									variant="flat"
 									isRequired
+									description="No se puede modificar"
 								/>
 								<Input
 									label="Correo Electrónico"
 									placeholder="tu@email.com"
 									type="email"
 									value={profile.email}
-									onValueChange={(value) => {
-										setProfile({ ...profile, email: value });
-										setFormErrors({ ...formErrors, email: undefined });
-									}}
-									isReadOnly={!isEditing}
-									variant={isEditing ? 'bordered' : 'flat'}
-									isInvalid={!!formErrors.email}
-									errorMessage={formErrors.email}
+									isReadOnly={true}
+									variant="flat"
 									startContent={<Mail className="w-4 h-4 text-default-400" />}
 									isRequired
+									description="No se puede modificar"
 								/>
 								<Input
 									label="Teléfono"
@@ -416,26 +357,26 @@ export default function TutorProfile() {
 									startContent={<MapPin className="w-4 h-4 text-default-400" />}
 								/>
 								<Input
-									label="Tarifa por Hora"
-									placeholder="25000"
-									value={profile.hourlyRate}
-									onValueChange={(value) =>
-										setProfile({ ...profile, hourlyRate: value })
-									}
-									isReadOnly={!isEditing}
-									variant={isEditing ? 'bordered' : 'flat'}
-									startContent={
-										<span className="text-default-400 text-sm">$</span>
-									}
-									endContent={
-										<span className="text-default-400 text-sm">COP</span>
-									}
+									label="Carrera"
+									placeholder="Ingeniería de Sistemas"
+									value={profile.career}
+									isReadOnly={true}
+									variant="flat"
+									description="No se puede modificar"
+								/>
+								<Input
+									label="Semestre"
+									placeholder="7"
+									value={profile.semester}
+									isReadOnly={true}
+									variant="flat"
+									description="No se puede modificar"
 								/>
 							</div>
 
 							<Textarea
-								label="Descripción Profesional"
-								placeholder="Cuéntanos sobre tu experiencia y especialidades..."
+								label="Sobre Mí"
+								placeholder="Cuéntanos sobre tus intereses y objetivos..."
 								value={profile.description}
 								onValueChange={(value) => {
 									setProfile({ ...profile, description: value });
@@ -454,47 +395,52 @@ export default function TutorProfile() {
 								}
 							/>
 
-							{isEditing && (
-								<div className="space-y-2">
-									<span className="text-sm font-medium block">
-										Materias que enseñas
-									</span>
-									<div className="flex flex-wrap gap-2">
-										{profile.subjects.map((subject) => (
-											<Chip
-												key={subject}
-												onClose={() =>
-													setProfile({
-														...profile,
-														subjects: profile.subjects.filter(
-															(s) => s !== subject,
-														),
-													})
-												}
-												variant="flat"
-												color="primary"
-											>
-												{subject}
-											</Chip>
-										))}
+							<div className="space-y-2">
+								<span className="text-sm font-medium block">
+									Áreas de Interés
+								</span>
+								<div className="flex flex-wrap gap-2">
+									{profile.interests.map((interest) => (
+										<Chip
+											key={interest}
+											onClose={
+												isEditing
+													? () =>
+															setProfile({
+																...profile,
+																interests: profile.interests.filter(
+																	(i) => i !== interest,
+																),
+															})
+													: undefined
+											}
+											variant="flat"
+											color="primary"
+										>
+											{interest}
+										</Chip>
+									))}
+									{isEditing && (
 										<Chip
 											variant="bordered"
 											className="cursor-pointer"
 											onClick={() => {
-												const newSubject = prompt('Ingresa una nueva materia:');
-												if (newSubject) {
+												const newInterest = prompt(
+													'Ingresa un área de interés:',
+												);
+												if (newInterest) {
 													setProfile({
 														...profile,
-														subjects: [...profile.subjects, newSubject],
+														interests: [...profile.interests, newInterest],
 													});
 												}
 											}}
 										>
 											+ Agregar
 										</Chip>
-									</div>
+									)}
 								</div>
-							)}
+							</div>
 						</div>
 					</div>
 				</CardBody>
@@ -503,54 +449,12 @@ export default function TutorProfile() {
 			{/* Estadísticas */}
 			<Card>
 				<CardBody className="gap-4">
-					<h2 className="text-xl font-semibold">Estadísticas</h2>
+					<h2 className="text-xl font-semibold">Mis Estadísticas</h2>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						<StatsCard
-							title="Tutorías Completadas"
+							title="Tutorías Tomadas"
 							value={-1}
 							description="Total"
-							color="success"
-							icon={
-								<svg
-									className="w-6 h-6"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-									/>
-								</svg>
-							}
-						/>
-						<StatsCard
-							title="Calificación Promedio"
-							value="-1"
-							description="de 5.0"
-							color="warning"
-							icon={
-								<svg
-									className="w-6 h-6"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-									/>
-								</svg>
-							}
-						/>
-						<StatsCard
-							title="Estudiantes Ayudados"
-							value={-1}
-							description="Únicos"
 							color="primary"
 							icon={
 								<svg
@@ -563,16 +467,16 @@ export default function TutorProfile() {
 										strokeLinecap="round"
 										strokeLinejoin="round"
 										strokeWidth={2}
-										d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+										d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
 									/>
 								</svg>
 							}
 						/>
 						<StatsCard
-							title="Horas de Tutoría"
+							title="Horas de Estudio"
 							value={-1}
-							description="Total"
-							color="default"
+							description="Este mes"
+							color="success"
 							icon={
 								<svg
 									className="w-6 h-6"
@@ -585,6 +489,48 @@ export default function TutorProfile() {
 										strokeLinejoin="round"
 										strokeWidth={2}
 										d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+									/>
+								</svg>
+							}
+						/>
+						<StatsCard
+							title="Materias Cursando"
+							value={-1}
+							description="Activas"
+							color="warning"
+							icon={
+								<svg
+									className="w-6 h-6"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+									/>
+								</svg>
+							}
+						/>
+						<StatsCard
+							title="Progreso General"
+							value="-1%"
+							description="Avance"
+							color="default"
+							icon={
+								<svg
+									className="w-6 h-6"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
 									/>
 								</svg>
 							}
@@ -620,7 +566,7 @@ export default function TutorProfile() {
 							<div className="flex-1">
 								<p className="font-medium">Notificaciones por Email</p>
 								<p className="text-sm text-default-500">
-									Recibe notificaciones de nuevas solicitudes
+									Recibe notificaciones de nuevas tutorías y materiales
 								</p>
 							</div>
 							<Switch
@@ -628,39 +574,6 @@ export default function TutorProfile() {
 								onValueChange={setEmailNotifications}
 								color="success"
 							/>
-						</div>
-
-						<Divider />
-
-						<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-							<div className="flex-1">
-								<p className="font-medium">Disponibilidad Semanal</p>
-								<p className="text-sm text-default-500">
-									Configura los días en que estás disponible
-								</p>
-								<div className="flex flex-wrap gap-2 mt-2">
-									{daysOfWeek.map(
-										({ key, label }) =>
-											profile.availability[key] && (
-												<Chip
-													key={key}
-													size="sm"
-													color="success"
-													variant="flat"
-												>
-													{label}
-												</Chip>
-											),
-									)}
-								</div>
-							</div>
-							<Button
-								color="primary"
-								variant="bordered"
-								onPress={onAvailabilityModalOpen}
-							>
-								Configurar
-							</Button>
 						</div>
 					</div>
 				</CardBody>
@@ -718,46 +631,6 @@ export default function TutorProfile() {
 						</Button>
 						<Button color="primary" onPress={handlePasswordChange}>
 							Guardar Cambios
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
-
-			{/* Modal de Disponibilidad */}
-			<Modal
-				isOpen={isAvailabilityModalOpen}
-				onClose={onAvailabilityModalClose}
-				size="md"
-			>
-				<ModalContent>
-					<ModalHeader>Configurar Disponibilidad</ModalHeader>
-					<ModalBody>
-						<div className="space-y-3">
-							<p className="text-sm text-default-500">
-								Selecciona los días en los que estás disponible para dar
-								tutorías
-							</p>
-							{daysOfWeek.map(({ key, label }) => (
-								<div
-									key={key}
-									className="flex justify-between items-center p-3 bg-default-50 rounded-lg"
-								>
-									<span className="font-medium">{label}</span>
-									<Switch
-										isSelected={profile.availability[key]}
-										onValueChange={() => toggleDay(key)}
-										color="success"
-									/>
-								</div>
-							))}
-						</div>
-					</ModalBody>
-					<ModalFooter>
-						<Button variant="flat" onPress={onAvailabilityModalClose}>
-							Cancelar
-						</Button>
-						<Button color="primary" onPress={onAvailabilityModalClose}>
-							Guardar
 						</Button>
 					</ModalFooter>
 				</ModalContent>

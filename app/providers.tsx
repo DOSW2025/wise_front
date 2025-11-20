@@ -2,6 +2,7 @@ import { HeroUIProvider } from '@heroui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type React from 'react';
 import { createContext, useCallback, useContext, useState } from 'react';
+import { AuthProvider } from './contexts/auth-context';
 
 export const themes = [
 	'brand',
@@ -74,7 +75,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 	return (
 		<ThemeContextProvider>
 			<QueryClientProvider client={queryClient}>
-				<HeroUIProvider>{children}</HeroUIProvider>
+				<HeroUIProvider>
+					<AuthProvider>{children}</AuthProvider>
+				</HeroUIProvider>
 			</QueryClientProvider>
 		</ThemeContextProvider>
 	);

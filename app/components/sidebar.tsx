@@ -1,4 +1,4 @@
-import { Avatar, Button, Listbox, ListboxItem } from '@heroui/react';
+import { Avatar, Button } from '@heroui/react';
 import {
 	BookOpen,
 	Calendar,
@@ -12,7 +12,6 @@ import {
 	Menu,
 	MessageSquare,
 	Settings,
-	Star,
 	TrendingUp,
 	UserCheck,
 	Users,
@@ -80,6 +79,12 @@ export function Sidebar({
 					label: 'Comunidad',
 					icon: <Users className="w-5 h-5" />,
 					path: '/dashboard/student/community',
+				},
+				{
+					key: 'profile',
+					label: 'Perfil',
+					icon: <UserCheck className="w-5 h-5" />,
+					path: '/dashboard/student/profile',
 				},
 			];
 		}

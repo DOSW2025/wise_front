@@ -19,7 +19,7 @@ export default function StudentDashboard() {
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatsCard
 					title="Tutorías Completadas"
-					value={12}
+					value={-1}
 					description="Este semestre"
 					color="success"
 					icon={
@@ -42,7 +42,7 @@ export default function StudentDashboard() {
 				/>
 				<StatsCard
 					title="Próximas Tutorías"
-					value={3}
+					value={-1}
 					description="Esta semana"
 					color="primary"
 					icon={
@@ -65,7 +65,7 @@ export default function StudentDashboard() {
 				/>
 				<StatsCard
 					title="Materiales Descargados"
-					value={45}
+					value={-1}
 					description="Total"
 					color="warning"
 					icon={
@@ -88,8 +88,8 @@ export default function StudentDashboard() {
 				/>
 				<StatsCard
 					title="Puntos de Reputación"
-					value={850}
-					description="+50 esta semana"
+					value={-1}
+					description="Sin conexión API"
 					color="default"
 					icon={
 						<svg
@@ -199,61 +199,38 @@ export default function StudentDashboard() {
 							Ver todos
 						</Button>
 					</div>
+					{/* TODO: Conectar con API - Ejemplo con valores negativos para referencia */}
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-						{[
-							{
-								id: 'mat-1',
-								title: 'Guía de Derivadas',
-								subject: 'Cálculo',
-								downloads: 234,
-							},
-							{
-								id: 'mat-2',
-								title: 'Ejercicios POO - Java',
-								subject: 'Programación',
-								downloads: 189,
-							},
-							{
-								id: 'mat-3',
-								title: 'Examen Parcial 2023',
-								subject: 'Física',
-								downloads: 156,
-							},
-						].map((material) => (
-							<div
-								key={material.id}
-								className="p-4 border border-default-200 rounded-lg hover:border-primary transition-colors cursor-pointer"
-							>
-								<div className="flex items-start gap-3">
-									<div className="p-2 bg-primary-50 text-primary rounded-lg">
-										<svg
-											className="w-5 h-5"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-											aria-label="Document icon"
-										>
-											<title>Material descargable</title>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-											/>
-										</svg>
-									</div>
-									<div className="flex-1">
-										<p className="font-semibold text-sm">{material.title}</p>
-										<p className="text-tiny text-default-500">
-											{material.subject}
-										</p>
-										<p className="text-tiny text-default-400 mt-1">
-											{material.downloads} descargas
-										</p>
-									</div>
+						<div className="p-4 border border-default-200 rounded-lg opacity-60">
+							<div className="flex items-start gap-3">
+								<div className="p-2 bg-primary-50 text-primary rounded-lg">
+									<svg
+										className="w-5 h-5"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+										aria-label="Document icon"
+									>
+										<title>Material descargable</title>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+										/>
+									</svg>
+								</div>
+								<div className="flex-1">
+									<p className="font-semibold text-sm">
+										Material Ejemplo (Sin conexión)
+									</p>
+									<p className="text-tiny text-default-500">Sin datos de API</p>
+									<p className="text-tiny text-default-400 mt-1">
+										-1 descargas
+									</p>
 								</div>
 							</div>
-						))}
+						</div>
 					</div>
 				</CardBody>
 			</Card>

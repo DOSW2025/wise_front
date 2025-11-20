@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { DashboardLayout } from '~/components/dashboard-layout';
 import { useAuth } from '~/contexts/auth-context';
 
-export default function TutorDashboard() {
+export default function AdminDashboard() {
 	const navigate = useNavigate();
 	const { user, logout, isAuthenticated, isLoading } = useAuth();
 
@@ -14,7 +14,7 @@ export default function TutorDashboard() {
 		}
 
 		// Verificar que el usuario tenga el rol correcto
-		if (!isLoading && user && user.role !== 'tutor') {
+		if (!isLoading && user && user.role !== 'admin') {
 			// Redirigir al dashboard correcto según el rol
 			const dashboardPath = `/dashboard/${user.role}`;
 			navigate(dashboardPath, { replace: true });

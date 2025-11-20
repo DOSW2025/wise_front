@@ -2,7 +2,7 @@ import { Button, Card, CardBody, Chip } from '@heroui/react';
 import { Link } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
 
-export default function AdminDashboard() {
+export default function AdminDashboardIndex() {
 	return (
 		<div className="space-y-6">
 			{/* Header */}

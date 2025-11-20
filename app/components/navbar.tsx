@@ -163,7 +163,7 @@ export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
 											? '/dashboard/tutor/profile'
 											: userRole === 'admin'
 												? '/dashboard/admin/profile'
-												: '/dashboard/profile'
+												: '/dashboard/student/profile'
 									}
 								>
 									Mi Perfil
@@ -176,7 +176,7 @@ export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
 											? '/dashboard/tutor/help'
 											: userRole === 'admin'
 												? '/dashboard/admin/help'
-												: '/dashboard/help'
+												: '/dashboard/student/help'
 									}
 								>
 									Ayuda
