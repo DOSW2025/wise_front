@@ -15,6 +15,7 @@ export default [
 		route('tutoring', 'routes/dashboard/student/tutoring.tsx'),
 		route('materials', 'routes/dashboard/student/materials.tsx'),
 		route('progress', 'routes/dashboard/student/progress.tsx'),
+		route('statistics', 'routes/dashboard/student/statistics.tsx'),
 		route('community', 'routes/dashboard/student/community.tsx'),
 		route('profile', 'routes/dashboard/student/profile.tsx'),
 	]),
