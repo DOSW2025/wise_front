@@ -19,6 +19,8 @@ import { Camera, Mail, MapPin, Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { StatsCard } from '~/components/stats-card';
 import { useAuth } from '~/contexts/auth-context';
+import { usePasswordManager } from '~/lib/hooks/usePasswordManager';
+import { useProfileForm } from './hooks/useProfileForm';
 
 interface ProfileData {
 	name: string;
@@ -42,15 +44,25 @@ interface FormErrors {
 
 export default function StudentProfile() {
 	const { user } = useAuth();
-	const [isEditing, setIsEditing] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
-	const [formErrors, setFormErrors] = useState<FormErrors>({});
-	const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 	const [emailNotifications, setEmailNotifications] = useState(true);
-	// TODO: Conectar con API - datos hardcodeados eliminados
-	const [profile, setProfile] = useState<ProfileData>({
+
+	// Custom hooks for managing complex state
+	const {
+		profile,
+		setProfile,
+		formErrors,
+		setFormErrors,
+		isEditing,
+		setIsEditing,
+		avatarPreview,
+		setAvatarPreview,
+		validateForm,
+		handleImageUpload,
+		resetForm,
+	} = useProfileForm({
 		name: user?.name || '',
 		email: user?.email || '',
 		phone: '',
@@ -63,22 +75,18 @@ export default function StudentProfile() {
 	});
 
 	const {
+		passwordData,
+		setPasswordData,
+		passwordErrors,
+		validatePassword,
+		resetPassword,
+	} = usePasswordManager();
+
+	const {
 		isOpen: isPasswordModalOpen,
 		onOpen: onPasswordModalOpen,
 		onClose: onPasswordModalClose,
 	} = useDisclosure();
-
-	const [passwordData, setPasswordData] = useState({
-		current: '',
-		new: '',
-		confirm: '',
-	});
-
-	const [passwordErrors, setPasswordErrors] = useState<{
-		current?: string;
-		new?: string;
-		confirm?: string;
-	}>({});
 
 	useEffect(() => {
 		if (user) {
@@ -89,74 +97,13 @@ export default function StudentProfile() {
 				avatar: user.avatar,
 			}));
 		}
-	}, [user]);
+	}, [user, setProfile]);
 
-	const validateForm = (): boolean => {
-		const errors: FormErrors = {};
-
-		if (!profile.name.trim()) {
-			errors.name = 'El nombre es requerido';
+	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const result = handleImageUpload(event);
+		if (result?.error) {
+			setError(result.error);
 		}
-
-		if (!profile.email.trim()) {
-			errors.email = 'El email es requerido';
-		} else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)) {
-			errors.email = 'Email inválido';
-		}
-
-		if (
-			profile.phone &&
-			!/^\+?[0-9]{1,4}?[\s-]?(?:\(?[0-9]{1,4}\)?[\s-]?)?[0-9]{1,4}[\s-]?[0-9]{1,4}[\s-]?[0-9]{0,9}$/.test(
-				profile.phone.trim(),
-			)
-		) {
-			errors.phone = 'Teléfono inválido';
-		}
-
-		if (profile.description && profile.description.length > 500) {
-			errors.description = 'La descripción no puede exceder 500 caracteres';
-		}
-
-		setFormErrors(errors);
-		return Object.keys(errors).length === 0;
-	};
-
-	const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const file = event.target.files?.[0];
-		if (file) {
-			if (file.size > 2 * 1024 * 1024) {
-				setError('La imagen no puede ser mayor a 2MB');
-				return;
-			}
-
-			const reader = new FileReader();
-			reader.onloadend = () => {
-				setAvatarPreview(reader.result as string);
-				setProfile({ ...profile, avatar: reader.result as string });
-			};
-			reader.readAsDataURL(file);
-		}
-	};
-
-	const validatePassword = (): boolean => {
-		const errors: typeof passwordErrors = {};
-
-		if (!passwordData.current) {
-			errors.current = 'Contraseña actual requerida';
-		}
-
-		if (!passwordData.new) {
-			errors.new = 'Nueva contraseña requerida';
-		} else if (passwordData.new.length < 8) {
-			errors.new = 'Mínimo 8 caracteres';
-		}
-
-		if (passwordData.new !== passwordData.confirm) {
-			errors.confirm = 'Las contraseñas no coinciden';
-		}
-
-		setPasswordErrors(errors);
-		return Object.keys(errors).length === 0;
 	};
 
 	const handlePasswordChange = async () => {
@@ -167,11 +114,7 @@ export default function StudentProfile() {
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 			setSuccess('Contraseña actualizada exitosamente');
 			onPasswordModalClose();
-			setPasswordData({
-				current: '',
-				new: '',
-				confirm: '',
-			});
+			resetPassword();
 		} catch (_err) {
 			setError('Error al cambiar la contraseña');
 		}
@@ -207,17 +150,8 @@ export default function StudentProfile() {
 	};
 
 	const handleCancel = () => {
-		setIsEditing(false);
-		setFormErrors({});
-		setAvatarPreview(null);
-		// Restaurar datos originales si es necesario
 		if (user) {
-			setProfile((prev) => ({
-				...prev,
-				name: user.name,
-				email: user.email,
-				avatar: user.avatar,
-			}));
+			resetForm(user);
 		}
 	};
 
@@ -296,7 +230,7 @@ export default function StudentProfile() {
 											id="avatar-upload"
 											type="file"
 											accept="image/*"
-											onChange={handleImageUpload}
+											onChange={handleImageChange}
 											className="hidden"
 										/>
 									</label>

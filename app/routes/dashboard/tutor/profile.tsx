@@ -19,7 +19,7 @@ import { Camera, Mail, MapPin, Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { StatsCard } from '~/components/stats-card';
 import { useAuth } from '~/contexts/auth-context';
-import { usePasswordManager } from './hooks/usePasswordManager';
+import { usePasswordManager } from '~/lib/hooks/usePasswordManager';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
 
@@ -60,6 +60,7 @@ export default function TutorProfile() {
 		profile,
 		setProfile,
 		formErrors,
+		setFormErrors,
 		isEditing,
 		setIsEditing,
 		avatarPreview,
@@ -587,35 +588,35 @@ export default function TutorProfile() {
 							<Input
 								label="Contraseña Actual"
 								type="password"
-								value={passwordData.currentPassword}
+								value={passwordData.current}
 								onValueChange={(value) =>
-									setPasswordData({ ...passwordData, currentPassword: value })
+									setPasswordData({ ...passwordData, current: value })
 								}
-								isInvalid={!!passwordErrors.currentPassword}
-								errorMessage={passwordErrors.currentPassword}
+								isInvalid={!!passwordErrors.current}
+								errorMessage={passwordErrors.current}
 								isRequired
 							/>
 							<Input
 								label="Nueva Contraseña"
 								type="password"
-								value={passwordData.newPassword}
+								value={passwordData.new}
 								onValueChange={(value) =>
-									setPasswordData({ ...passwordData, newPassword: value })
+									setPasswordData({ ...passwordData, new: value })
 								}
-								isInvalid={!!passwordErrors.newPassword}
-								errorMessage={passwordErrors.newPassword}
+								isInvalid={!!passwordErrors.new}
+								errorMessage={passwordErrors.new}
 								description="Mínimo 8 caracteres"
 								isRequired
 							/>
 							<Input
 								label="Confirmar Nueva Contraseña"
 								type="password"
-								value={passwordData.confirmPassword}
+								value={passwordData.confirm}
 								onValueChange={(value) =>
-									setPasswordData({ ...passwordData, confirmPassword: value })
+									setPasswordData({ ...passwordData, confirm: value })
 								}
-								isInvalid={!!passwordErrors.confirmPassword}
-								errorMessage={passwordErrors.confirmPassword}
+								isInvalid={!!passwordErrors.confirm}
+								errorMessage={passwordErrors.confirm}
 								isRequired
 							/>
 						</div>
