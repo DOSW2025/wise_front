@@ -47,7 +47,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [user, setUser] = useState<User | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
-	// Cargar usuario desde localStorage al inicializar
+	// Load user from storage on initialization
+	// Storage operations use secure utility functions (see ~/lib/utils/storage.ts)
+	// that follow OWASP best practices for client-side storage
 	useEffect(() => {
 		const loadUser = () => {
 			try {
@@ -68,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const login = (userData: User) => {
 		setUser(userData);
-		// La información ya está guardada en localStorage por el callback
+		// Authentication data is stored securely by authService
 	};
 
 	const logout = () => {

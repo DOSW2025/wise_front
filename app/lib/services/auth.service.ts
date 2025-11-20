@@ -6,6 +6,14 @@
 import apiClient from '../api/client';
 import { API_ENDPOINTS } from '../config/api.config';
 import type { LoginRequest, LoginResponse, UserDto } from '../types/api.types';
+import {
+	clearStorage,
+	getStorageItem,
+	getStorageJSON,
+	STORAGE_KEYS,
+	setStorageItem,
+	setStorageJSON,
+} from '../utils/storage';
 
 /**
  * Login de usuario
@@ -98,11 +106,12 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 		}
 
 		if (token && user) {
-			// Guardar en localStorage
-			localStorage.setItem('token', token);
-			localStorage.setItem('refreshToken', refreshToken);
-			localStorage.setItem('user', JSON.stringify(user));
-			localStorage.setItem('expiresIn', expiresIn.toString());
+			// Store authentication data using secure storage utility
+			// See storage.ts for security considerations
+			setStorageItem(STORAGE_KEYS.TOKEN, token);
+			setStorageItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+			setStorageJSON(STORAGE_KEYS.USER, user);
+			setStorageItem(STORAGE_KEYS.EXPIRES_IN, expiresIn.toString());
 
 			return { token, refreshToken, user, expiresIn } as LoginResponse;
 		}
@@ -139,33 +148,22 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
  * Logout de usuario
  */
 export async function logout(): Promise<void> {
-	// Limpiar localStorage
-	localStorage.removeItem('token');
-	localStorage.removeItem('refreshToken');
-	localStorage.removeItem('user');
-	localStorage.removeItem('expiresIn');
+	// Clear all authentication data using secure storage utility
+	clearStorage();
 }
 
 /**
  * Obtener usuario actual desde localStorage
  */
 export function getCurrentUser(): UserDto | null {
-	const userStr = localStorage.getItem('user');
-	if (userStr) {
-		try {
-			return JSON.parse(userStr);
-		} catch {
-			return null;
-		}
-	}
-	return null;
+	return getStorageJSON<UserDto>(STORAGE_KEYS.USER);
 }
 
 /**
  * Verificar si el usuario está autenticado
  */
 export function isAuthenticated(): boolean {
-	const token = localStorage.getItem('token');
+	const token = getStorageItem(STORAGE_KEYS.TOKEN);
 	const user = getCurrentUser();
 	return !!(token && user);
 }
@@ -174,12 +172,12 @@ export function isAuthenticated(): boolean {
  * Obtener token de acceso
  */
 export function getToken(): string | null {
-	return localStorage.getItem('token');
+	return getStorageItem(STORAGE_KEYS.TOKEN);
 }
 
 /**
  * Obtener refresh token
  */
 export function getRefreshToken(): string | null {
-	return localStorage.getItem('refreshToken');
+	return getStorageItem(STORAGE_KEYS.REFRESH_TOKEN);
 }

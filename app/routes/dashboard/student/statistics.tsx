@@ -15,6 +15,11 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts';
+import {
+	CHART_AXIS_STYLE,
+	CHART_GRID_STYLE,
+	CHART_TOOLTIP_STYLE,
+} from '~/components/charts/chart-tooltip';
 
 // Mock data - Tutorías recibidas por mes (últimos 6 meses)
 const tutoringData = [
@@ -105,22 +110,10 @@ export default function StudentStatistics() {
 									data={tutoringData}
 									margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
 								>
-									<CartesianGrid
-										strokeDasharray="3 3"
-										stroke="hsl(var(--heroui-default-200))"
-									/>
-									<XAxis
-										dataKey="month"
-										stroke="hsl(var(--heroui-default-500))"
-									/>
-									<YAxis stroke="hsl(var(--heroui-default-500))" />
-									<Tooltip
-										contentStyle={{
-											backgroundColor: 'hsl(var(--heroui-content1))',
-											border: '1px solid hsl(var(--heroui-divider))',
-											borderRadius: '8px',
-										}}
-									/>
+									<CartesianGrid {...CHART_GRID_STYLE} />
+									<XAxis dataKey="month" {...CHART_AXIS_STYLE} />
+									<YAxis {...CHART_AXIS_STYLE} />
+									<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
 									<Legend />
 									<Line
 										type="monotone"
@@ -151,25 +144,16 @@ export default function StudentStatistics() {
 									data={materialsData}
 									margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
 								>
-									<CartesianGrid
-										strokeDasharray="3 3"
-										stroke="hsl(var(--heroui-default-200))"
-									/>
+									<CartesianGrid {...CHART_GRID_STYLE} />
 									<XAxis
 										dataKey="category"
-										stroke="hsl(var(--heroui-default-500))"
+										{...CHART_AXIS_STYLE}
 										angle={-45}
 										textAnchor="end"
 										height={80}
 									/>
-									<YAxis stroke="hsl(var(--heroui-default-500))" />
-									<Tooltip
-										contentStyle={{
-											backgroundColor: 'hsl(var(--heroui-content1))',
-											border: '1px solid hsl(var(--heroui-divider))',
-											borderRadius: '8px',
-										}}
-									/>
+									<YAxis {...CHART_AXIS_STYLE} />
+									<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
 									<Legend />
 									<Bar
 										dataKey="downloads"
@@ -214,13 +198,7 @@ export default function StudentStatistics() {
 											/>
 										))}
 									</Pie>
-									<Tooltip
-										contentStyle={{
-											backgroundColor: 'hsl(var(--heroui-content1))',
-											border: '1px solid hsl(var(--heroui-divider))',
-											borderRadius: '8px',
-										}}
-									/>
+									<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
 									<Legend />
 								</PieChart>
 							</ResponsiveContainer>
