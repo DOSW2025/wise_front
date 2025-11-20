@@ -16,6 +16,49 @@ export interface TutorProfile {
 }
 
 /**
+ * Extraer datos de respuesta API
+ */
+function extractResponseData<T>(data: unknown): T {
+	const responseData = data as Record<string, unknown>;
+
+	if (
+		responseData?.success &&
+		typeof responseData.data === 'object' &&
+		responseData.data
+	) {
+		return responseData.data as T;
+	}
+
+	if (responseData) {
+		return responseData as T;
+	}
+
+	throw new Error('Error al procesar la respuesta');
+}
+
+/**
+ * Extraer mensaje de error de respuesta API
+ */
+function extractErrorMessage(error: unknown, defaultMessage: string): string {
+	if (
+		error &&
+		typeof error === 'object' &&
+		'response' in error &&
+		error.response &&
+		typeof error.response === 'object' &&
+		'data' in error.response
+	) {
+		const apiError = error.response.data as Record<string, unknown>;
+		return (
+			(apiError?.message as string) ||
+			(apiError?.error as string) ||
+			defaultMessage
+		);
+	}
+	return 'Error de conexión con el servidor';
+}
+
+/**
  * Actualizar perfil del tutor
  */
 export async function updateProfile(
@@ -27,35 +70,11 @@ export async function updateProfile(
 			profile,
 		);
 
-		// Manejar diferentes formatos de respuesta
-		const data = response.data as unknown as Record<string, unknown>;
-
-		if (data?.success && typeof data.data === 'object' && data.data) {
-			return data.data as TutorProfile;
-		}
-
-		if (data) {
-			return data as unknown as TutorProfile;
-		}
-
-		throw new Error('Error al actualizar el perfil');
+		return extractResponseData<TutorProfile>(response.data);
 	} catch (error: unknown) {
-		if (
-			error &&
-			typeof error === 'object' &&
-			'response' in error &&
-			error.response &&
-			typeof error.response === 'object' &&
-			'data' in error.response
-		) {
-			const apiError = error.response.data as Record<string, unknown>;
-			const message =
-				(apiError?.message as string) ||
-				(apiError?.error as string) ||
-				'Error al actualizar el perfil';
-			throw new Error(message);
-		}
-		throw new Error('Error de conexión con el servidor');
+		throw new Error(
+			extractErrorMessage(error, 'Error al actualizar el perfil'),
+		);
 	}
 }
 
@@ -68,33 +87,8 @@ export async function getProfile(): Promise<TutorProfile> {
 			API_ENDPOINTS.TUTOR.PROFILE,
 		);
 
-		const data = response.data as unknown as Record<string, unknown>;
-
-		if (data?.success && typeof data.data === 'object' && data.data) {
-			return data.data as TutorProfile;
-		}
-
-		if (data) {
-			return data as unknown as TutorProfile;
-		}
-
-		throw new Error('Error al obtener el perfil');
+		return extractResponseData<TutorProfile>(response.data);
 	} catch (error: unknown) {
-		if (
-			error &&
-			typeof error === 'object' &&
-			'response' in error &&
-			error.response &&
-			typeof error.response === 'object' &&
-			'data' in error.response
-		) {
-			const apiError = error.response.data as Record<string, unknown>;
-			const message =
-				(apiError?.message as string) ||
-				(apiError?.error as string) ||
-				'Error al obtener el perfil';
-			throw new Error(message);
-		}
-		throw new Error('Error de conexión con el servidor');
+		throw new Error(extractErrorMessage(error, 'Error al obtener el perfil'));
 	}
 }

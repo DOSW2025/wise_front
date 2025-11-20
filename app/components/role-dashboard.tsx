@@ -45,6 +45,9 @@ export function RoleDashboard({ allowedRole }: RoleDashboardProps) {
 		return null;
 	}
 
+	console.log('User in RoleDashboard:', user);
+	console.log('Avatar in RoleDashboard:', user.avatar);
+
 	return (
 		<DashboardLayout
 			userRole={user.role}

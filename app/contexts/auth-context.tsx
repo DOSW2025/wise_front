@@ -34,13 +34,19 @@ function mapRoleToUserRole(rol: string): UserRole {
 
 // Función auxiliar para convertir UserResponse a User
 function convertUserResponseToUser(userResponse: UserResponse): User {
-	return {
+	console.log('Converting UserResponse to User:', userResponse);
+	console.log('Avatar URL from backend:', userResponse.avatarUrl);
+
+	const user = {
 		id: userResponse.id,
 		name: `${userResponse.nombre} ${userResponse.apellido}`,
 		email: userResponse.email,
 		role: mapRoleToUserRole(userResponse.rol),
-		avatar: userResponse.avatarUrl || undefined,
+		avatar: userResponse.avatarUrl ?? undefined,
 	};
+
+	console.log('✨ Converted user with avatar:', user);
+	return user;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -54,8 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		const loadUser = () => {
 			try {
 				const storedUser = authService.getUser();
+				console.log('Stored user from storage:', storedUser);
 				if (storedUser) {
 					const convertedUser = convertUserResponseToUser(storedUser);
+					console.log('Converted user:', convertedUser);
+					console.log('Avatar URL:', convertedUser.avatar);
 					setUser(convertedUser);
 				}
 			} catch (error) {

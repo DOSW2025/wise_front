@@ -1,8 +1,12 @@
+export { AlertMessage } from './alert-message';
+export { AvatarDebug } from './avatar-debug';
 export { DashboardLayout } from './dashboard-layout';
 export { EmptyState } from './empty-state';
 export { MaterialCard } from './material-card';
 export { Navbar } from './navbar';
 export { PageHeader } from './page-header';
+export { PasswordChangeModal } from './password-change-modal';
+export { ProfileAvatar } from './profile-avatar';
 export { RoleDashboard } from './role-dashboard';
 export { Sidebar } from './sidebar';
 export { StatsCard } from './stats-card';

@@ -71,8 +71,11 @@ export const authService = {
 	 * Guardar datos de autenticación
 	 */
 	saveAuthData(authResponse: AuthResponse): void {
+		console.log('Saving auth data:', authResponse);
+		console.log('User avatar URL being saved:', authResponse.user.avatarUrl);
 		setStorageItem(STORAGE_KEYS.TOKEN, authResponse.access_token);
 		setStorageJSON(STORAGE_KEYS.USER, authResponse.user);
+		console.log('Auth data saved to localStorage');
 	},
 
 	/**
@@ -86,7 +89,10 @@ export const authService = {
 	 * Obtener usuario guardado
 	 */
 	getUser(): UserResponse | null {
-		return getStorageJSON<UserResponse>(STORAGE_KEYS.USER);
+		const user = getStorageJSON<UserResponse>(STORAGE_KEYS.USER);
+		console.log('Reading user from localStorage:', user);
+		console.log('Avatar URL from storage:', user?.avatarUrl);
+		return user;
 	},
 
 	/**

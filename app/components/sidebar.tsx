@@ -221,6 +221,10 @@ export function Sidebar({
 		navigate('/login');
 	};
 
+	console.log('Sidebar props:', { userName, userEmail, userAvatar });
+	console.log('Avatar URL:', userAvatar);
+	console.log('Avatar exists:', !!userAvatar);
+
 	return (
 		<>
 			{/* Mobile menu toggle button */}
@@ -277,15 +281,36 @@ export function Sidebar({
 				<div className="p-4 border-b border-divider bg-content2">
 					<div className="flex items-center gap-3">
 						<Avatar
-							src={userAvatar}
+							src={
+								userAvatar
+									? userAvatar.includes('googleusercontent.com')
+										? userAvatar.split('=')[0] + '=s200-c'
+										: userAvatar
+									: undefined
+							}
 							color="primary"
 							isBordered
 							size="md"
 							showFallback
 							name={userName}
+							imgProps={{
+								crossOrigin: 'anonymous',
+								referrerPolicy: 'no-referrer',
+								onError: (e) => {
+									console.error('Sidebar: Error loading avatar:', userAvatar);
+									e.currentTarget.style.display = 'none';
+								},
+								onLoad: () => {
+									console.log(
+										'Sidebar: Avatar loaded successfully:',
+										userAvatar,
+									);
+								},
+							}}
 							classNames={{
 								base: 'bg-primary',
 								icon: 'text-primary',
+								img: 'object-cover',
 							}}
 						/>
 						<div className="flex-1 min-w-0">

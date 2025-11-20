@@ -52,8 +52,7 @@ const StudentTutoringPage: React.FC = () => {
 	const [searchValue, setSearchValue] = useState('');
 
 	// Filtros aplicados
-	const handleSearch = (filters: TutorFilters) => {
-		console.log('Filtros aplicados:', filters);
+	const handleSearch = (_filters: TutorFilters) => {
 		// Lógica de filtrado simulada (reemplazar con Axios/Zustand después)
 	};
 

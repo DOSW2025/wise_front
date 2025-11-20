@@ -1,46 +1,25 @@
 import {
-	Avatar,
 	Button,
 	Card,
 	CardBody,
 	Chip,
 	Divider,
 	Input,
-	Modal,
-	ModalBody,
-	ModalContent,
-	ModalFooter,
-	ModalHeader,
 	Switch,
 	Textarea,
 	useDisclosure,
 } from '@heroui/react';
-import { Camera, Mail, MapPin, Phone } from 'lucide-react';
+import { Mail, MapPin, Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { StatsCard } from '~/components/stats-card';
+import {
+	AlertMessage,
+	PasswordChangeModal,
+	ProfileAvatar,
+	StatsCard,
+} from '~/components';
 import { useAuth } from '~/contexts/auth-context';
 import { usePasswordManager } from '~/lib/hooks/usePasswordManager';
 import { useProfileForm } from './hooks/useProfileForm';
-
-interface ProfileData {
-	name: string;
-	email: string;
-	phone: string;
-	location: string;
-	description: string;
-	avatar?: string;
-	interests: string[];
-	career: string;
-	semester: string;
-}
-
-interface FormErrors {
-	name?: string;
-	email?: string;
-	phone?: string;
-	location?: string;
-	description?: string;
-}
 
 export default function StudentProfile() {
 	const { user } = useAuth();
@@ -165,21 +144,8 @@ export default function StudentProfile() {
 			</div>
 
 			{/* Mensajes de error y éxito */}
-			{error && (
-				<Card className="bg-danger-50 border-danger">
-					<CardBody>
-						<p className="text-danger font-medium">{error}</p>
-					</CardBody>
-				</Card>
-			)}
-
-			{success && (
-				<Card className="bg-success-50 border-success">
-					<CardBody>
-						<p className="text-success font-medium">{success}</p>
-					</CardBody>
-				</Card>
-			)}
+			{error && <AlertMessage message={error} type="error" />}
+			{success && <AlertMessage message={success} type="success" />}
 
 			{/* Información Personal */}
 			<Card>
@@ -210,41 +176,13 @@ export default function StudentProfile() {
 					</div>
 
 					<div className="flex flex-col md:flex-row gap-6">
-						<div className="flex flex-col items-center gap-4">
-							<div className="relative">
-								<Avatar
-									src={avatarPreview || profile.avatar}
-									name={profile.name}
-									size="lg"
-									color="primary"
-									isBordered
-									className="w-32 h-32 text-large"
-								/>
-								{isEditing && (
-									<label
-										htmlFor="avatar-upload"
-										className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-600 transition-colors"
-									>
-										<Camera className="w-4 h-4" />
-										<input
-											id="avatar-upload"
-											type="file"
-											accept="image/*"
-											onChange={handleImageChange}
-											className="hidden"
-										/>
-									</label>
-								)}
-							</div>
-							{isEditing && (
-								<div className="text-center">
-									<p className="text-xs text-default-500">Tamaño máximo: 2MB</p>
-									<p className="text-xs text-default-500">
-										Formatos: JPG, PNG, GIF
-									</p>
-								</div>
-							)}
-						</div>
+						<ProfileAvatar
+							src={profile.avatar}
+							name={profile.name}
+							isEditing={isEditing}
+							onImageChange={handleImageChange}
+							preview={avatarPreview}
+						/>
 
 						<div className="flex-1 space-y-4">
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -519,61 +457,14 @@ export default function StudentProfile() {
 			</Card>
 
 			{/* Modal de Cambio de Contraseña */}
-			<Modal
+			<PasswordChangeModal
 				isOpen={isPasswordModalOpen}
 				onClose={onPasswordModalClose}
-				size="md"
-			>
-				<ModalContent>
-					<ModalHeader>Cambiar Contraseña</ModalHeader>
-					<ModalBody>
-						<div className="space-y-4">
-							<Input
-								label="Contraseña Actual"
-								type="password"
-								value={passwordData.current}
-								onValueChange={(value) =>
-									setPasswordData({ ...passwordData, current: value })
-								}
-								isInvalid={!!passwordErrors.current}
-								errorMessage={passwordErrors.current}
-								isRequired
-							/>
-							<Input
-								label="Nueva Contraseña"
-								type="password"
-								value={passwordData.new}
-								onValueChange={(value) =>
-									setPasswordData({ ...passwordData, new: value })
-								}
-								isInvalid={!!passwordErrors.new}
-								errorMessage={passwordErrors.new}
-								description="Mínimo 8 caracteres"
-								isRequired
-							/>
-							<Input
-								label="Confirmar Nueva Contraseña"
-								type="password"
-								value={passwordData.confirm}
-								onValueChange={(value) =>
-									setPasswordData({ ...passwordData, confirm: value })
-								}
-								isInvalid={!!passwordErrors.confirm}
-								errorMessage={passwordErrors.confirm}
-								isRequired
-							/>
-						</div>
-					</ModalBody>
-					<ModalFooter>
-						<Button variant="flat" onPress={onPasswordModalClose}>
-							Cancelar
-						</Button>
-						<Button color="primary" onPress={handlePasswordChange}>
-							Guardar Cambios
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
+				passwordData={passwordData}
+				passwordErrors={passwordErrors}
+				onPasswordDataChange={setPasswordData}
+				onSave={handlePasswordChange}
+			/>
 		</div>
 	);
 }

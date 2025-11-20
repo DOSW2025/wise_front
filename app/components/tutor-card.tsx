@@ -108,7 +108,7 @@ const TutorCard: React.FC<TutorCardProps> = ({ tutor }) => {
 						isIconOnly
 						variant="bordered"
 						aria-label="Enviar Mensaje"
-						onPress={() => console.log(`Iniciar chat con ${tutor.name}`)}
+						onPress={() => {}}
 					>
 						<MessageCircle className="w-5 h-5" />
 					</Button>
