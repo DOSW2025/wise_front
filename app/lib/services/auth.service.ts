@@ -16,6 +16,114 @@ import {
 } from '../utils/storage';
 
 /**
+ * Extrae el token de la respuesta (soporta 'token' o 'accessToken')
+ */
+function extractToken(data: Record<string, unknown>): string | undefined {
+	if (typeof data.token === 'string') return data.token;
+	if (typeof data.accessToken === 'string') return data.accessToken;
+	return undefined;
+}
+
+/**
+ * Extrae el refresh token de la respuesta
+ */
+function extractRefreshToken(data: Record<string, unknown>): string {
+	return typeof data.refreshToken === 'string' ? data.refreshToken : '';
+}
+
+/**
+ * Extrae el usuario de la respuesta (soporta 'user' o 'usuario')
+ */
+function extractUser(data: Record<string, unknown>): UserDto | undefined {
+	if (typeof data.user === 'object' && data.user !== null) {
+		return data.user as UserDto;
+	}
+	if (typeof data.usuario === 'object' && data.usuario !== null) {
+		return data.usuario as UserDto;
+	}
+	return undefined;
+}
+
+/**
+ * Extrae el tiempo de expiración de la respuesta
+ */
+function extractExpiresIn(data: Record<string, unknown>): number {
+	if (typeof data.expiresIn === 'number') return data.expiresIn;
+
+	const metadata = data.metadata as Record<string, unknown> | null;
+	if (metadata && typeof metadata.expiresIn === 'number') {
+		return metadata.expiresIn;
+	}
+
+	return 0;
+}
+
+/**
+ * Verifica si la respuesta tiene estructura envuelta ({ success: true, data: {...} })
+ */
+function isWrappedResponse(data: Record<string, unknown>): boolean {
+	return (
+		'success' in data &&
+		data.success === true &&
+		'data' in data &&
+		typeof data.data === 'object' &&
+		data.data !== null
+	);
+}
+
+/**
+ * Parsea la respuesta del login y extrae los datos de autenticación
+ */
+function parseLoginResponse(data: Record<string, unknown>): LoginResponse {
+	const responseData = isWrappedResponse(data)
+		? (data.data as Record<string, unknown>)
+		: data;
+
+	const token = extractToken(responseData);
+	const refreshToken = extractRefreshToken(responseData);
+	const user = extractUser(responseData);
+	const expiresIn = extractExpiresIn(responseData);
+
+	if (!token || !user) {
+		const message =
+			typeof data.message === 'string' ? data.message : 'Error en el login';
+		throw new Error(message);
+	}
+
+	return { token, refreshToken, user, expiresIn };
+}
+
+/**
+ * Almacena los datos de autenticación en el storage
+ */
+function storeAuthData(authData: LoginResponse): void {
+	setStorageItem(STORAGE_KEYS.TOKEN, authData.token);
+	setStorageItem(STORAGE_KEYS.REFRESH_TOKEN, authData.refreshToken);
+	setStorageJSON(STORAGE_KEYS.USER, authData.user);
+	setStorageItem(STORAGE_KEYS.EXPIRES_IN, authData.expiresIn.toString());
+}
+
+/**
+ * Extrae el mensaje de error de la respuesta de la API
+ */
+function extractErrorMessage(error: unknown): string {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		'response' in error &&
+		typeof (error as { response?: { data?: unknown } }).response === 'object'
+	) {
+		const response = (error as { response: { data?: unknown } }).response;
+		if (response.data && typeof response.data === 'object') {
+			const apiError = response.data as Record<string, unknown>;
+			if (typeof apiError.message === 'string') return apiError.message;
+			if (typeof apiError.error === 'string') return apiError.error;
+		}
+	}
+	return 'Error de conexión con el servidor';
+}
+
+/**
  * Login de usuario
  */
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
@@ -26,121 +134,12 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 		);
 
 		const data = response.data as unknown as Record<string, unknown>;
+		const authData = parseLoginResponse(data);
+		storeAuthData(authData);
 
-		// Soportar dos formas de respuesta:
-		// 1) { success: true, data: { token|accessToken, user|usuario, refreshToken?, expiresIn|metadata.expiresIn } }
-		// 2) { mensaje, accessToken|token, usuario|user, metadata.expiresIn|expiresIn, refreshToken? }
-
-		let token: string | undefined;
-		let refreshToken: string = '';
-		let user: UserDto | undefined;
-		let expiresIn: number = 0;
-
-		// Type guard para verificar la estructura de data
-		if (
-			typeof data === 'object' &&
-			data !== null &&
-			'success' in data &&
-			data.success &&
-			'data' in data &&
-			typeof data.data === 'object' &&
-			data.data !== null
-		) {
-			const innerData = data.data as Record<string, unknown>;
-			token = (
-				typeof innerData.token === 'string'
-					? innerData.token
-					: typeof innerData.accessToken === 'string'
-						? innerData.accessToken
-						: undefined
-			) as string | undefined;
-			refreshToken =
-				typeof innerData.refreshToken === 'string'
-					? innerData.refreshToken
-					: '';
-			user = (
-				typeof innerData.user === 'object'
-					? innerData.user
-					: typeof innerData.usuario === 'object'
-						? innerData.usuario
-						: undefined
-			) as UserDto | undefined;
-
-			const metadata =
-				typeof innerData.metadata === 'object' ? innerData.metadata : null;
-			expiresIn =
-				typeof innerData.expiresIn === 'number'
-					? innerData.expiresIn
-					: metadata &&
-							typeof (metadata as Record<string, unknown>).expiresIn ===
-								'number'
-						? ((metadata as Record<string, unknown>).expiresIn as number)
-						: 0;
-		} else if (typeof data === 'object' && data !== null) {
-			token = (
-				typeof data.token === 'string'
-					? data.token
-					: typeof data.accessToken === 'string'
-						? data.accessToken
-						: undefined
-			) as string | undefined;
-			refreshToken =
-				typeof data.refreshToken === 'string' ? data.refreshToken : '';
-			user = (
-				typeof data.user === 'object'
-					? data.user
-					: typeof data.usuario === 'object'
-						? data.usuario
-						: undefined
-			) as UserDto | undefined;
-
-			const metadata = typeof data.metadata === 'object' ? data.metadata : null;
-			expiresIn =
-				typeof data.expiresIn === 'number'
-					? data.expiresIn
-					: metadata &&
-							typeof (metadata as Record<string, unknown>).expiresIn ===
-								'number'
-						? ((metadata as Record<string, unknown>).expiresIn as number)
-						: 0;
-		}
-
-		if (token && user) {
-			// Store authentication data using secure storage utility
-			// See storage.ts for security considerations
-			setStorageItem(STORAGE_KEYS.TOKEN, token);
-			setStorageItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-			setStorageJSON(STORAGE_KEYS.USER, user);
-			setStorageItem(STORAGE_KEYS.EXPIRES_IN, expiresIn.toString());
-
-			return { token, refreshToken, user, expiresIn } as LoginResponse;
-		}
-
-		throw new Error(
-			typeof data.message === 'string' ? data.message : 'Error en el login',
-		);
+		return authData;
 	} catch (error: unknown) {
-		// Type guard para verificar si el error tiene la estructura de una respuesta de API
-		if (
-			typeof error === 'object' &&
-			error !== null &&
-			'response' in error &&
-			typeof (error as { response?: { data?: unknown } }).response ===
-				'object' &&
-			(error as { response: { data?: unknown } }).response.data
-		) {
-			const apiError = (error as { response: { data: unknown } }).response
-				.data as Record<string, unknown>;
-			const message = (
-				typeof apiError?.message === 'string'
-					? apiError.message
-					: typeof apiError?.error === 'string'
-						? apiError.error
-						: 'Error al iniciar sesión'
-			) as string;
-			throw new Error(message);
-		}
-		throw new Error('Error de conexión con el servidor');
+		throw new Error(extractErrorMessage(error));
 	}
 }
 

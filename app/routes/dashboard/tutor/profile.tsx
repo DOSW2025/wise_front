@@ -19,7 +19,9 @@ import { Camera, Mail, MapPin, Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { StatsCard } from '~/components/stats-card';
 import { useAuth } from '~/contexts/auth-context';
-import { updateProfile } from '~/lib/services/tutor.service';
+import { usePasswordManager } from './hooks/usePasswordManager';
+import { useProfileForm } from './hooks/useProfileForm';
+import { useProfileSave } from './hooks/useProfileSave';
 
 interface ProfileData {
 	name: string;
@@ -51,15 +53,21 @@ interface FormErrors {
 
 export default function TutorProfile() {
 	const { user } = useAuth();
-	const [isEditing, setIsEditing] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [success, setSuccess] = useState<string | null>(null);
-	const [formErrors, setFormErrors] = useState<FormErrors>({});
-	const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 	const [emailNotifications, setEmailNotifications] = useState(true);
-	// TODO: Conectar con API - datos hardcodeados eliminados
-	const [profile, setProfile] = useState<ProfileData>({
+
+	// Custom hooks for managing complex state
+	const {
+		profile,
+		setProfile,
+		formErrors,
+		isEditing,
+		setIsEditing,
+		avatarPreview,
+		validateForm,
+		handleImageUpload,
+		toggleDay,
+		resetForm,
+	} = useProfileForm({
 		name: user?.name || '',
 		email: user?.email || '',
 		phone: '',
@@ -80,6 +88,17 @@ export default function TutorProfile() {
 	});
 
 	const {
+		passwordData,
+		setPasswordData,
+		passwordErrors,
+		validatePassword,
+		resetPassword,
+	} = usePasswordManager();
+
+	const { isSaving, error, success, setError, saveProfile, changePassword } =
+		useProfileSave();
+
+	const {
 		isOpen: isPasswordModalOpen,
 		onOpen: onPasswordModalOpen,
 		onClose: onPasswordModalClose,
@@ -91,18 +110,6 @@ export default function TutorProfile() {
 		onClose: onAvailabilityModalClose,
 	} = useDisclosure();
 
-	const [passwordData, setPasswordData] = useState({
-		currentPassword: '',
-		newPassword: '',
-		confirmPassword: '',
-	});
-
-	const [passwordErrors, setPasswordErrors] = useState<{
-		currentPassword?: string;
-		newPassword?: string;
-		confirmPassword?: string;
-	}>({});
-
 	useEffect(() => {
 		if (user) {
 			setProfile((prev) => ({
@@ -112,88 +119,7 @@ export default function TutorProfile() {
 				avatar: user.avatar,
 			}));
 		}
-	}, [user]);
-
-	const validateForm = (): boolean => {
-		const errors: FormErrors = {};
-
-		if (!profile.name.trim()) {
-			errors.name = 'El nombre es requerido';
-		}
-
-		if (!profile.email.trim()) {
-			errors.email = 'El email es requerido';
-		} else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)) {
-			errors.email = 'Email inválido';
-		}
-
-		if (profile.phone && !/^\+?[\d\s-()]+$/.test(profile.phone)) {
-			errors.phone = 'Teléfono inválido';
-		}
-
-		if (profile.description && profile.description.length > 500) {
-			errors.description = 'La descripción no puede exceder 500 caracteres';
-		}
-
-		setFormErrors(errors);
-		return Object.keys(errors).length === 0;
-	};
-
-	const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const file = event.target.files?.[0];
-		if (file) {
-			if (file.size > 2 * 1024 * 1024) {
-				setError('La imagen no puede ser mayor a 2MB');
-				return;
-			}
-
-			const reader = new FileReader();
-			reader.onloadend = () => {
-				setAvatarPreview(reader.result as string);
-				setProfile({ ...profile, avatar: reader.result as string });
-			};
-			reader.readAsDataURL(file);
-		}
-	};
-
-	const validatePassword = (): boolean => {
-		const errors: typeof passwordErrors = {};
-
-		if (!passwordData.currentPassword) {
-			errors.currentPassword = 'Contraseña actual requerida';
-		}
-
-		if (!passwordData.newPassword) {
-			errors.newPassword = 'Nueva contraseña requerida';
-		} else if (passwordData.newPassword.length < 8) {
-			errors.newPassword = 'Mínimo 8 caracteres';
-		}
-
-		if (passwordData.newPassword !== passwordData.confirmPassword) {
-			errors.confirmPassword = 'Las contraseñas no coinciden';
-		}
-
-		setPasswordErrors(errors);
-		return Object.keys(errors).length === 0;
-	};
-
-	const handlePasswordChange = async () => {
-		if (!validatePassword()) return;
-
-		try {
-			// Simular llamada a API
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-			setSuccess('Contraseña actualizada exitosamente');
-			onPasswordModalClose();
-			setPasswordData({
-				currentPassword: '',
-				newPassword: '',
-				confirmPassword: '',
-			});
-		} catch (_err) {
-			setError('Error al cambiar la contraseña');
-		}
-	};
+	}, [user, setProfile]);
 
 	const handleSave = async () => {
 		if (!validateForm()) {
@@ -201,58 +127,40 @@ export default function TutorProfile() {
 			return;
 		}
 
-		setError(null);
-		setSuccess(null);
-		setIsSaving(true);
+		const saved = await saveProfile({
+			name: profile.name,
+			email: profile.email,
+			phone: profile.phone,
+			location: profile.location,
+			description: profile.description,
+		});
 
-		try {
-			// Guardar los cambios del perfil en el backend
-			await updateProfile({
-				name: profile.name,
-				email: profile.email,
-				phone: profile.phone,
-				location: profile.location,
-				description: profile.description,
-			});
-
+		if (saved) {
 			setIsEditing(false);
-			setSuccess('Perfil actualizado exitosamente');
-			setAvatarPreview(null);
+		}
+	};
 
-			// Limpiar mensaje de éxito después de 3 segundos
-			setTimeout(() => setSuccess(null), 3000);
-		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Error al guardar el perfil';
-			setError(errorMessage);
-		} finally {
-			setIsSaving(false);
+	const handlePasswordChange = async () => {
+		if (!validatePassword()) return;
+
+		const changed = await changePassword();
+		if (changed) {
+			onPasswordModalClose();
+			resetPassword();
 		}
 	};
 
 	const handleCancel = () => {
-		setIsEditing(false);
-		setFormErrors({});
-		setAvatarPreview(null);
-		// Restaurar datos originales si es necesario
 		if (user) {
-			setProfile((prev) => ({
-				...prev,
-				name: user.name,
-				email: user.email,
-				avatar: user.avatar,
-			}));
+			resetForm(user);
 		}
 	};
 
-	const toggleDay = (day: keyof ProfileData['availability']) => {
-		setProfile({
-			...profile,
-			availability: {
-				...profile.availability,
-				[day]: !profile.availability[day],
-			},
-		});
+	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const result = handleImageUpload(event);
+		if (result?.error) {
+			setError(result.error);
+		}
 	};
 
 	const daysOfWeek = [
@@ -340,7 +248,7 @@ export default function TutorProfile() {
 											id="avatar-upload"
 											type="file"
 											accept="image/*"
-											onChange={handleImageUpload}
+											onChange={handleImageChange}
 											className="hidden"
 										/>
 									</label>

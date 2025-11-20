@@ -69,15 +69,15 @@ export default function StudentProfile() {
 	} = useDisclosure();
 
 	const [passwordData, setPasswordData] = useState({
-		currentPassword: '',
-		newPassword: '',
-		confirmPassword: '',
+		current: '',
+		new: '',
+		confirm: '',
 	});
 
 	const [passwordErrors, setPasswordErrors] = useState<{
-		currentPassword?: string;
-		newPassword?: string;
-		confirmPassword?: string;
+		current?: string;
+		new?: string;
+		confirm?: string;
 	}>({});
 
 	useEffect(() => {
@@ -104,7 +104,12 @@ export default function StudentProfile() {
 			errors.email = 'Email inválido';
 		}
 
-		if (profile.phone && !/^\+?[\d\s-()]+$/.test(profile.phone)) {
+		if (
+			profile.phone &&
+			!/^\+?[0-9]{1,4}?[\s-]?(?:\(?[0-9]{1,4}\)?[\s-]?)?[0-9]{1,4}[\s-]?[0-9]{1,4}[\s-]?[0-9]{0,9}$/.test(
+				profile.phone.trim(),
+			)
+		) {
 			errors.phone = 'Teléfono inválido';
 		}
 
@@ -136,18 +141,18 @@ export default function StudentProfile() {
 	const validatePassword = (): boolean => {
 		const errors: typeof passwordErrors = {};
 
-		if (!passwordData.currentPassword) {
-			errors.currentPassword = 'Contraseña actual requerida';
+		if (!passwordData.current) {
+			errors.current = 'Contraseña actual requerida';
 		}
 
-		if (!passwordData.newPassword) {
-			errors.newPassword = 'Nueva contraseña requerida';
-		} else if (passwordData.newPassword.length < 8) {
-			errors.newPassword = 'Mínimo 8 caracteres';
+		if (!passwordData.new) {
+			errors.new = 'Nueva contraseña requerida';
+		} else if (passwordData.new.length < 8) {
+			errors.new = 'Mínimo 8 caracteres';
 		}
 
-		if (passwordData.newPassword !== passwordData.confirmPassword) {
-			errors.confirmPassword = 'Las contraseñas no coinciden';
+		if (passwordData.new !== passwordData.confirm) {
+			errors.confirm = 'Las contraseñas no coinciden';
 		}
 
 		setPasswordErrors(errors);
@@ -163,9 +168,9 @@ export default function StudentProfile() {
 			setSuccess('Contraseña actualizada exitosamente');
 			onPasswordModalClose();
 			setPasswordData({
-				currentPassword: '',
-				newPassword: '',
-				confirmPassword: '',
+				current: '',
+				new: '',
+				confirm: '',
 			});
 		} catch (_err) {
 			setError('Error al cambiar la contraseña');
@@ -592,35 +597,35 @@ export default function StudentProfile() {
 							<Input
 								label="Contraseña Actual"
 								type="password"
-								value={passwordData.currentPassword}
+								value={passwordData.current}
 								onValueChange={(value) =>
-									setPasswordData({ ...passwordData, currentPassword: value })
+									setPasswordData({ ...passwordData, current: value })
 								}
-								isInvalid={!!passwordErrors.currentPassword}
-								errorMessage={passwordErrors.currentPassword}
+								isInvalid={!!passwordErrors.current}
+								errorMessage={passwordErrors.current}
 								isRequired
 							/>
 							<Input
 								label="Nueva Contraseña"
 								type="password"
-								value={passwordData.newPassword}
+								value={passwordData.new}
 								onValueChange={(value) =>
-									setPasswordData({ ...passwordData, newPassword: value })
+									setPasswordData({ ...passwordData, new: value })
 								}
-								isInvalid={!!passwordErrors.newPassword}
-								errorMessage={passwordErrors.newPassword}
+								isInvalid={!!passwordErrors.new}
+								errorMessage={passwordErrors.new}
 								description="Mínimo 8 caracteres"
 								isRequired
 							/>
 							<Input
 								label="Confirmar Nueva Contraseña"
 								type="password"
-								value={passwordData.confirmPassword}
+								value={passwordData.confirm}
 								onValueChange={(value) =>
-									setPasswordData({ ...passwordData, confirmPassword: value })
+									setPasswordData({ ...passwordData, confirm: value })
 								}
-								isInvalid={!!passwordErrors.confirmPassword}
-								errorMessage={passwordErrors.confirmPassword}
+								isInvalid={!!passwordErrors.confirm}
+								errorMessage={passwordErrors.confirm}
 								isRequired
 							/>
 						</div>
