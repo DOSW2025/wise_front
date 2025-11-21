@@ -9,11 +9,11 @@
  * Email validation regex with bounded repetition
  * - Local part (before @): 1-64 characters
  * - Domain part (after @): 1-255 characters
- * - TLD (after .): 2+ characters
+ * - TLD (after .): 2-63 characters (RFC 1035 compliant)
  *
  * Complexity: O(n) - linear time
  */
-export const EMAIL_REGEX = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
+export const EMAIL_REGEX = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,63}$/;
 
 /**
  * Phone validation regex with bounded repetition
