@@ -1,9 +1,11 @@
 export { AlertMessage } from './alert-message';
 export { AvatarDebug } from './avatar-debug';
+export { ChatAIButton } from './chat-ai-button';
 export { DashboardLayout } from './dashboard-layout';
 export { EmptyState } from './empty-state';
 export { MaterialCard } from './material-card';
 export { Navbar } from './navbar';
+export { NotificationsButton } from './notifications-button';
 export { PageHeader } from './page-header';
 export { PasswordChangeModal } from './password-change-modal';
 export {

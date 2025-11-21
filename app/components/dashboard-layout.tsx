@@ -1,4 +1,6 @@
 import { Outlet } from 'react-router';
+import { ChatAIButton } from './chat-ai-button';
+import { NotificationsButton } from './notifications-button';
 import { Sidebar } from './sidebar';
 
 interface DashboardLayoutProps {
@@ -26,8 +28,14 @@ export function DashboardLayout({
 				onLogout={onLogout}
 			/>
 			<main className="flex-1 lg:ml-64 p-4 pt-16 lg:pt-8 lg:p-8 overflow-y-auto">
+				{/* Top-right notifications button */}
+				<div className="fixed top-4 right-4 z-30 lg:top-8 lg:right-8">
+					<NotificationsButton />
+				</div>
 				<Outlet />
 			</main>
+			{/* Floating chat button */}
+			<ChatAIButton />
 		</div>
 	);
 }
