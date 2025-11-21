@@ -6,6 +6,12 @@ export { MaterialCard } from './material-card';
 export { Navbar } from './navbar';
 export { PageHeader } from './page-header';
 export { PasswordChangeModal } from './password-change-modal';
+export {
+	ProfileConfigurationSection,
+	ProfileEditButtons,
+	ProfileFormFields,
+	ProfileHeader,
+} from './profile';
 export { ProfileAvatar } from './profile-avatar';
 export { RoleDashboard } from './role-dashboard';
 export { Sidebar } from './sidebar';

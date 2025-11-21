@@ -1,15 +1,4 @@
-import {
-	Button,
-	Card,
-	CardBody,
-	Chip,
-	Divider,
-	Input,
-	Switch,
-	Textarea,
-	useDisclosure,
-} from '@heroui/react';
-import { Mail, MapPin, Phone } from 'lucide-react';
+import { Card, CardBody, Chip, Input, useDisclosure } from '@heroui/react';
 import { useEffect, useState } from 'react';
 import {
 	AlertMessage,
@@ -17,15 +6,19 @@ import {
 	ProfileAvatar,
 	StatsCard,
 } from '~/components';
+import {
+	ProfileConfigurationSection,
+	ProfileEditButtons,
+	ProfileFormFields,
+	ProfileHeader,
+} from '~/components/profile';
 import { useAuth } from '~/contexts/auth-context';
 import { usePasswordManager } from '~/lib/hooks/usePasswordManager';
 import { useProfileForm } from './hooks/useProfileForm';
+import { useProfileSave } from './hooks/useProfileSave';
 
 export default function StudentProfile() {
 	const { user } = useAuth();
-	const [isSaving, setIsSaving] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [success, setSuccess] = useState<string | null>(null);
 	const [emailNotifications, setEmailNotifications] = useState(true);
 
 	// Custom hooks for managing complex state
@@ -61,6 +54,9 @@ export default function StudentProfile() {
 		resetPassword,
 	} = usePasswordManager();
 
+	const { isSaving, error, success, setError, saveProfile, changePassword } =
+		useProfileSave();
+
 	const {
 		isOpen: isPasswordModalOpen,
 		onOpen: onPasswordModalOpen,
@@ -78,24 +74,13 @@ export default function StudentProfile() {
 		}
 	}, [user, setProfile]);
 
-	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const result = handleImageUpload(event);
-		if (result?.error) {
-			setError(result.error);
-		}
-	};
-
 	const handlePasswordChange = async () => {
 		if (!validatePassword()) return;
 
-		try {
-			// Simular llamada a API
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-			setSuccess('Contraseña actualizada exitosamente');
+		const changed = await changePassword();
+		if (changed) {
 			onPasswordModalClose();
 			resetPassword();
-		} catch (_err) {
-			setError('Error al cambiar la contraseña');
 		}
 	};
 
@@ -105,26 +90,24 @@ export default function StudentProfile() {
 			return;
 		}
 
-		setError(null);
-		setSuccess(null);
-		setIsSaving(true);
+		const saved = await saveProfile({
+			name: profile.name,
+			email: profile.email,
+			phone: profile.phone,
+			location: profile.location,
+			description: profile.description,
+		});
 
-		try {
-			// Simular llamada a API para guardar perfil
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-
+		if (saved) {
 			setIsEditing(false);
-			setSuccess('Perfil actualizado exitosamente');
 			setAvatarPreview(null);
+		}
+	};
 
-			// Limpiar mensaje de éxito después de 3 segundos
-			setTimeout(() => setSuccess(null), 3000);
-		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Error al guardar el perfil';
-			setError(errorMessage);
-		} finally {
-			setIsSaving(false);
+	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const result = handleImageUpload(event);
+		if (result?.error) {
+			setError(result.error);
 		}
 	};
 
@@ -136,12 +119,10 @@ export default function StudentProfile() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-col gap-2">
-				<h1 className="text-3xl font-bold text-foreground">Mi Perfil</h1>
-				<p className="text-default-500">
-					Gestiona tu información personal y configuración
-				</p>
-			</div>
+			<ProfileHeader
+				title="Mi Perfil"
+				description="Gestiona tu información personal y configuración"
+			/>
 
 			{/* Mensajes de error y éxito */}
 			{error && <AlertMessage message={error} type="error" />}
@@ -152,27 +133,13 @@ export default function StudentProfile() {
 				<CardBody className="gap-6">
 					<div className="flex justify-between items-center">
 						<h2 className="text-xl font-semibold">Información Personal</h2>
-						<div className="flex gap-2">
-							{isEditing && (
-								<Button
-									color="default"
-									variant="flat"
-									onPress={handleCancel}
-									isDisabled={isSaving}
-								>
-									Cancelar
-								</Button>
-							)}
-							<Button
-								color={isEditing ? 'success' : 'primary'}
-								variant={isEditing ? 'solid' : 'bordered'}
-								onPress={isEditing ? handleSave : () => setIsEditing(true)}
-								isLoading={isSaving}
-								isDisabled={isSaving}
-							>
-								{isEditing ? 'Guardar Cambios' : 'Editar Perfil'}
-							</Button>
-						</div>
+						<ProfileEditButtons
+							isEditing={isEditing}
+							isSaving={isSaving}
+							onEdit={() => setIsEditing(true)}
+							onSave={handleSave}
+							onCancel={handleCancel}
+						/>
 					</div>
 
 					<div className="flex flex-col md:flex-row gap-6">
@@ -184,55 +151,20 @@ export default function StudentProfile() {
 							preview={avatarPreview}
 						/>
 
-						<div className="flex-1 space-y-4">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<Input
-									label="Nombre Completo"
-									placeholder="Ingresa tu nombre completo"
-									value={profile.name}
-									isReadOnly={true}
-									variant="flat"
-									isRequired
-									description="No se puede modificar"
-								/>
-								<Input
-									label="Correo Electrónico"
-									placeholder="tu@email.com"
-									type="email"
-									value={profile.email}
-									isReadOnly={true}
-									variant="flat"
-									startContent={<Mail className="w-4 h-4 text-default-400" />}
-									isRequired
-									description="No se puede modificar"
-								/>
-								<Input
-									label="Teléfono"
-									placeholder="+57 300 123 4567"
-									type="tel"
-									value={profile.phone}
-									onValueChange={(value) => {
-										setProfile({ ...profile, phone: value });
-										setFormErrors({ ...formErrors, phone: undefined });
-									}}
-									isReadOnly={!isEditing}
-									variant={isEditing ? 'bordered' : 'flat'}
-									isInvalid={!!formErrors.phone}
-									errorMessage={formErrors.phone}
-									startContent={<Phone className="w-4 h-4 text-default-400" />}
-								/>
-								<Input
-									label="Ubicación"
-									placeholder="Ciudad, País"
-									value={profile.location}
-									onValueChange={(value) => {
-										setProfile({ ...profile, location: value });
-										setFormErrors({ ...formErrors, location: undefined });
-									}}
-									isReadOnly={!isEditing}
-									variant={isEditing ? 'bordered' : 'flat'}
-									startContent={<MapPin className="w-4 h-4 text-default-400" />}
-								/>
+						<ProfileFormFields
+							profile={profile}
+							isEditing={isEditing}
+							formErrors={formErrors}
+							onProfileChange={setProfile}
+							onErrorClear={(field) =>
+								setFormErrors({ ...formErrors, [field]: undefined })
+							}
+							nameReadOnly={true}
+							emailReadOnly={true}
+							descriptionLabel="Sobre Mí"
+							descriptionPlaceholder="Cuéntanos sobre tus intereses y objetivos..."
+						>
+							<>
 								<Input
 									label="Carrera"
 									placeholder="Ingeniería de Sistemas"
@@ -249,75 +181,50 @@ export default function StudentProfile() {
 									variant="flat"
 									description="No se puede modificar"
 								/>
-							</div>
+							</>
+						</ProfileFormFields>
+					</div>
 
-							<Textarea
-								label="Sobre Mí"
-								placeholder="Cuéntanos sobre tus intereses y objetivos..."
-								value={profile.description}
-								onValueChange={(value) => {
-									setProfile({ ...profile, description: value });
-									setFormErrors({ ...formErrors, description: undefined });
-								}}
-								isReadOnly={!isEditing}
-								variant={isEditing ? 'bordered' : 'flat'}
-								minRows={3}
-								maxRows={6}
-								isInvalid={!!formErrors.description}
-								errorMessage={formErrors.description}
-								description={
-									isEditing
-										? `${profile.description.length}/500 caracteres`
-										: undefined
-								}
-							/>
-
-							<div className="space-y-2">
-								<span className="text-sm font-medium block">
-									Áreas de Interés
-								</span>
-								<div className="flex flex-wrap gap-2">
-									{profile.interests.map((interest) => (
-										<Chip
-											key={interest}
-											onClose={
-												isEditing
-													? () =>
-															setProfile({
-																...profile,
-																interests: profile.interests.filter(
-																	(i) => i !== interest,
-																),
-															})
-													: undefined
-											}
-											variant="flat"
-											color="primary"
-										>
-											{interest}
-										</Chip>
-									))}
-									{isEditing && (
-										<Chip
-											variant="bordered"
-											className="cursor-pointer"
-											onClick={() => {
-												const newInterest = prompt(
-													'Ingresa un área de interés:',
-												);
-												if (newInterest) {
+					<div className="space-y-2">
+						<span className="text-sm font-medium block">Áreas de Interés</span>
+						<div className="flex flex-wrap gap-2">
+							{profile.interests.map((interest) => (
+								<Chip
+									key={interest}
+									onClose={
+										isEditing
+											? () =>
 													setProfile({
 														...profile,
-														interests: [...profile.interests, newInterest],
-													});
-												}
-											}}
-										>
-											+ Agregar
-										</Chip>
-									)}
-								</div>
-							</div>
+														interests: profile.interests.filter(
+															(i) => i !== interest,
+														),
+													})
+											: undefined
+									}
+									variant="flat"
+									color="primary"
+								>
+									{interest}
+								</Chip>
+							))}
+							{isEditing && (
+								<Chip
+									variant="bordered"
+									className="cursor-pointer"
+									onClick={() => {
+										const newInterest = prompt('Ingresa un área de interés:');
+										if (newInterest) {
+											setProfile({
+												...profile,
+												interests: [...profile.interests, newInterest],
+											});
+										}
+									}}
+								>
+									+ Agregar
+								</Chip>
+							)}
 						</div>
 					</div>
 				</CardBody>
@@ -420,39 +327,12 @@ export default function StudentProfile() {
 			<Card>
 				<CardBody className="gap-4">
 					<h2 className="text-xl font-semibold">Configuración de Cuenta</h2>
-					<div className="space-y-4">
-						<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-							<div className="flex-1">
-								<p className="font-medium">Cambiar Contraseña</p>
-								<p className="text-sm text-default-500">
-									Actualiza tu contraseña de acceso
-								</p>
-							</div>
-							<Button
-								color="primary"
-								variant="bordered"
-								onPress={onPasswordModalOpen}
-							>
-								Cambiar
-							</Button>
-						</div>
-
-						<Divider />
-
-						<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg">
-							<div className="flex-1">
-								<p className="font-medium">Notificaciones por Email</p>
-								<p className="text-sm text-default-500">
-									Recibe notificaciones de nuevas tutorías y materiales
-								</p>
-							</div>
-							<Switch
-								isSelected={emailNotifications}
-								onValueChange={setEmailNotifications}
-								color="success"
-							/>
-						</div>
-					</div>
+					<ProfileConfigurationSection
+						onPasswordChange={onPasswordModalOpen}
+						emailNotifications={emailNotifications}
+						onEmailNotificationsChange={setEmailNotifications}
+						emailNotificationsDescription="Recibe notificaciones de nuevas tutorías y materiales"
+					/>
 				</CardBody>
 			</Card>
 

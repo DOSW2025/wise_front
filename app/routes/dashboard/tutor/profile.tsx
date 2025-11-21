@@ -11,10 +11,8 @@ import {
 	ModalFooter,
 	ModalHeader,
 	Switch,
-	Textarea,
 	useDisclosure,
 } from '@heroui/react';
-import { Mail, MapPin, Phone } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
 	AlertMessage,
@@ -23,6 +21,12 @@ import {
 	ProfileAvatar,
 	StatsCard,
 } from '~/components';
+import {
+	ProfileConfigurationSection,
+	ProfileEditButtons,
+	ProfileFormFields,
+	ProfileHeader,
+} from '~/components/profile';
 import { useAuth } from '~/contexts/auth-context';
 import { usePasswordManager } from '~/lib/hooks/usePasswordManager';
 import { useProfileForm } from './hooks/useProfileForm';
@@ -153,12 +157,10 @@ export default function TutorProfile() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-col gap-2">
-				<h1 className="text-3xl font-bold text-foreground">Mi Perfil</h1>
-				<p className="text-default-500">
-					Gestiona tu información personal y configuración
-				</p>
-			</div>
+			<ProfileHeader
+				title="Mi Perfil"
+				description="Gestiona tu información personal y configuración"
+			/>
 
 			{/* Componente de Debug - TEMPORAL para diagnosticar avatar */}
 			<AvatarDebug />
@@ -172,27 +174,13 @@ export default function TutorProfile() {
 				<CardBody className="gap-6">
 					<div className="flex justify-between items-center">
 						<h2 className="text-xl font-semibold">Información Personal</h2>
-						<div className="flex gap-2">
-							{isEditing && (
-								<Button
-									color="default"
-									variant="flat"
-									onPress={handleCancel}
-									isDisabled={isSaving}
-								>
-									Cancelar
-								</Button>
-							)}
-							<Button
-								color={isEditing ? 'success' : 'primary'}
-								variant={isEditing ? 'solid' : 'bordered'}
-								onPress={isEditing ? handleSave : () => setIsEditing(true)}
-								isLoading={isSaving}
-								isDisabled={isSaving}
-							>
-								{isEditing ? 'Guardar Cambios' : 'Editar Perfil'}
-							</Button>
-						</div>
+						<ProfileEditButtons
+							isEditing={isEditing}
+							isSaving={isSaving}
+							onEdit={() => setIsEditing(true)}
+							onSave={handleSave}
+							onCancel={handleCancel}
+						/>
 					</div>
 
 					<div className="flex flex-col md:flex-row gap-6">
@@ -204,147 +192,77 @@ export default function TutorProfile() {
 							preview={avatarPreview}
 						/>
 
-						<div className="flex-1 space-y-4">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<Input
-									label="Nombre Completo"
-									placeholder="Ingresa tu nombre completo"
-									value={profile.name}
-									onValueChange={(value) => {
-										setProfile({ ...profile, name: value });
-										setFormErrors({ ...formErrors, name: undefined });
-									}}
-									isReadOnly={!isEditing}
-									variant={isEditing ? 'bordered' : 'flat'}
-									isInvalid={!!formErrors.name}
-									errorMessage={formErrors.name}
-									isRequired
-								/>
-								<Input
-									label="Correo Electrónico"
-									placeholder="tu@email.com"
-									type="email"
-									value={profile.email}
-									onValueChange={(value) => {
-										setProfile({ ...profile, email: value });
-										setFormErrors({ ...formErrors, email: undefined });
-									}}
-									isReadOnly={!isEditing}
-									variant={isEditing ? 'bordered' : 'flat'}
-									isInvalid={!!formErrors.email}
-									errorMessage={formErrors.email}
-									startContent={<Mail className="w-4 h-4 text-default-400" />}
-									isRequired
-								/>
-								<Input
-									label="Teléfono"
-									placeholder="+57 300 123 4567"
-									type="tel"
-									value={profile.phone}
-									onValueChange={(value) => {
-										setProfile({ ...profile, phone: value });
-										setFormErrors({ ...formErrors, phone: undefined });
-									}}
-									isReadOnly={!isEditing}
-									variant={isEditing ? 'bordered' : 'flat'}
-									isInvalid={!!formErrors.phone}
-									errorMessage={formErrors.phone}
-									startContent={<Phone className="w-4 h-4 text-default-400" />}
-								/>
-								<Input
-									label="Ubicación"
-									placeholder="Ciudad, País"
-									value={profile.location}
-									onValueChange={(value) => {
-										setProfile({ ...profile, location: value });
-										setFormErrors({ ...formErrors, location: undefined });
-									}}
-									isReadOnly={!isEditing}
-									variant={isEditing ? 'bordered' : 'flat'}
-									startContent={<MapPin className="w-4 h-4 text-default-400" />}
-								/>
-								<Input
-									label="Tarifa por Hora"
-									placeholder="25000"
-									value={profile.hourlyRate}
-									onValueChange={(value) =>
-										setProfile({ ...profile, hourlyRate: value })
-									}
-									isReadOnly={!isEditing}
-									variant={isEditing ? 'bordered' : 'flat'}
-									startContent={
-										<span className="text-default-400 text-sm">$</span>
-									}
-									endContent={
-										<span className="text-default-400 text-sm">COP</span>
-									}
-								/>
-							</div>
-
-							<Textarea
-								label="Descripción Profesional"
-								placeholder="Cuéntanos sobre tu experiencia y especialidades..."
-								value={profile.description}
-								onValueChange={(value) => {
-									setProfile({ ...profile, description: value });
-									setFormErrors({ ...formErrors, description: undefined });
-								}}
+						<ProfileFormFields
+							profile={profile}
+							isEditing={isEditing}
+							formErrors={formErrors}
+							onProfileChange={setProfile}
+							onErrorClear={(field) =>
+								setFormErrors({ ...formErrors, [field]: undefined })
+							}
+							nameReadOnly={false}
+							emailReadOnly={false}
+							descriptionLabel="Descripción Profesional"
+							descriptionPlaceholder="Cuéntanos sobre tu experiencia y especialidades..."
+						>
+							<Input
+								label="Tarifa por Hora"
+								placeholder="25000"
+								value={profile.hourlyRate}
+								onValueChange={(value) =>
+									setProfile({ ...profile, hourlyRate: value })
+								}
 								isReadOnly={!isEditing}
 								variant={isEditing ? 'bordered' : 'flat'}
-								minRows={3}
-								maxRows={6}
-								isInvalid={!!formErrors.description}
-								errorMessage={formErrors.description}
-								description={
-									isEditing
-										? `${profile.description.length}/500 caracteres`
-										: undefined
+								startContent={
+									<span className="text-default-400 text-sm">$</span>
+								}
+								endContent={
+									<span className="text-default-400 text-sm">COP</span>
 								}
 							/>
-
-							{isEditing && (
-								<div className="space-y-2">
-									<span className="text-sm font-medium block">
-										Materias que enseñas
-									</span>
-									<div className="flex flex-wrap gap-2">
-										{profile.subjects.map((subject) => (
-											<Chip
-												key={subject}
-												onClose={() =>
-													setProfile({
-														...profile,
-														subjects: profile.subjects.filter(
-															(s) => s !== subject,
-														),
-													})
-												}
-												variant="flat"
-												color="primary"
-											>
-												{subject}
-											</Chip>
-										))}
-										<Chip
-											variant="bordered"
-											className="cursor-pointer"
-											onClick={() => {
-												const newSubject = prompt('Ingresa una nueva materia:');
-												if (newSubject) {
-													setProfile({
-														...profile,
-														subjects: [...profile.subjects, newSubject],
-													});
-												}
-											}}
-										>
-											+ Agregar
-										</Chip>
-									</div>
-								</div>
-							)}
-						</div>
+						</ProfileFormFields>
 					</div>
+
+					{isEditing && (
+						<div className="space-y-2">
+							<span className="text-sm font-medium block">
+								Materias que enseñas
+							</span>
+							<div className="flex flex-wrap gap-2">
+								{profile.subjects.map((subject) => (
+									<Chip
+										key={subject}
+										onClose={() =>
+											setProfile({
+												...profile,
+												subjects: profile.subjects.filter((s) => s !== subject),
+											})
+										}
+										variant="flat"
+										color="primary"
+									>
+										{subject}
+									</Chip>
+								))}
+								<Chip
+									variant="bordered"
+									className="cursor-pointer"
+									onClick={() => {
+										const newSubject = prompt('Ingresa una nueva materia:');
+										if (newSubject) {
+											setProfile({
+												...profile,
+												subjects: [...profile.subjects, newSubject],
+											});
+										}
+									}}
+								>
+									+ Agregar
+								</Chip>
+							</div>
+						</div>
+					)}
 				</CardBody>
 			</Card>
 
@@ -445,72 +363,47 @@ export default function TutorProfile() {
 			<Card>
 				<CardBody className="gap-4">
 					<h2 className="text-xl font-semibold">Configuración de Cuenta</h2>
-					<div className="space-y-4">
-						<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-							<div className="flex-1">
-								<p className="font-medium">Cambiar Contraseña</p>
-								<p className="text-sm text-default-500">
-									Actualiza tu contraseña de acceso
-								</p>
-							</div>
-							<Button
-								color="primary"
-								variant="bordered"
-								onPress={onPasswordModalOpen}
-							>
-								Cambiar
-							</Button>
-						</div>
+					<ProfileConfigurationSection
+						onPasswordChange={onPasswordModalOpen}
+						emailNotifications={emailNotifications}
+						onEmailNotificationsChange={setEmailNotifications}
+						emailNotificationsDescription="Recibe notificaciones de nuevas solicitudes"
+					>
+						<>
+							<Divider />
 
-						<Divider />
-
-						<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg">
-							<div className="flex-1">
-								<p className="font-medium">Notificaciones por Email</p>
-								<p className="text-sm text-default-500">
-									Recibe notificaciones de nuevas solicitudes
-								</p>
-							</div>
-							<Switch
-								isSelected={emailNotifications}
-								onValueChange={setEmailNotifications}
-								color="success"
-							/>
-						</div>
-
-						<Divider />
-
-						<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-							<div className="flex-1">
-								<p className="font-medium">Disponibilidad Semanal</p>
-								<p className="text-sm text-default-500">
-									Configura los días en que estás disponible
-								</p>
-								<div className="flex flex-wrap gap-2 mt-2">
-									{daysOfWeek.map(
-										({ key, label }) =>
-											profile.availability[key] && (
-												<Chip
-													key={key}
-													size="sm"
-													color="success"
-													variant="flat"
-												>
-													{label}
-												</Chip>
-											),
-									)}
+							<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+								<div className="flex-1">
+									<p className="font-medium">Disponibilidad Semanal</p>
+									<p className="text-sm text-default-500">
+										Configura los días en que estás disponible
+									</p>
+									<div className="flex flex-wrap gap-2 mt-2">
+										{daysOfWeek.map(
+											({ key, label }) =>
+												profile.availability[key] && (
+													<Chip
+														key={key}
+														size="sm"
+														color="success"
+														variant="flat"
+													>
+														{label}
+													</Chip>
+												),
+										)}
+									</div>
 								</div>
+								<Button
+									color="primary"
+									variant="bordered"
+									onPress={onAvailabilityModalOpen}
+								>
+									Configurar
+								</Button>
 							</div>
-							<Button
-								color="primary"
-								variant="bordered"
-								onPress={onAvailabilityModalOpen}
-							>
-								Configurar
-							</Button>
-						</div>
-					</div>
+						</>
+					</ProfileConfigurationSection>
 				</CardBody>
 			</Card>
 
