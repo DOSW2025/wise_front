@@ -14,7 +14,7 @@ import {
 	SelectItem,
 	useDisclosure,
 } from '@heroui/react';
-import { Calendar, Clock, MapPin, Plus, User, Video, X } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, Video, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface TimeSlot {
@@ -69,26 +69,13 @@ export default function TutorScheduled() {
 		'scheduled',
 	);
 
+	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
 	const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
 		{
-			id: '1',
+			id: '-1',
 			day: 'monday',
-			startTime: '09:00',
-			endTime: '11:00',
-			isAvailable: true,
-		},
-		{
-			id: '2',
-			day: 'tuesday',
-			startTime: '14:00',
-			endTime: '16:00',
-			isAvailable: true,
-		},
-		{
-			id: '3',
-			day: 'wednesday',
-			startTime: '10:00',
-			endTime: '12:00',
+			startTime: '00:00',
+			endTime: '00:00',
 			isAvailable: false,
 		},
 	]);
@@ -99,28 +86,17 @@ export default function TutorScheduled() {
 		endTime: '',
 	});
 
-	// Sesiones confirmadas de ejemplo
+	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
 	const confirmedSessions: ConfirmedSession[] = [
 		{
-			id: '1',
-			studentName: 'Ana García',
-			subject: 'Cálculo I',
-			topic: 'Límites y continuidad',
-			date: '2024-01-15',
-			time: '14:00',
-			duration: 120,
+			id: '-1',
+			studentName: 'Estudiante Ejemplo (Sin conexión)',
+			subject: 'Sin datos de API',
+			topic: 'Esperando conexión',
+			date: '1900-01-01',
+			time: '00:00',
+			duration: -1,
 			modality: 'virtual',
-		},
-		{
-			id: '2',
-			studentName: 'Carlos Rodríguez',
-			subject: 'Álgebra Lineal',
-			topic: 'Matrices y determinantes',
-			date: '2024-01-16',
-			time: '10:00',
-			duration: 90,
-			modality: 'presencial',
-			location: 'Aula 205',
 		},
 	];
 

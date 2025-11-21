@@ -1,120 +1,268 @@
 import {
-	Avatar,
 	Button,
 	Card,
 	CardBody,
+	Chip,
 	Divider,
 	Input,
-	Textarea,
+	Modal,
+	ModalBody,
+	ModalContent,
+	ModalFooter,
+	ModalHeader,
+	Switch,
+	useDisclosure,
 } from '@heroui/react';
-import { useState } from 'react';
-import { StatsCard } from '~/components/stats-card';
+import { useEffect, useState } from 'react';
+import {
+	AlertMessage,
+	AvatarDebug,
+	PasswordChangeModal,
+	ProfileAvatar,
+	StatsCard,
+} from '~/components';
+import {
+	ProfileConfigurationSection,
+	ProfileEditButtons,
+	ProfileFormFields,
+	ProfileHeader,
+} from '~/components/profile';
+import { useAuth } from '~/contexts/auth-context';
+import { usePasswordManager } from '~/lib/hooks/usePasswordManager';
+import { useProfileForm } from './hooks/useProfileForm';
+import { useProfileSave } from './hooks/useProfileSave';
 
 export default function TutorProfile() {
-	const [isEditing, setIsEditing] = useState(false);
-	const [profile, setProfile] = useState({
-		name: 'Dr. María González',
-		email: 'maria.gonzalez@eci.edu.co',
-		phone: '+57 300 123 4567',
-		location: 'Bogotá, Colombia',
-		description:
-			'Profesora de Programación Orientada a Objetos con 8 años de experiencia. Especialista en Java, Python y metodologías ágiles.',
+	const { user } = useAuth();
+	const [emailNotifications, setEmailNotifications] = useState(true);
+
+	// Custom hooks for managing complex state
+	const {
+		profile,
+		setProfile,
+		formErrors,
+		setFormErrors,
+		isEditing,
+		setIsEditing,
+		avatarPreview,
+		validateForm,
+		handleImageUpload,
+		toggleDay,
+		resetForm,
+	} = useProfileForm({
+		name: user?.name || '',
+		email: user?.email || '',
+		phone: '',
+		location: '',
+		description: '',
+		avatar: user?.avatar,
+		availability: {
+			monday: false,
+			tuesday: false,
+			wednesday: false,
+			thursday: false,
+			friday: false,
+			saturday: false,
+			sunday: false,
+		},
+		subjects: [],
+		hourlyRate: '',
 	});
 
-	const handleSave = () => {
-		setIsEditing(false);
-		// TODO: Guardar cambios
+	const {
+		passwordData,
+		setPasswordData,
+		passwordErrors,
+		validatePassword,
+		resetPassword,
+	} = usePasswordManager();
+
+	const { isSaving, error, success, setError, saveProfile, changePassword } =
+		useProfileSave();
+
+	const {
+		isOpen: isPasswordModalOpen,
+		onOpen: onPasswordModalOpen,
+		onClose: onPasswordModalClose,
+	} = useDisclosure();
+
+	const {
+		isOpen: isAvailabilityModalOpen,
+		onOpen: onAvailabilityModalOpen,
+		onClose: onAvailabilityModalClose,
+	} = useDisclosure();
+
+	useEffect(() => {
+		if (user) {
+			setProfile((prev) => ({
+				...prev,
+				name: user.name,
+				email: user.email,
+				avatar: user.avatar,
+			}));
+		}
+	}, [user, setProfile]);
+
+	const handleSave = async () => {
+		if (!validateForm()) {
+			setError('Por favor corrige los errores en el formulario');
+			return;
+		}
+
+		const saved = await saveProfile({
+			name: profile.name,
+			email: profile.email,
+			phone: profile.phone,
+			location: profile.location,
+			description: profile.description,
+		});
+
+		if (saved) {
+			setIsEditing(false);
+		}
 	};
+
+	const handlePasswordChange = async () => {
+		if (!validatePassword()) return;
+
+		const changed = await changePassword();
+		if (changed) {
+			onPasswordModalClose();
+			resetPassword();
+		}
+	};
+
+	const handleCancel = () => {
+		if (user) {
+			resetForm(user);
+		}
+	};
+
+	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const result = handleImageUpload(event);
+		if (result?.error) {
+			setError(result.error);
+		}
+	};
+
+	const daysOfWeek = [
+		{ key: 'monday', label: 'Lunes' },
+		{ key: 'tuesday', label: 'Martes' },
+		{ key: 'wednesday', label: 'Miércoles' },
+		{ key: 'thursday', label: 'Jueves' },
+		{ key: 'friday', label: 'Viernes' },
+		{ key: 'saturday', label: 'Sábado' },
+		{ key: 'sunday', label: 'Domingo' },
+	] as const;
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-col gap-2">
-				<h1 className="text-3xl font-bold text-foreground">Mi Perfil</h1>
-				<p className="text-default-500">
-					Gestiona tu información personal y configuración
-				</p>
-			</div>
+			<ProfileHeader
+				title="Mi Perfil"
+				description="Gestiona tu información personal y configuración"
+			/>
+
+			{/* Componente de Debug - TEMPORAL para diagnosticar avatar */}
+			<AvatarDebug />
+
+			{/* Mensajes de error y éxito */}
+			{error && <AlertMessage message={error} type="error" />}
+			{success && <AlertMessage message={success} type="success" />}
 
 			{/* Información Personal */}
 			<Card>
 				<CardBody className="gap-6">
 					<div className="flex justify-between items-center">
 						<h2 className="text-xl font-semibold">Información Personal</h2>
-						<Button
-							color={isEditing ? 'success' : 'primary'}
-							variant={isEditing ? 'solid' : 'bordered'}
-							onPress={isEditing ? handleSave : () => setIsEditing(true)}
-						>
-							{isEditing ? 'Guardar' : 'Editar Perfil'}
-						</Button>
+						<ProfileEditButtons
+							isEditing={isEditing}
+							isSaving={isSaving}
+							onEdit={() => setIsEditing(true)}
+							onSave={handleSave}
+							onCancel={handleCancel}
+						/>
 					</div>
 
 					<div className="flex flex-col md:flex-row gap-6">
-						<div className="flex flex-col items-center gap-4">
-							<Avatar
-								name={profile.name}
-								size="lg"
-								color="primary"
-								isBordered
-								className="w-24 h-24"
-							/>
-							{isEditing && (
-								<Button size="sm" variant="flat">
-									Cambiar Foto
-								</Button>
-							)}
-						</div>
+						<ProfileAvatar
+							src={profile.avatar}
+							name={profile.name}
+							isEditing={isEditing}
+							onImageChange={handleImageChange}
+							preview={avatarPreview}
+						/>
 
-						<div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+						<ProfileFormFields
+							profile={profile}
+							isEditing={isEditing}
+							formErrors={formErrors}
+							onProfileChange={setProfile}
+							onErrorClear={(field) =>
+								setFormErrors({ ...formErrors, [field]: undefined })
+							}
+							nameReadOnly={false}
+							emailReadOnly={false}
+							descriptionLabel="Descripción Profesional"
+							descriptionPlaceholder="Cuéntanos sobre tu experiencia y especialidades..."
+						>
 							<Input
-								label="Nombre Completo"
-								value={profile.name}
+								label="Tarifa por Hora"
+								placeholder="25000"
+								value={profile.hourlyRate}
 								onValueChange={(value) =>
-									setProfile({ ...profile, name: value })
+									setProfile({ ...profile, hourlyRate: value })
 								}
 								isReadOnly={!isEditing}
 								variant={isEditing ? 'bordered' : 'flat'}
-							/>
-							<Input
-								label="Correo Electrónico"
-								value={profile.email}
-								onValueChange={(value) =>
-									setProfile({ ...profile, email: value })
+								startContent={
+									<span className="text-default-400 text-sm">$</span>
 								}
-								isReadOnly={!isEditing}
-								variant={isEditing ? 'bordered' : 'flat'}
-							/>
-							<Input
-								label="Teléfono"
-								value={profile.phone}
-								onValueChange={(value) =>
-									setProfile({ ...profile, phone: value })
+								endContent={
+									<span className="text-default-400 text-sm">COP</span>
 								}
-								isReadOnly={!isEditing}
-								variant={isEditing ? 'bordered' : 'flat'}
 							/>
-							<Input
-								label="Ubicación"
-								value={profile.location}
-								onValueChange={(value) =>
-									setProfile({ ...profile, location: value })
-								}
-								isReadOnly={!isEditing}
-								variant={isEditing ? 'bordered' : 'flat'}
-							/>
-						</div>
+						</ProfileFormFields>
 					</div>
 
-					<Textarea
-						label="Descripción Profesional"
-						value={profile.description}
-						onValueChange={(value) =>
-							setProfile({ ...profile, description: value })
-						}
-						isReadOnly={!isEditing}
-						variant={isEditing ? 'bordered' : 'flat'}
-						rows={3}
-					/>
+					{isEditing && (
+						<div className="space-y-2">
+							<span className="text-sm font-medium block">
+								Materias que enseñas
+							</span>
+							<div className="flex flex-wrap gap-2">
+								{profile.subjects.map((subject) => (
+									<Chip
+										key={subject}
+										onClose={() =>
+											setProfile({
+												...profile,
+												subjects: profile.subjects.filter((s) => s !== subject),
+											})
+										}
+										variant="flat"
+										color="primary"
+									>
+										{subject}
+									</Chip>
+								))}
+								<Chip
+									variant="bordered"
+									className="cursor-pointer"
+									onClick={() => {
+										const newSubject = prompt('Ingresa una nueva materia:');
+										if (newSubject) {
+											setProfile({
+												...profile,
+												subjects: [...profile.subjects, newSubject],
+											});
+										}
+									}}
+								>
+									+ Agregar
+								</Chip>
+							</div>
+						</div>
+					)}
 				</CardBody>
 			</Card>
 
@@ -125,7 +273,7 @@ export default function TutorProfile() {
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						<StatsCard
 							title="Tutorías Completadas"
-							value={156}
+							value={-1}
 							description="Total"
 							color="success"
 							icon={
@@ -146,7 +294,7 @@ export default function TutorProfile() {
 						/>
 						<StatsCard
 							title="Calificación Promedio"
-							value="4.8"
+							value="-1"
 							description="de 5.0"
 							color="warning"
 							icon={
@@ -167,7 +315,7 @@ export default function TutorProfile() {
 						/>
 						<StatsCard
 							title="Estudiantes Ayudados"
-							value={89}
+							value={-1}
 							description="Únicos"
 							color="primary"
 							icon={
@@ -188,7 +336,7 @@ export default function TutorProfile() {
 						/>
 						<StatsCard
 							title="Horas de Tutoría"
-							value={234}
+							value={-1}
 							description="Total"
 							color="default"
 							icon={
@@ -215,47 +363,99 @@ export default function TutorProfile() {
 			<Card>
 				<CardBody className="gap-4">
 					<h2 className="text-xl font-semibold">Configuración de Cuenta</h2>
-					<div className="space-y-4">
-						<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg">
-							<div>
-								<p className="font-medium">Cambiar Contraseña</p>
-								<p className="text-sm text-default-500">
-									Actualiza tu contraseña de acceso
-								</p>
-							</div>
-							<Button color="primary" variant="bordered">
-								Cambiar
-							</Button>
-						</div>
+					<ProfileConfigurationSection
+						onPasswordChange={onPasswordModalOpen}
+						emailNotifications={emailNotifications}
+						onEmailNotificationsChange={setEmailNotifications}
+						emailNotificationsDescription="Recibe notificaciones de nuevas solicitudes"
+					>
+						<>
+							<Divider />
 
-						<Divider />
-
-						<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg">
-							<div>
-								<p className="font-medium">Notificaciones por Email</p>
-								<p className="text-sm text-default-500">
-									Recibe notificaciones de nuevas solicitudes
-								</p>
+							<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+								<div className="flex-1">
+									<p className="font-medium">Disponibilidad Semanal</p>
+									<p className="text-sm text-default-500">
+										Configura los días en que estás disponible
+									</p>
+									<div className="flex flex-wrap gap-2 mt-2">
+										{daysOfWeek.map(
+											({ key, label }) =>
+												profile.availability[key] && (
+													<Chip
+														key={key}
+														size="sm"
+														color="success"
+														variant="flat"
+													>
+														{label}
+													</Chip>
+												),
+										)}
+									</div>
+								</div>
+								<Button
+									color="primary"
+									variant="bordered"
+									onPress={onAvailabilityModalOpen}
+								>
+									Configurar
+								</Button>
 							</div>
-							<Button color="success" variant="bordered">
-								Activado
-							</Button>
-						</div>
-
-						<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg">
-							<div>
-								<p className="font-medium">Disponibilidad</p>
-								<p className="text-sm text-default-500">
-									Configura tus horarios disponibles
-								</p>
-							</div>
-							<Button color="primary" variant="bordered">
-								Configurar
-							</Button>
-						</div>
-					</div>
+						</>
+					</ProfileConfigurationSection>
 				</CardBody>
 			</Card>
+
+			{/* Modal de Cambio de Contraseña */}
+			<PasswordChangeModal
+				isOpen={isPasswordModalOpen}
+				onClose={onPasswordModalClose}
+				passwordData={passwordData}
+				passwordErrors={passwordErrors}
+				onPasswordDataChange={setPasswordData}
+				onSave={handlePasswordChange}
+			/>
+
+			{/* Modal de Disponibilidad */}
+			<Modal
+				isOpen={isAvailabilityModalOpen}
+				onClose={onAvailabilityModalClose}
+				size="md"
+			>
+				<ModalContent>
+					<ModalHeader>Configurar Disponibilidad</ModalHeader>
+					<ModalBody>
+						<div className="space-y-3">
+							<p className="text-sm text-default-500">
+								Selecciona los días en los que estás disponible para dar
+								tutorías
+							</p>
+							{daysOfWeek.map(({ key, label }) => (
+								<div
+									key={key}
+									className="flex justify-between items-center p-3 bg-default-50 rounded-lg"
+								>
+									<span className="font-medium">{label}</span>
+									<Switch
+										isSelected={profile.availability[key]}
+										onValueChange={() => toggleDay(key)}
+										color="success"
+									/>
+								</div>
+							))}
+						</div>
+					</ModalBody>
+					<ModalFooter>
+						<Button variant="flat" onPress={onAvailabilityModalClose}>
+							Cancelar
+						</Button>
+						<Button color="primary" onPress={onAvailabilityModalClose}>
+							Guardar
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
 		</div>
 	);
 }

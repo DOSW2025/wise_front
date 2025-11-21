@@ -19,9 +19,15 @@ interface NavbarProps {
 	userRole?: 'student' | 'tutor' | 'admin';
 	userName?: string;
 	userAvatar?: string;
+	onLogout?: () => void;
 }
 
-export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
+export function Navbar({
+	userRole,
+	userName,
+	userAvatar,
+	onLogout,
+}: NavbarProps) {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const location = useLocation();
 
@@ -64,6 +70,8 @@ export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
 	};
 
 	const menuItems = getMenuItems();
+
+	console.log('Navbar avatar prop:', userAvatar);
 
 	return (
 		<HeroNavbar
@@ -148,7 +156,28 @@ export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
 								color="primary"
 								name={userName || 'Usuario'}
 								size="sm"
-								src={userAvatar}
+								src={
+									userAvatar
+										? userAvatar.includes('googleusercontent.com')
+											? userAvatar.split('=')[0] + '=s200-c'
+											: userAvatar
+										: undefined
+								}
+								showFallback
+								imgProps={{
+									crossOrigin: 'anonymous',
+									referrerPolicy: 'no-referrer',
+									onError: (e) => {
+										console.error('Navbar: Error loading avatar:', userAvatar);
+										e.currentTarget.style.display = 'none';
+									},
+									onLoad: () => {
+										console.log('Navbar: Avatar loaded successfully');
+									},
+								}}
+								classNames={{
+									img: 'object-cover',
+								}}
 							/>
 						</DropdownTrigger>
 						<DropdownMenu aria-label="Acciones de usuario" variant="flat">
@@ -163,7 +192,7 @@ export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
 											? '/dashboard/tutor/profile'
 											: userRole === 'admin'
 												? '/dashboard/admin/profile'
-												: '/dashboard/profile'
+												: '/dashboard/student/profile'
 									}
 								>
 									Mi Perfil
@@ -176,13 +205,13 @@ export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
 											? '/dashboard/tutor/help'
 											: userRole === 'admin'
 												? '/dashboard/admin/help'
-												: '/dashboard/help'
+												: '/dashboard/student/help'
 									}
 								>
 									Ayuda
 								</Link>
 							</DropdownItem>
-							<DropdownItem key="logout" color="danger">
+							<DropdownItem key="logout" color="danger" onPress={onLogout}>
 								Cerrar Sesión
 							</DropdownItem>
 						</DropdownMenu>

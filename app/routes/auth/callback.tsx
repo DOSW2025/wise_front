@@ -53,6 +53,13 @@ export default function AuthCallback() {
 				let user: unknown;
 				try {
 					user = JSON.parse(decodeURIComponent(userParam));
+					console.log('User data received from backend:', user);
+					console.log(
+						'Avatar URL from backend:',
+						(user as any)?.avatarUrl ||
+							(user as any)?.avatar ||
+							(user as any)?.picture,
+					);
 				} catch (parseError) {
 					console.error('Error al parsear datos del usuario:', parseError);
 					setError('Datos de usuario inválidos');
@@ -71,6 +78,9 @@ export default function AuthCallback() {
 					}, 3000);
 					return;
 				}
+
+				// Log para verificar el avatar después de la validación
+				console.log('Usuario validado con avatar:', user.avatarUrl);
 
 				// Crear el objeto de respuesta de autenticación
 				const authResponse: AuthResponse = {

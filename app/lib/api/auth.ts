@@ -4,6 +4,14 @@
  */
 
 import { API_ENDPOINTS } from '../config/api.config';
+import {
+	getStorageItem,
+	getStorageJSON,
+	removeStorageItem,
+	STORAGE_KEYS,
+	setStorageItem,
+	setStorageJSON,
+} from '../utils/storage';
 import apiClient from './client';
 
 export interface UserResponse {
@@ -45,9 +53,9 @@ export const authService = {
 		try {
 			await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT);
 		} finally {
-			// Limpiar localStorage independientemente del resultado
-			localStorage.removeItem('token');
-			localStorage.removeItem('user');
+			// Clear storage using secure utility functions
+			removeStorageItem(STORAGE_KEYS.TOKEN);
+			removeStorageItem(STORAGE_KEYS.USER);
 		}
 	},
 
@@ -63,32 +71,28 @@ export const authService = {
 	 * Guardar datos de autenticación
 	 */
 	saveAuthData(authResponse: AuthResponse): void {
-		localStorage.setItem('token', authResponse.access_token);
-		localStorage.setItem('user', JSON.stringify(authResponse.user));
+		console.log('Saving auth data:', authResponse);
+		console.log('User avatar URL being saved:', authResponse.user.avatarUrl);
+		setStorageItem(STORAGE_KEYS.TOKEN, authResponse.access_token);
+		setStorageJSON(STORAGE_KEYS.USER, authResponse.user);
+		console.log('Auth data saved to localStorage');
 	},
 
 	/**
 	 * Obtener token guardado
 	 */
 	getToken(): string | null {
-		return localStorage.getItem('token');
+		return getStorageItem(STORAGE_KEYS.TOKEN);
 	},
 
 	/**
 	 * Obtener usuario guardado
 	 */
 	getUser(): UserResponse | null {
-		const userStr = localStorage.getItem('user');
-		if (!userStr) return null;
-
-		try {
-			return JSON.parse(userStr);
-		} catch (error) {
-			console.error('Error al parsear usuario de localStorage:', error);
-			// Limpiar dato corrupto
-			localStorage.removeItem('user');
-			return null;
-		}
+		const user = getStorageJSON<UserResponse>(STORAGE_KEYS.USER);
+		console.log('Reading user from localStorage:', user);
+		console.log('Avatar URL from storage:', user?.avatarUrl);
+		return user;
 	},
 
 	/**

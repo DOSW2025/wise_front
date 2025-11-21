@@ -52,7 +52,8 @@ export default function Register() {
 					<Button
 						onClick={handleGoogleSignup}
 						size="lg"
-						className="w-full font-semibold font-nav bg-white hover:bg-gray-50 text-gray-800 border border-gray-300"
+						variant="bordered"
+						className="w-full font-semibold font-nav"
 						startContent={
 							<svg
 								className="w-5 h-5"

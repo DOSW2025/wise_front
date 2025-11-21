@@ -24,7 +24,7 @@ export default function TutorDashboard() {
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatsCard
 					title="Tutorías Realizadas"
-					value={48}
+					value={-1}
 					description="Este semestre"
 					color="success"
 					icon={
@@ -47,7 +47,7 @@ export default function TutorDashboard() {
 				/>
 				<StatsCard
 					title="Calificación Promedio"
-					value="4.8"
+					value="-1"
 					description="De 5.0 estrellas"
 					color="warning"
 					icon={
@@ -70,7 +70,7 @@ export default function TutorDashboard() {
 				/>
 				<StatsCard
 					title="Estudiantes Atendidos"
-					value={32}
+					value={-1}
 					description="Únicos este mes"
 					color="primary"
 					icon={
@@ -91,7 +91,7 @@ export default function TutorDashboard() {
 				/>
 				<StatsCard
 					title="Horas de Tutoría"
-					value={96}
+					value={-1}
 					description="Este semestre"
 					color="default"
 					icon={
@@ -187,74 +187,34 @@ export default function TutorDashboard() {
 			<Card>
 				<CardBody className="gap-4">
 					<h2 className="text-xl font-semibold">Resumen de Desempeño</h2>
+					{/* TODO: Conectar con API - datos hardcodeados eliminados */}
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-						<div className="p-4 bg-success-50 rounded-lg">
+						<div className="p-4 bg-default-50 rounded-lg">
 							<div className="flex items-center gap-2 mb-2">
-								<svg
-									className="w-5 h-5 text-success"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-									/>
-								</svg>
-								<p className="text-sm font-semibold text-success">
-									Tendencia Positiva
+								<p className="text-sm font-semibold text-default-600">
+									Tendencia
 								</p>
 							</div>
-							<p className="text-2xl font-bold text-success">+15%</p>
-							<p className="text-tiny text-success-600">
-								Aumento en solicitudes vs mes anterior
-							</p>
+							<p className="text-2xl font-bold text-default-600">-1%</p>
+							<p className="text-tiny text-default-500">Sin datos de API</p>
 						</div>
-						<div className="p-4 bg-warning-50 rounded-lg">
+						<div className="p-4 bg-default-50 rounded-lg">
 							<div className="flex items-center gap-2 mb-2">
-								<svg
-									className="w-5 h-5 text-warning"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-									/>
-								</svg>
-								<p className="text-sm font-semibold text-warning">
-									Comentarios Recientes
+								<p className="text-sm font-semibold text-default-600">
+									Comentarios
 								</p>
 							</div>
-							<p className="text-2xl font-bold text-warning">8</p>
-							<p className="text-tiny text-warning-600">Sin responder</p>
+							<p className="text-2xl font-bold text-default-600">-1</p>
+							<p className="text-tiny text-default-500">Sin datos de API</p>
 						</div>
-						<div className="p-4 bg-primary-50 rounded-lg">
+						<div className="p-4 bg-default-50 rounded-lg">
 							<div className="flex items-center gap-2 mb-2">
-								<svg
-									className="w-5 h-5 text-primary"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-									/>
-								</svg>
-								<p className="text-sm font-semibold text-primary">
-									Insignias Ganadas
+								<p className="text-sm font-semibold text-default-600">
+									Insignias
 								</p>
 							</div>
-							<p className="text-2xl font-bold text-primary">12</p>
-							<p className="text-tiny text-primary-600">Total acumulado</p>
+							<p className="text-2xl font-bold text-default-600">-1</p>
+							<p className="text-tiny text-default-500">Sin datos de API</p>
 						</div>
 					</div>
 				</CardBody>
@@ -275,47 +235,29 @@ export default function TutorDashboard() {
 							Ver todas
 						</Button>
 					</div>
+					{/* TODO: Conectar con API - Ejemplo con valores negativos para referencia */}
 					<div className="space-y-3">
-						{[
-							{
-								student: 'Pedro Ramírez',
-								rating: 5,
-								comment:
-									'Excelente tutor, muy claro en sus explicaciones y paciente.',
-								date: 'Hace 2 días',
-							},
-							{
-								student: 'Laura Silva',
-								rating: 5,
-								comment:
-									'Me ayudó mucho a entender los conceptos. Muy recomendado.',
-								date: 'Hace 5 días',
-							},
-						].map((review, index) => (
-							<div
-								key={index}
-								className="p-4 border border-default-200 rounded-lg"
-							>
-								<div className="flex items-start justify-between mb-2">
-									<p className="font-semibold">{review.student}</p>
-									<div className="flex items-center gap-1">
-										{[...Array(review.rating)].map((_, i) => (
-											<svg
-												key={i}
-												className="w-4 h-4 text-warning fill-current"
-												viewBox="0 0 24 24"
-											>
-												<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-											</svg>
-										))}
-									</div>
-								</div>
-								<p className="text-sm text-default-600 mb-1">
-									{review.comment}
+						<div className="p-4 border border-default-200 rounded-lg opacity-60">
+							<div className="flex items-start justify-between mb-2">
+								<p className="font-semibold">
+									Estudiante Ejemplo (Sin conexión)
 								</p>
-								<p className="text-tiny text-default-400">{review.date}</p>
+								<div className="flex items-center gap-1">
+									<svg
+										className="w-4 h-4 text-default-300 fill-current"
+										viewBox="0 0 24 24"
+									>
+										<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+									</svg>
+									<span className="text-sm">-1</span>
+								</div>
 							</div>
-						))}
+							<p className="text-sm text-default-600 mb-1">
+								Este es un comentario de ejemplo. Conectar con API para ver
+								datos reales.
+							</p>
+							<p className="text-tiny text-default-400">Sin fecha</p>
+						</div>
 					</div>
 				</CardBody>
 			</Card>

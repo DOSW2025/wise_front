@@ -1,5 +1,6 @@
-import { Avatar, Button, Listbox, ListboxItem } from '@heroui/react';
+import { Avatar, Button } from '@heroui/react';
 import {
+	BarChart3,
 	BookOpen,
 	Calendar,
 	CheckSquare,
@@ -12,7 +13,6 @@ import {
 	Menu,
 	MessageSquare,
 	Settings,
-	Star,
 	TrendingUp,
 	UserCheck,
 	Users,
@@ -76,10 +76,22 @@ export function Sidebar({
 					path: '/dashboard/student/progress',
 				},
 				{
+					key: 'statistics',
+					label: 'Estadísticas',
+					icon: <BarChart3 className="w-5 h-5" />,
+					path: '/dashboard/student/statistics',
+				},
+				{
 					key: 'community',
 					label: 'Comunidad',
 					icon: <Users className="w-5 h-5" />,
 					path: '/dashboard/student/community',
+				},
+				{
+					key: 'profile',
+					label: 'Perfil',
+					icon: <UserCheck className="w-5 h-5" />,
+					path: '/dashboard/student/profile',
 				},
 			];
 		}
@@ -209,6 +221,10 @@ export function Sidebar({
 		navigate('/login');
 	};
 
+	console.log('Sidebar props:', { userName, userEmail, userAvatar });
+	console.log('Avatar URL:', userAvatar);
+	console.log('Avatar exists:', !!userAvatar);
+
 	return (
 		<>
 			{/* Mobile menu toggle button */}
@@ -265,15 +281,36 @@ export function Sidebar({
 				<div className="p-4 border-b border-divider bg-content2">
 					<div className="flex items-center gap-3">
 						<Avatar
-							src={userAvatar}
+							src={
+								userAvatar
+									? userAvatar.includes('googleusercontent.com')
+										? userAvatar.split('=')[0] + '=s200-c'
+										: userAvatar
+									: undefined
+							}
 							color="primary"
 							isBordered
 							size="md"
 							showFallback
 							name={userName}
+							imgProps={{
+								crossOrigin: 'anonymous',
+								referrerPolicy: 'no-referrer',
+								onError: (e) => {
+									console.error('Sidebar: Error loading avatar:', userAvatar);
+									e.currentTarget.style.display = 'none';
+								},
+								onLoad: () => {
+									console.log(
+										'Sidebar: Avatar loaded successfully:',
+										userAvatar,
+									);
+								},
+							}}
 							classNames={{
 								base: 'bg-primary',
 								icon: 'text-primary',
+								img: 'object-cover',
 							}}
 						/>
 						<div className="flex-1 min-w-0">

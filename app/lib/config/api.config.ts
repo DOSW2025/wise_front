@@ -10,8 +10,12 @@ export const API_CONFIG = {
 
 export const API_ENDPOINTS = {
 	AUTH: {
+		LOGIN: '/wise/auth/login',
 		GOOGLE_LOGIN: '/wise/auth/google',
 		LOGOUT: '/wise/auth/logout',
 		ME: '/wise/auth/me',
+	},
+	TUTOR: {
+		PROFILE: '/wise/tutor/profile',
 	},
 } as const;

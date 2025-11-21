@@ -5,6 +5,11 @@
 
 import axios, { type AxiosError, type AxiosInstance } from 'axios';
 import { API_CONFIG } from '../config/api.config';
+import {
+	getStorageItem,
+	removeStorageItem,
+	STORAGE_KEYS,
+} from '../utils/storage';
 
 // Crear instancia de Axios
 const apiClient: AxiosInstance = axios.create({
@@ -19,7 +24,8 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor - Agregar token de autenticación
 apiClient.interceptors.request.use(
 	(config) => {
-		const token = localStorage.getItem('token');
+		// Retrieve token using secure storage utility
+		const token = getStorageItem(STORAGE_KEYS.TOKEN);
 		if (token) {
 			config.headers.Authorization = `Bearer ${token}`;
 		}
@@ -36,9 +42,9 @@ apiClient.interceptors.response.use(
 	async (error: AxiosError) => {
 		// Si el error es 401, limpiar sesión y redirigir a login
 		if (error.response?.status === 401) {
-			// Limpiar sesión
-			localStorage.removeItem('token');
-			localStorage.removeItem('user');
+			// Clear session using secure storage utility
+			removeStorageItem(STORAGE_KEYS.TOKEN);
+			removeStorageItem(STORAGE_KEYS.USER);
 
 			if (
 				window.location.pathname !== '/login' &&
