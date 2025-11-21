@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router';
 import { Sidebar } from './sidebar';
+import AIChatWidget from './chat/AIChatWidget';
 
 interface DashboardLayoutProps {
 	userRole?: 'student' | 'tutor' | 'admin';
@@ -28,6 +29,7 @@ export function DashboardLayout({
 			<main className="flex-1 lg:ml-64 p-4 pt-16 lg:pt-8 lg:p-8 overflow-y-auto">
 				<Outlet />
 			</main>
+			<AIChatWidget />
 		</div>
 	);
 }
