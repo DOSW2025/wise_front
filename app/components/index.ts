@@ -16,4 +16,5 @@ export { ProfileAvatar } from './profile-avatar';
 export { RoleDashboard } from './role-dashboard';
 export { Sidebar } from './sidebar';
 export { StatsCard } from './stats-card';
+export { SuggestedMaterialsPanel } from './suggested-materials-panel';
 export { TutoringCard } from './tutoring-card';

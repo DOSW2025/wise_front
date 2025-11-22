@@ -1,6 +1,7 @@
 import { Button, Card, CardBody } from '@heroui/react';
 import { Link } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
+import { SuggestedMaterialsPanel } from '~/components/suggested-materials-panel';
 
 export default function StudentDashboard() {
 	return (
@@ -234,6 +235,9 @@ export default function StudentDashboard() {
 					</div>
 				</CardBody>
 			</Card>
+
+			{/* Suggested Materials Panel */}
+			<SuggestedMaterialsPanel />
 		</div>
 	);
 }
