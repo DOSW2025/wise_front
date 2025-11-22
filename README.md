@@ -1,87 +1,227 @@
-# Welcome to React Router!
+# ECIWISE+ Frontend
 
-A modern, production-ready template for building full-stack React applications using React Router.
+Plataforma de aprendizaje colaborativo para la Escuela Colombiana de Ingeniería Julio Garavito. Facilita tutorías, materiales de estudio, grupos de trabajo y gestión del progreso académico.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## Stack Tecnológico
 
-## Features
+- React Router v7.9.2 (SSR, HMR)
+- TypeScript 5.9.2
+- Tailwind CSS v4.1.13
+- Hero UI v2.8.5
+- React Query v5.90.8
+- Vite 7.1.7
+- Biome v2.3.5 (linting/formatting)
+- Framer Motion
+- Lucide React v0.553.0
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+## Características
 
-## Getting Started
+- Dashboards personalizados por rol: Estudiante, Tutor y Administrador
+- Validación automática de código pre-commit con Husky y Biome
+- Sistema de temas con colores institucionales
+- Tipografía: Poppins, Nunito, IBM Plex Sans, DM Sans
 
-### Installation
+## Estructura del Proyecto
 
-Install the dependencies:
+```
+app/
+  components/       # Componentes reutilizables
+  contexts/         # Context providers (auth-context.tsx)
+  lib/              # API client, servicios, tipos, utils
+  routes/
+    dashboard/      # student/, tutor/, admin/
+    home/           # Landing page
+    login/          # Autenticación
+    register/       # Registro de usuarios
+  root.tsx          # Layout raíz
+  providers.tsx     # React Query, temas
+  hero.ts           # Configuración Hero UI
+  routes.ts         # Definición de rutas
+```
+
+## Requisitos
+
+- Node.js 18+
+- pnpm 10+
+
+## Instalación y Desarrollo
 
 ```bash
-npm install
+# Instalar dependencias
+pnpm install
+
+# Iniciar servidor de desarrollo (http://localhost:5173)
+pnpm run dev
+
+# Construir para producción
+pnpm run build
+
+# Iniciar servidor de producción
+pnpm run start
 ```
 
-### Development
-
-Start the development server with HMR:
+## Scripts Disponibles
 
 ```bash
-npm run dev
+pnpm run dev         # Servidor de desarrollo
+pnpm run build       # Build de producción
+pnpm run start       # Servidor de producción
+pnpm run typecheck   # Verificar tipos TypeScript
+pnpm run lint        # Linter con auto-fix
+pnpm run lint:ci     # Linter sin modificaciones (CI/CD)
 ```
 
-Your application will be available at `http://localhost:5173`.
+## Despliegue
 
-## Building for Production
-
-Create a production build:
+### Docker
 
 ```bash
-npm run build
+# Construir imagen
+docker build -t eciwise-front .
+
+# Ejecutar contenedor
+docker run -p 3000:3000 eciwise-front
 ```
 
-## Deployment
+Plataformas compatibles: AWS ECS, Google Cloud Run, Azure Container Apps, Digital Ocean, Fly.io, Railway
 
-### Docker Deployment
+### Manual
 
-To build and run using Docker:
+El servidor está listo para producción. Despliega el output de `build/`:
+- `build/client/` - Activos estáticos
+- `build/server/` - Código del servidor
+
+## Convenciones de Código
+
+- Componentes: PascalCase
+- Archivos y carpetas: kebab-case
+- Color primario institucional: #990000
+- Pre-commit hooks validan código automáticamente
 
 ```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
+git add .
+git commit -m "mensaje"  # Validación automática
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+## Rutas de la Aplicación
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
+Públicas:
+- `/` - Landing page
+- `/login` - Inicio de sesión
+- `/register` - Registro
 
-### DIY Deployment
+Protegidas (requieren autenticación):
+- `/dashboard` - Redirige según rol del usuario
+- `/dashboard/student` - Dashboard de estudiante
+- `/dashboard/tutor` - Dashboard de tutor
+- `/dashboard/admin` - Dashboard de administrador
 
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
+## Nuevas Funcionalidades
 
-Make sure to deploy the output of `npm run build`
+### Panel de Materiales Sugeridos
 
+El componente `SuggestedMaterialsPanel` proporciona una sección de materiales recomendados en el Dashboard del estudiante.
+
+**Ubicación**: `app/components/suggested-materials-panel.tsx`
+
+**Características**:
+- Panel con gradiente y diseño institucional
+- Encabezado con ícono de documento
+- Botón "Ver más" para acceder a todos los materiales
+- Lista de materiales sugeridos con información detallada
+- Cada material muestra: título, asignatura, rating
+- Botón de descarga para cada material
+- Indicador visual del tipo de archivo (PDF/DOC)
+
+**Uso**:
+```tsx
+import { SuggestedMaterialsPanel } from '~/components';
+
+export default function StudentDashboard() {
+  return (
+    <div className="space-y-6">
+      {/* Otros componentes */}
+      <SuggestedMaterialsPanel />
+    </div>
+  );
+}
 ```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
+
+**Datos de Ejemplo**:
+```tsx
+interface SuggestedMaterial {
+  id: string;
+  title: string;
+  subject: string;
+  rating: number;
+  type: 'PDF' | 'DOC';
+  fileUrl?: string;
+}
+
+const mockSuggestedMaterials: SuggestedMaterial[] = [
+  {
+    id: '1',
+    title: 'Guía completa de integrales',
+    subject: 'Matemáticas',
+    rating: 4.8,
+    type: 'PDF',
+  },
+  {
+    id: '2',
+    title: 'Python para principiantes',
+    subject: 'Programación',
+    rating: 4.9,
+    type: 'DOC',
+  },
+];
 ```
 
-## Styling
+**Características del Panel**:
+- Descarga de materiales (simulada, lista para integrar con API)
+- Hover effects para mejor interactividad
+- Respuesta hover en tarjetas de materiales
+- Botones con iconos de descarga
+- Rating visible con estrella (★)
+- Clasificación por tipo de archivo
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+**Integración en Dashboard**:
+El componente se integra en la parte inferior del Dashboard del estudiante:
 
----
+```tsx
+// app/routes/dashboard/student/index.tsx
+import { SuggestedMaterialsPanel } from '~/components';
 
-Built with ❤️ using React Router.
+export default function StudentDashboard() {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      {/* Stats Grid */}
+      {/* Quick Actions */}
+      {/* Recent Materials */}
+      
+      {/* Suggested Materials Panel */}
+      <SuggestedMaterialsPanel />
+    </div>
+  );
+}
+```
+
+**Próximas Mejoras**:
+- [ ] Conectar a API backend para obtener materiales recomendados
+- [ ] Implementar sistema de recomendación basado en el progreso del estudiante
+- [ ] Descargas reales de archivos PDF/DOC
+- [ ] Historial de descargas del estudiante
+- [ ] Filtrado de materiales por asignatura
+- [ ] Ordenamiento por rating o fecha
+
+## Convenciones de Código
+
+- Componentes: PascalCase
+- Archivos y carpetas: kebab-case
+- Color primario institucional: #990000
+- Pre-commit hooks validan código automáticamente
+
+```bash
+git add .
+git commit -m "mensaje"  # Validación automática
+```
