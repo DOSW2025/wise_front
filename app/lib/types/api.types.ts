@@ -39,3 +39,32 @@ export interface ApiError {
 	error: string | Record<string, string[]>;
 	message: string;
 }
+
+export interface PaginationParams {
+	page: number;
+	limit: number;
+	search?: string;
+	role?: 'estudiante' | 'tutor' | 'admin';
+	status?: 'active' | 'suspended';
+}
+
+export interface PaginatedResponse<T> {
+	data: T[];
+	pagination: {
+		currentPage: number;
+		totalPages: number;
+		totalItems: number;
+		itemsPerPage: number;
+		hasNextPage: boolean;
+		hasPreviousPage: boolean;
+	};
+}
+
+export interface UpdateRoleRequest {
+	role: 'estudiante' | 'tutor' | 'admin';
+}
+
+export interface UpdateUserStatusRequest {
+	isActive: boolean;
+	reason?: string;
+}
