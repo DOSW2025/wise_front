@@ -116,6 +116,104 @@ Protegidas (requieren autenticación):
 - `/dashboard/tutor` - Dashboard de tutor
 - `/dashboard/admin` - Dashboard de administrador
 
+## Nuevas Funcionalidades
+
+### Panel de Materiales Sugeridos
+
+El componente `SuggestedMaterialsPanel` proporciona una sección de materiales recomendados en el Dashboard del estudiante.
+
+**Ubicación**: `app/components/suggested-materials-panel.tsx`
+
+**Características**:
+- Panel con gradiente y diseño institucional
+- Encabezado con ícono de documento
+- Botón "Ver más" para acceder a todos los materiales
+- Lista de materiales sugeridos con información detallada
+- Cada material muestra: título, asignatura, rating
+- Botón de descarga para cada material
+- Indicador visual del tipo de archivo (PDF/DOC)
+
+**Uso**:
+```tsx
+import { SuggestedMaterialsPanel } from '~/components';
+
+export default function StudentDashboard() {
+  return (
+    <div className="space-y-6">
+      {/* Otros componentes */}
+      <SuggestedMaterialsPanel />
+    </div>
+  );
+}
+```
+
+**Datos de Ejemplo**:
+```tsx
+interface SuggestedMaterial {
+  id: string;
+  title: string;
+  subject: string;
+  rating: number;
+  type: 'PDF' | 'DOC';
+  fileUrl?: string;
+}
+
+const mockSuggestedMaterials: SuggestedMaterial[] = [
+  {
+    id: '1',
+    title: 'Guía completa de integrales',
+    subject: 'Matemáticas',
+    rating: 4.8,
+    type: 'PDF',
+  },
+  {
+    id: '2',
+    title: 'Python para principiantes',
+    subject: 'Programación',
+    rating: 4.9,
+    type: 'DOC',
+  },
+];
+```
+
+**Características del Panel**:
+- Descarga de materiales (simulada, lista para integrar con API)
+- Hover effects para mejor interactividad
+- Respuesta hover en tarjetas de materiales
+- Botones con iconos de descarga
+- Rating visible con estrella (★)
+- Clasificación por tipo de archivo
+
+**Integración en Dashboard**:
+El componente se integra en la parte inferior del Dashboard del estudiante:
+
+```tsx
+// app/routes/dashboard/student/index.tsx
+import { SuggestedMaterialsPanel } from '~/components';
+
+export default function StudentDashboard() {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      {/* Stats Grid */}
+      {/* Quick Actions */}
+      {/* Recent Materials */}
+      
+      {/* Suggested Materials Panel */}
+      <SuggestedMaterialsPanel />
+    </div>
+  );
+}
+```
+
+**Próximas Mejoras**:
+- [ ] Conectar a API backend para obtener materiales recomendados
+- [ ] Implementar sistema de recomendación basado en el progreso del estudiante
+- [ ] Descargas reales de archivos PDF/DOC
+- [ ] Historial de descargas del estudiante
+- [ ] Filtrado de materiales por asignatura
+- [ ] Ordenamiento por rating o fecha
+
 ## Convenciones de Código
 
 - Componentes: PascalCase
