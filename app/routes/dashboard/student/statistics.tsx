@@ -1,15 +1,5 @@
-import {
-	Button,
-	Card,
-	CardBody,
-	CardHeader,
-	Input,
-	Select,
-	SelectItem,
-	Spinner,
-} from '@heroui/react';
-import { TrendingUp } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Card, CardBody, CardHeader, Spinner } from '@heroui/react';
+import { useMemo } from 'react';
 import {
 	Bar,
 	BarChart,
@@ -25,11 +15,13 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts';
+import { DateRangeFilter } from '~/components';
 import {
 	CHART_AXIS_STYLE,
 	CHART_GRID_STYLE,
 	CHART_TOOLTIP_STYLE,
 } from '~/components/charts/chart-tooltip';
+import { useDateFilter } from '~/lib/hooks/useDateFilter';
 
 // Mock data - Tutorías recibidas por mes (últimos 6 meses)
 const tutoringData = [
@@ -66,22 +58,16 @@ const COLORS = [
 ];
 
 export default function StudentStatistics() {
-	const [period, setPeriod] = useState<string>('last-month');
-	const [customDateStart, setCustomDateStart] = useState('');
-	const [customDateEnd, setCustomDateEnd] = useState('');
-	const [isLoading, setIsLoading] = useState(false);
-
-	const handlePeriodChange = (keys: any) => {
-		const newPeriod = Array.from(keys)[0] as string;
-		setPeriod(newPeriod);
-		setIsLoading(true);
-		setTimeout(() => setIsLoading(false), 1000);
-	};
-
-	const handleCustomFilter = () => {
-		setIsLoading(true);
-		setTimeout(() => setIsLoading(false), 1000);
-	};
+	const {
+		period,
+		customDateStart,
+		setCustomDateStart,
+		customDateEnd,
+		setCustomDateEnd,
+		isLoading,
+		handlePeriodChange,
+		handleCustomFilter,
+	} = useDateFilter();
 
 	// Calculate totals using useMemo for performance optimization
 	const totalSessions = useMemo(
@@ -110,51 +96,15 @@ export default function StudentStatistics() {
 					</p>
 				</div>
 
-				<div className="flex flex-wrap gap-2 items-center bg-default-50 p-2 rounded-lg">
-					<Select
-						label="Periodo"
-						className="w-40"
-						size="sm"
-						selectedKeys={[period]}
-						onSelectionChange={handlePeriodChange}
-					>
-						<SelectItem key="last-week">Última semana</SelectItem>
-						<SelectItem key="last-month">Último mes</SelectItem>
-						<SelectItem key="semester">Semestre actual</SelectItem>
-						<SelectItem key="year">Año actual</SelectItem>
-						<SelectItem key="custom">Personalizado</SelectItem>
-					</Select>
-
-					{period === 'custom' && (
-						<div className="flex gap-2 items-center">
-							<Input
-								type="date"
-								label="Desde"
-								size="sm"
-								value={customDateStart}
-								onValueChange={setCustomDateStart}
-								className="w-32"
-							/>
-							<Input
-								type="date"
-								label="Hasta"
-								size="sm"
-								value={customDateEnd}
-								onValueChange={setCustomDateEnd}
-								className="w-32"
-							/>
-							<Button
-								isIconOnly
-								size="sm"
-								color="primary"
-								variant="flat"
-								onPress={handleCustomFilter}
-							>
-								<TrendingUp className="w-4 h-4" />
-							</Button>
-						</div>
-					)}
-				</div>
+				<DateRangeFilter
+					period={period}
+					onPeriodChange={handlePeriodChange}
+					customDateStart={customDateStart}
+					onCustomDateStartChange={setCustomDateStart}
+					customDateEnd={customDateEnd}
+					onCustomDateEndChange={setCustomDateEnd}
+					onCustomFilter={handleCustomFilter}
+				/>
 			</div>
 
 			{isLoading ? (

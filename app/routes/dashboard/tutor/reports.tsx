@@ -5,14 +5,11 @@ import {
 	CardBody,
 	CardHeader,
 	Chip,
-	Input,
 	Modal,
 	ModalBody,
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
-	Select,
-	SelectItem,
 	Spinner,
 	Textarea,
 	useDisclosure,
@@ -29,6 +26,8 @@ import {
 	Users,
 } from 'lucide-react';
 import { useState } from 'react';
+import { DateRangeFilter } from '~/components';
+import { useDateFilter } from '~/lib/hooks/useDateFilter';
 
 interface CompletedSession {
 	id: string;
@@ -59,27 +58,16 @@ export default function TutorReports() {
 		'sessions',
 	);
 
-	const [period, setPeriod] = useState<string>('last-month');
-	const [customDateStart, setCustomDateStart] = useState('');
-	const [customDateEnd, setCustomDateEnd] = useState('');
-	const [isLoading, setIsLoading] = useState(false);
-
-	const handlePeriodChange = (keys: any) => {
-		const newPeriod = Array.from(keys)[0] as string;
-		setPeriod(newPeriod);
-		setIsLoading(true);
-		// Simulate API call
-		setTimeout(() => {
-			setIsLoading(false);
-		}, 1000);
-	};
-
-	const handleCustomFilter = () => {
-		setIsLoading(true);
-		setTimeout(() => {
-			setIsLoading(false);
-		}, 1000);
-	};
+	const {
+		period,
+		customDateStart,
+		setCustomDateStart,
+		customDateEnd,
+		setCustomDateEnd,
+		isLoading,
+		handlePeriodChange,
+		handleCustomFilter,
+	} = useDateFilter();
 
 	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
 	const _monthlyData: { month: string; sessions: number; rating: number }[] = [
@@ -193,51 +181,15 @@ export default function TutorReports() {
 						</Button>
 					</div>
 
-					<div className="flex flex-wrap gap-2 items-center bg-default-50 p-2 rounded-lg">
-						<Select
-							label="Periodo"
-							className="w-40"
-							size="sm"
-							selectedKeys={[period]}
-							onSelectionChange={handlePeriodChange}
-						>
-							<SelectItem key="last-week">Última semana</SelectItem>
-							<SelectItem key="last-month">Último mes</SelectItem>
-							<SelectItem key="semester">Semestre actual</SelectItem>
-							<SelectItem key="year">Año actual</SelectItem>
-							<SelectItem key="custom">Personalizado</SelectItem>
-						</Select>
-
-						{period === 'custom' && (
-							<div className="flex gap-2 items-center">
-								<Input
-									type="date"
-									label="Desde"
-									size="sm"
-									value={customDateStart}
-									onValueChange={setCustomDateStart}
-									className="w-32"
-								/>
-								<Input
-									type="date"
-									label="Hasta"
-									size="sm"
-									value={customDateEnd}
-									onValueChange={setCustomDateEnd}
-									className="w-32"
-								/>
-								<Button
-									isIconOnly
-									size="sm"
-									color="primary"
-									variant="flat"
-									onPress={handleCustomFilter}
-								>
-									<TrendingUp className="w-4 h-4" />
-								</Button>
-							</div>
-						)}
-					</div>
+					<DateRangeFilter
+						period={period}
+						onPeriodChange={handlePeriodChange}
+						customDateStart={customDateStart}
+						onCustomDateStartChange={setCustomDateStart}
+						customDateEnd={customDateEnd}
+						onCustomDateEndChange={setCustomDateEnd}
+						onCustomFilter={handleCustomFilter}
+					/>
 				</div>
 			</div>
 
