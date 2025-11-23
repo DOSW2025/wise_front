@@ -43,15 +43,15 @@ import {
 	suspendUser,
 	updateUserRole,
 } from '~/lib/services/user.service';
-import type { PaginationParams, UserDto } from '~/lib/types/api.types';
+import type { AdminUserDto, PaginationParams } from '~/lib/types/api.types';
 
 type RoleChangeModalData = {
-	user: UserDto;
+	user: AdminUserDto;
 	newRole: 'estudiante' | 'tutor' | 'admin';
 };
 
 type SuspendModalData = {
-	user: UserDto;
+	user: AdminUserDto;
 	reason: string;
 };
 
@@ -74,7 +74,7 @@ const roleLabels: Record<string, string> = {
 
 export default function AdminUsers() {
 	// State for users data
-	const [users, setUsers] = useState<UserDto[]>([]);
+	const [users, setUsers] = useState<AdminUserDto[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalItems, setTotalItems] = useState(0);
@@ -93,7 +93,7 @@ export default function AdminUsers() {
 	const [roleChangeData, setRoleChangeData] =
 		useState<RoleChangeModalData | null>(null);
 	const [suspendData, setSuspendData] = useState<SuspendModalData | null>(null);
-	const [activateData, setActivateData] = useState<UserDto | null>(null);
+	const [activateData, setActivateData] = useState<AdminUserDto | null>(null);
 
 	// Action loading states
 	const [actionLoading, setActionLoading] = useState(false);
@@ -139,7 +139,7 @@ export default function AdminUsers() {
 
 	// Handle role change
 	const openRoleChangeModal = useCallback(
-		(user: UserDto, newRole: 'estudiante' | 'tutor' | 'admin') => {
+		(user: AdminUserDto, newRole: 'estudiante' | 'tutor' | 'admin') => {
 			setRoleChangeData({ user, newRole });
 			roleModal.onOpen();
 		},
@@ -165,7 +165,7 @@ export default function AdminUsers() {
 
 	// Handle suspend
 	const openSuspendModal = useCallback(
-		(user: UserDto) => {
+		(user: AdminUserDto) => {
 			setSuspendData({ user, reason: '' });
 			suspendModal.onOpen();
 		},
@@ -191,7 +191,7 @@ export default function AdminUsers() {
 
 	// Handle activate
 	const openActivateModal = useCallback(
-		(user: UserDto) => {
+		(user: AdminUserDto) => {
 			setActivateData(user);
 			activateModal.onOpen();
 		},
@@ -226,36 +226,37 @@ export default function AdminUsers() {
 
 	// Render cell content
 	const renderCell = useCallback(
-		(user: UserDto, columnKey: string) => {
+		(user: AdminUserDto, columnKey: string) => {
+			const isActive = user.estado.nombre === 'activo';
 			switch (columnKey) {
 				case 'user':
 					return (
 						<div className="flex flex-col">
-							<p className="text-sm font-semibold">{user.name}</p>
+							<p className="text-sm font-semibold">{`${user.nombre} ${user.apellido}`}</p>
 							<p className="text-tiny text-default-400">{user.email}</p>
 						</div>
 					);
 				case 'role':
 					return (
-						<Chip size="sm" color={roleColors[user.role]} variant="flat">
-							{roleLabels[user.role]}
+						<Chip size="sm" color={roleColors[user.rol.nombre]} variant="flat">
+							{roleLabels[user.rol.nombre]}
 						</Chip>
 					);
 				case 'status':
 					return (
 						<Chip
 							size="sm"
-							color={user.isActive ? 'success' : 'danger'}
+							color={isActive ? 'success' : 'danger'}
 							variant="flat"
 							startContent={
-								user.isActive ? (
+								isActive ? (
 									<ShieldCheck className="w-3 h-3" />
 								) : (
 									<ShieldAlert className="w-3 h-3" />
 								)
 							}
 						>
-							{user.isActive ? 'Activo' : 'Suspendido'}
+							{isActive ? 'Activo' : 'Suspendido'}
 						</Chip>
 					);
 				case 'createdAt':
@@ -279,7 +280,7 @@ export default function AdminUsers() {
 									</Button>
 								</DropdownTrigger>
 								<DropdownMenu aria-label="Acciones de usuario">
-									{user.role !== 'estudiante' ? (
+									{user.rol.nombre !== 'estudiante' ? (
 										<DropdownItem
 											key="change-role-estudiante"
 											startContent={<Edit className="w-4 h-4" />}
@@ -288,7 +289,7 @@ export default function AdminUsers() {
 											Cambiar a Estudiante
 										</DropdownItem>
 									) : null}
-									{user.role !== 'tutor' ? (
+									{user.rol.nombre !== 'tutor' ? (
 										<DropdownItem
 											key="change-role-tutor"
 											startContent={<Edit className="w-4 h-4" />}
@@ -297,7 +298,7 @@ export default function AdminUsers() {
 											Cambiar a Tutor
 										</DropdownItem>
 									) : null}
-									{user.role !== 'admin' ? (
+									{user.rol.nombre !== 'admin' ? (
 										<DropdownItem
 											key="change-role-admin"
 											startContent={<Edit className="w-4 h-4" />}
@@ -306,7 +307,7 @@ export default function AdminUsers() {
 											Cambiar a Admin
 										</DropdownItem>
 									) : null}
-									{user.isActive ? (
+									{isActive ? (
 										<DropdownItem
 											key="suspend"
 											color="danger"
@@ -453,7 +454,8 @@ export default function AdminUsers() {
 							<div className="space-y-4">
 								<p className="text-sm">
 									¿Estás seguro de que deseas cambiar el rol de{' '}
-									<strong>{roleChangeData.user.name}</strong>?
+									<strong>{`${roleChangeData.user.nombre} ${roleChangeData.user.apellido}`}</strong>
+									?
 								</p>
 								<div className="bg-default-100 p-4 rounded-lg space-y-2">
 									<div className="flex justify-between">
@@ -462,10 +464,10 @@ export default function AdminUsers() {
 										</span>
 										<Chip
 											size="sm"
-											color={roleColors[roleChangeData.user.role]}
+											color={roleColors[roleChangeData.user.rol.nombre]}
 											variant="flat"
 										>
-											{roleLabels[roleChangeData.user.role]}
+											{roleLabels[roleChangeData.user.rol.nombre]}
 										</Chip>
 									</div>
 									<div className="flex justify-between">
@@ -514,7 +516,8 @@ export default function AdminUsers() {
 							<div className="space-y-4">
 								<p className="text-sm">
 									¿Estás seguro de que deseas suspender a{' '}
-									<strong>{suspendData.user.name}</strong>?
+									<strong>{`${suspendData.user.nombre} ${suspendData.user.apellido}`}</strong>
+									?
 								</p>
 								<Textarea
 									label="Razón de suspensión (opcional)"
@@ -560,7 +563,8 @@ export default function AdminUsers() {
 							<div className="space-y-4">
 								<p className="text-sm">
 									¿Estás seguro de que deseas activar a{' '}
-									<strong>{activateData.name}</strong>?
+									<strong>{`${activateData.nombre} ${activateData.apellido}`}</strong>
+									?
 								</p>
 								<p className="text-tiny text-success-600">
 									El usuario podrá acceder nuevamente a la plataforma.

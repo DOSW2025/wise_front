@@ -342,9 +342,7 @@ export default function TutorScheduled() {
 								}}
 							>
 								{DAYS.map((day) => (
-									<SelectItem key={day.key} value={day.key}>
-										{day.label}
-									</SelectItem>
+									<SelectItem key={day.key}>{day.label}</SelectItem>
 								))}
 							</Select>
 							<Select
@@ -357,9 +355,7 @@ export default function TutorScheduled() {
 								}}
 							>
 								{TIME_OPTIONS.map((time) => (
-									<SelectItem key={time} value={time}>
-										{time}
-									</SelectItem>
+									<SelectItem key={time}>{time}</SelectItem>
 								))}
 							</Select>
 							<Select
@@ -372,9 +368,7 @@ export default function TutorScheduled() {
 								}}
 							>
 								{TIME_OPTIONS.map((time) => (
-									<SelectItem key={time} value={time}>
-										{time}
-									</SelectItem>
+									<SelectItem key={time}>{time}</SelectItem>
 								))}
 							</Select>
 						</div>

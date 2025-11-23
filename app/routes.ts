@@ -1,7 +1,7 @@
 import { index, type RouteConfig, route } from '@react-router/dev/routes';
 
 // Helper function to create dashboard routes
-function createDashboardRoutes(role: string, pages: string[]): RouteConfig[0] {
+function createDashboardRoutes(role: string, pages: string[]) {
 	return route(`dashboard/${role}`, `routes/dashboard/${role}/dashboard.tsx`, [
 		index(`routes/dashboard/${role}/index.tsx`),
 		...pages.map((page) => route(page, `routes/dashboard/${role}/${page}.tsx`)),

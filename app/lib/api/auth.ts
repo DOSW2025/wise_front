@@ -4,6 +4,7 @@
  */
 
 import { API_ENDPOINTS } from '../config/api.config';
+import type { AuthUserDto } from '../types/api.types';
 import {
 	getStorageItem,
 	getStorageJSON,
@@ -14,18 +15,11 @@ import {
 } from '../utils/storage';
 import apiClient from './client';
 
-export interface UserResponse {
-	id: string;
-	email: string;
-	nombre: string;
-	apellido: string;
-	rol: string;
-	avatarUrl?: string | null;
-}
+export type UserResponse = AuthUserDto;
 
 export interface AuthResponse {
 	access_token: string;
-	user: UserResponse;
+	user: AuthUserDto;
 }
 
 export const authService = {
@@ -62,7 +56,7 @@ export const authService = {
 	/**
 	 * Obtener usuario actual
 	 */
-	async me(): Promise<UserResponse> {
+	async me(): Promise<AuthUserDto> {
 		const response = await apiClient.get(API_ENDPOINTS.AUTH.ME);
 		return response.data;
 	},
@@ -88,8 +82,8 @@ export const authService = {
 	/**
 	 * Obtener usuario guardado
 	 */
-	getUser(): UserResponse | null {
-		const user = getStorageJSON<UserResponse>(STORAGE_KEYS.USER);
+	getUser(): AuthUserDto | null {
+		const user = getStorageJSON<AuthUserDto>(STORAGE_KEYS.USER);
 		console.log('Reading user from localStorage:', user);
 		console.log('Avatar URL from storage:', user?.avatarUrl);
 		return user;
