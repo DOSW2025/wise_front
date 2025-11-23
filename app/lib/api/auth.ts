@@ -28,8 +28,19 @@ export const authService = {
 	 * Redirige al usuario al flujo de OAuth de Google
 	 */
 	getGoogleAuthUrl(): string {
-		const baseUrl = API_ENDPOINTS.AUTH.GOOGLE_LOGIN;
-		return `${apiClient.defaults.baseURL}${baseUrl}`;
+		const endpoint = API_ENDPOINTS.AUTH.GOOGLE_LOGIN;
+		const baseURL = apiClient.defaults.baseURL || '';
+
+		// Si baseURL ya termina en /wise y el endpoint empieza con /wise, evitar duplicación
+		if (baseURL.endsWith('/wise') && endpoint.startsWith('/wise')) {
+			return `${baseURL.slice(0, -5)}${endpoint}`;
+		}
+
+		// Asegurar que no haya doble slash al unir
+		const cleanBaseURL = baseURL.replace(/\/$/, '');
+		const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+		return `${cleanBaseURL}${cleanEndpoint}`;
 	},
 
 	/**

@@ -52,7 +52,14 @@ export default function AuthCallback() {
 				// Decodificar y parsear la información del usuario con validación
 				let user: unknown;
 				try {
-					user = JSON.parse(decodeURIComponent(userParam));
+					// El parámetro ya viene decodificado por searchParams.get()
+					// Intentamos parsearlo directamente, o decodificarlo si es necesario
+					try {
+						user = JSON.parse(userParam);
+					} catch {
+						user = JSON.parse(decodeURIComponent(userParam));
+					}
+
 					console.log('User data received from backend:', user);
 					console.log(
 						'Avatar URL from backend:',
