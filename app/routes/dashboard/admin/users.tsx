@@ -120,6 +120,9 @@ export default function AdminUsers() {
 			setTotalItems(response.pagination.totalItems);
 		} catch (error) {
 			console.error('Error loading users:', error);
+			setError(
+				'Error al cargar la lista de usuarios. Por favor intente nuevamente.',
+			);
 		} finally {
 			setLoading(false);
 		}
@@ -371,6 +374,11 @@ export default function AdminUsers() {
 			/>
 
 			{/* Filters */}
+			{error && !actionLoading && (
+				<div className="bg-danger-50 text-danger-600 p-4 rounded-lg text-sm">
+					{error}
+				</div>
+			)}
 			<Card>
 				<CardBody>
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
