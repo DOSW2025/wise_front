@@ -5,7 +5,11 @@
 
 import apiClient from '../api/client';
 import { API_ENDPOINTS } from '../config/api.config';
-import type { LoginRequest, LoginResponse, UserDto } from '../types/api.types';
+import type {
+	AuthUserDto,
+	LoginRequest,
+	LoginResponse,
+} from '../types/api.types';
 import {
 	clearStorage,
 	getStorageItem,
@@ -16,46 +20,26 @@ import {
 } from '../utils/storage';
 
 /**
- * Extrae el token de la respuesta (soporta 'token' o 'accessToken')
+ * Extrae el token de la respuesta (soporta 'token' o 'access_token')
  */
 function extractToken(data: Record<string, unknown>): string | undefined {
+	if (typeof data.access_token === 'string') return data.access_token;
 	if (typeof data.token === 'string') return data.token;
 	if (typeof data.accessToken === 'string') return data.accessToken;
 	return undefined;
 }
 
 /**
- * Extrae el refresh token de la respuesta
- */
-function extractRefreshToken(data: Record<string, unknown>): string {
-	return typeof data.refreshToken === 'string' ? data.refreshToken : '';
-}
-
-/**
  * Extrae el usuario de la respuesta (soporta 'user' o 'usuario')
  */
-function extractUser(data: Record<string, unknown>): UserDto | undefined {
+function extractUser(data: Record<string, unknown>): AuthUserDto | undefined {
 	if (typeof data.user === 'object' && data.user !== null) {
-		return data.user as UserDto;
+		return data.user as AuthUserDto;
 	}
 	if (typeof data.usuario === 'object' && data.usuario !== null) {
-		return data.usuario as UserDto;
+		return data.usuario as AuthUserDto;
 	}
 	return undefined;
-}
-
-/**
- * Extrae el tiempo de expiración de la respuesta
- */
-function extractExpiresIn(data: Record<string, unknown>): number {
-	if (typeof data.expiresIn === 'number') return data.expiresIn;
-
-	const metadata = data.metadata as Record<string, unknown> | null;
-	if (metadata && typeof metadata.expiresIn === 'number') {
-		return metadata.expiresIn;
-	}
-
-	return 0;
 }
 
 /**
@@ -79,28 +63,24 @@ function parseLoginResponse(data: Record<string, unknown>): LoginResponse {
 		? (data.data as Record<string, unknown>)
 		: data;
 
-	const token = extractToken(responseData);
-	const refreshToken = extractRefreshToken(responseData);
+	const access_token = extractToken(responseData);
 	const user = extractUser(responseData);
-	const expiresIn = extractExpiresIn(responseData);
 
-	if (!token || !user) {
+	if (!access_token || !user) {
 		const message =
 			typeof data.message === 'string' ? data.message : 'Error en el login';
 		throw new Error(message);
 	}
 
-	return { token, refreshToken, user, expiresIn };
+	return { access_token, user };
 }
 
 /**
  * Almacena los datos de autenticación en el storage
  */
 function storeAuthData(authData: LoginResponse): void {
-	setStorageItem(STORAGE_KEYS.TOKEN, authData.token);
-	setStorageItem(STORAGE_KEYS.REFRESH_TOKEN, authData.refreshToken);
+	setStorageItem(STORAGE_KEYS.TOKEN, authData.access_token);
 	setStorageJSON(STORAGE_KEYS.USER, authData.user);
-	setStorageItem(STORAGE_KEYS.EXPIRES_IN, authData.expiresIn.toString());
 }
 
 /**
@@ -154,8 +134,8 @@ export async function logout(): Promise<void> {
 /**
  * Obtener usuario actual desde localStorage
  */
-export function getCurrentUser(): UserDto | null {
-	return getStorageJSON<UserDto>(STORAGE_KEYS.USER);
+export function getCurrentUser(): AuthUserDto | null {
+	return getStorageJSON<AuthUserDto>(STORAGE_KEYS.USER);
 }
 
 /**

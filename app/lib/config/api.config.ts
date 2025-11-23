@@ -19,9 +19,9 @@ export const API_ENDPOINTS = {
 		PROFILE: '/wise/tutor/profile',
 	},
 	USERS: {
-		LIST: '/wise/users',
-		UPDATE_ROLE: '/wise/users/:id/role',
-		SUSPEND: '/wise/users/:id/suspend',
-		ACTIVATE: '/wise/users/:id/activate',
+		LIST: '/wise/gestion-usuarios',
+		UPDATE_ROLE: '/wise/gestion-usuarios/:id/rol',
+		SUSPEND: '/wise/gestion-usuarios/:id/estado',
+		ACTIVATE: '/wise/gestion-usuarios/:id/estado',
 	},
 } as const;
