@@ -56,7 +56,11 @@ export default function AuthCallback() {
 					// Intentamos parsearlo directamente, o decodificarlo si es necesario
 					try {
 						user = JSON.parse(userParam);
-					} catch {
+					} catch (firstError) {
+						console.warn(
+							'Direct parsing failed, trying decoded:',
+							firstError instanceof Error ? firstError.message : firstError,
+						);
 						user = JSON.parse(decodeURIComponent(userParam));
 					}
 

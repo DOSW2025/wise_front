@@ -75,6 +75,7 @@ export async function getUsers(
 			};
 		}
 
+		// Fallback para otros formatos o devolver data directamente
 		return body.data || (body as unknown as PaginatedResponse<AdminUserDto>);
 	} catch (error) {
 		console.error('Error fetching users:', error);
