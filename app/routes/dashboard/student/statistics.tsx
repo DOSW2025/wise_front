@@ -1,5 +1,15 @@
-import { Card, CardBody, CardHeader } from '@heroui/react';
-import { useMemo } from 'react';
+import {
+	Button,
+	Card,
+	CardBody,
+	CardHeader,
+	Input,
+	Select,
+	SelectItem,
+	Spinner,
+} from '@heroui/react';
+import { TrendingUp } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import {
 	Bar,
 	BarChart,
@@ -56,6 +66,23 @@ const COLORS = [
 ];
 
 export default function StudentStatistics() {
+	const [period, setPeriod] = useState<string>('last-month');
+	const [customDateStart, setCustomDateStart] = useState('');
+	const [customDateEnd, setCustomDateEnd] = useState('');
+	const [isLoading, setIsLoading] = useState(false);
+
+	const handlePeriodChange = (keys: any) => {
+		const newPeriod = Array.from(keys)[0] as string;
+		setPeriod(newPeriod);
+		setIsLoading(true);
+		setTimeout(() => setIsLoading(false), 1000);
+	};
+
+	const handleCustomFilter = () => {
+		setIsLoading(true);
+		setTimeout(() => setIsLoading(false), 1000);
+	};
+
 	// Calculate totals using useMemo for performance optimization
 	const totalSessions = useMemo(
 		() => tutoringData.reduce((sum, item) => sum + item.sessions, 0),
@@ -75,174 +102,240 @@ export default function StudentStatistics() {
 	return (
 		<div className="space-y-6">
 			{/* Header */}
-			<div className="flex flex-col gap-2">
-				<h1 className="text-3xl font-bold text-foreground">Estadísticas</h1>
-				<p className="text-default-500">
-					Visualiza tu progreso académico y participación en la plataforma
-				</p>
+			<div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+				<div className="flex flex-col gap-2">
+					<h1 className="text-3xl font-bold text-foreground">Estadísticas</h1>
+					<p className="text-default-500">
+						Visualiza tu progreso académico y participación en la plataforma
+					</p>
+				</div>
+
+				<div className="flex flex-wrap gap-2 items-center bg-default-50 p-2 rounded-lg">
+					<Select
+						label="Periodo"
+						className="w-40"
+						size="sm"
+						selectedKeys={[period]}
+						onSelectionChange={handlePeriodChange}
+					>
+						<SelectItem key="last-week">Última semana</SelectItem>
+						<SelectItem key="last-month">Último mes</SelectItem>
+						<SelectItem key="semester">Semestre actual</SelectItem>
+						<SelectItem key="year">Año actual</SelectItem>
+						<SelectItem key="custom">Personalizado</SelectItem>
+					</Select>
+
+					{period === 'custom' && (
+						<div className="flex gap-2 items-center">
+							<Input
+								type="date"
+								label="Desde"
+								size="sm"
+								value={customDateStart}
+								onValueChange={setCustomDateStart}
+								className="w-32"
+							/>
+							<Input
+								type="date"
+								label="Hasta"
+								size="sm"
+								value={customDateEnd}
+								onValueChange={setCustomDateEnd}
+								className="w-32"
+							/>
+							<Button
+								isIconOnly
+								size="sm"
+								color="primary"
+								variant="flat"
+								onPress={handleCustomFilter}
+							>
+								<TrendingUp className="w-4 h-4" />
+							</Button>
+						</div>
+					)}
+				</div>
 			</div>
 
-			{/* Info Notice */}
-			<div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-				<p className="text-sm text-primary-700">
-					<span className="font-semibold">Nota:</span> Los datos mostrados son
-					de ejemplo. Una vez que el backend esté integrado, verás tus
-					estadísticas reales.
-				</p>
-			</div>
-
-			{/* Charts Grid */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				{/* Line Chart - Tutorías recibidas por mes */}
-				<Card className="lg:col-span-2">
-					<CardHeader className="flex flex-col items-start gap-2 pb-0">
-						<h2 className="text-xl font-semibold">
-							Tutorías Recibidas por Mes
-						</h2>
-						<p className="text-sm text-default-500">
-							Seguimiento de tus sesiones de tutoría en los últimos 6 meses
+			{isLoading ? (
+				<div className="flex justify-center items-center h-64">
+					<Spinner size="lg" label="Cargando estadísticas..." />
+				</div>
+			) : (
+				<>
+					{/* Info Notice */}
+					<div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+						<p className="text-sm text-primary-700">
+							<span className="font-semibold">Nota:</span> Los datos mostrados
+							son de ejemplo. Una vez que el backend esté integrado, verás tus
+							estadísticas reales.
 						</p>
-					</CardHeader>
-					<CardBody className="pt-4">
-						<div className="w-full h-[300px] sm:h-[350px] md:h-[400px]">
-							<ResponsiveContainer width="100%" height="100%">
-								<LineChart
-									data={tutoringData}
-									margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-								>
-									<CartesianGrid {...CHART_GRID_STYLE} />
-									<XAxis dataKey="month" {...CHART_AXIS_STYLE} />
-									<YAxis {...CHART_AXIS_STYLE} />
-									<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-									<Legend />
-									<Line
-										type="monotone"
-										dataKey="sessions"
-										name="Sesiones"
-										stroke="hsl(var(--heroui-primary))"
-										strokeWidth={2}
-										activeDot={{ r: 8 }}
-									/>
-								</LineChart>
-							</ResponsiveContainer>
-						</div>
-					</CardBody>
-				</Card>
+					</div>
 
-				{/* Bar Chart - Materiales descargados */}
-				<Card>
-					<CardHeader className="flex flex-col items-start gap-2 pb-0">
-						<h2 className="text-xl font-semibold">Materiales Descargados</h2>
-						<p className="text-sm text-default-500">
-							Distribución por categoría académica
-						</p>
-					</CardHeader>
-					<CardBody className="pt-4">
-						<div className="w-full h-[300px] sm:h-[350px]">
-							<ResponsiveContainer width="100%" height="100%">
-								<BarChart
-									data={materialsData}
-									margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-								>
-									<CartesianGrid {...CHART_GRID_STYLE} />
-									<XAxis
-										dataKey="category"
-										{...CHART_AXIS_STYLE}
-										angle={-45}
-										textAnchor="end"
-										height={80}
-									/>
-									<YAxis {...CHART_AXIS_STYLE} />
-									<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-									<Legend />
-									<Bar
-										dataKey="downloads"
-										name="Descargas"
-										fill="hsl(var(--heroui-warning))"
-										radius={[8, 8, 0, 0]}
-									/>
-								</BarChart>
-							</ResponsiveContainer>
-						</div>
-					</CardBody>
-				</Card>
-
-				{/* Pie Chart - Participación en foros */}
-				<Card>
-					<CardHeader className="flex flex-col items-start gap-2 pb-0">
-						<h2 className="text-xl font-semibold">Participación en Foros</h2>
-						<p className="text-sm text-default-500">
-							Distribución de tus interacciones comunitarias
-						</p>
-					</CardHeader>
-					<CardBody className="pt-4">
-						<div className="w-full h-[300px] sm:h-[350px]">
-							<ResponsiveContainer width="100%" height="100%">
-								<PieChart>
-									<Pie
-										data={forumData}
-										cx="50%"
-										cy="50%"
-										labelLine={false}
-										label={({ name, percent }) =>
-											`${name} ${((percent ?? 0) * 100).toFixed(0)}%`
-										}
-										outerRadius={80}
-										fill="#8884d8"
-										dataKey="value"
-									>
-										{forumData.map((_entry, index) => (
-											<Cell
-												key={`cell-${index}`}
-												fill={COLORS[index % COLORS.length]}
+					{/* Charts Grid */}
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+						{/* Line Chart - Tutorías recibidas por mes */}
+						<Card className="lg:col-span-2">
+							<CardHeader className="flex flex-col items-start gap-2 pb-0">
+								<h2 className="text-xl font-semibold">
+									Tutorías Recibidas por Mes
+								</h2>
+								<p className="text-sm text-default-500">
+									Seguimiento de tus sesiones de tutoría en los últimos 6 meses
+								</p>
+							</CardHeader>
+							<CardBody className="pt-4">
+								<div className="w-full h-[300px] sm:h-[350px] md:h-[400px]">
+									<ResponsiveContainer width="100%" height="100%">
+										<LineChart
+											data={tutoringData}
+											margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+										>
+											<CartesianGrid {...CHART_GRID_STYLE} />
+											<XAxis dataKey="month" {...CHART_AXIS_STYLE} />
+											<YAxis {...CHART_AXIS_STYLE} />
+											<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+											<Legend />
+											<Line
+												type="monotone"
+												dataKey="sessions"
+												name="Sesiones"
+												stroke="hsl(var(--heroui-primary))"
+												strokeWidth={2}
+												activeDot={{ r: 8 }}
 											/>
-										))}
-									</Pie>
-									<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-									<Legend />
-								</PieChart>
-							</ResponsiveContainer>
-						</div>
-					</CardBody>
-				</Card>
-			</div>
+										</LineChart>
+									</ResponsiveContainer>
+								</div>
+							</CardBody>
+						</Card>
 
-			{/* Summary Stats */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<Card>
-					<CardBody>
-						<div className="flex flex-col gap-2">
-							<p className="text-sm text-default-500">Total de Tutorías</p>
-							<p className="text-3xl font-bold text-primary">{totalSessions}</p>
-							<p className="text-xs text-default-400">Últimos 6 meses</p>
-						</div>
-					</CardBody>
-				</Card>
-				<Card>
-					<CardBody>
-						<div className="flex flex-col gap-2">
-							<p className="text-sm text-default-500">Total de Descargas</p>
-							<p className="text-3xl font-bold text-warning">
-								{totalDownloads}
-							</p>
-							<p className="text-xs text-default-400">Materiales académicos</p>
-						</div>
-					</CardBody>
-				</Card>
-				<Card>
-					<CardBody>
-						<div className="flex flex-col gap-2">
-							<p className="text-sm text-default-500">Interacciones en Foros</p>
-							<p className="text-3xl font-bold text-success">
-								{totalInteractions}
-							</p>
-							<p className="text-xs text-default-400">
-								Preguntas, respuestas y comentarios
-							</p>
-						</div>
-					</CardBody>
-				</Card>
-			</div>
+						{/* Bar Chart - Materiales descargados */}
+						<Card>
+							<CardHeader className="flex flex-col items-start gap-2 pb-0">
+								<h2 className="text-xl font-semibold">
+									Materiales Descargados
+								</h2>
+								<p className="text-sm text-default-500">
+									Distribución por categoría académica
+								</p>
+							</CardHeader>
+							<CardBody className="pt-4">
+								<div className="w-full h-[300px] sm:h-[350px]">
+									<ResponsiveContainer width="100%" height="100%">
+										<BarChart
+											data={materialsData}
+											margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+										>
+											<CartesianGrid {...CHART_GRID_STYLE} />
+											<XAxis
+												dataKey="category"
+												{...CHART_AXIS_STYLE}
+												angle={-45}
+												textAnchor="end"
+												height={80}
+											/>
+											<YAxis {...CHART_AXIS_STYLE} />
+											<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+											<Legend />
+											<Bar
+												dataKey="downloads"
+												name="Descargas"
+												fill="hsl(var(--heroui-warning))"
+												radius={[8, 8, 0, 0]}
+											/>
+										</BarChart>
+									</ResponsiveContainer>
+								</div>
+							</CardBody>
+						</Card>
+
+						{/* Pie Chart - Participación en foros */}
+						<Card>
+							<CardHeader className="flex flex-col items-start gap-2 pb-0">
+								<h2 className="text-xl font-semibold">
+									Participación en Foros
+								</h2>
+								<p className="text-sm text-default-500">
+									Distribución de tus interacciones comunitarias
+								</p>
+							</CardHeader>
+							<CardBody className="pt-4">
+								<div className="w-full h-[300px] sm:h-[350px]">
+									<ResponsiveContainer width="100%" height="100%">
+										<PieChart>
+											<Pie
+												data={forumData}
+												cx="50%"
+												cy="50%"
+												labelLine={false}
+												label={({ name, percent }) =>
+													`${name} ${((percent ?? 0) * 100).toFixed(0)}%`
+												}
+												outerRadius={80}
+												fill="#8884d8"
+												dataKey="value"
+											>
+												{forumData.map((_entry, index) => (
+													<Cell
+														key={`cell-${index}`}
+														fill={COLORS[index % COLORS.length]}
+													/>
+												))}
+											</Pie>
+											<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+											<Legend />
+										</PieChart>
+									</ResponsiveContainer>
+								</div>
+							</CardBody>
+						</Card>
+					</div>
+
+					{/* Summary Stats */}
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+						<Card>
+							<CardBody>
+								<div className="flex flex-col gap-2">
+									<p className="text-sm text-default-500">Total de Tutorías</p>
+									<p className="text-3xl font-bold text-primary">
+										{totalSessions}
+									</p>
+									<p className="text-xs text-default-400">Últimos 6 meses</p>
+								</div>
+							</CardBody>
+						</Card>
+						<Card>
+							<CardBody>
+								<div className="flex flex-col gap-2">
+									<p className="text-sm text-default-500">Total de Descargas</p>
+									<p className="text-3xl font-bold text-warning">
+										{totalDownloads}
+									</p>
+									<p className="text-xs text-default-400">
+										Materiales académicos
+									</p>
+								</div>
+							</CardBody>
+						</Card>
+						<Card>
+							<CardBody>
+								<div className="flex flex-col gap-2">
+									<p className="text-sm text-default-500">
+										Interacciones en Foros
+									</p>
+									<p className="text-3xl font-bold text-success">
+										{totalInteractions}
+									</p>
+									<p className="text-xs text-default-400">
+										Preguntas, respuestas y comentarios
+									</p>
+								</div>
+							</CardBody>
+						</Card>
+					</div>
+				</>
+			)}
 		</div>
 	);
 }
