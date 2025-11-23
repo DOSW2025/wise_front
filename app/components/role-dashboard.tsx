@@ -46,14 +46,14 @@ export function RoleDashboard({ allowedRole }: RoleDashboardProps) {
 	}
 
 	console.log('User in RoleDashboard:', user);
-	console.log('Avatar in RoleDashboard:', user.avatar);
+	console.log('Avatar in RoleDashboard:', user.avatarUrl);
 
 	return (
 		<DashboardLayout
 			userRole={user.role}
 			userName={user.name}
 			userEmail={user.email}
-			userAvatar={user.avatar}
+			userAvatar={user.avatarUrl}
 			onLogout={handleLogout}
 		/>
 	);

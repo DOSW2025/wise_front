@@ -40,7 +40,7 @@ export default function StudentProfile() {
 		phone: '',
 		location: '',
 		description: '',
-		avatar: user?.avatar,
+		avatarUrl: user?.avatarUrl,
 		interests: [],
 		career: '',
 		semester: '',
@@ -69,7 +69,7 @@ export default function StudentProfile() {
 				...prev,
 				name: user.name,
 				email: user.email,
-				avatar: user.avatar,
+				avatarUrl: user.avatarUrl,
 			}));
 		}
 	}, [user, setProfile]);
@@ -144,7 +144,7 @@ export default function StudentProfile() {
 
 					<div className="flex flex-col md:flex-row gap-6">
 						<ProfileAvatar
-							src={profile.avatar}
+							src={profile.avatarUrl}
 							name={profile.name}
 							isEditing={isEditing}
 							onImageChange={handleImageChange}

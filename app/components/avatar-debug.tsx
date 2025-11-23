@@ -35,7 +35,7 @@ export function AvatarDebug() {
 							{JSON.stringify(user, null, 2)}
 						</pre>
 						<p className="text-warning-600 mt-1">
-							Avatar: <strong>{user?.avatar || 'NO DISPONIBLE'}</strong>
+							Avatar: <strong>{user?.avatarUrl || 'NO DISPONIBLE'}</strong>
 						</p>
 					</div>
 

@@ -10,7 +10,7 @@ export interface User {
 	name: string;
 	email: string;
 	role: UserRole;
-	avatar?: string;
+	avatarUrl?: string;
 }
 
 interface AuthContextType {
@@ -42,7 +42,7 @@ function convertUserResponseToUser(userResponse: UserResponse): User {
 		name: `${userResponse.nombre} ${userResponse.apellido}`,
 		email: userResponse.email,
 		role: mapRoleToUserRole(userResponse.rol),
-		avatar: userResponse.avatarUrl ?? undefined,
+		avatarUrl: userResponse.avatarUrl ?? undefined,
 	};
 
 	console.log('✨ Converted user with avatar:', user);
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				if (storedUser) {
 					const convertedUser = convertUserResponseToUser(storedUser);
 					console.log('Converted user:', convertedUser);
-					console.log('Avatar URL:', convertedUser.avatar);
+					console.log('Avatar URL:', convertedUser.avatarUrl);
 					setUser(convertedUser);
 				}
 			} catch (error) {

@@ -122,27 +122,13 @@ export async function updateUserRole(
 /**
  * Suspender un usuario
  */
-export async function suspendUser(
-	userId: string,
-	reason?: string,
-): Promise<AdminUserDto> {
+export async function suspendUser(userId: string): Promise<AdminUserDto> {
 	try {
-		const endpoint = API_ENDPOINTS.USERS.SUSPEND.replace(':id', userId); // This endpoint might be wrong if it's just 'estado'
-		// The controller has @Patch(':id/estado')
-		// So endpoint should be .../estado
-		// API_ENDPOINTS.USERS.SUSPEND might be defined as .../suspend which is wrong.
-		// I should check api.config.ts
-
-		// Assuming I need to fix the endpoint usage or config.
-		// For now, let's assume the config is correct or I'll fix it later.
-		// But wait, the controller has `changeStatus`.
-
+		const endpoint = API_ENDPOINTS.USERS.SUSPEND.replace(':id', userId);
 		const response = await apiClient.patch<ApiResponse<AdminUserDto>>(
 			endpoint,
 			{
 				estadoId: STATUS_IDS.suspendido,
-				// reason is not in ChangeStatusDto, so it might be ignored or I should check if backend supports it.
-				// Backend ChangeStatusDto only has estadoId.
 			},
 		);
 

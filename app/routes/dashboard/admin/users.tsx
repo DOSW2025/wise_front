@@ -23,11 +23,9 @@ import {
 	TableColumn,
 	TableHeader,
 	TableRow,
-	Textarea,
 	useDisclosure,
 } from '@heroui/react';
 import {
-	ChevronDown,
 	Edit,
 	MoreVertical,
 	Search,
@@ -52,7 +50,6 @@ type RoleChangeModalData = {
 
 type SuspendModalData = {
 	user: AdminUserDto;
-	reason: string;
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -97,6 +94,7 @@ export default function AdminUsers() {
 
 	// Action loading states
 	const [actionLoading, setActionLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	// Fetch users
 	const fetchUsers = useCallback(async () => {
@@ -141,6 +139,7 @@ export default function AdminUsers() {
 	const openRoleChangeModal = useCallback(
 		(user: AdminUserDto, newRole: 'estudiante' | 'tutor' | 'admin') => {
 			setRoleChangeData({ user, newRole });
+			setError(null);
 			roleModal.onOpen();
 		},
 		[roleModal],
@@ -150,6 +149,7 @@ export default function AdminUsers() {
 		if (!roleChangeData) return;
 
 		setActionLoading(true);
+		setError(null);
 		try {
 			await updateUserRole(roleChangeData.user.id, roleChangeData.newRole);
 			await fetchUsers();
@@ -157,7 +157,7 @@ export default function AdminUsers() {
 			setRoleChangeData(null);
 		} catch (error) {
 			console.error('Error updating role:', error);
-			alert('Error al cambiar el rol del usuario');
+			setError('Error al cambiar el rol del usuario');
 		} finally {
 			setActionLoading(false);
 		}
@@ -166,7 +166,8 @@ export default function AdminUsers() {
 	// Handle suspend
 	const openSuspendModal = useCallback(
 		(user: AdminUserDto) => {
-			setSuspendData({ user, reason: '' });
+			setSuspendData({ user });
+			setError(null);
 			suspendModal.onOpen();
 		},
 		[suspendModal],
@@ -176,14 +177,15 @@ export default function AdminUsers() {
 		if (!suspendData) return;
 
 		setActionLoading(true);
+		setError(null);
 		try {
-			await suspendUser(suspendData.user.id, suspendData.reason);
+			await suspendUser(suspendData.user.id);
 			await fetchUsers();
 			suspendModal.onClose();
 			setSuspendData(null);
 		} catch (error) {
 			console.error('Error suspending user:', error);
-			alert('Error al suspender el usuario');
+			setError('Error al suspender el usuario');
 		} finally {
 			setActionLoading(false);
 		}
@@ -193,6 +195,7 @@ export default function AdminUsers() {
 	const openActivateModal = useCallback(
 		(user: AdminUserDto) => {
 			setActivateData(user);
+			setError(null);
 			activateModal.onOpen();
 		},
 		[activateModal],
@@ -202,6 +205,7 @@ export default function AdminUsers() {
 		if (!activateData) return;
 
 		setActionLoading(true);
+		setError(null);
 		try {
 			await activateUser(activateData.id);
 			await fetchUsers();
@@ -209,7 +213,7 @@ export default function AdminUsers() {
 			setActivateData(null);
 		} catch (error) {
 			console.error('Error activating user:', error);
-			alert('Error al activar el usuario');
+			setError('Error al activar el usuario');
 		} finally {
 			setActionLoading(false);
 		}
@@ -485,6 +489,7 @@ export default function AdminUsers() {
 									Este cambio se aplicará inmediatamente y afectará los permisos
 									del usuario.
 								</p>
+								{error && <p className="text-sm text-danger">{error}</p>}
 							</div>
 						)}
 					</ModalBody>
@@ -519,19 +524,11 @@ export default function AdminUsers() {
 									<strong>{`${suspendData.user.nombre} ${suspendData.user.apellido}`}</strong>
 									?
 								</p>
-								<Textarea
-									label="Razón de suspensión (opcional)"
-									placeholder="Describe el motivo de la suspensión..."
-									value={suspendData.reason}
-									onValueChange={(value) =>
-										setSuspendData({ ...suspendData, reason: value })
-									}
-									minRows={3}
-								/>
 								<p className="text-tiny text-danger-500">
 									El usuario no podrá acceder a la plataforma hasta que sea
 									reactivado.
 								</p>
+								{error && <p className="text-sm text-danger">{error}</p>}
 							</div>
 						)}
 					</ModalBody>
@@ -569,6 +566,7 @@ export default function AdminUsers() {
 								<p className="text-tiny text-success-600">
 									El usuario podrá acceder nuevamente a la plataforma.
 								</p>
+								{error && <p className="text-sm text-danger">{error}</p>}
 							</div>
 						)}
 					</ModalBody>

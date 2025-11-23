@@ -55,7 +55,7 @@ export default function Dashboard() {
 			userRole={user.role}
 			userName={user.name}
 			userEmail={user.email}
-			userAvatar={user.avatar}
+			userAvatar={user.avatarUrl}
 			onLogout={handleLogout}
 		/>
 	);

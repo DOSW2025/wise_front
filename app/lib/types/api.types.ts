@@ -82,6 +82,5 @@ export interface UpdateRoleRequest {
 }
 
 export interface UpdateUserStatusRequest {
-	isActive: boolean;
-	reason?: string;
+	estadoId: number;
 }
