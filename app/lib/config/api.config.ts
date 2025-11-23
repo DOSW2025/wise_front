@@ -3,8 +3,16 @@
  * Configuración centralizada para las llamadas al backend
  */
 
+const getBaseUrl = () => {
+	let url = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3002';
+	if (!url.startsWith('http')) {
+		url = `https://${url}`;
+	}
+	return url;
+};
+
 export const API_CONFIG = {
-	BASE_URL: import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3002',
+	BASE_URL: getBaseUrl(),
 	TIMEOUT: import.meta.env.VITE_API_TIMEOUT || 30000,
 } as const;
 
