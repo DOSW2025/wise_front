@@ -165,7 +165,6 @@ export function Navbar({
 								}
 								showFallback
 								imgProps={{
-									crossOrigin: 'anonymous',
 									referrerPolicy: 'no-referrer',
 									onError: (e) => {
 										console.error('Navbar: Error loading avatar:', userAvatar);

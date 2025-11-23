@@ -49,7 +49,6 @@ export function ProfileAvatar({
 					showFallback
 					className="w-32 h-32 text-large"
 					imgProps={{
-						crossOrigin: 'anonymous',
 						referrerPolicy: 'no-referrer',
 						onError: (e) => {
 							console.error('ProfileAvatar: Error loading image:', avatarSrc);

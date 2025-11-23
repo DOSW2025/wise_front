@@ -1,5 +1,4 @@
 export { AlertMessage } from './alert-message';
-export { AvatarDebug } from './avatar-debug';
 export { DashboardLayout } from './dashboard-layout';
 export { EmptyState } from './empty-state';
 export { MaterialCard } from './material-card';

@@ -16,7 +16,6 @@ import {
 import { useEffect, useState } from 'react';
 import {
 	AlertMessage,
-	AvatarDebug,
 	PasswordChangeModal,
 	ProfileAvatar,
 	StatsCard,
@@ -55,7 +54,7 @@ export default function TutorProfile() {
 		phone: '',
 		location: '',
 		description: '',
-		avatar: user?.avatar,
+		avatarUrl: user?.avatarUrl,
 		availability: {
 			monday: false,
 			tuesday: false,
@@ -98,7 +97,7 @@ export default function TutorProfile() {
 				...prev,
 				name: user.name,
 				email: user.email,
-				avatar: user.avatar,
+				avatarUrl: user.avatarUrl,
 			}));
 		}
 	}, [user, setProfile]);
@@ -162,9 +161,6 @@ export default function TutorProfile() {
 				description="Gestiona tu información personal y configuración"
 			/>
 
-			{/* Componente de Debug - TEMPORAL para diagnosticar avatar */}
-			<AvatarDebug />
-
 			{/* Mensajes de error y éxito */}
 			{error && <AlertMessage message={error} type="error" />}
 			{success && <AlertMessage message={success} type="success" />}
@@ -185,7 +181,7 @@ export default function TutorProfile() {
 
 					<div className="flex flex-col md:flex-row gap-6">
 						<ProfileAvatar
-							src={profile.avatar}
+							src={profile.avatarUrl}
 							name={profile.name}
 							isEditing={isEditing}
 							onImageChange={handleImageChange}

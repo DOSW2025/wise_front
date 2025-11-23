@@ -15,7 +15,7 @@ export interface BaseProfileData {
 	phone: string;
 	location: string;
 	description: string;
-	avatar?: string;
+	avatarUrl?: string;
 }
 
 export function useProfileFormBase<T extends BaseProfileData>(
@@ -62,7 +62,7 @@ export function useProfileFormBase<T extends BaseProfileData>(
 		const reader = new FileReader();
 		reader.onloadend = () => {
 			setAvatarPreview(reader.result as string);
-			setProfile({ ...profile, avatar: reader.result as string });
+			setProfile({ ...profile, avatarUrl: reader.result as string });
 		};
 		reader.readAsDataURL(file);
 		return null;
@@ -71,7 +71,7 @@ export function useProfileFormBase<T extends BaseProfileData>(
 	const resetForm = (userData: {
 		name: string;
 		email: string;
-		avatar?: string;
+		avatarUrl?: string;
 	}) => {
 		setIsEditing(false);
 		setFormErrors({});
@@ -80,7 +80,7 @@ export function useProfileFormBase<T extends BaseProfileData>(
 			...prev,
 			name: userData.name,
 			email: userData.email,
-			avatar: userData.avatar,
+			avatarUrl: userData.avatarUrl,
 		}));
 	};
 

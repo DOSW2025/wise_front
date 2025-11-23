@@ -294,7 +294,6 @@ export function Sidebar({
 							showFallback
 							name={userName}
 							imgProps={{
-								crossOrigin: 'anonymous',
 								referrerPolicy: 'no-referrer',
 								onError: (e) => {
 									console.error('Sidebar: Error loading avatar:', userAvatar);
