@@ -112,6 +112,15 @@ export function useMaterials(filters?: MaterialFilters) {
 			if (filters?.semester) {
 				filtered = filtered.filter((m) => m.semestre === filters.semester);
 			}
+			if (filters?.search) {
+				const searchLower = filters.search.toLowerCase();
+				filtered = filtered.filter(
+					(m) =>
+						m.nombre.toLowerCase().includes(searchLower) ||
+						m.materia.toLowerCase().includes(searchLower) ||
+						m.tutor.toLowerCase().includes(searchLower),
+				);
+			}
 
 			return Promise.resolve(filtered);
 		},
