@@ -322,12 +322,27 @@ export function useViewMaterial() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (id: string) => materialsService.viewMaterial(id),
+		mutationFn: (id: string) => {
+			// Simular POST /api/materials/:id/view
+			console.log(`Registrando vista para material ${id}`);
+			return Promise.resolve();
+		},
 		onSuccess: (_, id) => {
-			// Actualizar el material específico
-			queryClient.invalidateQueries({
-				queryKey: MATERIALS_QUERY_KEYS.detail(id),
-			});
+			// Actualizar el contador de vistas en el cache
+			queryClient.setQueryData(
+				MATERIALS_QUERY_KEYS.detail(id),
+				(oldData: any) => {
+					if (oldData) {
+						return {
+							...oldData,
+							vistas: oldData.vistas + 1,
+						};
+					}
+					return oldData;
+				},
+			);
+
+			// Actualizar también en la lista
 			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.lists() });
 		},
 	});
@@ -358,12 +373,47 @@ export function useDownloadMaterial() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (id: string) => materialsService.downloadMaterial(id),
+		mutationFn: async (id: string) => {
+			// Simular GET /api/materials/:id/download
+			console.log(`Descargando material ${id}`);
+
+			// Simular descarga de archivo
+			const material = queryClient.getQueryData(
+				MATERIALS_QUERY_KEYS.detail(id),
+			) as any;
+			if (material) {
+				// Crear blob simulado y descargar
+				const blob = new Blob(['Contenido simulado del archivo'], {
+					type: 'application/pdf',
+				});
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = `${material.nombre}.${material.tipo.toLowerCase()}`;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+			}
+
+			return Promise.resolve();
+		},
 		onSuccess: (_, id) => {
-			// Actualizar contadores
-			queryClient.invalidateQueries({
-				queryKey: MATERIALS_QUERY_KEYS.detail(id),
-			});
+			// Actualizar el contador de descargas en el cache
+			queryClient.setQueryData(
+				MATERIALS_QUERY_KEYS.detail(id),
+				(oldData: any) => {
+					if (oldData) {
+						return {
+							...oldData,
+							descargas: oldData.descargas + 1,
+						};
+					}
+					return oldData;
+				},
+			);
+
+			// Actualizar también en la lista
 			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.lists() });
 		},
 	});
