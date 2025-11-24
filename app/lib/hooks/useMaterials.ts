@@ -330,13 +330,32 @@ export function useUpdateMaterial() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: ({ id, data }: { id: string; data: UpdateMaterialRequest }) =>
-			materialsService.updateMaterial(id, data),
-		onSuccess: (_, { id }) => {
-			// Invalidar queries relacionadas
+		mutationFn: ({ id, data }: { id: string; data: UpdateMaterialRequest }) => {
+			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.updateMaterial(id, data);
+			// Simular PUT /api/materials/:id
+			console.log(`Actualizando material ${id}:`, data);
+			return Promise.resolve();
+		},
+		onSuccess: (_, { id, data }) => {
+			// Actualizar el material en el cache
+			queryClient.setQueryData(
+				MATERIALS_QUERY_KEYS.detail(id),
+				(oldData: any) => {
+					if (oldData) {
+						return {
+							...oldData,
+							...data,
+							updatedAt: new Date().toISOString(),
+						};
+					}
+					return oldData;
+				},
+			);
+
+			// Invalidar listas para refrescar
 			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.lists() });
 			queryClient.invalidateQueries({
-				queryKey: MATERIALS_QUERY_KEYS.detail(id),
+				queryKey: MATERIALS_QUERY_KEYS.userMaterials('dev-tutor-1'),
 			});
 		},
 	});
@@ -347,11 +366,34 @@ export function useDeleteMaterial() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (id: string) => materialsService.deleteMaterial(id),
-		onSuccess: () => {
-			// Invalidar queries relacionadas
+		mutationFn: (id: string) => {
+			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.deleteMaterial(id);
+			// Simular DELETE /api/materials/:id
+			console.log(`Eliminando material ${id}`);
+			return Promise.resolve();
+		},
+		onSuccess: (_, id) => {
+			// Remover el material del cache inmediatamente
+			queryClient.removeQueries({ queryKey: MATERIALS_QUERY_KEYS.detail(id) });
+
+			// Actualizar listas removiendo el elemento
+			queryClient.setQueryData(
+				MATERIALS_QUERY_KEYS.userMaterials('dev-tutor-1'),
+				(oldData: any[]) => {
+					if (oldData) {
+						return oldData.filter((material) => material.id !== id);
+					}
+					return oldData;
+				},
+			);
+
+			// Invalidar otras queries
 			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.lists() });
 			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.popular });
+		},
+		onError: () => {
+			// El error se maneja en el componente
+			console.error('Error al eliminar material');
 		},
 	});
 }
