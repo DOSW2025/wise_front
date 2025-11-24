@@ -25,6 +25,8 @@ import {
 	X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { DeleteConfirmationModal } from '~/components/delete-confirmation-modal';
+import { EditMaterialForm } from '~/components/edit-material-form';
 import { MaterialDetailModal } from '~/components/material-detail-modal';
 import { MyMaterialsList } from '~/components/my-materials-list';
 import { UploadMaterialForm } from '~/components/upload-material-form';
@@ -33,6 +35,7 @@ import {
 	useMaterials,
 	useResourceTypes,
 	useSubjects,
+	useUserMaterials,
 } from '~/lib/hooks/useMaterials';
 import type { MaterialFilters } from '~/lib/types/api.types';
 
@@ -47,9 +50,20 @@ export default function TutorMaterials() {
 		onOpen: onDetailOpen,
 		onClose: onDetailClose,
 	} = useDisclosure();
+	const {
+		isOpen: isEditOpen,
+		onOpen: onEditOpen,
+		onClose: onEditClose,
+	} = useDisclosure();
+	const {
+		isOpen: isDeleteOpen,
+		onOpen: onDeleteOpen,
+		onClose: onDeleteClose,
+	} = useDisclosure();
 	const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(
 		null,
 	);
+	const [selectedMaterialName, setSelectedMaterialName] = useState('');
 	const [activeTab, setActiveTab] = useState('all');
 
 	// Combinar filtros con búsqueda debounced
@@ -59,6 +73,7 @@ export default function TutorMaterials() {
 	};
 
 	const { data: materials = [], isLoading } = useMaterials(combinedFilters);
+	const { data: userMaterials = [] } = useUserMaterials('dev-tutor-1');
 	const { data: subjects = [] } = useSubjects();
 	const { data: resourceTypes = [] } = useResourceTypes();
 
@@ -355,10 +370,16 @@ export default function TutorMaterials() {
 						onDetailOpen();
 					}}
 					onEdit={(material) => {
-						console.log('Editar material:', material);
+						setSelectedMaterialId(material.id);
+						onEditOpen();
 					}}
 					onDelete={(materialId) => {
-						console.log('Eliminar material:', materialId);
+						const material = userMaterials.find((m) => m.id === materialId);
+						if (material) {
+							setSelectedMaterialId(materialId);
+							setSelectedMaterialName(material.nombre);
+							onDeleteOpen();
+						}
 					}}
 				/>
 			)}
@@ -394,12 +415,54 @@ export default function TutorMaterials() {
 							materialId={selectedMaterialId}
 							onClose={onDetailClose}
 							onEdit={(material) => {
-								console.log('Editar material:', material);
-								// Aquí se abriría el formulario de edición
+								onDetailClose();
+								setSelectedMaterialId(material.id);
+								onEditOpen();
 							}}
 							onDelete={(materialId) => {
-								console.log('Eliminar material:', materialId);
-								// Aquí se mostraría confirmación de eliminación
+								onDetailClose();
+								const material = materials.find((m) => m.id === materialId);
+								if (material) {
+									setSelectedMaterialId(materialId);
+									setSelectedMaterialName(material.nombre);
+									onDeleteOpen();
+								}
+							}}
+						/>
+					)}
+				</ModalContent>
+			</Modal>
+
+			{/* Modal de edición */}
+			<Modal
+				isOpen={isEditOpen}
+				onClose={onEditClose}
+				size="2xl"
+				scrollBehavior="inside"
+			>
+				<ModalContent>
+					{selectedMaterialId && (
+						<EditMaterialForm
+							materialId={selectedMaterialId}
+							onClose={onEditClose}
+							onSuccess={() => {
+								console.log('Material actualizado correctamente');
+							}}
+						/>
+					)}
+				</ModalContent>
+			</Modal>
+
+			{/* Modal de confirmación de eliminación */}
+			<Modal isOpen={isDeleteOpen} onClose={onDeleteClose} size="sm">
+				<ModalContent>
+					{selectedMaterialId && (
+						<DeleteConfirmationModal
+							materialId={selectedMaterialId}
+							materialName={selectedMaterialName}
+							onClose={onDeleteClose}
+							onSuccess={() => {
+								console.log('Material eliminado correctamente');
 							}}
 						/>
 					)}
