@@ -29,6 +29,7 @@ import { DeleteConfirmationModal } from '~/components/delete-confirmation-modal'
 import { EditMaterialForm } from '~/components/edit-material-form';
 import { MaterialDetailModal } from '~/components/material-detail-modal';
 import { MyMaterialsList } from '~/components/my-materials-list';
+import { PopularMaterials } from '~/components/popular-materials';
 import { UploadMaterialForm } from '~/components/upload-material-form';
 import { useDebounce } from '~/lib/hooks/useDebounce';
 import {
@@ -121,6 +122,7 @@ export default function TutorMaterials() {
 			>
 				<Tab key="all" title="Todos los Materiales" />
 				<Tab key="mine" title="Mis Materiales" />
+				<Tab key="popular" title="Populares" />
 			</Tabs>
 
 			{/* Buscador - solo en tab "all" */}
@@ -380,6 +382,16 @@ export default function TutorMaterials() {
 							setSelectedMaterialName(material.nombre);
 							onDeleteOpen();
 						}
+					}}
+				/>
+			)}
+
+			{/* Tab de Materiales Populares */}
+			{activeTab === 'popular' && (
+				<PopularMaterials
+					onMaterialClick={(material) => {
+						setSelectedMaterialId(material.id);
+						onDetailOpen();
 					}}
 				/>
 			)}
