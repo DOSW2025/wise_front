@@ -305,7 +305,68 @@ export function useUserMaterials(userId: string) {
 export function usePopularMaterials() {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.popular,
-		queryFn: () => materialsService.getPopularMaterials(),
+		queryFn: () => {
+			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.getPopularMaterials();
+			// MOCK DATA - materiales populares
+			return Promise.resolve({
+				mostViewed: [
+					{
+						id: '2',
+						nombre: 'Estructuras de Datos Básicas',
+						materia: 'Estructuras de Datos',
+						tipo: 'DOCX',
+						semestre: 3,
+						tutor: 'Dra. María García',
+						calificacion: 4.8,
+						vistas: 203,
+						descargas: 156,
+						createdAt: '2024-01-10T14:30:00Z',
+						updatedAt: '2024-01-10T14:30:00Z',
+					},
+					{
+						id: '1',
+						nombre: 'Introducción a Algoritmos',
+						materia: 'Programación I',
+						tipo: 'PDF',
+						semestre: 2,
+						tutor: 'Dr. Juan Pérez',
+						calificacion: 4.5,
+						vistas: 125,
+						descargas: 89,
+						createdAt: '2024-01-15T10:00:00Z',
+						updatedAt: '2024-01-15T10:00:00Z',
+					},
+				],
+				mostDownloaded: [
+					{
+						id: '2',
+						nombre: 'Estructuras de Datos Básicas',
+						materia: 'Estructuras de Datos',
+						tipo: 'DOCX',
+						semestre: 3,
+						tutor: 'Dra. María García',
+						calificacion: 4.8,
+						vistas: 203,
+						descargas: 156,
+						createdAt: '2024-01-10T14:30:00Z',
+						updatedAt: '2024-01-10T14:30:00Z',
+					},
+					{
+						id: '5',
+						nombre: 'Consultas SQL Básicas',
+						materia: 'Bases de Datos',
+						tipo: 'DOCX',
+						semestre: 4,
+						tutor: 'Prof. Luis Rodríguez',
+						calificacion: 4.3,
+						vistas: 112,
+						descargas: 78,
+						createdAt: '2024-01-05T11:45:00Z',
+						updatedAt: '2024-01-05T11:45:00Z',
+					},
+				],
+			});
+		},
 		staleTime: 10 * 60 * 1000, // 10 minutos
 	});
 }
