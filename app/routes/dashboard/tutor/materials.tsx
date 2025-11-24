@@ -4,9 +4,12 @@ import {
 	CardBody,
 	Chip,
 	Input,
+	Modal,
+	ModalContent,
 	Select,
 	SelectItem,
 	Spinner,
+	useDisclosure,
 } from '@heroui/react';
 import {
 	ChevronDown,
@@ -14,11 +17,14 @@ import {
 	Download,
 	Eye,
 	Filter,
+	Plus,
 	Search,
 	Star,
 	X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { MaterialDetailModal } from '~/components/material-detail-modal';
+import { UploadMaterialForm } from '~/components/upload-material-form';
 import { useDebounce } from '~/lib/hooks/useDebounce';
 import {
 	useMaterials,
@@ -32,6 +38,15 @@ export default function TutorMaterials() {
 	const [showFilters, setShowFilters] = useState(false);
 	const [searchTerm, setSearchTerm] = useState('');
 	const debouncedSearch = useDebounce(searchTerm, 500);
+	const { isOpen, onOpen, onClose } = useDisclosure();
+	const {
+		isOpen: isDetailOpen,
+		onOpen: onDetailOpen,
+		onClose: onDetailClose,
+	} = useDisclosure();
+	const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(
+		null,
+	);
 
 	// Combinar filtros con búsqueda debounced
 	const combinedFilters = {
@@ -60,13 +75,22 @@ export default function TutorMaterials() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-col gap-2">
-				<h1 className="text-3xl font-bold text-foreground">
-					Banco de Materiales
-				</h1>
-				<p className="text-default-500">
-					Gestiona y comparte materiales educativos.
-				</p>
+			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+				<div>
+					<h1 className="text-3xl font-bold text-foreground">
+						Banco de Materiales
+					</h1>
+					<p className="text-default-500">
+						Gestiona y comparte materiales educativos.
+					</p>
+				</div>
+				<Button
+					color="primary"
+					startContent={<Plus className="w-4 h-4" />}
+					onPress={onOpen}
+				>
+					Subir Material
+				</Button>
 			</div>
 
 			{/* Buscador */}
@@ -241,7 +265,12 @@ export default function TutorMaterials() {
 					{materials.map((material) => (
 						<Card
 							key={material.id}
-							className="hover:shadow-md transition-shadow"
+							className="hover:shadow-md transition-shadow cursor-pointer"
+							isPressable
+							onPress={() => {
+								setSelectedMaterialId(material.id);
+								onDetailOpen();
+							}}
 						>
 							<CardBody className="p-6">
 								<div className="flex justify-between items-start">
@@ -290,6 +319,49 @@ export default function TutorMaterials() {
 					))}
 				</div>
 			)}
+
+			{/* Modal de subida */}
+			<Modal
+				isOpen={isOpen}
+				onClose={onClose}
+				size="2xl"
+				scrollBehavior="inside"
+			>
+				<ModalContent>
+					<UploadMaterialForm
+						onClose={onClose}
+						onSuccess={() => {
+							// Refrescar la lista de materiales
+							window.location.reload();
+						}}
+					/>
+				</ModalContent>
+			</Modal>
+
+			{/* Modal de detalle */}
+			<Modal
+				isOpen={isDetailOpen}
+				onClose={onDetailClose}
+				size="2xl"
+				scrollBehavior="inside"
+			>
+				<ModalContent>
+					{selectedMaterialId && (
+						<MaterialDetailModal
+							materialId={selectedMaterialId}
+							onClose={onDetailClose}
+							onEdit={(material) => {
+								console.log('Editar material:', material);
+								// Aquí se abriría el formulario de edición
+							}}
+							onDelete={(materialId) => {
+								console.log('Eliminar material:', materialId);
+								// Aquí se mostraría confirmación de eliminación
+							}}
+						/>
+					)}
+				</ModalContent>
+			</Modal>
 		</div>
 	);
 }

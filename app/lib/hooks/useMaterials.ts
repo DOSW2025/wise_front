@@ -132,7 +132,89 @@ export function useMaterials(filters?: MaterialFilters) {
 export function useMaterial(id: string) {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.detail(id),
-		queryFn: () => materialsService.getMaterialById(id),
+		queryFn: () => {
+			// MOCK DATA - buscar material por ID
+			const allMaterials = [
+				{
+					id: '1',
+					nombre: 'Introducción a Algoritmos',
+					materia: 'Programación I',
+					tipo: 'PDF',
+					semestre: 2,
+					tutor: 'Dr. Juan Pérez',
+					calificacion: 4.5,
+					vistas: 125,
+					descargas: 89,
+					createdAt: '2024-01-15T10:00:00Z',
+					updatedAt: '2024-01-15T10:00:00Z',
+					descripcion:
+						'Material completo sobre algoritmos básicos y estructuras de control.',
+				},
+				{
+					id: '2',
+					nombre: 'Estructuras de Datos Básicas',
+					materia: 'Estructuras de Datos',
+					tipo: 'DOCX',
+					semestre: 3,
+					tutor: 'Dra. María García',
+					calificacion: 4.8,
+					vistas: 203,
+					descargas: 156,
+					createdAt: '2024-01-10T14:30:00Z',
+					updatedAt: '2024-01-10T14:30:00Z',
+					descripcion: 'Guía práctica sobre listas, pilas y colas.',
+				},
+				{
+					id: '3',
+					nombre: 'Ejercicios de Cálculo Diferencial',
+					materia: 'Cálculo I',
+					tipo: 'PDF',
+					semestre: 1,
+					tutor: 'Prof. Carlos López',
+					calificacion: 4.2,
+					vistas: 87,
+					descargas: 45,
+					createdAt: '2024-01-08T09:15:00Z',
+					updatedAt: '2024-01-08T09:15:00Z',
+					descripcion: 'Colección de ejercicios resueltos de derivadas.',
+				},
+				{
+					id: '4',
+					nombre: 'Matrices y Vectores',
+					materia: 'Álgebra Lineal',
+					tipo: 'PPT',
+					semestre: 2,
+					tutor: 'Dr. Ana Martínez',
+					calificacion: 4.6,
+					vistas: 95,
+					descargas: 67,
+					createdAt: '2024-01-12T16:20:00Z',
+					updatedAt: '2024-01-12T16:20:00Z',
+					descripcion: 'Presentación sobre operaciones con matrices.',
+				},
+				{
+					id: '5',
+					nombre: 'Consultas SQL Básicas',
+					materia: 'Bases de Datos',
+					tipo: 'DOCX',
+					semestre: 4,
+					tutor: 'Prof. Luis Rodríguez',
+					calificacion: 4.3,
+					vistas: 112,
+					descargas: 78,
+					createdAt: '2024-01-05T11:45:00Z',
+					updatedAt: '2024-01-05T11:45:00Z',
+					descripcion: 'Manual de consultas SELECT, INSERT, UPDATE y DELETE.',
+				},
+			];
+
+			const material = allMaterials.find((m) => m.id === id);
+			if (!material) {
+				throw new Error('Material no encontrado');
+			}
+
+			return Promise.resolve(material);
+		},
 		enabled: !!id,
 	});
 }
