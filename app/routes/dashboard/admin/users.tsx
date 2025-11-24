@@ -118,11 +118,16 @@ export default function AdminUsers() {
 			setUsers(response.data);
 			setTotalPages(response.pagination.totalPages);
 			setTotalItems(response.pagination.totalItems);
-		} catch (error) {
+		} catch (error: any) {
 			console.error('Error loading users:', error);
-			setError(
-				'Error al cargar la lista de usuarios. Por favor intente nuevamente.',
-			);
+			let message =
+				'Error al cargar la lista de usuarios. Por favor intente nuevamente.';
+			if (error.response?.data?.message) {
+				message = Array.isArray(error.response.data.message)
+					? error.response.data.message.join(', ')
+					: error.response.data.message;
+			}
+			setError(message);
 		} finally {
 			setLoading(false);
 		}
