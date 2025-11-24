@@ -120,6 +120,10 @@ export default function AdminUsers() {
 			setTotalItems(response.pagination.totalItems);
 		} catch (error: any) {
 			console.error('Error loading users:', error);
+			if (error.config) {
+				console.error('Failed request URL:', error.config.url);
+				console.error('Failed request baseURL:', error.config.baseURL);
+			}
 			let message =
 				'Error al cargar la lista de usuarios. Por favor intente nuevamente.';
 			if (error.response?.data?.message) {

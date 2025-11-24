@@ -5,9 +5,20 @@
 
 const getBaseUrl = () => {
 	let url = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3002';
+
+	// Ensure HTTPS for non-local environments to avoid Mixed Content errors
+	if (
+		url.startsWith('http://') &&
+		!url.includes('localhost') &&
+		!url.includes('127.0.0.1')
+	) {
+		url = url.replace('http://', 'https://');
+	}
+
 	if (!url.startsWith('http')) {
 		url = `https://${url}`;
 	}
+	console.log('API Base URL configured:', url);
 	return url;
 };
 
