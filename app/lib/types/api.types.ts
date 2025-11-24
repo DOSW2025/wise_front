@@ -84,3 +84,67 @@ export interface UpdateRoleRequest {
 export interface UpdateUserStatusRequest {
 	estadoId: number;
 }
+
+// Material Types
+export interface Material {
+	id: string;
+	nombre: string;
+	materia: string;
+	tipo: string;
+	semestre: number;
+	tutor: string;
+	calificacion: number;
+	vistas: number;
+	descargas: number;
+	createdAt: string;
+	updatedAt: string;
+	fileUrl?: string;
+	descripcion?: string;
+}
+
+export interface Subject {
+	id: string;
+	nombre: string;
+}
+
+export interface ResourceType {
+	id: string;
+	nombre: string;
+}
+
+export interface MaterialFilters {
+	subject?: string;
+	resourceType?: string;
+	semester?: number;
+	search?: string;
+}
+
+export interface MaterialRating {
+	id: string;
+	materialId: string;
+	userId: string;
+	calificacion: number;
+	createdAt: string;
+}
+
+export interface CreateMaterialRequest {
+	nombre: string;
+	materia: string;
+	tipo: string;
+	semestre: number;
+	descripcion?: string;
+	file: File;
+}
+
+export interface UpdateMaterialRequest {
+	nombre?: string;
+	materia?: string;
+	tipo?: string;
+	semestre?: number;
+	descripcion?: string;
+}
+
+export interface MaterialStats {
+	mostViewed: Material[];
+	mostDownloaded: Material[];
+}
