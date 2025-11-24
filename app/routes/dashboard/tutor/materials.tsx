@@ -3,6 +3,7 @@ import {
 	Card,
 	CardBody,
 	Chip,
+	Input,
 	Select,
 	SelectItem,
 	Spinner,
@@ -13,10 +14,12 @@ import {
 	Download,
 	Eye,
 	Filter,
+	Search,
 	Star,
 	X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useDebounce } from '~/lib/hooks/useDebounce';
 import {
 	useMaterials,
 	useResourceTypes,
@@ -27,7 +30,16 @@ import type { MaterialFilters } from '~/lib/types/api.types';
 export default function TutorMaterials() {
 	const [filters, setFilters] = useState<MaterialFilters>({});
 	const [showFilters, setShowFilters] = useState(false);
-	const { data: materials = [], isLoading } = useMaterials(filters);
+	const [searchTerm, setSearchTerm] = useState('');
+	const debouncedSearch = useDebounce(searchTerm, 500);
+
+	// Combinar filtros con búsqueda debounced
+	const combinedFilters = {
+		...filters,
+		search: debouncedSearch || undefined,
+	};
+
+	const { data: materials = [], isLoading } = useMaterials(combinedFilters);
 	const { data: subjects = [] } = useSubjects();
 	const { data: resourceTypes = [] } = useResourceTypes();
 
@@ -40,10 +52,11 @@ export default function TutorMaterials() {
 
 	const clearFilters = () => {
 		setFilters({});
+		setSearchTerm('');
 	};
 
 	const hasActiveFilters =
-		filters.subject || filters.resourceType || filters.semester;
+		filters.subject || filters.resourceType || filters.semester || searchTerm;
 
 	return (
 		<div className="space-y-6">
@@ -54,6 +67,21 @@ export default function TutorMaterials() {
 				<p className="text-default-500">
 					Gestiona y comparte materiales educativos.
 				</p>
+			</div>
+
+			{/* Buscador */}
+			<div className="w-full max-w-md">
+				<Input
+					placeholder="Buscar materiales..."
+					value={searchTerm}
+					onValueChange={setSearchTerm}
+					startContent={<Search className="w-4 h-4 text-default-400" />}
+					isClearable
+					onClear={() => setSearchTerm('')}
+					classNames={{
+						input: 'text-sm',
+					}}
+				/>
 			</div>
 
 			{/* Filtros */}
