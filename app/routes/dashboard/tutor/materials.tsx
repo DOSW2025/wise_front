@@ -1,9 +1,49 @@
-import { Card, CardBody, Chip, Spinner } from '@heroui/react';
-import { Download, Eye, Star } from 'lucide-react';
-import { useMaterials } from '~/lib/hooks/useMaterials';
+import {
+	Button,
+	Card,
+	CardBody,
+	Chip,
+	Select,
+	SelectItem,
+	Spinner,
+} from '@heroui/react';
+import {
+	ChevronDown,
+	ChevronUp,
+	Download,
+	Eye,
+	Filter,
+	Star,
+	X,
+} from 'lucide-react';
+import { useState } from 'react';
+import {
+	useMaterials,
+	useResourceTypes,
+	useSubjects,
+} from '~/lib/hooks/useMaterials';
+import type { MaterialFilters } from '~/lib/types/api.types';
 
 export default function TutorMaterials() {
-	const { data: materials = [], isLoading, error } = useMaterials();
+	const [filters, setFilters] = useState<MaterialFilters>({});
+	const [showFilters, setShowFilters] = useState(false);
+	const { data: materials = [], isLoading } = useMaterials(filters);
+	const { data: subjects = [] } = useSubjects();
+	const { data: resourceTypes = [] } = useResourceTypes();
+
+	const handleFilterChange = (
+		key: keyof MaterialFilters,
+		value: string | number | undefined,
+	) => {
+		setFilters((prev) => ({ ...prev, [key]: value || undefined }));
+	};
+
+	const clearFilters = () => {
+		setFilters({});
+	};
+
+	const hasActiveFilters =
+		filters.subject || filters.resourceType || filters.semester;
 
 	return (
 		<div className="space-y-6">
@@ -14,6 +54,134 @@ export default function TutorMaterials() {
 				<p className="text-default-500">
 					Gestiona y comparte materiales educativos.
 				</p>
+			</div>
+
+			{/* Filtros */}
+			<div className="space-y-4">
+				<div className="flex items-center gap-4">
+					<Button
+						variant="bordered"
+						startContent={<Filter className="w-4 h-4" />}
+						endContent={
+							showFilters ? (
+								<ChevronUp className="w-4 h-4" />
+							) : (
+								<ChevronDown className="w-4 h-4" />
+							)
+						}
+						color={hasActiveFilters ? 'primary' : 'default'}
+						onPress={() => setShowFilters(!showFilters)}
+					>
+						Filtros{' '}
+						{hasActiveFilters &&
+							`(${Object.values(filters).filter(Boolean).length})`}
+					</Button>
+
+					{/* Indicadores de filtros activos */}
+					{hasActiveFilters && (
+						<div className="flex flex-wrap gap-2">
+							{filters.subject && (
+								<Chip size="sm" color="primary" variant="flat">
+									Materia: {filters.subject}
+								</Chip>
+							)}
+							{filters.resourceType && (
+								<Chip size="sm" color="secondary" variant="flat">
+									Tipo: {filters.resourceType}
+								</Chip>
+							)}
+							{filters.semester && (
+								<Chip size="sm" color="default" variant="flat">
+									Semestre: {filters.semester}
+								</Chip>
+							)}
+						</div>
+					)}
+				</div>
+
+				{/* Panel de filtros expandible */}
+				{showFilters && (
+					<Card>
+						<CardBody className="p-6">
+							<div className="space-y-4">
+								<div className="flex items-center justify-between">
+									<h4 className="font-semibold">Filtrar materiales</h4>
+									{hasActiveFilters && (
+										<Button
+											size="sm"
+											variant="light"
+											startContent={<X className="w-3 h-3" />}
+											onPress={clearFilters}
+										>
+											Limpiar filtros
+										</Button>
+									)}
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+									<Select
+										label="Materia"
+										placeholder="Seleccionar materia"
+										selectedKeys={filters.subject ? [filters.subject] : []}
+										onSelectionChange={(keys) => {
+											const value = Array.from(keys)[0] as string;
+											handleFilterChange('subject', value);
+										}}
+										size="sm"
+									>
+										{subjects.map((subject) => (
+											<SelectItem key={subject.nombre} value={subject.nombre}>
+												{subject.nombre}
+											</SelectItem>
+										))}
+									</Select>
+
+									<Select
+										label="Tipo de recurso"
+										placeholder="Seleccionar tipo"
+										selectedKeys={
+											filters.resourceType ? [filters.resourceType] : []
+										}
+										onSelectionChange={(keys) => {
+											const value = Array.from(keys)[0] as string;
+											handleFilterChange('resourceType', value);
+										}}
+										size="sm"
+									>
+										{resourceTypes.map((type) => (
+											<SelectItem key={type.nombre} value={type.nombre}>
+												{type.nombre}
+											</SelectItem>
+										))}
+									</Select>
+
+									<Select
+										label="Semestre"
+										placeholder="Seleccionar semestre"
+										selectedKeys={
+											filters.semester ? [filters.semester.toString()] : []
+										}
+										onSelectionChange={(keys) => {
+											const selectedArray = Array.from(keys);
+											const value = selectedArray[0] as string;
+											handleFilterChange(
+												'semester',
+												value ? Number(value) : undefined,
+											);
+										}}
+										size="sm"
+									>
+										{[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((semester) => (
+											<SelectItem key={semester} value={semester}>
+												Semestre {semester}
+											</SelectItem>
+										))}
+									</Select>
+								</div>
+							</div>
+						</CardBody>
+					</Card>
+				)}
 			</div>
 
 			{/* Estado de carga */}

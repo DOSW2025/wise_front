@@ -32,8 +32,8 @@ export function useMaterials(filters?: MaterialFilters) {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.list(filters),
 		queryFn: () => {
-			// MOCK DATA para desarrollo
-			return Promise.resolve([
+			// MOCK DATA completo
+			const allMaterials = [
 				{
 					id: '1',
 					nombre: 'Introducción a Algoritmos',
@@ -73,7 +73,47 @@ export function useMaterials(filters?: MaterialFilters) {
 					createdAt: '2024-01-08T09:15:00Z',
 					updatedAt: '2024-01-08T09:15:00Z',
 				},
-			]);
+				{
+					id: '4',
+					nombre: 'Matrices y Vectores',
+					materia: 'Álgebra Lineal',
+					tipo: 'PPT',
+					semestre: 2,
+					tutor: 'Dr. Ana Martínez',
+					calificacion: 4.6,
+					vistas: 95,
+					descargas: 67,
+					createdAt: '2024-01-12T16:20:00Z',
+					updatedAt: '2024-01-12T16:20:00Z',
+				},
+				{
+					id: '5',
+					nombre: 'Consultas SQL Básicas',
+					materia: 'Bases de Datos',
+					tipo: 'DOCX',
+					semestre: 4,
+					tutor: 'Prof. Luis Rodríguez',
+					calificacion: 4.3,
+					vistas: 112,
+					descargas: 78,
+					createdAt: '2024-01-05T11:45:00Z',
+					updatedAt: '2024-01-05T11:45:00Z',
+				},
+			];
+
+			// Simular filtrado
+			let filtered = allMaterials;
+			if (filters?.subject) {
+				filtered = filtered.filter((m) => m.materia === filters.subject);
+			}
+			if (filters?.resourceType) {
+				filtered = filtered.filter((m) => m.tipo === filters.resourceType);
+			}
+			if (filters?.semester) {
+				filtered = filtered.filter((m) => m.semestre === filters.semester);
+			}
+
+			return Promise.resolve(filtered);
 		},
 		staleTime: 5 * 60 * 1000, // 5 minutos
 	});
@@ -92,7 +132,16 @@ export function useMaterial(id: string) {
 export function useSubjects() {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.subjects,
-		queryFn: () => materialsService.getSubjects(),
+		queryFn: () => {
+			// MOCK DATA para desarrollo
+			return Promise.resolve([
+				{ id: '1', nombre: 'Programación I' },
+				{ id: '2', nombre: 'Estructuras de Datos' },
+				{ id: '3', nombre: 'Cálculo I' },
+				{ id: '4', nombre: 'Álgebra Lineal' },
+				{ id: '5', nombre: 'Bases de Datos' },
+			]);
+		},
 		staleTime: 30 * 60 * 1000, // 30 minutos
 	});
 }
@@ -101,7 +150,14 @@ export function useSubjects() {
 export function useResourceTypes() {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.resourceTypes,
-		queryFn: () => materialsService.getResourceTypes(),
+		queryFn: () => {
+			// MOCK DATA para desarrollo
+			return Promise.resolve([
+				{ id: '1', nombre: 'PDF' },
+				{ id: '2', nombre: 'DOCX' },
+				{ id: '3', nombre: 'PPT' },
+			]);
+		},
 		staleTime: 30 * 60 * 1000, // 30 minutos
 	});
 }
