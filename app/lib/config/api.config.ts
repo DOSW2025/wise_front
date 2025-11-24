@@ -4,6 +4,14 @@
  */
 
 const getBaseUrl = () => {
+	// Use proxy path when running in Vercel client-side to avoid CORS issues
+	if (
+		typeof window !== 'undefined' &&
+		window.location.hostname.includes('vercel.app')
+	) {
+		return '/api';
+	}
+
 	let url = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3002';
 
 	// Ensure HTTPS for non-local environments to avoid Mixed Content errors
