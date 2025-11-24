@@ -5,7 +5,10 @@
 
 import { Button, Card, CardBody, Chip, Divider, Spinner } from '@heroui/react';
 import { Download, Edit, Eye, Star, Trash2, X } from 'lucide-react';
-import { useMaterial } from '~/lib/hooks/useMaterials';
+import { useEffect } from 'react';
+import { useDownloadMaterial, useMaterial } from '~/lib/hooks/useMaterials';
+import { useToast } from '~/lib/hooks/useToast';
+import { useViewTracker } from '~/lib/hooks/useViewTracker';
 import type { Material } from '~/lib/types/api.types';
 
 interface MaterialDetailModalProps {
@@ -22,6 +25,16 @@ export function MaterialDetailModal({
 	onDelete,
 }: MaterialDetailModalProps) {
 	const { data: material, isLoading, error } = useMaterial(materialId);
+	const { trackView } = useViewTracker();
+	const downloadMaterial = useDownloadMaterial();
+	const { showToast } = useToast();
+
+	// Registrar vista automáticamente al abrir el modal
+	useEffect(() => {
+		if (material) {
+			trackView(materialId);
+		}
+	}, [material, materialId, trackView]);
 
 	if (isLoading) {
 		return (
@@ -157,11 +170,18 @@ export function MaterialDetailModal({
 							color="primary"
 							startContent={<Download className="w-4 h-4" />}
 							onPress={() => {
-								// Simular descarga
-								console.log('Descargando material:', material.id);
+								downloadMaterial.mutate(material.id, {
+									onSuccess: () => {
+										showToast('Descarga iniciada correctamente', 'success');
+									},
+									onError: () => {
+										showToast('Error al descargar el archivo', 'error');
+									},
+								});
 							}}
+							isLoading={downloadMaterial.isPending}
 						>
-							Descargar
+							{downloadMaterial.isPending ? 'Descargando...' : 'Descargar'}
 						</Button>
 
 						{/* Botones condicionados para el propietario */}
