@@ -10,6 +10,7 @@ import { useDownloadMaterial, useMaterial } from '~/lib/hooks/useMaterials';
 import { useToast } from '~/lib/hooks/useToast';
 import { useViewTracker } from '~/lib/hooks/useViewTracker';
 import type { Material } from '~/lib/types/api.types';
+import { MaterialRating } from './material-rating';
 
 interface MaterialDetailModalProps {
 	materialId: string;
@@ -111,20 +112,25 @@ export function MaterialDetailModal({
 
 					<Divider />
 
-					{/* Estadísticas */}
+					{/* Calificación interactiva */}
 					<div>
-						<h5 className="font-semibold mb-3">Estadísticas</h5>
-						<div className="grid grid-cols-3 gap-4">
-							<div className="text-center p-3 bg-warning-50 rounded-lg">
-								<div className="flex items-center justify-center gap-1 mb-1">
-									<Star className="w-4 h-4 text-warning-600" />
-									<span className="font-semibold text-warning-700">
-										{material.calificacion.toFixed(1)}
-									</span>
-								</div>
-								<p className="text-xs text-warning-600">Calificación</p>
-							</div>
+						<h5 className="font-semibold mb-3">Calificar Material</h5>
+						<div className="bg-warning-50 p-4 rounded-lg mb-4">
+							<MaterialRating
+								materialId={material.id}
+								currentRating={material.calificacion}
+								userRating={0}
+								onRatingChange={(newRating) => {
+									showToast(
+										`Calificación registrada: ${newRating} estrellas`,
+										'success',
+									);
+								}}
+							/>
+						</div>
 
+						<h5 className="font-semibold mb-3">Estadísticas</h5>
+						<div className="grid grid-cols-2 gap-4">
 							<div className="text-center p-3 bg-primary-50 rounded-lg">
 								<div className="flex items-center justify-center gap-1 mb-1">
 									<Eye className="w-4 h-4 text-primary-600" />

@@ -32,6 +32,7 @@ export function useMaterials(filters?: MaterialFilters) {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.list(filters),
 		queryFn: () => {
+			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.getMaterials(filters);
 			// MOCK DATA completo
 			const allMaterials = [
 				{
@@ -133,6 +134,7 @@ export function useMaterial(id: string) {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.detail(id),
 		queryFn: () => {
+			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.getMaterialById(id);
 			// MOCK DATA - buscar material por ID
 			const allMaterials = [
 				{
@@ -224,6 +226,7 @@ export function useSubjects() {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.subjects,
 		queryFn: () => {
+			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.getSubjects();
 			// MOCK DATA para desarrollo
 			return Promise.resolve([
 				{ id: '1', nombre: 'Programación I' },
@@ -242,6 +245,7 @@ export function useResourceTypes() {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.resourceTypes,
 		queryFn: () => {
+			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.getResourceTypes();
 			// MOCK DATA para desarrollo
 			return Promise.resolve([
 				{ id: '1', nombre: 'PDF' },
@@ -257,7 +261,42 @@ export function useResourceTypes() {
 export function useUserMaterials(userId: string) {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.userMaterials(userId),
-		queryFn: () => materialsService.getUserMaterials(userId),
+		queryFn: () => {
+			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.getUserMaterials(userId);
+			// MOCK DATA - materiales del usuario logueado
+			const userMaterials = [
+				{
+					id: '1',
+					nombre: 'Introducción a Algoritmos',
+					materia: 'Programación I',
+					tipo: 'PDF',
+					semestre: 2,
+					tutor: 'Tutor Desarrollo',
+					calificacion: 4.5,
+					vistas: 125,
+					descargas: 89,
+					createdAt: '2024-01-15T10:00:00Z',
+					updatedAt: '2024-01-15T10:00:00Z',
+					descripcion: 'Material completo sobre algoritmos básicos.',
+				},
+				{
+					id: '6',
+					nombre: 'Ejercicios de Programación',
+					materia: 'Programación I',
+					tipo: 'DOCX',
+					semestre: 2,
+					tutor: 'Tutor Desarrollo',
+					calificacion: 4.2,
+					vistas: 67,
+					descargas: 34,
+					createdAt: '2024-01-20T09:30:00Z',
+					updatedAt: '2024-01-20T09:30:00Z',
+					descripcion: 'Colección de ejercicios prácticos.',
+				},
+			];
+
+			return Promise.resolve(userMaterials);
+		},
 		enabled: !!userId,
 	});
 }
@@ -323,6 +362,7 @@ export function useViewMaterial() {
 
 	return useMutation({
 		mutationFn: (id: string) => {
+			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.viewMaterial(id);
 			// Simular POST /api/materials/:id/view
 			console.log(`Registrando vista para material ${id}`);
 			return Promise.resolve();
@@ -353,16 +393,31 @@ export function useRateMaterial() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: ({ id, rating }: { id: string; rating: number }) =>
-			materialsService.rateMaterial(id, rating),
-		onSuccess: (_, { id }) => {
-			// Invalidar queries relacionadas
-			queryClient.invalidateQueries({
-				queryKey: MATERIALS_QUERY_KEYS.detail(id),
-			});
-			queryClient.invalidateQueries({
-				queryKey: MATERIALS_QUERY_KEYS.ratings(id),
-			});
+		mutationFn: ({ id, rating }: { id: string; rating: number }) => {
+			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.rateMaterial(id, rating);
+			// Simular POST /api/materials/:id/ratings
+			console.log(`Calificando material ${id} con ${rating} estrellas`);
+			return Promise.resolve();
+		},
+		onSuccess: (_, { id, rating }) => {
+			// Actualizar calificación promedio en el cache
+			queryClient.setQueryData(
+				MATERIALS_QUERY_KEYS.detail(id),
+				(oldData: any) => {
+					if (oldData) {
+						// Simular cálculo de nuevo promedio
+						const currentRating = oldData.calificacion;
+						const newRating = (currentRating + rating) / 2; // Simplificado
+						return {
+							...oldData,
+							calificacion: newRating,
+						};
+					}
+					return oldData;
+				},
+			);
+
+			// Actualizar también en la lista
 			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.lists() });
 		},
 	});
@@ -374,6 +429,7 @@ export function useDownloadMaterial() {
 
 	return useMutation({
 		mutationFn: async (id: string) => {
+			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.downloadMaterial(id);
 			// Simular GET /api/materials/:id/download
 			console.log(`Descargando material ${id}`);
 
