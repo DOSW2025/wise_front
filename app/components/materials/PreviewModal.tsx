@@ -8,7 +8,7 @@ import {
 	ModalHeader,
 } from '@heroui/react';
 import { Download, FileText, Flag, MessageSquare, Share2 } from 'lucide-react';
-import RatingStars from './RatingStars';
+import RatingStars from './ratingStars';
 import type { Material } from './types';
 import { fileTypeColors } from './types';
 
