@@ -1,4 +1,5 @@
 export { AlertMessage } from './alert-message';
+export { BarChart, ChartTooltip, LineChart, PieChart } from './charts';
 export { DashboardLayout } from './dashboard-layout';
 export { DateRangeFilter } from './date-range-filter';
 export { EmptyState } from './empty-state';
@@ -16,4 +17,5 @@ export { ProfileAvatar } from './profile-avatar';
 export { RoleDashboard } from './role-dashboard';
 export { Sidebar } from './sidebar';
 export { StatsCard } from './stats-card';
+export { SubjectDetailTable } from './subject-detail-table';
 export { TutoringCard } from './tutoring-card';

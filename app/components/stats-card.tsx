@@ -6,7 +6,17 @@ interface StatsCardProps {
 	value: string | number;
 	icon?: ReactNode;
 	description?: string;
-	color?: 'primary' | 'success' | 'warning' | 'danger' | 'default';
+	color?:
+		| 'primary'
+		| 'success'
+		| 'warning'
+		| 'danger'
+		| 'secondary'
+		| 'default';
+	trend?: {
+		value: string;
+		isPositive: boolean;
+	};
 }
 
 export function StatsCard({
@@ -15,30 +25,43 @@ export function StatsCard({
 	icon,
 	description,
 	color = 'default',
+	trend,
 }: StatsCardProps) {
 	const colorClasses = {
 		primary: 'bg-primary-50 text-primary',
 		success: 'bg-success-50 text-success',
 		warning: 'bg-warning-50 text-warning',
 		danger: 'bg-danger-50 text-danger',
+		secondary: 'bg-blue-100 text-blue-600',
 		default: 'bg-default-100 text-default-700',
 	};
 
+	const trendColorClass = trend?.isPositive ? 'text-success' : 'text-danger';
+
 	return (
-		<Card>
-			<CardBody className="gap-4">
+		<Card className="border border-default-200 bg-white">
+			<CardBody className="gap-4 p-6">
+				{/* Fila 1: Icono y Tendencia */}
 				<div className="flex items-start justify-between">
-					<div className="flex flex-col gap-1">
-						<p className="text-small text-default-500">{title}</p>
-						<p className="text-2xl font-bold">{value}</p>
-						{description && (
-							<p className="text-tiny text-default-400">{description}</p>
-						)}
-					</div>
 					{icon && (
-						<div className={`p-3 rounded-lg ${colorClasses[color]}`}>
+						<div className={`p-2.5 rounded-lg ${colorClasses[color]}`}>
 							{icon}
 						</div>
+					)}
+					{trend && (
+						<span className={`text-xs font-semibold ${trendColorClass}`}>
+							{trend.isPositive ? '+' : '-'}
+							{trend.value}
+						</span>
+					)}
+				</div>
+
+				{/* Fila 2: Valor principal */}
+				<div className="flex flex-col gap-1">
+					<p className="text-4xl font-bold text-foreground">{value}</p>
+					<p className="text-sm font-medium text-default-600">{title}</p>
+					{description && (
+						<p className="text-xs text-default-500">{description}</p>
 					)}
 				</div>
 			</CardBody>
