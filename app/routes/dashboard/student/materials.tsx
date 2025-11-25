@@ -8,14 +8,14 @@ import {
 } from '@heroui/react';
 import { Filter, Grid3x3, List, Search, Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import FiltersPanel from '~/components/materials/FiltersPanel';
+import FiltersPanel from '~/components/materials/filtersPanel';
 // Componentes
-import MaterialCard from '~/components/materials/MaterialCard';
+import MaterialCard from '~/components/materials/materialCard';
 import PreviewModal from '~/components/materials/PreviewModal';
 // Tipos y datos
 import type { Material, UploadFormState } from '~/components/materials/types';
 import { mockMaterials, sortOptions } from '~/components/materials/types';
-import UploadModal from '~/components/materials/UploadModal';
+import UploadModal from '~/components/materials/uploadModal';
 
 export default function StudentMaterials() {
 	// Estados
