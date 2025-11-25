@@ -119,7 +119,7 @@ export default function StudentDashboard() {
 						<div className="flex flex-col gap-2">
 							<Button
 								as={Link}
-								to="/dashboard/tutoring"
+								to="/dashboard/student/tutoring"
 								color="primary"
 								fullWidth
 							>
@@ -127,7 +127,7 @@ export default function StudentDashboard() {
 							</Button>
 							<Button
 								as={Link}
-								to="/dashboard/materials"
+								to="/dashboard/student/materials"
 								color="default"
 								variant="bordered"
 								fullWidth
@@ -136,7 +136,7 @@ export default function StudentDashboard() {
 							</Button>
 							<Button
 								as={Link}
-								to="/dashboard/community"
+								to="/dashboard/student/community"
 								color="default"
 								variant="bordered"
 								fullWidth
