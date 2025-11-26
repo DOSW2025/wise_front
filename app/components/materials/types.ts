@@ -1,4 +1,11 @@
 // Tipos TypeScript para materiales
+export interface Comment {
+	id: string;
+	userId: string;
+	userName: string;
+	date: string;
+	content: string;
+}
 export interface Material {
 	id: string;
 	title: string;
@@ -12,6 +19,7 @@ export interface Material {
 	downloads: number;
 	comments: number;
 	description: string;
+	commentsList: Comment[];
 }
 
 // Configuraciones
@@ -58,6 +66,31 @@ export const mockMaterials: Material[] = [
 		comments: 78,
 		description:
 			'Documento completo sobre programación en Python desde cero con ejemplos prácticos y ejercicios.',
+		commentsList: [
+			{
+				id: 'c1',
+				userId: 'user1',
+				userName: 'Juana Lozano',
+				date: '5 nov 2025',
+				content:
+					'Excelente material, muy completo y bien explicado. Me ayudó mucho para el examen.',
+			},
+			{
+				id: 'c2',
+				userId: 'user2',
+				userName: 'Anderson García',
+				date: '3 nov 2025',
+				content:
+					'Muy útil, aunque le faltarían algunos ejemplos más avanzados.',
+			},
+			{
+				id: 'c3',
+				userId: 'user3',
+				userName: 'Laura Alejandra Venegas',
+				date: '1 nov 2025',
+				content: '¡Gracias por compartir! Los diagramas están muy claros.',
+			},
+		],
 	},
 	{
 		id: '2',
@@ -73,7 +106,24 @@ export const mockMaterials: Material[] = [
 		comments: 67,
 		description:
 			'Documento completo sobre estructuras de datos con implementaciones en Python y Java.',
+		commentsList: [
+			{
+				id: 'c4',
+				userId: 'user4',
+				userName: 'Juana Lozano',
+				date: '4 nov 2025',
+				content: 'Muy buena explicación de árboles binarios.',
+			},
+			{
+				id: 'c5',
+				userId: 'user5',
+				userName: 'Sofia Rodríguez',
+				date: '2 nov 2025',
+				content: 'Los ejemplos en Java son muy claros, gracias.',
+			},
+		],
 	},
+
 	{
 		id: '3',
 		title: 'Cálculo Diferencial e Integral',
@@ -88,6 +138,24 @@ export const mockMaterials: Material[] = [
 		comments: 45,
 		description:
 			'Libro completo de cálculo con ejercicios resueltos y teoría avanzada.',
+		commentsList: [
+			{
+				id: 'c6',
+				userId: 'user6',
+				userName: 'Christian Romero',
+				date: '18 oct 2025',
+				content:
+					'Los ejercicios propuestos me ayudaron a entender mejor las integrales.',
+			},
+			{
+				id: 'c7',
+				userId: 'user7',
+				userName: 'María Fernanda',
+				date: '20 oct 2025',
+				content:
+					'Faltaron algunos pasos en las soluciones, pero en general buen material.',
+			},
+		],
 	},
 	{
 		id: '4',
@@ -103,6 +171,22 @@ export const mockMaterials: Material[] = [
 		comments: 32,
 		description:
 			'Colección de ejercicios de álgebra lineal con soluciones detalladas.',
+		commentsList: [
+			{
+				id: 'c8',
+				userId: 'user8',
+				userName: 'Diego Herrera',
+				date: '12 oct 2025',
+				content: 'Muy buen compendio. Los pasos están bien explicados.',
+			},
+			{
+				id: 'c9',
+				userId: 'user9',
+				userName: 'Valeria Suárez',
+				date: '11 oct 2025',
+				content: 'Ideal para practicar antes del parcial de álgebra lineal.',
+			},
+		],
 	},
 	{
 		id: '5',
@@ -118,6 +202,22 @@ export const mockMaterials: Material[] = [
 		comments: 28,
 		description:
 			'Presentación sobre las leyes de Newton con animaciones y ejemplos.',
+		commentsList: [
+			{
+				id: 'c10',
+				userId: 'user10',
+				userName: 'Juana lozano',
+				date: '6 nov 2025',
+				content: 'Las animaciones hacen más claro el concepto de fuerza.',
+			},
+			{
+				id: 'c11',
+				userId: 'user11',
+				userName: 'Fernando Ruiz',
+				date: '7 nov 2025',
+				content: 'Sería genial tener más ejercicios resueltos paso a paso.',
+			},
+		],
 	},
 	{
 		id: '6',
@@ -133,6 +233,23 @@ export const mockMaterials: Material[] = [
 		comments: 19,
 		description:
 			'Tabla periódica en alta resolución con información detallada de cada elemento.',
+		commentsList: [
+			{
+				id: 'c12',
+				userId: 'user12',
+				userName: 'Camila Ortiz',
+				date: '1 sep 2025',
+				content: 'Información precisa y muy útil para laboratorio.',
+			},
+			{
+				id: 'c13',
+				userId: 'user13',
+				userName: 'Sergio Molina',
+				date: '2 sep 2025',
+				content:
+					'Buen formato, ayuda a identificar propiedades de los elementos rápidamente.',
+			},
+		],
 	},
 	{
 		id: '7',
@@ -148,6 +265,24 @@ export const mockMaterials: Material[] = [
 		comments: 41,
 		description:
 			'Guía completa de experimentos de química orgánica en laboratorio.',
+		commentsList: [
+			{
+				id: 'c14',
+				userId: 'user14',
+				userName: 'Paula Gómez',
+				date: '13 nov 2025',
+				content:
+					'Excelente guía, las precauciones de seguridad están muy claras.',
+			},
+			{
+				id: 'c15',
+				userId: 'user15',
+				userName: 'Ricardo Salas',
+				date: '14 nov 2025',
+				content:
+					'Probé el experimento 4 y los resultados coincidieron con los descritos.',
+			},
+		],
 	},
 	{
 		id: '8',
@@ -163,5 +298,23 @@ export const mockMaterials: Material[] = [
 		comments: 23,
 		description:
 			'Guía completa de estadística con ejemplos prácticos y casos de estudio.',
+		commentsList: [
+			{
+				id: 'c16',
+				userId: 'user16',
+				userName: 'Lucía Fernández',
+				date: '9 oct 2025',
+				content:
+					'Muy buena explicación de procesos inferenciales con ejemplos reales.',
+			},
+			{
+				id: 'c17',
+				userId: 'user17',
+				userName: 'Mateo Vargas',
+				date: '10 oct 2025',
+				content:
+					'Los casos de estudio ayudan a entender la aplicación práctica de las técnicas.',
+			},
+		],
 	},
 ];

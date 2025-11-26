@@ -8,9 +8,10 @@ import {
 	ModalHeader,
 } from '@heroui/react';
 import { Download, FileText, Flag, MessageSquare, Share2 } from 'lucide-react';
+import { useState } from 'react';
+import CommentsSection from './CommentsSection';
 import RatingStars from './ratingStars';
 import type { Material } from './types';
-import { fileTypeColors } from './types';
 
 interface PreviewModalProps {
 	material: Material | null;
@@ -23,6 +24,7 @@ interface PreviewModalProps {
 	onRate: (material: Material, rating: number) => void;
 	onComment: (material: Material) => void;
 	onRatingChange: (rating: number) => void;
+	onAddComment: (materialId: string, content: string) => void;
 }
 
 export default function PreviewModal({
@@ -36,8 +38,15 @@ export default function PreviewModal({
 	onRate,
 	onComment,
 	onRatingChange,
+	onAddComment,
 }: PreviewModalProps) {
+	const [showComments, setShowComments] = useState(false);
+
 	if (!material) return null;
+
+	const handleAddComment = (content: string) => {
+		onAddComment(material.id, content);
+	};
 
 	return (
 		<Modal isOpen={isOpen} onClose={onClose} size="4xl" scrollBehavior="inside">
@@ -45,9 +54,7 @@ export default function PreviewModal({
 				<>
 					<ModalHeader className="border-b">
 						<div className="flex items-center gap-4">
-							<div
-								className={`p-3 rounded-lg ${fileTypeColors[material.fileType]}`}
-							>
+							<div className={`p-3 rounded-lg bg-red-50 text-red-600`}>
 								<FileText size={32} />
 							</div>
 							<div className="flex-1">
@@ -99,6 +106,7 @@ export default function PreviewModal({
 									variant="flat"
 									startContent={<Share2 size={16} />}
 									onClick={() => onShare(material)}
+									type="button"
 								>
 									Compartir
 								</Button>
@@ -106,6 +114,7 @@ export default function PreviewModal({
 									className="bg-[#8B1A1A] text-white"
 									startContent={<Download size={16} />}
 									onClick={() => onDownload(material.id)}
+									type="button"
 								>
 									Descargar
 								</Button>
@@ -126,6 +135,7 @@ export default function PreviewModal({
 								className="bg-[#8B1A1A] text-white"
 								startContent={<Download size={16} />}
 								onClick={() => onDownload(material.id)}
+								type="button"
 							>
 								Descargar {material.fileType}
 							</Button>
@@ -159,25 +169,36 @@ export default function PreviewModal({
 									className="bg-[#8B1A1A] text-white"
 									isDisabled={userRating === 0}
 									onClick={() => onRate(material, userRating)}
+									type="button"
 								>
 									Enviar valoración
 								</Button>
 								<Button
 									variant="flat"
 									startContent={<MessageSquare size={16} />}
-									onClick={() => onComment(material)}
+									onClick={() => setShowComments(!showComments)}
+									type="button"
 								>
-									Agregar comentario
+									{showComments ? 'Ocultar comentarios' : 'Ver comentarios'}
 								</Button>
 								<Button
 									variant="light"
 									startContent={<Flag size={16} />}
 									onClick={() => onReport(material)}
+									type="button"
 								>
 									Reportar
 								</Button>
 							</div>
 						</div>
+
+						{/*  SECCIÓN: Comentarios */}
+						<CommentsSection
+							comments={material.commentsList}
+							onAddComment={handleAddComment}
+							isOpen={showComments}
+							onClose={() => setShowComments(false)}
+						/>
 					</ModalBody>
 				</>
 			</ModalContent>

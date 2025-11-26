@@ -6,14 +6,14 @@ import {
 	DropdownTrigger,
 	Input,
 } from '@heroui/react';
-import { Filter, Grid3x3, List, Search, Upload } from 'lucide-react';
+import { Filter, Grid3x3, List, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import CommentsModal from '~/components/materials/CommentsModal';
 import FiltersPanel from '~/components/materials/filtersPanel';
-// Componentes
 import MaterialCard from '~/components/materials/materialCard';
 import PreviewModal from '~/components/materials/PreviewModal';
 // Tipos y datos
-import type { Material } from '~/components/materials/types';
+import type { Comment, Material } from '~/components/materials/types';
 import { mockMaterials, sortOptions } from '~/components/materials/types';
 
 export default function StudentMaterials() {
@@ -25,6 +25,9 @@ export default function StudentMaterials() {
 	const [selectedSemester, setSelectedSemester] = useState('Todos');
 	const [sortBy, setSortBy] = useState('Todos');
 	const [previewMaterial, setPreviewMaterial] = useState<Material | null>(null);
+	const [commentsMaterial, setCommentsMaterial] = useState<Material | null>(
+		null,
+	);
 	const [userRating, setUserRating] = useState(0);
 
 	// Filtrar y ordenar materiales
@@ -106,9 +109,44 @@ export default function StudentMaterials() {
 		}
 	};
 
-	const handleAddComment = (material: Material) => {
-		console.log('Agregando comentario a:', material.id);
-		alert(`Redirigiendo a comentarios de: ${material.title}`);
+	// Abrir modal SOLO de comentarios (desde la tarjeta)
+	const handleOpenCommentsModal = (material: Material) => {
+		console.log('Abrir modal de comentarios para:', material.title);
+		setCommentsMaterial(material);
+	};
+
+	// Esta función ahora es para abrir comentarios DENTRO del modal de vista previa
+	const handleOpenCommentsInPreview = (material: Material) => {
+		console.log(
+			'Abrir sección de comentarios en vista previa:',
+			material.title,
+		);
+		// Esta función se pasa al PreviewModal para manejar comentarios internos
+	};
+
+	// Agregar comentario (simulado). Firma: (materialId, content)
+	const handleAddComment = async (materialId: string, content: string) => {
+		console.log('Agregando comentario:', { materialId, content });
+
+		// Simular agregar comentario
+		const newComment: Comment = {
+			id: `c${Date.now()}`,
+			userId: 'current-user', // En una app real, esto vendría del auth
+			userName: 'Tú', // En una app real, esto vendría del perfil
+			date: new Date().toLocaleDateString('es-ES', {
+				day: 'numeric',
+				month: 'short',
+				year: 'numeric',
+			}),
+			content: content,
+		};
+
+		// En una app real, aquí harías una llamada a la API
+		// Por ahora, solo mostramos un mensaje
+		alert(`Comentario agregado: "${content}"`);
+
+		// Aquí deberías actualizar el estado para reflejar el nuevo comentario
+		// Pero como estamos usando mock data, solo mostramos el alert
 	};
 
 	return (
@@ -207,7 +245,7 @@ export default function StudentMaterials() {
 						onPreview={setPreviewMaterial}
 						onDownload={handleDownload}
 						onRate={setPreviewMaterial}
-						onComment={handleAddComment}
+						onComment={handleOpenCommentsModal}
 					/>
 				))}
 			</div>
@@ -222,8 +260,17 @@ export default function StudentMaterials() {
 				onShare={handleShare}
 				onReport={handleReport}
 				onRate={handleRateMaterial}
-				onComment={handleAddComment}
+				onComment={handleOpenCommentsInPreview}
 				onRatingChange={setUserRating}
+				onAddComment={handleAddComment}
+			/>
+
+			{/*  Modal solo para comentarios */}
+			<CommentsModal
+				material={commentsMaterial}
+				isOpen={!!commentsMaterial}
+				onClose={() => setCommentsMaterial(null)}
+				onAddComment={handleAddComment}
 			/>
 		</div>
 	);
