@@ -7,6 +7,7 @@ export { MaterialCard } from './material-card';
 export { Navbar } from './navbar';
 export { PageHeader } from './page-header';
 export { PasswordChangeModal } from './password-change-modal';
+export { PeriodCalendar } from './period-calendar';
 export {
 	ProfileConfigurationSection,
 	ProfileEditButtons,

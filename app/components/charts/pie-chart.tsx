@@ -1,4 +1,4 @@
-import { Card, CardBody, CardHeader } from '@heroui/react';
+import { Card, CardBody, CardHeader, Chip } from '@heroui/react';
 
 interface PieChartData {
 	label: string;
@@ -13,13 +13,21 @@ interface PieChartProps {
 	size?: number;
 }
 
+// Mapeo de colores semánticos (referencia para futuros usos)
+const _semanticColors = {
+	danger: '#ef4444', // Rojo
+	success: '#10b981', // Verde
+	warning: '#f59e0b', // Naranja
+	primary: '#3b82f6', // Azul
+	secondary: '#8b5cf6', // Púrpura
+};
+
 export function PieChart({ title, data, size = 200 }: PieChartProps) {
 	const radius = size / 2;
-	const circumference = 2 * Math.PI * radius;
 
 	// Calcular los segmentos del pastel
 	let currentAngle = -90; // Empezar en la parte superior
-	const segments = data.map((item, index) => {
+	const segments = data.map((item) => {
 		const sliceAngle = (item.percentage / 100) * 360;
 		const startAngle = currentAngle;
 		const endAngle = currentAngle + sliceAngle;
@@ -42,13 +50,16 @@ export function PieChart({ title, data, size = 200 }: PieChartProps) {
 			color: item.color,
 			label: item.label,
 			percentage: item.percentage,
+			value: item.value,
 		};
 	});
 
 	return (
-		<Card className="w-full">
-			<CardHeader className="flex justify-between items-center px-6 py-4 border-b border-default-100">
-				<h3 className="text-lg font-semibold text-foreground">{title}</h3>
+		<Card className="w-full border border-default-200 bg-white shadow-sm">
+			<CardHeader className="flex justify-between items-center px-6 py-5 border-b border-default-100">
+				<h3 className="text-lg font-bold text-foreground tracking-tight">
+					{title}
+				</h3>
 			</CardHeader>
 			<CardBody className="flex flex-col md:flex-row items-center justify-center gap-8 p-8">
 				{/* SVG Pie Chart */}
@@ -57,7 +68,7 @@ export function PieChart({ title, data, size = 200 }: PieChartProps) {
 						width={size}
 						height={size}
 						viewBox={`0 0 ${size} ${size}`}
-						className="drop-shadow-sm"
+						className="drop-shadow-md"
 					>
 						{segments.map((segment, index) => (
 							<path
@@ -65,26 +76,57 @@ export function PieChart({ title, data, size = 200 }: PieChartProps) {
 								d={segment.pathData}
 								fill={segment.color}
 								stroke="white"
-								strokeWidth="2"
-								className="transition-opacity duration-300 hover:opacity-80 cursor-pointer"
+								strokeWidth="2.5"
+								className="transition-all duration-300 hover:opacity-80 cursor-pointer hover:drop-shadow-lg"
 							/>
 						))}
 					</svg>
 				</div>
 
-				{/* Leyenda */}
+				{/* Leyenda mejorada */}
 				<div className="flex flex-col gap-3">
-					{data.map((item, index) => (
-						<div key={index} className="flex items-center gap-2">
-							<div
-								className="w-4 h-4 rounded"
-								style={{ backgroundColor: item.color }}
-							/>
-							<span className="text-sm text-default-700">
-								{item.label}: {item.percentage}%
-							</span>
-						</div>
-					))}
+					{data.map((item, index) => {
+						// Mapear colores a nombres semánticos para los chips
+						const colorMap: Record<
+							string,
+							'danger' | 'success' | 'warning' | 'primary' | 'default'
+						> = {
+							'#ef4444': 'danger',
+							'#10b981': 'success',
+							'#f59e0b': 'warning',
+							'#3b82f6': 'primary',
+							'#8b5cf6': 'default',
+						};
+
+						const chipColor = colorMap[item.color] || 'default';
+
+						return (
+							<div key={index} className="flex items-center gap-3">
+								<Chip
+									size="sm"
+									color={chipColor}
+									variant="flat"
+									className="font-medium"
+									startContent={
+										<div
+											className="w-2.5 h-2.5 rounded-full"
+											style={{ backgroundColor: item.color }}
+										/>
+									}
+								>
+									{item.label}
+								</Chip>
+								<div className="flex flex-col gap-1">
+									<span className="text-xs text-default-500 font-medium">
+										{item.value}
+									</span>
+									<span className="text-sm font-bold text-default-700">
+										{item.percentage}%
+									</span>
+								</div>
+							</div>
+						);
+					})}
 				</div>
 			</CardBody>
 		</Card>

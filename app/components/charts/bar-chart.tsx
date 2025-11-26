@@ -12,6 +12,7 @@ interface BarChartProps {
 	height?: number;
 	detailsLink?: string;
 	color?: string;
+	semanticColor?: 'primary' | 'danger' | 'success' | 'warning';
 }
 
 export function BarChart({
@@ -19,8 +20,18 @@ export function BarChart({
 	data,
 	height = 420,
 	detailsLink,
-	color = '#8e3839',
+	color,
+	semanticColor = 'primary',
 }: BarChartProps) {
+	// Mapear colores semánticos a valores hex
+	const colorMap = {
+		primary: '#3b82f6', // Azul
+		danger: '#ef4444', // Rojo
+		success: '#10b981', // Verde
+		warning: '#f59e0b', // Naranja
+	};
+
+	const finalColor = color || colorMap[semanticColor];
 	const maxValue = Math.max(...data.map((d) => d.maxValue || d.value));
 
 	// Generar escala en el eje Y (0, 90, 180, 270, 360)
@@ -34,7 +45,9 @@ export function BarChart({
 	return (
 		<Card className="w-full border border-default-200 bg-white shadow-sm">
 			<CardHeader className="flex justify-between items-center px-6 py-5 border-b border-default-100">
-				<h3 className="text-base font-semibold text-foreground">{title}</h3>
+				<h3 className="text-lg font-bold text-foreground tracking-tight">
+					{title}
+				</h3>
 				{detailsLink && (
 					<Link
 						href={detailsLink}
@@ -106,7 +119,7 @@ export function BarChart({
 									y={y}
 									width={barWidth}
 									height={barHeight}
-									fill={color}
+									fill={finalColor}
 									rx="6"
 									className="hover:opacity-80 cursor-pointer transition-opacity"
 								/>
@@ -116,7 +129,7 @@ export function BarChart({
 									y="385"
 									fontSize="14"
 									textAnchor="middle"
-									fill="#dc2626"
+									fill="#6b7280"
 									fontWeight="600"
 									className="font-semibold"
 								>

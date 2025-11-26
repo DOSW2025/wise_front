@@ -15,8 +15,6 @@ import {
 	useDisclosure,
 } from '@heroui/react';
 import {
-	Award,
-	BarChart3,
 	Calendar,
 	Clock,
 	MessageSquare,
@@ -28,8 +26,8 @@ import {
 import { useState } from 'react';
 import {
 	BarChart,
-	DateRangeFilter,
 	LineChart,
+	PeriodCalendar,
 	PieChart,
 	StatsCard,
 	SubjectDetailTable,
@@ -64,17 +62,9 @@ export default function TutorReports() {
 	const [chartType, setChartType] = useState<'sessions' | 'ratings'>(
 		'sessions',
 	);
+	const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-	const {
-		period,
-		customDateStart,
-		setCustomDateStart,
-		customDateEnd,
-		setCustomDateEnd,
-		isLoading,
-		handlePeriodChange,
-		handleCustomFilter,
-	} = useDateFilter();
+	const { period, isLoading, handlePeriodChange } = useDateFilter();
 
 	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
 	const _monthlyData: { month: string; sessions: number; rating: number }[] = [
@@ -95,8 +85,11 @@ export default function TutorReports() {
 	];
 
 	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
-	const modalityData: { type: string; sessions: number; percentage: number }[] =
-		[{ type: 'Sin conexión', sessions: -1, percentage: -1 }];
+	const _modalityData: {
+		type: string;
+		sessions: number;
+		percentage: number;
+	}[] = [{ type: 'Sin conexión', sessions: -1, percentage: -1 }];
 
 	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
 	const [completedSessions, setCompletedSessions] = useState<
@@ -205,9 +198,9 @@ export default function TutorReports() {
 				ratedSessions.length
 			: 0;
 
-	const totalHours =
+	const _totalHours =
 		completedSessions.reduce((sum, session) => sum + session.duration, 0) / 60;
-	const uniqueStudents = new Set(completedSessions.map((s) => s.studentName))
+	const _uniqueStudents = new Set(completedSessions.map((s) => s.studentName))
 		.size;
 
 	return (
@@ -269,77 +262,82 @@ export default function TutorReports() {
 					</div>
 				</div>
 
-				{/* Filtros - Panel */}
-				<div className="bg-default-50 rounded-lg px-6 py-4 border border-default-200">
-					<div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-						{/* Período */}
-						<div className="flex items-center gap-4 flex-wrap">
-							<span className="text-sm font-medium text-default-700 flex items-center gap-2 whitespace-nowrap">
-								<Calendar className="w-4 h-4" />
-								Período:
-							</span>
-							<div className="flex gap-2 flex-wrap">
-								<Button
-									size="sm"
-									variant={period === 'semana' ? 'solid' : 'bordered'}
-									color={period === 'semana' ? 'default' : 'default'}
-									className={
-										period === 'semana'
-											? 'bg-default-200'
-											: 'border-default-300'
-									}
-									onPress={() => handlePeriodChange('semana')}
-								>
-									Semana
-								</Button>
-								<Button
-									size="sm"
-									variant={period === 'mes' ? 'solid' : 'bordered'}
-									color={period === 'mes' ? 'primary' : 'default'}
-									className={period === 'mes' ? '' : 'border-default-300'}
-									onPress={() => handlePeriodChange('mes')}
-								>
-									Mes
-								</Button>
-								<Button
-									size="sm"
-									variant={period === 'trimestre' ? 'solid' : 'bordered'}
-									color={period === 'trimestre' ? 'default' : 'default'}
-									className={
-										period === 'trimestre'
-											? 'bg-default-200'
-											: 'border-default-300'
-									}
-									onPress={() => handlePeriodChange('trimestre')}
-								>
-									Trimestre
-								</Button>
-								<Button
-									size="sm"
-									variant={period === 'año' ? 'solid' : 'bordered'}
-									color={period === 'año' ? 'default' : 'default'}
-									className={
-										period === 'año' ? 'bg-default-200' : 'border-default-300'
-									}
-									onPress={() => handlePeriodChange('año')}
-								>
-									Año
-								</Button>
-							</div>
+				{/* Tabs Principales */}
+				<div className="flex gap-2 items-center">
+					<Button
+						variant={mainTab === 'stats' ? 'solid' : 'light'}
+						color="primary"
+						onPress={() => setMainTab('stats')}
+					>
+						Estadísticas
+					</Button>
+					<Button
+						variant={mainTab === 'history' ? 'solid' : 'light'}
+						color="primary"
+						onPress={() => setMainTab('history')}
+					>
+						Historial y Evaluaciones
+					</Button>
+				</div>
+
+				{/* Filtros - Panel (solo en vista de Estadísticas) */}
+				{mainTab === 'stats' && (
+					<div className="bg-white rounded-lg px-6 py-4 border border-default-200 flex flex-wrap items-center gap-4">
+						{/* Etiqueta Período */}
+						<span className="text-sm font-medium text-default-600 flex items-center gap-2">
+							<Calendar className="w-4 h-4" />
+							Período:
+						</span>
+
+						{/* Botones de Período */}
+						<div className="flex gap-2 flex-wrap">
+							<Button
+								size="sm"
+								variant={period === 'semana' ? 'solid' : 'bordered'}
+								color={period === 'semana' ? 'primary' : 'default'}
+								className={period === 'semana' ? '' : 'border-default-300'}
+								onPress={() => handlePeriodChange('semana')}
+							>
+								Semana
+							</Button>
+							<Button
+								size="sm"
+								variant={period === 'mes' ? 'solid' : 'bordered'}
+								color={period === 'mes' ? 'danger' : 'default'}
+								className={period === 'mes' ? '' : 'border-default-300'}
+								onPress={() => handlePeriodChange('mes')}
+							>
+								Mes
+							</Button>
+							<Button
+								size="sm"
+								variant={period === 'trimestre' ? 'solid' : 'bordered'}
+								color={period === 'trimestre' ? 'warning' : 'default'}
+								className={period === 'trimestre' ? '' : 'border-default-300'}
+								onPress={() => handlePeriodChange('trimestre')}
+							>
+								Trimestre
+							</Button>
+							<Button
+								size="sm"
+								variant={period === 'año' ? 'solid' : 'bordered'}
+								color={period === 'año' ? 'success' : 'default'}
+								className={period === 'año' ? '' : 'border-default-300'}
+								onPress={() => handlePeriodChange('año')}
+							>
+								Año
+							</Button>
 						</div>
 
-						{/* Fecha personalizada */}
-						<DateRangeFilter
-							period={period}
-							onPeriodChange={handlePeriodChange}
-							customDateStart={customDateStart}
-							onCustomDateStartChange={setCustomDateStart}
-							customDateEnd={customDateEnd}
-							onCustomDateEndChange={setCustomDateEnd}
-							onCustomFilter={handleCustomFilter}
-						/>
+						{/* Calendario */}
+						<div className="ml-auto">
+							<PeriodCalendar
+								selectedDate={selectedDate}
+								onDateChange={(date) => setSelectedDate(date)}
+							/>
+						</div>
 					</div>
-				</div>
+				)}
 			</div>
 
 			{isLoading ? (
@@ -382,9 +380,7 @@ export default function TutorReports() {
 									trend={{ value: '8%', isPositive: true }}
 								/>
 							</div>
-
 							{/* Sección de Gráficos y Análisis */}
-
 							{/* Gráfico de barras - Tutorías por materia */}
 							<BarChart
 								title="Tus Tutorías por Materia"
@@ -402,26 +398,22 @@ export default function TutorReports() {
 								data={[
 									{
 										label: 'Tutorías',
-										value: 45,
 										color: '#990000',
 										percentage: 45,
 									},
 									{
 										label: 'Eventos',
-										value: 28,
-										color: '#FFA500',
+										color: '#f59e0b',
 										percentage: 28,
 									},
 									{
 										label: 'Materiales',
-										value: 27,
-										color: '#4CAF50',
+										color: '#10b981',
 										percentage: 27,
 									},
 								]}
 								size={200}
 							/>
-
 							{/* Gráfico de líneas - Tu desempeño en el tiempo */}
 							<LineChart
 								title="Tu Desempeño en el Tiempo"
@@ -450,9 +442,8 @@ export default function TutorReports() {
 								onTabChange={(tab: string) =>
 									setChartType(tab as 'sessions' | 'ratings')
 								}
-								color={chartType === 'sessions' ? '#990000' : '#3b82f6'}
-							/>
-
+								color="#990000"
+							/>{' '}
 							{/* Tabla de detalles por materia */}
 							<SubjectDetailTable
 								title="Detalle por Materia"
@@ -489,60 +480,76 @@ export default function TutorReports() {
 									},
 								]}
 							/>
-
 							{/* Métricas de rendimiento */}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+								{/* Rendimiento Semanal */}
 								<Card>
-									<CardHeader>
-										<h3 className="text-lg font-semibold">
+									<CardHeader className="flex flex-col items-start px-6 py-5">
+										<h3 className="text-lg font-semibold text-foreground">
 											Rendimiento Semanal
 										</h3>
 									</CardHeader>
-									<CardBody>
-										<div className="space-y-3">
-											<div className="flex justify-between">
-												<span>Promedio de sesiones/semana</span>
-												<span className="font-semibold">6.2</span>
-											</div>
-											<div className="flex justify-between">
-												<span>Duración promedio</span>
-												<span className="font-semibold">95 min</span>
-											</div>
-											<div className="flex justify-between">
-												<span>Modalidad más usada</span>
-												<span className="font-semibold">Virtual (60%)</span>
-											</div>
+									<CardBody className="px-6 py-5 space-y-3">
+										<div className="flex justify-between">
+											<span className="text-default-600">
+												Promedio de sesiones
+											</span>
+											<span className="font-bold text-primary">6.2</span>
+										</div>
+										<div className="flex justify-between">
+											<span className="text-default-600">
+												Duración promedio
+											</span>
+											<span className="font-bold text-primary">95 min</span>
+										</div>
+										<div className="flex justify-between">
+											<span className="text-default-600">
+												Modalidad más usada
+											</span>
+											<span className="font-bold text-default-700">
+												Virtual (60%)
+											</span>
 										</div>
 									</CardBody>
 								</Card>
 
+								{/* Feedback Recibido */}
 								<Card>
-									<CardHeader>
-										<h3 className="text-lg font-semibold">Feedback Recibido</h3>
+									<CardHeader className="flex flex-col items-start px-6 py-5">
+										<h3 className="text-lg font-semibold text-foreground">
+											Feedback Recibido
+										</h3>
 									</CardHeader>
-									<CardBody>
-										<div className="space-y-3">
-											<div className="flex justify-between">
-												<span>Evaluaciones recibidas</span>
-												<span className="font-semibold">
-													{ratedSessions.length}/{completedSessions.length}
-												</span>
-											</div>
-											<div className="flex justify-between">
-												<span>Comentarios positivos</span>
-												<span className="font-semibold">95%</span>
-											</div>
-											<div className="flex justify-between">
-												<span>Tasa de respuesta</span>
-												<span className="font-semibold">
-													{Math.round(
-														(ratedSessions.filter((s) => s.hasResponse).length /
-															ratedSessions.length) *
-															100,
-													)}
-													%
-												</span>
-											</div>
+									<CardBody className="px-6 py-5 space-y-3">
+										<div className="flex justify-between">
+											<span className="text-default-600">
+												Evaluaciones recibidas
+											</span>
+											<span className="font-bold text-primary">
+												{ratedSessions.length} / {completedSessions.length}
+											</span>
+										</div>
+										<div className="flex justify-between">
+											<span className="text-default-600">
+												Comentarios positivos
+											</span>
+											<span className="font-bold text-success">95%</span>
+										</div>
+										<div className="flex justify-between">
+											<span className="text-default-600">
+												Tasa de respuesta
+											</span>
+											<span className="font-bold text-warning">
+												{ratedSessions.length > 0
+													? Math.round(
+															(ratedSessions.filter((s) => s.hasResponse)
+																.length /
+																ratedSessions.length) *
+																100,
+														)
+													: 0}
+												%
+											</span>
 										</div>
 									</CardBody>
 								</Card>
