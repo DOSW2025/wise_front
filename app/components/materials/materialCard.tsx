@@ -79,6 +79,7 @@ export default function MaterialCard({
 							className="flex-1 bg-[#8B1A1A] text-white"
 							startContent={<Download size={18} />}
 							onClick={() => onDownload(material.id)}
+							type="button"
 						>
 							Descargar
 						</Button>

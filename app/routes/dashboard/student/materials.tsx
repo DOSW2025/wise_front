@@ -6,37 +6,29 @@ import {
 	DropdownTrigger,
 	Input,
 } from '@heroui/react';
-import { Filter, Grid3x3, List, Search, Upload } from 'lucide-react';
+import { Filter, Grid3x3, List, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import CommentsModal from '~/components/materials/CommentsModal';
 import FiltersPanel from '~/components/materials/filtersPanel';
-// Componentes
 import MaterialCard from '~/components/materials/materialCard';
 import PreviewModal from '~/components/materials/PreviewModal';
 // Tipos y datos
-import type { Material, UploadFormState } from '~/components/materials/types';
+import type { Comment, Material } from '~/components/materials/types';
 import { mockMaterials, sortOptions } from '~/components/materials/types';
-import UploadModal from '~/components/materials/uploadModal';
 
 export default function StudentMaterials() {
 	// Estados
-	const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 	const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 	const [searchQuery, setSearchQuery] = useState('');
 	const [selectedSubject, setSelectedSubject] = useState('Todos');
 	const [selectedSemester, setSelectedSemester] = useState('Todos');
-	const [selectedFileType, setSelectedFileType] = useState('Todos');
-	const [sortBy, setSortBy] = useState('Más relevantes');
+	const [sortBy, setSortBy] = useState('Todos');
 	const [previewMaterial, setPreviewMaterial] = useState<Material | null>(null);
+	const [commentsMaterial, setCommentsMaterial] = useState<Material | null>(
+		null,
+	);
 	const [userRating, setUserRating] = useState(0);
-
-	const [uploadForm, setUploadForm] = useState<UploadFormState>({
-		subject: '',
-		semester: '',
-		fileType: '',
-		file: null,
-		description: '',
-	});
 
 	// Filtrar y ordenar materiales
 	const filteredMaterials = useMemo(() => {
@@ -50,12 +42,8 @@ export default function StudentMaterials() {
 				selectedSubject === 'Todos' || material.subject === selectedSubject;
 			const matchesSemester =
 				selectedSemester === 'Todos' || material.semester === selectedSemester;
-			const matchesFileType =
-				selectedFileType === 'Todos' || material.fileType === selectedFileType;
 
-			return (
-				matchesSearch && matchesSubject && matchesSemester && matchesFileType
-			);
+			return matchesSearch && matchesSubject && matchesSemester;
 		});
 
 		// Ordenar
@@ -71,7 +59,9 @@ export default function StudentMaterials() {
 			case 'Más descargados':
 				filtered.sort((a, b) => b.downloads - a.downloads);
 				break;
-			default: // Más relevantes
+			case 'Todos':
+			case 'Más relevantes':
+			default:
 				filtered.sort(
 					(a, b) => b.rating * b.downloads - a.rating * a.downloads,
 				);
@@ -79,33 +69,9 @@ export default function StudentMaterials() {
 		}
 
 		return filtered;
-	}, [
-		searchQuery,
-		selectedSubject,
-		selectedSemester,
-		selectedFileType,
-		sortBy,
-	]);
+	}, [searchQuery, selectedSubject, selectedSemester, sortBy]);
 
 	// Handlers
-	const handleFileChange = (file: File) => {
-		if (file.size <= 50 * 1024 * 1024) {
-			setUploadForm((prev) => ({ ...prev, file }));
-		}
-	};
-
-	const handleUploadSubmit = async () => {
-		console.log('Subiendo material:', uploadForm);
-		setIsUploadModalOpen(false);
-		setUploadForm({
-			subject: '',
-			semester: '',
-			fileType: '',
-			file: null,
-			description: '',
-		});
-	};
-
 	const handleDownload = async (materialId: string) => {
 		console.log('Descargando material:', materialId);
 		alert(`Descargando material ${materialId}`);
@@ -143,18 +109,49 @@ export default function StudentMaterials() {
 		}
 	};
 
-	const handleAddComment = (material: Material) => {
-		console.log('Agregando comentario a:', material.id);
-		alert(`Redirigiendo a comentarios de: ${material.title}`);
+	// Abrir modal SOLO de comentarios (desde la tarjeta)
+	const handleOpenCommentsModal = (material: Material) => {
+		console.log('Abrir modal de comentarios para:', material.title);
+		setCommentsMaterial(material);
 	};
 
-	const handleFormChange = (updates: Partial<UploadFormState>) => {
-		setUploadForm((prev) => ({ ...prev, ...updates }));
+	// Esta función ahora es para abrir comentarios DENTRO del modal de vista previa
+	const handleOpenCommentsInPreview = (material: Material) => {
+		console.log(
+			'Abrir sección de comentarios en vista previa:',
+			material.title,
+		);
+		// Esta función se pasa al PreviewModal para manejar comentarios internos
+	};
+
+	// Agregar comentario (simulado). Firma: (materialId, content)
+	const handleAddComment = async (materialId: string, content: string) => {
+		console.log('Agregando comentario:', { materialId, content });
+
+		// Simular agregar comentario
+		const newComment: Comment = {
+			id: `c${Date.now()}`,
+			userId: 'current-user', // En una app real, esto vendría del auth
+			userName: 'Tú', // En una app real, esto vendría del perfil
+			date: new Date().toLocaleDateString('es-ES', {
+				day: 'numeric',
+				month: 'short',
+				year: 'numeric',
+			}),
+			content: content,
+		};
+
+		// En una app real, aquí harías una llamada a la API
+		// Por ahora, solo mostramos un mensaje
+		alert(`Comentario agregado: "${content}"`);
+
+		// Aquí deberías actualizar el estado para reflejar el nuevo comentario
+		// Pero como estamos usando mock data, solo mostramos el alert
 	};
 
 	return (
 		<div className="space-y-6">
-			{/* Header con botón Subir material */}
+			{/* Header SIN botón Subir material */}
 			<div className="flex items-start justify-between">
 				<div className="flex flex-col gap-2">
 					<h1 className="text-3xl font-bold text-foreground">
@@ -164,14 +161,6 @@ export default function StudentMaterials() {
 						{filteredMaterials.length} materiales disponibles
 					</p>
 				</div>
-
-				<Button
-					className="bg-[#8B1A1A] text-white"
-					startContent={<Upload size={20} />}
-					onClick={() => setIsUploadModalOpen(true)}
-				>
-					Subir material
-				</Button>
 			</div>
 
 			{/* Barra de búsqueda y botón filtros */}
@@ -198,10 +187,8 @@ export default function StudentMaterials() {
 				isOpen={isFiltersOpen}
 				selectedSubject={selectedSubject}
 				selectedSemester={selectedSemester}
-				selectedFileType={selectedFileType}
 				onSubjectChange={setSelectedSubject}
 				onSemesterChange={setSelectedSemester}
-				onFileTypeChange={setSelectedFileType}
 			/>
 
 			{/* Ordenar por y cambiar vista */}
@@ -226,6 +213,7 @@ export default function StudentMaterials() {
 						variant={viewMode === 'grid' ? 'solid' : 'flat'}
 						className={viewMode === 'grid' ? 'bg-[#8B1A1A] text-white' : ''}
 						onClick={() => setViewMode('grid')}
+						type="button"
 					>
 						<Grid3x3 size={20} />
 					</Button>
@@ -234,6 +222,7 @@ export default function StudentMaterials() {
 						variant={viewMode === 'list' ? 'solid' : 'flat'}
 						className={viewMode === 'list' ? 'bg-[#8B1A1A] text-white' : ''}
 						onClick={() => setViewMode('list')}
+						type="button"
 					>
 						<List size={20} />
 					</Button>
@@ -256,12 +245,12 @@ export default function StudentMaterials() {
 						onPreview={setPreviewMaterial}
 						onDownload={handleDownload}
 						onRate={setPreviewMaterial}
-						onComment={handleAddComment}
+						onComment={handleOpenCommentsModal}
 					/>
 				))}
 			</div>
 
-			{/* Modales */}
+			{/* Modal de vista previa */}
 			<PreviewModal
 				material={previewMaterial}
 				isOpen={!!previewMaterial}
@@ -271,17 +260,17 @@ export default function StudentMaterials() {
 				onShare={handleShare}
 				onReport={handleReport}
 				onRate={handleRateMaterial}
-				onComment={handleAddComment}
+				onComment={handleOpenCommentsInPreview}
 				onRatingChange={setUserRating}
+				onAddComment={handleAddComment}
 			/>
 
-			<UploadModal
-				isOpen={isUploadModalOpen}
-				uploadForm={uploadForm}
-				onClose={() => setIsUploadModalOpen(false)}
-				onSubmit={handleUploadSubmit}
-				onFormChange={handleFormChange}
-				onFileChange={handleFileChange}
+			{/*  Modal solo para comentarios */}
+			<CommentsModal
+				material={commentsMaterial}
+				isOpen={!!commentsMaterial}
+				onClose={() => setCommentsMaterial(null)}
+				onAddComment={handleAddComment}
 			/>
 		</div>
 	);
