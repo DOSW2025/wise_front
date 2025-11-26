@@ -13,30 +13,19 @@ import FiltersPanel from '~/components/materials/filtersPanel';
 import MaterialCard from '~/components/materials/materialCard';
 import PreviewModal from '~/components/materials/PreviewModal';
 // Tipos y datos
-import type { Material, UploadFormState } from '~/components/materials/types';
+import type { Material } from '~/components/materials/types';
 import { mockMaterials, sortOptions } from '~/components/materials/types';
-import UploadModal from '~/components/materials/uploadModal';
 
 export default function StudentMaterials() {
 	// Estados
-	const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 	const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 	const [searchQuery, setSearchQuery] = useState('');
 	const [selectedSubject, setSelectedSubject] = useState('Todos');
 	const [selectedSemester, setSelectedSemester] = useState('Todos');
-	const [selectedFileType, setSelectedFileType] = useState('Todos');
-	const [sortBy, setSortBy] = useState('Más relevantes');
+	const [sortBy, setSortBy] = useState('Todos');
 	const [previewMaterial, setPreviewMaterial] = useState<Material | null>(null);
 	const [userRating, setUserRating] = useState(0);
-
-	const [uploadForm, setUploadForm] = useState<UploadFormState>({
-		subject: '',
-		semester: '',
-		fileType: '',
-		file: null,
-		description: '',
-	});
 
 	// Filtrar y ordenar materiales
 	const filteredMaterials = useMemo(() => {
@@ -50,12 +39,8 @@ export default function StudentMaterials() {
 				selectedSubject === 'Todos' || material.subject === selectedSubject;
 			const matchesSemester =
 				selectedSemester === 'Todos' || material.semester === selectedSemester;
-			const matchesFileType =
-				selectedFileType === 'Todos' || material.fileType === selectedFileType;
 
-			return (
-				matchesSearch && matchesSubject && matchesSemester && matchesFileType
-			);
+			return matchesSearch && matchesSubject && matchesSemester;
 		});
 
 		// Ordenar
@@ -71,7 +56,9 @@ export default function StudentMaterials() {
 			case 'Más descargados':
 				filtered.sort((a, b) => b.downloads - a.downloads);
 				break;
-			default: // Más relevantes
+			case 'Todos':
+			case 'Más relevantes':
+			default:
 				filtered.sort(
 					(a, b) => b.rating * b.downloads - a.rating * a.downloads,
 				);
@@ -79,33 +66,9 @@ export default function StudentMaterials() {
 		}
 
 		return filtered;
-	}, [
-		searchQuery,
-		selectedSubject,
-		selectedSemester,
-		selectedFileType,
-		sortBy,
-	]);
+	}, [searchQuery, selectedSubject, selectedSemester, sortBy]);
 
 	// Handlers
-	const handleFileChange = (file: File) => {
-		if (file.size <= 50 * 1024 * 1024) {
-			setUploadForm((prev) => ({ ...prev, file }));
-		}
-	};
-
-	const handleUploadSubmit = async () => {
-		console.log('Subiendo material:', uploadForm);
-		setIsUploadModalOpen(false);
-		setUploadForm({
-			subject: '',
-			semester: '',
-			fileType: '',
-			file: null,
-			description: '',
-		});
-	};
-
 	const handleDownload = async (materialId: string) => {
 		console.log('Descargando material:', materialId);
 		alert(`Descargando material ${materialId}`);
@@ -148,13 +111,9 @@ export default function StudentMaterials() {
 		alert(`Redirigiendo a comentarios de: ${material.title}`);
 	};
 
-	const handleFormChange = (updates: Partial<UploadFormState>) => {
-		setUploadForm((prev) => ({ ...prev, ...updates }));
-	};
-
 	return (
 		<div className="space-y-6">
-			{/* Header con botón Subir material */}
+			{/* Header SIN botón Subir material */}
 			<div className="flex items-start justify-between">
 				<div className="flex flex-col gap-2">
 					<h1 className="text-3xl font-bold text-foreground">
@@ -164,14 +123,6 @@ export default function StudentMaterials() {
 						{filteredMaterials.length} materiales disponibles
 					</p>
 				</div>
-
-				<Button
-					className="bg-[#8B1A1A] text-white"
-					startContent={<Upload size={20} />}
-					onClick={() => setIsUploadModalOpen(true)}
-				>
-					Subir material
-				</Button>
 			</div>
 
 			{/* Barra de búsqueda y botón filtros */}
@@ -198,10 +149,8 @@ export default function StudentMaterials() {
 				isOpen={isFiltersOpen}
 				selectedSubject={selectedSubject}
 				selectedSemester={selectedSemester}
-				selectedFileType={selectedFileType}
 				onSubjectChange={setSelectedSubject}
 				onSemesterChange={setSelectedSemester}
-				onFileTypeChange={setSelectedFileType}
 			/>
 
 			{/* Ordenar por y cambiar vista */}
@@ -226,6 +175,7 @@ export default function StudentMaterials() {
 						variant={viewMode === 'grid' ? 'solid' : 'flat'}
 						className={viewMode === 'grid' ? 'bg-[#8B1A1A] text-white' : ''}
 						onClick={() => setViewMode('grid')}
+						type="button"
 					>
 						<Grid3x3 size={20} />
 					</Button>
@@ -234,6 +184,7 @@ export default function StudentMaterials() {
 						variant={viewMode === 'list' ? 'solid' : 'flat'}
 						className={viewMode === 'list' ? 'bg-[#8B1A1A] text-white' : ''}
 						onClick={() => setViewMode('list')}
+						type="button"
 					>
 						<List size={20} />
 					</Button>
@@ -261,7 +212,7 @@ export default function StudentMaterials() {
 				))}
 			</div>
 
-			{/* Modales */}
+			{/* Modal de vista previa */}
 			<PreviewModal
 				material={previewMaterial}
 				isOpen={!!previewMaterial}
@@ -273,15 +224,6 @@ export default function StudentMaterials() {
 				onRate={handleRateMaterial}
 				onComment={handleAddComment}
 				onRatingChange={setUserRating}
-			/>
-
-			<UploadModal
-				isOpen={isUploadModalOpen}
-				uploadForm={uploadForm}
-				onClose={() => setIsUploadModalOpen(false)}
-				onSubmit={handleUploadSubmit}
-				onFormChange={handleFormChange}
-				onFileChange={handleFileChange}
 			/>
 		</div>
 	);

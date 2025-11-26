@@ -5,20 +5,12 @@ export interface Material {
 	author: string;
 	subject: string;
 	semester: string;
-	fileType: 'PDF' | 'DOC' | 'XLSX' | 'PPT' | 'IMG' | 'VIDEO';
+	fileType: 'PDF'; //Por ahora dado el ael alcance se recibe solo PDF;
 	date: string;
 	rating: number;
 	ratingsCount: number;
 	downloads: number;
 	comments: number;
-	description: string;
-}
-
-export interface UploadFormState {
-	subject: string;
-	semester: string;
-	fileType: string;
-	file: File | null;
 	description: string;
 }
 
@@ -39,6 +31,7 @@ export const semesters = [
 ];
 export const fileTypes = ['Todos', 'PDF', 'DOC', 'XLSX', 'PPT', 'IMG', 'VIDEO'];
 export const sortOptions = [
+	'Todos',
 	'Más relevantes',
 	'Más recientes',
 	'Mejor valorado',
@@ -47,11 +40,6 @@ export const sortOptions = [
 
 export const fileTypeColors: Record<string, string> = {
 	PDF: 'bg-red-50 text-red-600',
-	DOC: 'bg-blue-50 text-blue-600',
-	XLSX: 'bg-green-50 text-green-600',
-	PPT: 'bg-orange-50 text-orange-600',
-	IMG: 'bg-purple-50 text-purple-600',
-	VIDEO: 'bg-pink-50 text-pink-600',
 };
 
 // Datos mock
@@ -62,7 +50,7 @@ export const mockMaterials: Material[] = [
 		author: 'Ing. Ana López',
 		subject: 'Programación',
 		semester: '2do Semestre',
-		fileType: 'DOC',
+		fileType: 'PDF',
 		date: '20 oct 2025',
 		rating: 4.8,
 		ratingsCount: 234,
@@ -107,7 +95,7 @@ export const mockMaterials: Material[] = [
 		author: 'Dra. María González',
 		subject: 'Matemáticas',
 		semester: '2do Semestre',
-		fileType: 'XLSX',
+		fileType: 'PDF',
 		date: '10 oct 2025',
 		rating: 4.5,
 		ratingsCount: 98,
@@ -122,7 +110,7 @@ export const mockMaterials: Material[] = [
 		author: 'Fís. Jorge Ramírez',
 		subject: 'Física',
 		semester: '3er Semestre',
-		fileType: 'PPT',
+		fileType: 'PDF',
 		date: '5 nov 2025',
 		rating: 4.6,
 		ratingsCount: 134,
@@ -137,7 +125,7 @@ export const mockMaterials: Material[] = [
 		author: 'Q.F.B. Laura Mendoza',
 		subject: 'Química',
 		semester: '1er Semestre',
-		fileType: 'IMG',
+		fileType: 'PDF',
 		date: '25 ago 2025',
 		rating: 4.4,
 		ratingsCount: 87,
@@ -152,14 +140,14 @@ export const mockMaterials: Material[] = [
 		author: 'Dr. Luis Torres',
 		subject: 'Química',
 		semester: '4to Semestre',
-		fileType: 'VIDEO',
+		fileType: 'PDF',
 		date: '12 nov 2025',
 		rating: 4.8,
 		ratingsCount: 176,
 		downloads: 1123,
 		comments: 41,
 		description:
-			'Video demostrativo de experimentos de química orgánica en laboratorio.',
+			'Guía completa de experimentos de química orgánica en laboratorio.',
 	},
 	{
 		id: '8',
@@ -167,7 +155,7 @@ export const mockMaterials: Material[] = [
 		author: 'Mtro. Pedro Castillo',
 		subject: 'Matemáticas',
 		semester: '3er Semestre',
-		fileType: 'DOC',
+		fileType: 'PDF',
 		date: '8 oct 2025',
 		rating: 4.3,
 		ratingsCount: 112,
