@@ -2,6 +2,7 @@ export { AlertMessage } from './alert-message';
 export { DashboardLayout } from './dashboard-layout';
 export { DateRangeFilter } from './date-range-filter';
 export { EmptyState } from './empty-state';
+export { ForumCreationModal } from './forum-creation-modal';
 export { MaterialCard } from './material-card';
 export { Navbar } from './navbar';
 export { PageHeader } from './page-header';
