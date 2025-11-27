@@ -261,10 +261,6 @@ export function PopularMaterials({ onMaterialClick }: PopularMaterialsProps) {
 										</span>
 										<span className="font-medium">+1,247</span>
 									</div>
-									<div className="flex justify-between">
-										<span className="text-gray-600">Usuarios activos:</span>
-										<span className="font-medium">892</span>
-									</div>
 								</div>
 							</div>
 						</CardBody>
