@@ -34,7 +34,6 @@ import { UploadMaterialForm } from '~/components/upload-material-form';
 import { useDebounce } from '~/lib/hooks/useDebounce';
 import {
 	useMaterials,
-	useResourceTypes,
 	useSubjects,
 	useUserMaterials,
 } from '~/lib/hooks/useMaterials';
@@ -76,7 +75,6 @@ export default function TutorMaterials() {
 	const { data: materials = [], isLoading } = useMaterials(combinedFilters);
 	const { data: userMaterials = [] } = useUserMaterials('dev-tutor-1');
 	const { data: subjects = [] } = useSubjects();
-	const { data: resourceTypes = [] } = useResourceTypes();
 
 	const handleFilterChange = (
 		key: keyof MaterialFilters,
@@ -90,8 +88,7 @@ export default function TutorMaterials() {
 		setSearchTerm('');
 	};
 
-	const hasActiveFilters =
-		filters.subject || filters.resourceType || filters.semester || searchTerm;
+	const hasActiveFilters = filters.subject || filters.semester || searchTerm;
 
 	return (
 		<div className="space-y-6">
@@ -172,11 +169,6 @@ export default function TutorMaterials() {
 										Materia: {filters.subject}
 									</Chip>
 								)}
-								{filters.resourceType && (
-									<Chip size="sm" color="secondary" variant="flat">
-										Tipo: {filters.resourceType}
-									</Chip>
-								)}
 								{filters.semester && (
 									<Chip size="sm" color="default" variant="flat">
 										Semestre: {filters.semester}
@@ -205,7 +197,7 @@ export default function TutorMaterials() {
 										)}
 									</div>
 
-									<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 										<Select
 											label="Materia"
 											placeholder="Seleccionar materia"
@@ -219,25 +211,6 @@ export default function TutorMaterials() {
 											{subjects.map((subject) => (
 												<SelectItem key={subject.nombre} value={subject.nombre}>
 													{subject.nombre}
-												</SelectItem>
-											))}
-										</Select>
-
-										<Select
-											label="Tipo de recurso"
-											placeholder="Seleccionar tipo"
-											selectedKeys={
-												filters.resourceType ? [filters.resourceType] : []
-											}
-											onSelectionChange={(keys) => {
-												const value = Array.from(keys)[0] as string;
-												handleFilterChange('resourceType', value);
-											}}
-											size="sm"
-										>
-											{resourceTypes.map((type) => (
-												<SelectItem key={type.nombre} value={type.nombre}>
-													{type.nombre}
 												</SelectItem>
 											))}
 										</Select>
@@ -335,9 +308,6 @@ export default function TutorMaterials() {
 												<div className="flex flex-wrap gap-2 mb-3">
 													<Chip size="sm" variant="flat" color="primary">
 														{material.materia}
-													</Chip>
-													<Chip size="sm" variant="flat" color="secondary">
-														{material.tipo}
 													</Chip>
 													<Chip size="sm" variant="flat">
 														Semestre {material.semestre}
