@@ -15,11 +15,7 @@ import {
 } from '@heroui/react';
 import { Upload, X } from 'lucide-react';
 import { useState } from 'react';
-import {
-	useCreateMaterial,
-	useResourceTypes,
-	useSubjects,
-} from '~/lib/hooks/useMaterials';
+import { useCreateMaterial, useSubjects } from '~/lib/hooks/useMaterials';
 
 interface UploadMaterialFormProps {
 	onClose: () => void;
@@ -33,7 +29,6 @@ export function UploadMaterialForm({
 	const [formData, setFormData] = useState({
 		nombre: '',
 		materia: '',
-		tipo: '',
 		semestre: '',
 		descripcion: '',
 	});
@@ -42,22 +37,16 @@ export function UploadMaterialForm({
 	const [errors, setErrors] = useState<Record<string, string>>({});
 
 	const { data: subjects = [] } = useSubjects();
-	const { data: resourceTypes = [] } = useResourceTypes();
 	const createMaterial = useCreateMaterial();
 
-	const allowedTypes = [
-		'application/pdf',
-		'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-		'image/jpeg',
-		'image/png',
-	];
+	const allowedTypes = ['application/pdf'];
 	const maxSize = 10 * 1024 * 1024; // 10MB
 
 	const validateFile = (selectedFile: File) => {
 		const newErrors: Record<string, string> = {};
 
 		if (!allowedTypes.includes(selectedFile.type)) {
-			newErrors.file = 'Solo se permiten archivos PDF, DOCX, JPG y PNG';
+			newErrors.file = 'Solo se permiten archivos PDF';
 		}
 
 		if (selectedFile.size > maxSize) {
@@ -86,7 +75,6 @@ export function UploadMaterialForm({
 
 		if (!formData.nombre.trim()) newErrors.nombre = 'El nombre es requerido';
 		if (!formData.materia) newErrors.materia = 'La materia es requerida';
-		if (!formData.tipo) newErrors.tipo = 'El tipo es requerido';
 		if (!formData.semestre) newErrors.semestre = 'El semestre es requerido';
 		if (!file) newErrors.file = 'Debe seleccionar un archivo';
 
@@ -120,7 +108,7 @@ export function UploadMaterialForm({
 			await createMaterial.mutateAsync({
 				nombre: formData.nombre,
 				materia: formData.materia,
-				tipo: formData.tipo,
+				tipo: 'PDF',
 				semestre: Number(formData.semestre),
 				descripcion: formData.descripcion,
 				file,
@@ -162,45 +150,24 @@ export function UploadMaterialForm({
 						isRequired
 					/>
 
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<Select
-							label="Materia"
-							placeholder="Seleccionar materia"
-							selectedKeys={formData.materia ? [formData.materia] : []}
-							onSelectionChange={(keys) => {
-								const value = Array.from(keys)[0] as string;
-								setFormData((prev) => ({ ...prev, materia: value }));
-							}}
-							isInvalid={!!errors.materia}
-							errorMessage={errors.materia}
-							isRequired
-						>
-							{subjects.map((subject) => (
-								<SelectItem key={subject.nombre} value={subject.nombre}>
-									{subject.nombre}
-								</SelectItem>
-							))}
-						</Select>
-
-						<Select
-							label="Tipo de recurso"
-							placeholder="Seleccionar tipo"
-							selectedKeys={formData.tipo ? [formData.tipo] : []}
-							onSelectionChange={(keys) => {
-								const value = Array.from(keys)[0] as string;
-								setFormData((prev) => ({ ...prev, tipo: value }));
-							}}
-							isInvalid={!!errors.tipo}
-							errorMessage={errors.tipo}
-							isRequired
-						>
-							{resourceTypes.map((type) => (
-								<SelectItem key={type.nombre} value={type.nombre}>
-									{type.nombre}
-								</SelectItem>
-							))}
-						</Select>
-					</div>
+					<Select
+						label="Materia"
+						placeholder="Seleccionar materia"
+						selectedKeys={formData.materia ? [formData.materia] : []}
+						onSelectionChange={(keys) => {
+							const value = Array.from(keys)[0] as string;
+							setFormData((prev) => ({ ...prev, materia: value }));
+						}}
+						isInvalid={!!errors.materia}
+						errorMessage={errors.materia}
+						isRequired
+					>
+						{subjects.map((subject) => (
+							<SelectItem key={subject.nombre} value={subject.nombre}>
+								{subject.nombre}
+							</SelectItem>
+						))}
+					</Select>
 
 					<Select
 						label="Semestre"
@@ -238,7 +205,7 @@ export function UploadMaterialForm({
 						<div className="border-2 border-dashed border-default-300 rounded-lg p-6 text-center">
 							<input
 								type="file"
-								accept=".pdf,.docx,.jpg,.jpeg,.png"
+								accept=".pdf"
 								onChange={handleFileChange}
 								className="hidden"
 								id="file-upload"
@@ -249,7 +216,7 @@ export function UploadMaterialForm({
 									{file ? file.name : 'Haz clic para seleccionar un archivo'}
 								</p>
 								<p className="text-xs text-default-400 mt-1">
-									PDF, DOCX, JPG, PNG (máx. 10MB)
+									Solo archivos PDF (máx. 10MB)
 								</p>
 							</label>
 						</div>

@@ -81,9 +81,6 @@ export function MyMaterialsList({
 									<Chip size="sm" variant="flat" color="primary">
 										{material.materia}
 									</Chip>
-									<Chip size="sm" variant="flat" color="secondary">
-										{material.tipo}
-									</Chip>
 									<Chip size="sm" variant="flat" color="default">
 										Semestre {material.semestre}
 									</Chip>

@@ -17,7 +17,6 @@ import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
 	useMaterial,
-	useResourceTypes,
 	useSubjects,
 	useUpdateMaterial,
 } from '~/lib/hooks/useMaterials';
@@ -36,13 +35,11 @@ export function EditMaterialForm({
 	const { data: material, isLoading: isLoadingMaterial } =
 		useMaterial(materialId);
 	const { data: subjects = [] } = useSubjects();
-	const { data: resourceTypes = [] } = useResourceTypes();
 	const updateMaterial = useUpdateMaterial();
 
 	const [formData, setFormData] = useState({
 		nombre: '',
 		materia: '',
-		tipo: '',
 		semestre: '',
 		descripcion: '',
 	});
@@ -54,7 +51,6 @@ export function EditMaterialForm({
 			setFormData({
 				nombre: material.nombre,
 				materia: material.materia,
-				tipo: material.tipo,
 				semestre: material.semestre.toString(),
 				descripcion: material.descripcion || '',
 			});
@@ -66,7 +62,6 @@ export function EditMaterialForm({
 
 		if (!formData.nombre.trim()) newErrors.nombre = 'El nombre es requerido';
 		if (!formData.materia) newErrors.materia = 'La materia es requerida';
-		if (!formData.tipo) newErrors.tipo = 'El tipo es requerido';
 		if (!formData.semestre) newErrors.semestre = 'El semestre es requerido';
 
 		return newErrors;
@@ -87,7 +82,7 @@ export function EditMaterialForm({
 				data: {
 					nombre: formData.nombre,
 					materia: formData.materia,
-					tipo: formData.tipo,
+					tipo: 'PDF',
 					semestre: Number(formData.semestre),
 					descripcion: formData.descripcion,
 				},
@@ -158,45 +153,24 @@ export function EditMaterialForm({
 						isRequired
 					/>
 
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<Select
-							label="Materia"
-							placeholder="Seleccionar materia"
-							selectedKeys={formData.materia ? [formData.materia] : []}
-							onSelectionChange={(keys) => {
-								const value = Array.from(keys)[0] as string;
-								setFormData((prev) => ({ ...prev, materia: value }));
-							}}
-							isInvalid={!!errors.materia}
-							errorMessage={errors.materia}
-							isRequired
-						>
-							{subjects.map((subject) => (
-								<SelectItem key={subject.nombre} value={subject.nombre}>
-									{subject.nombre}
-								</SelectItem>
-							))}
-						</Select>
-
-						<Select
-							label="Tipo de recurso"
-							placeholder="Seleccionar tipo"
-							selectedKeys={formData.tipo ? [formData.tipo] : []}
-							onSelectionChange={(keys) => {
-								const value = Array.from(keys)[0] as string;
-								setFormData((prev) => ({ ...prev, tipo: value }));
-							}}
-							isInvalid={!!errors.tipo}
-							errorMessage={errors.tipo}
-							isRequired
-						>
-							{resourceTypes.map((type) => (
-								<SelectItem key={type.nombre} value={type.nombre}>
-									{type.nombre}
-								</SelectItem>
-							))}
-						</Select>
-					</div>
+					<Select
+						label="Materia"
+						placeholder="Seleccionar materia"
+						selectedKeys={formData.materia ? [formData.materia] : []}
+						onSelectionChange={(keys) => {
+							const value = Array.from(keys)[0] as string;
+							setFormData((prev) => ({ ...prev, materia: value }));
+						}}
+						isInvalid={!!errors.materia}
+						errorMessage={errors.materia}
+						isRequired
+					>
+						{subjects.map((subject) => (
+							<SelectItem key={subject.nombre} value={subject.nombre}>
+								{subject.nombre}
+							</SelectItem>
+						))}
+					</Select>
 
 					<Select
 						label="Semestre"
