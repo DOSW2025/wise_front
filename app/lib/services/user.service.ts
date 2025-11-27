@@ -26,10 +26,17 @@ function buildQueryParams(params: PaginationParams): string {
 		queryParams.append('search', params.search);
 	}
 	if (params.role) {
-		queryParams.append('role', params.role);
+		// Backend expects 'rol' instead of 'role'
+		queryParams.append('rol', params.role);
 	}
 	if (params.status) {
-		queryParams.append('status', params.status);
+		// Backend expects 'estado' instead of 'status'
+		// Map status values to Spanish
+		const statusMap: Record<string, string> = {
+			active: 'activo',
+			suspended: 'suspendido',
+		};
+		queryParams.append('estado', statusMap[params.status] || params.status);
 	}
 
 	return queryParams.toString();
@@ -114,8 +121,11 @@ export async function updateUserRole(
 		);
 
 		return response.data.data || (response.data as unknown as AdminUserDto);
-	} catch (error) {
+	} catch (error: any) {
 		console.error('Error updating user role:', error);
+		if (error.response?.data) {
+			console.error('Backend error details:', error.response.data);
+		}
 		throw error;
 	}
 }
@@ -134,8 +144,11 @@ export async function suspendUser(userId: string): Promise<AdminUserDto> {
 		);
 
 		return response.data.data || (response.data as unknown as AdminUserDto);
-	} catch (error) {
+	} catch (error: any) {
 		console.error('Error suspending user:', error);
+		if (error.response?.data) {
+			console.error('Backend error details:', error.response.data);
+		}
 		throw error;
 	}
 }
@@ -154,8 +167,11 @@ export async function activateUser(userId: string): Promise<AdminUserDto> {
 		);
 
 		return response.data.data || (response.data as unknown as AdminUserDto);
-	} catch (error) {
+	} catch (error: any) {
 		console.error('Error activating user:', error);
+		if (error.response?.data) {
+			console.error('Backend error details:', error.response.data);
+		}
 		throw error;
 	}
 }
