@@ -31,6 +31,7 @@ import { useState } from 'react';
 import { DeleteConfirmationModal } from '~/components/delete-confirmation-modal';
 import { EditMaterialForm } from '~/components/edit-material-form';
 import { MaterialDetailModal } from '~/components/material-detail-modal';
+import { MaterialStatsModal } from '~/components/material-stats-modal';
 import { MyMaterialsList } from '~/components/my-materials-list';
 import { PopularMaterials } from '~/components/popular-materials';
 import { UploadMaterialForm } from '~/components/upload-material-form';
@@ -63,10 +64,17 @@ export default function TutorMaterials() {
 		onOpen: onDeleteOpen,
 		onClose: onDeleteClose,
 	} = useDisclosure();
+	const {
+		isOpen: isStatsOpen,
+		onOpen: onStatsOpen,
+		onClose: onStatsClose,
+	} = useDisclosure();
 	const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(
 		null,
 	);
 	const [selectedMaterialName, setSelectedMaterialName] = useState('');
+	const [selectedMaterialForStats, setSelectedMaterialForStats] =
+		useState<any>(null);
 	const [activeTab, setActiveTab] = useState('all');
 	const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
@@ -417,6 +425,10 @@ export default function TutorMaterials() {
 							onDeleteOpen();
 						}
 					}}
+					onStats={(material) => {
+						setSelectedMaterialForStats(material);
+						onStatsOpen();
+					}}
 				/>
 			)}
 
@@ -514,6 +526,13 @@ export default function TutorMaterials() {
 					)}
 				</ModalContent>
 			</Modal>
+
+			{/* Modal de estadísticas */}
+			<MaterialStatsModal
+				material={selectedMaterialForStats}
+				isOpen={isStatsOpen}
+				onClose={onStatsClose}
+			/>
 		</div>
 	);
 }
