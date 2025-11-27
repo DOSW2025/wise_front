@@ -9,9 +9,19 @@ import {
 	CardHeader,
 	Chip,
 	Divider,
+	Progress,
 	Spinner,
 } from '@heroui/react';
-import { Download, Eye, Star, TrendingUp } from 'lucide-react';
+import {
+	Award,
+	BarChart3,
+	Download,
+	Eye,
+	FileText,
+	Star,
+	TrendingUp,
+	Users,
+} from 'lucide-react';
 import { usePopularMaterials } from '~/lib/hooks/useMaterials';
 import type { Material } from '~/lib/types/api.types';
 
@@ -90,43 +100,177 @@ export function PopularMaterials({ onMaterialClick }: PopularMaterialsProps) {
 		</Card>
 	);
 
-	return (
-		<Card>
-			<CardHeader className="pb-3">
-				<div className="flex items-center gap-2">
-					<TrendingUp className="w-5 h-5 text-primary-600" />
-					<h3 className="text-lg font-semibold">Materiales Populares</h3>
-				</div>
-			</CardHeader>
-			<CardBody className="pt-0">
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-					{/* Más Vistos */}
-					<div>
-						<div className="flex items-center gap-2 mb-4">
-							<Eye className="w-4 h-4 text-primary-600" />
-							<h4 className="font-medium text-primary-700">Más Vistos</h4>
-						</div>
-						<div className="space-y-3">
-							{popularData.mostViewed.map((material, index) =>
-								renderMaterialCard(material, index + 1),
-							)}
-						</div>
-					</div>
+	// Datos mock para estadísticas generales
+	const generalStats = {
+		totalMateriales: 1247,
+		totalDescargas: 15890,
+		totalVistas: 45230,
+		calificacionPromedio: 4.2,
+		materiasMasPopulares: [
+			{ nombre: 'Matemáticas', porcentaje: 35 },
+			{ nombre: 'Física', porcentaje: 28 },
+			{ nombre: 'Química', porcentaje: 22 },
+			{ nombre: 'Programación', porcentaje: 15 },
+		],
+	};
 
-					{/* Más Descargados */}
-					<div>
-						<div className="flex items-center gap-2 mb-4">
-							<Download className="w-4 h-4 text-success-600" />
-							<h4 className="font-medium text-success-700">Más Descargados</h4>
+	return (
+		<div className="space-y-6">
+			{/* Estadísticas Generales */}
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+				<Card className="shadow-sm">
+					<CardBody className="p-4 text-center">
+						<div className="flex items-center justify-center mb-2">
+							<FileText className="w-6 h-6 text-blue-600" />
 						</div>
-						<div className="space-y-3">
-							{popularData.mostDownloaded.map((material, index) =>
-								renderMaterialCard(material, index + 1),
-							)}
+						<p className="text-2xl font-bold text-gray-900">
+							{generalStats.totalMateriales.toLocaleString()}
+						</p>
+						<p className="text-sm text-gray-600">Total Materiales</p>
+					</CardBody>
+				</Card>
+
+				<Card className="shadow-sm">
+					<CardBody className="p-4 text-center">
+						<div className="flex items-center justify-center mb-2">
+							<Download className="w-6 h-6 text-green-600" />
 						</div>
-					</div>
+						<p className="text-2xl font-bold text-gray-900">
+							{generalStats.totalDescargas.toLocaleString()}
+						</p>
+						<p className="text-sm text-gray-600">Total Descargas</p>
+					</CardBody>
+				</Card>
+
+				<Card className="shadow-sm">
+					<CardBody className="p-4 text-center">
+						<div className="flex items-center justify-center mb-2">
+							<Eye className="w-6 h-6 text-purple-600" />
+						</div>
+						<p className="text-2xl font-bold text-gray-900">
+							{generalStats.totalVistas.toLocaleString()}
+						</p>
+						<p className="text-sm text-gray-600">Total Vistas</p>
+					</CardBody>
+				</Card>
+
+				<Card className="shadow-sm">
+					<CardBody className="p-4 text-center">
+						<div className="flex items-center justify-center mb-2">
+							<Star className="w-6 h-6 text-yellow-500" />
+						</div>
+						<p className="text-2xl font-bold text-gray-900">
+							{generalStats.calificacionPromedio}
+						</p>
+						<p className="text-sm text-gray-600">Calificación Promedio</p>
+					</CardBody>
+				</Card>
+			</div>
+
+			{/* Contenido Principal */}
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				{/* Materiales Más Populares */}
+				<div className="lg:col-span-2">
+					<Card className="h-full">
+						<CardHeader className="pb-3">
+							<div className="flex items-center gap-2">
+								<TrendingUp className="w-5 h-5 text-[#8B1A1A]" />
+								<h3 className="text-lg font-semibold">Top Materiales</h3>
+							</div>
+						</CardHeader>
+						<CardBody className="pt-0">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+								{/* Más Vistos */}
+								<div>
+									<div className="flex items-center gap-2 mb-4">
+										<Eye className="w-4 h-4 text-blue-600" />
+										<h4 className="font-medium text-gray-700">Más Vistos</h4>
+									</div>
+									<div className="space-y-3">
+										{popularData.mostViewed.map((material, index) =>
+											renderMaterialCard(material, index + 1),
+										)}
+									</div>
+								</div>
+
+								{/* Más Descargados */}
+								<div>
+									<div className="flex items-center gap-2 mb-4">
+										<Download className="w-4 h-4 text-green-600" />
+										<h4 className="font-medium text-gray-700">
+											Más Descargados
+										</h4>
+									</div>
+									<div className="space-y-3">
+										{popularData.mostDownloaded.map((material, index) =>
+											renderMaterialCard(material, index + 1),
+										)}
+									</div>
+								</div>
+							</div>
+						</CardBody>
+					</Card>
 				</div>
-			</CardBody>
-		</Card>
+
+				{/* Gráfico de Materias Populares */}
+				<div>
+					<Card className="h-full">
+						<CardHeader className="pb-3">
+							<div className="flex items-center gap-2">
+								<BarChart3 className="w-5 h-5 text-[#8B1A1A]" />
+								<h3 className="text-lg font-semibold">Materias Populares</h3>
+							</div>
+						</CardHeader>
+						<CardBody className="pt-0">
+							<div className="space-y-4">
+								{generalStats.materiasMasPopulares.map((materia, index) => (
+									<div key={materia.nombre} className="space-y-2">
+										<div className="flex justify-between items-center">
+											<span className="text-sm font-medium text-gray-700">
+												{materia.nombre}
+											</span>
+											<span className="text-sm text-gray-500">
+												{materia.porcentaje}%
+											</span>
+										</div>
+										<Progress
+											value={materia.porcentaje}
+											className="[&_[data-filled=true]]:bg-[#8B1A1A]"
+											size="sm"
+										/>
+									</div>
+								))}
+							</div>
+
+							<Divider className="my-4" />
+
+							{/* Resumen adicional */}
+							<div className="bg-gray-50 rounded-lg p-4">
+								<div className="flex items-center gap-2 mb-2">
+									<Award className="w-4 h-4 text-[#8B1A1A]" />
+									<h4 className="font-medium text-gray-700">Resumen Semanal</h4>
+								</div>
+								<div className="space-y-2 text-sm">
+									<div className="flex justify-between">
+										<span className="text-gray-600">Nuevos materiales:</span>
+										<span className="font-medium">+23</span>
+									</div>
+									<div className="flex justify-between">
+										<span className="text-gray-600">
+											Descargas esta semana:
+										</span>
+										<span className="font-medium">+1,247</span>
+									</div>
+									<div className="flex justify-between">
+										<span className="text-gray-600">Usuarios activos:</span>
+										<span className="font-medium">892</span>
+									</div>
+								</div>
+							</div>
+						</CardBody>
+					</Card>
+				</div>
+			</div>
+		</div>
 	);
 }

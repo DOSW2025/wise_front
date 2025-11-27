@@ -18,7 +18,10 @@ import {
 	ChevronUp,
 	Download,
 	Eye,
+	FileText,
 	Filter,
+	Grid3X3,
+	List,
 	Plus,
 	Search,
 	Star,
@@ -28,13 +31,13 @@ import { useState } from 'react';
 import { DeleteConfirmationModal } from '~/components/delete-confirmation-modal';
 import { EditMaterialForm } from '~/components/edit-material-form';
 import { MaterialDetailModal } from '~/components/material-detail-modal';
+import { MaterialStatsModal } from '~/components/material-stats-modal';
 import { MyMaterialsList } from '~/components/my-materials-list';
 import { PopularMaterials } from '~/components/popular-materials';
 import { UploadMaterialForm } from '~/components/upload-material-form';
 import { useDebounce } from '~/lib/hooks/useDebounce';
 import {
 	useMaterials,
-	useResourceTypes,
 	useSubjects,
 	useUserMaterials,
 } from '~/lib/hooks/useMaterials';
@@ -61,11 +64,19 @@ export default function TutorMaterials() {
 		onOpen: onDeleteOpen,
 		onClose: onDeleteClose,
 	} = useDisclosure();
+	const {
+		isOpen: isStatsOpen,
+		onOpen: onStatsOpen,
+		onClose: onStatsClose,
+	} = useDisclosure();
 	const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(
 		null,
 	);
 	const [selectedMaterialName, setSelectedMaterialName] = useState('');
+	const [selectedMaterialForStats, setSelectedMaterialForStats] =
+		useState<any>(null);
 	const [activeTab, setActiveTab] = useState('all');
+	const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
 	// Combinar filtros con búsqueda debounced
 	const combinedFilters = {
@@ -76,7 +87,6 @@ export default function TutorMaterials() {
 	const { data: materials = [], isLoading } = useMaterials(combinedFilters);
 	const { data: userMaterials = [] } = useUserMaterials('dev-tutor-1');
 	const { data: subjects = [] } = useSubjects();
-	const { data: resourceTypes = [] } = useResourceTypes();
 
 	const handleFilterChange = (
 		key: keyof MaterialFilters,
@@ -90,8 +100,7 @@ export default function TutorMaterials() {
 		setSearchTerm('');
 	};
 
-	const hasActiveFilters =
-		filters.subject || filters.resourceType || filters.semester || searchTerm;
+	const hasActiveFilters = filters.subject || filters.semester || searchTerm;
 
 	return (
 		<div className="space-y-6">
@@ -122,23 +131,45 @@ export default function TutorMaterials() {
 			>
 				<Tab key="all" title="Todos los Materiales" />
 				<Tab key="mine" title="Mis Materiales" />
-				<Tab key="popular" title="Populares" />
+				<Tab key="popular" title="Estadísticas Generales" />
 			</Tabs>
 
-			{/* Buscador - solo en tab "all" */}
+			{/* Buscador y controles de vista - solo en tab "all" */}
 			{activeTab === 'all' && (
-				<div className="w-full max-w-md">
-					<Input
-						placeholder="Buscar materiales..."
-						value={searchTerm}
-						onValueChange={setSearchTerm}
-						startContent={<Search className="w-4 h-4 text-default-400" />}
-						isClearable
-						onClear={() => setSearchTerm('')}
-						classNames={{
-							input: 'text-sm',
-						}}
-					/>
+				<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+					<div className="w-full max-w-md">
+						<Input
+							placeholder="Buscar materiales..."
+							value={searchTerm}
+							onValueChange={setSearchTerm}
+							startContent={<Search className="w-4 h-4 text-default-400" />}
+							isClearable
+							onClear={() => setSearchTerm('')}
+							classNames={{
+								input: 'text-sm',
+							}}
+						/>
+					</div>
+					<div className="flex gap-2">
+						<Button
+							isIconOnly
+							variant={viewMode === 'list' ? 'solid' : 'bordered'}
+							color={viewMode === 'list' ? 'primary' : 'default'}
+							onPress={() => setViewMode('list')}
+							size="sm"
+						>
+							<List className="w-4 h-4" />
+						</Button>
+						<Button
+							isIconOnly
+							variant={viewMode === 'grid' ? 'solid' : 'bordered'}
+							color={viewMode === 'grid' ? 'primary' : 'default'}
+							onPress={() => setViewMode('grid')}
+							size="sm"
+						>
+							<Grid3X3 className="w-4 h-4" />
+						</Button>
+					</div>
 				</div>
 			)}
 
@@ -172,11 +203,6 @@ export default function TutorMaterials() {
 										Materia: {filters.subject}
 									</Chip>
 								)}
-								{filters.resourceType && (
-									<Chip size="sm" color="secondary" variant="flat">
-										Tipo: {filters.resourceType}
-									</Chip>
-								)}
 								{filters.semester && (
 									<Chip size="sm" color="default" variant="flat">
 										Semestre: {filters.semester}
@@ -205,7 +231,7 @@ export default function TutorMaterials() {
 										)}
 									</div>
 
-									<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 										<Select
 											label="Materia"
 											placeholder="Seleccionar materia"
@@ -219,25 +245,6 @@ export default function TutorMaterials() {
 											{subjects.map((subject) => (
 												<SelectItem key={subject.nombre} value={subject.nombre}>
 													{subject.nombre}
-												</SelectItem>
-											))}
-										</Select>
-
-										<Select
-											label="Tipo de recurso"
-											placeholder="Seleccionar tipo"
-											selectedKeys={
-												filters.resourceType ? [filters.resourceType] : []
-											}
-											onSelectionChange={(keys) => {
-												const value = Array.from(keys)[0] as string;
-												handleFilterChange('resourceType', value);
-											}}
-											size="sm"
-										>
-											{resourceTypes.map((type) => (
-												<SelectItem key={type.nombre} value={type.nombre}>
-													{type.nombre}
 												</SelectItem>
 											))}
 										</Select>
@@ -300,9 +307,15 @@ export default function TutorMaterials() {
 						</Card>
 					)}
 
-					{/* Lista de materiales */}
+					{/* Lista/Cuadrícula de materiales */}
 					{!isLoading && materials.length > 0 && (
-						<div className="grid gap-4">
+						<div
+							className={
+								viewMode === 'grid'
+									? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
+									: 'grid gap-4'
+							}
+						>
 							{materials.map((material) => (
 								<Card
 									key={material.id}
@@ -313,48 +326,77 @@ export default function TutorMaterials() {
 										onDetailOpen();
 									}}
 								>
-									<CardBody className="p-6">
-										<div className="flex justify-between items-start">
-											<div className="flex-1">
-												<div className="flex items-start justify-between mb-3">
-													<div>
-														<h3 className="text-lg font-semibold mb-1">
-															{material.nombre}
-														</h3>
-														<p className="text-sm text-default-600">
-															Por: {material.tutor}
-														</p>
+									<CardBody className={viewMode === 'grid' ? 'p-4' : 'p-6'}>
+										{viewMode === 'list' ? (
+											<div className="flex justify-between items-start">
+												<div className="flex-1">
+													<div className="flex items-start justify-between mb-3">
+														<div>
+															<h3 className="text-lg font-semibold mb-1">
+																{material.nombre}
+															</h3>
+															<p className="text-sm text-default-600">
+																Por: {material.tutor}
+															</p>
+														</div>
+														<div className="flex items-center gap-1">
+															<Star className="w-4 h-4 text-yellow-500 fill-current" />
+															<span className="text-sm font-medium">
+																{material.calificacion.toFixed(1)}
+															</span>
+														</div>
 													</div>
-													<div className="flex items-center gap-1">
-														<Star className="w-4 h-4 text-yellow-500 fill-current" />
-														<span className="text-sm font-medium">
-															{material.calificacion.toFixed(1)}
-														</span>
+													<div className="flex flex-wrap gap-2 mb-3">
+														<Chip size="sm" variant="flat" color="primary">
+															{material.materia}
+														</Chip>
+														<Chip size="sm" variant="flat">
+															Semestre {material.semestre}
+														</Chip>
 													</div>
-												</div>
-												<div className="flex flex-wrap gap-2 mb-3">
-													<Chip size="sm" variant="flat" color="primary">
-														{material.materia}
-													</Chip>
-													<Chip size="sm" variant="flat" color="secondary">
-														{material.tipo}
-													</Chip>
-													<Chip size="sm" variant="flat">
-														Semestre {material.semestre}
-													</Chip>
-												</div>
-												<div className="flex items-center gap-4 text-sm text-default-500">
-													<div className="flex items-center gap-1">
-														<Eye className="w-4 h-4" />
-														<span>{material.vistas} vistas</span>
-													</div>
-													<div className="flex items-center gap-1">
-														<Download className="w-4 h-4" />
-														<span>{material.descargas} descargas</span>
+													<div className="flex items-center gap-4 text-sm text-default-500">
+														<div className="flex items-center gap-1">
+															<Eye className="w-4 h-4" />
+															<span>{material.vistas} vistas</span>
+														</div>
+														<div className="flex items-center gap-1">
+															<Download className="w-4 h-4" />
+															<span>{material.descargas} descargas</span>
+														</div>
 													</div>
 												</div>
 											</div>
-										</div>
+										) : (
+											<div className="text-center">
+												<FileText className="w-12 h-12 text-[#8B1A1A] mx-auto mb-3" />
+												<h3 className="font-semibold text-sm mb-1 line-clamp-2">
+													{material.nombre}
+												</h3>
+												<p className="text-xs text-default-600 mb-2">
+													{material.tutor}
+												</p>
+												<div className="flex flex-wrap gap-1 justify-center mb-2">
+													<Chip
+														size="sm"
+														variant="flat"
+														color="primary"
+														className="text-xs"
+													>
+														{material.materia}
+													</Chip>
+												</div>
+												<div className="flex items-center justify-between text-xs text-default-500">
+													<div className="flex items-center gap-1">
+														<Star className="w-3 h-3 text-yellow-500 fill-current" />
+														<span>{material.calificacion.toFixed(1)}</span>
+													</div>
+													<div className="flex items-center gap-1">
+														<Eye className="w-3 h-3" />
+														<span>{material.vistas}</span>
+													</div>
+												</div>
+											</div>
+										)}
 									</CardBody>
 								</Card>
 							))}
@@ -382,6 +424,10 @@ export default function TutorMaterials() {
 							setSelectedMaterialName(material.nombre);
 							onDeleteOpen();
 						}
+					}}
+					onStats={(material) => {
+						setSelectedMaterialForStats(material);
+						onStatsOpen();
 					}}
 				/>
 			)}
@@ -480,6 +526,13 @@ export default function TutorMaterials() {
 					)}
 				</ModalContent>
 			</Modal>
+
+			{/* Modal de estadísticas */}
+			<MaterialStatsModal
+				material={selectedMaterialForStats}
+				isOpen={isStatsOpen}
+				onClose={onStatsClose}
+			/>
 		</div>
 	);
 }
