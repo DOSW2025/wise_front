@@ -4,7 +4,7 @@
  */
 
 import { Button, Card, CardBody, Chip, Divider, Spinner } from '@heroui/react';
-import { Download, Edit, Eye, Star, Trash2, X } from 'lucide-react';
+import { Download, Edit, Eye, FileText, Star, Trash2, X } from 'lucide-react';
 import { useEffect } from 'react';
 import { useDownloadMaterial, useMaterial } from '~/lib/hooks/useMaterials';
 import { useToast } from '~/lib/hooks/useToast';
@@ -84,6 +84,13 @@ export function MaterialDetailModal({
 				</div>
 
 				<div className="space-y-6">
+					{/* Vista previa del archivo */}
+					<div className="bg-gray-50 rounded-lg p-8 text-center">
+						<FileText className="w-16 h-16 text-[#8B1A1A] mx-auto mb-3" />
+						<p className="text-gray-600 text-sm mb-1">Archivo PDF</p>
+						<p className="text-xs text-gray-500">{material.nombre}.pdf</p>
+					</div>
+
 					{/* Información principal */}
 					<div>
 						<h4 className="text-2xl font-bold text-foreground mb-2">
@@ -92,16 +99,24 @@ export function MaterialDetailModal({
 						<p className="text-default-600 mb-4">Por: {material.tutor}</p>
 
 						<div className="flex flex-wrap gap-2 mb-4">
-							<Chip size="sm" variant="flat" color="primary">
+							<Chip
+								size="sm"
+								variant="flat"
+								className="bg-gray-100 text-gray-700"
+							>
 								{material.materia}
 							</Chip>
-							<Chip size="sm" variant="flat">
+							<Chip
+								size="sm"
+								variant="flat"
+								className="bg-gray-100 text-gray-700"
+							>
 								Semestre {material.semestre}
 							</Chip>
 						</div>
 
 						{material.descripcion && (
-							<p className="text-default-700 bg-default-100 p-3 rounded-lg">
+							<p className="text-default-700 bg-gray-50 p-3 rounded-lg text-sm">
 								{material.descripcion}
 							</p>
 						)}
@@ -109,43 +124,43 @@ export function MaterialDetailModal({
 
 					<Divider />
 
-					{/* Calificación interactiva */}
+					{/* Calificación */}
 					<div>
-						<h5 className="font-semibold mb-3">Calificar Material</h5>
-						<div className="bg-warning-50 p-4 rounded-lg mb-4">
-							<MaterialRating
-								materialId={material.id}
-								currentRating={material.calificacion}
-								userRating={0}
-								onRatingChange={(newRating) => {
-									showToast(
-										`Calificación registrada: ${newRating} estrellas`,
-										'success',
-									);
-								}}
-							/>
+						<div className="flex items-center gap-2">
+							<Star className="w-5 h-5 text-yellow-500 fill-current" />
+							<span className="font-semibold">
+								{material.calificacion.toFixed(1)}
+							</span>
+							<span className="text-sm text-gray-500">
+								calificación promedio
+							</span>
 						</div>
+					</div>
 
+					<Divider />
+
+					{/* Estadísticas */}
+					<div>
 						<h5 className="font-semibold mb-3">Estadísticas</h5>
 						<div className="grid grid-cols-2 gap-4">
-							<div className="text-center p-3 bg-primary-50 rounded-lg">
+							<div className="text-center p-3 bg-gray-50 rounded-lg">
 								<div className="flex items-center justify-center gap-1 mb-1">
-									<Eye className="w-4 h-4 text-primary-600" />
-									<span className="font-semibold text-primary-700">
+									<Eye className="w-4 h-4 text-gray-600" />
+									<span className="font-semibold text-gray-700">
 										{material.vistas}
 									</span>
 								</div>
-								<p className="text-xs text-primary-600">Vistas</p>
+								<p className="text-xs text-gray-600">Vistas</p>
 							</div>
 
-							<div className="text-center p-3 bg-success-50 rounded-lg">
+							<div className="text-center p-3 bg-gray-50 rounded-lg">
 								<div className="flex items-center justify-center gap-1 mb-1">
-									<Download className="w-4 h-4 text-success-600" />
-									<span className="font-semibold text-success-700">
+									<Download className="w-4 h-4 text-gray-600" />
+									<span className="font-semibold text-gray-700">
 										{material.descargas}
 									</span>
 								</div>
-								<p className="text-xs text-success-600">Descargas</p>
+								<p className="text-xs text-gray-600">Descargas</p>
 							</div>
 						</div>
 					</div>
@@ -170,7 +185,7 @@ export function MaterialDetailModal({
 					{/* Botones de acción */}
 					<div className="flex gap-3 pt-4">
 						<Button
-							color="primary"
+							className="bg-[#8B1A1A] text-white"
 							startContent={<Download className="w-4 h-4" />}
 							onPress={() => {
 								downloadMaterial.mutate(material.id, {
@@ -198,8 +213,8 @@ export function MaterialDetailModal({
 									Editar
 								</Button>
 								<Button
-									color="danger"
 									variant="bordered"
+									className="text-red-600 border-red-600 hover:bg-red-50"
 									startContent={<Trash2 className="w-4 h-4" />}
 									onPress={() => onDelete?.(material.id)}
 								>
