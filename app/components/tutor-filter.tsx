@@ -1,6 +1,7 @@
 // app/components/tutor-filter.tsx
 
-import { ChevronDownIcon, FunnelIcon } from '@heroicons/react/24/solid';
+import { Button, Select, SelectItem, type Selection } from '@heroui/react';
+import { ChevronDown, Filter } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 
@@ -14,115 +15,117 @@ interface TutorFilterProps {
 
 const TutorFilter: React.FC<TutorFilterProps> = ({ onApplyFilters }) => {
 	const [showFilters, setShowFilters] = useState(false);
-	const [materia, setMateria] = useState('Todos');
-	const [calificacion, setCalificacion] = useState('Todas');
-	const [disponibilidad, setDisponibilidad] = useState('Cualquiera');
+	const [materia, setMateria] = useState<Selection>(new Set(['Todos']));
+	const [calificacion, setCalificacion] = useState<Selection>(
+		new Set(['Todas']),
+	);
+	const [disponibilidad, setDisponibilidad] = useState<Selection>(
+		new Set(['Cualquiera']),
+	);
 
 	const handleApply = () => {
-		onApplyFilters({ materia, calificacion, disponibilidad });
+		onApplyFilters({
+			materia:
+				materia === 'all'
+					? 'Todos'
+					: (Array.from(materia)[0] as string) || 'Todos',
+			calificacion:
+				calificacion === 'all'
+					? 'Todas'
+					: (Array.from(calificacion)[0] as string) || 'Todas',
+			disponibilidad:
+				disponibilidad === 'all'
+					? 'Cualquiera'
+					: (Array.from(disponibilidad)[0] as string) || 'Cualquiera',
+		});
 	};
 
-	const selectClasses =
-		'p-3 border border-gray-300 rounded-lg appearance-none bg-white focus:ring-red-700 focus:border-red-700 w-full'; // Añadido w-full
-	const primaryColor = '#b81d24';
+	// Materia options
+	const materiaOptions = [
+		{ key: 'Todos', label: 'Todos' },
+		{ key: 'Matemáticas', label: 'Matemáticas' },
+		{ key: 'Química', label: 'Química' },
+	];
+
+	// Calificación options
+	const calificacionOptions = [
+		{ key: 'Todas', label: 'Todas' },
+		{ key: '4.0', label: '4.0' },
+		{ key: '4.5', label: '4.5' },
+	];
+
+	// Disponibilidad options
+	const disponibilidadOptions = [
+		{ key: 'Cualquiera', label: 'Cualquiera' },
+		{ key: 'Hoy', label: 'Hoy' },
+		{ key: 'Mañana', label: 'Mañana' },
+	];
 
 	return (
 		<div>
 			{/* Contenedor de "Filtros" y Flecha */}
 			<div className="flex items-center space-x-2 mb-4">
-				{/* Botón/Etiqueta que contiene el icono de embudo y el texto "Filtros" */}
-				<button
-					onClick={() => setShowFilters(!showFilters)}
-					type="button"
-					className="flex items-center text-gray-700 p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-					title="Alternar filtros"
+				{/* Botón que contiene el icono de embudo y el texto "Filtros" */}
+				<Button
+					variant="bordered"
+					startContent={<Filter className="w-5 h-5" />}
+					endContent={
+						<ChevronDown
+							className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`}
+						/>
+					}
+					onPress={() => setShowFilters(!showFilters)}
 				>
-					<FunnelIcon
-						className="w-5 h-5 mr-2"
-						style={{ color: primaryColor }}
-					/>
 					Filtros
-					{/* Icono de Flecha: Controla la visibilidad */}
-					<ChevronDownIcon
-						className={`w-4 h-4 ml-2 transition-transform ${showFilters ? 'rotate-180' : ''}`}
-					/>
-				</button>
+				</Button>
 			</div>
 
 			{/* Contenedor de Filtros (visible condicionalmente) */}
 			{showFilters && (
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg bg-gray-50">
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-default-200 rounded-lg bg-default-50">
 					{/* Filtro de Materia */}
-					<div>
-						<label
-							htmlFor="materia"
-							className="block text-sm font-medium text-gray-700 mb-1"
-						>
-							Materia
-						</label>
-						<div className="relative">
-							<select
-								id="materia"
-								value={materia}
-								onChange={(e) => setMateria(e.target.value)}
-								onBlur={handleApply} // Aplicar al salir del select
-								className={selectClasses}
-							>
-								<option value="Todos">Todos</option>
-								<option value="Matemáticas">Matemáticas</option>
-								<option value="Química">Química</option>
-							</select>
-							<ChevronDownIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-						</div>
-					</div>
+					<Select
+						label="Materia"
+						placeholder="Selecciona una materia"
+						selectedKeys={materia}
+						onSelectionChange={setMateria}
+						onClose={handleApply}
+						variant="bordered"
+					>
+						{materiaOptions.map((item) => (
+							<SelectItem key={item.key}>{item.label}</SelectItem>
+						))}
+					</Select>
 
 					{/* Filtro de Calificación */}
-					<div>
-						<label
-							htmlFor="calificacion"
-							className="block text-sm font-medium text-gray-700 mb-1"
-						>
-							Calificación mínima
-						</label>
-						<div className="relative">
-							<select
-								id="calificacion"
-								value={calificacion}
-								onChange={(e) => setCalificacion(e.target.value)}
-								onBlur={handleApply}
-								className={selectClasses}
-							>
-								<option value="Todas">Todas</option>
-								<option value="4.0">4.0</option>
-								<option value="4.5">4.5</option>
-							</select>
-							<ChevronDownIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-						</div>
-					</div>
+					<Select
+						label="Calificación mínima"
+						placeholder="Selecciona calificación"
+						selectedKeys={calificacion}
+						onSelectionChange={setCalificacion}
+						onClose={handleApply}
+						variant="bordered"
+					>
+						{calificacionOptions.map((item) => (
+							<SelectItem key={item.key}>{item.label}</SelectItem>
+						))}
+					</Select>
 
 					{/* Filtro de Disponibilidad */}
-					<div>
-						<label
-							htmlFor="disponibilidad"
-							className="block text-sm font-medium text-gray-700 mb-1"
-						>
-							Disponibilidad
-						</label>
-						<div className="relative">
-							<select
-								id="disponibilidad"
-								value={disponibilidad}
-								onChange={(e) => setDisponibilidad(e.target.value)}
-								onBlur={handleApply}
-								className={`${selectClasses} border-red-700`} // Borde Rojo para resaltar
-							>
-								<option value="Cualquiera">Cualquiera</option>
-								<option value="Hoy">Hoy</option>
-								<option value="Mañana">Mañana</option>
-							</select>
-							<ChevronDownIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-						</div>
-					</div>
+					<Select
+						label="Disponibilidad"
+						placeholder="Selecciona disponibilidad"
+						selectedKeys={disponibilidad}
+						onSelectionChange={setDisponibilidad}
+						onClose={handleApply}
+						variant="bordered"
+						color="danger"
+						className="border-danger"
+					>
+						{disponibilidadOptions.map((item) => (
+							<SelectItem key={item.key}>{item.label}</SelectItem>
+						))}
+					</Select>
 				</div>
 			)}
 		</div>

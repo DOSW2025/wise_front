@@ -1,5 +1,6 @@
-import { Avatar, Button, Listbox, ListboxItem } from '@heroui/react';
+import { Avatar, Button } from '@heroui/react';
 import {
+	BarChart3,
 	BookOpen,
 	Calendar,
 	CheckSquare,
@@ -12,7 +13,6 @@ import {
 	Menu,
 	MessageSquare,
 	Settings,
-	Star,
 	TrendingUp,
 	UserCheck,
 	Users,
@@ -70,28 +70,22 @@ export function Sidebar({
 					path: '/dashboard/student/materials',
 				},
 				{
-					key: 'planning',
-					label: 'Planificación',
-					icon: <Calendar className="w-5 h-5" />,
-					path: '/dashboard/student/planning',
+					key: 'progress',
+					label: 'Mi Progreso',
+					icon: <TrendingUp className="w-5 h-5" />,
+					path: '/dashboard/student/progress',
+				},
+				{
+					key: 'statistics',
+					label: 'Estadísticas',
+					icon: <BarChart3 className="w-5 h-5" />,
+					path: '/dashboard/student/statistics',
 				},
 				{
 					key: 'community',
 					label: 'Comunidad',
 					icon: <Users className="w-5 h-5" />,
 					path: '/dashboard/student/community',
-				},
-				{
-					key: 'reputation',
-					label: 'Reputación',
-					icon: <Star className="w-5 h-5" />,
-					path: '/dashboard/student/reputation',
-				},
-				{
-					key: 'help',
-					label: 'Centro de Ayuda',
-					icon: <HelpCircle className="w-5 h-5" />,
-					path: '/dashboard/student/help',
 				},
 				{
 					key: 'profile',
@@ -227,6 +221,10 @@ export function Sidebar({
 		navigate('/login');
 	};
 
+	console.log('Sidebar props:', { userName, userEmail, userAvatar });
+	console.log('Avatar URL:', userAvatar);
+	console.log('Avatar exists:', !!userAvatar);
+
 	return (
 		<>
 			{/* Mobile menu toggle button */}
@@ -283,15 +281,35 @@ export function Sidebar({
 				<div className="p-4 border-b border-divider bg-content2">
 					<div className="flex items-center gap-3">
 						<Avatar
-							src={userAvatar}
+							src={
+								userAvatar
+									? userAvatar.includes('googleusercontent.com')
+										? userAvatar.split('=')[0] + '=s200-c'
+										: userAvatar
+									: undefined
+							}
 							color="primary"
 							isBordered
 							size="md"
 							showFallback
 							name={userName}
+							imgProps={{
+								referrerPolicy: 'no-referrer',
+								onError: (e) => {
+									console.error('Sidebar: Error loading avatar:', userAvatar);
+									e.currentTarget.style.display = 'none';
+								},
+								onLoad: () => {
+									console.log(
+										'Sidebar: Avatar loaded successfully:',
+										userAvatar,
+									);
+								},
+							}}
 							classNames={{
 								base: 'bg-primary',
 								icon: 'text-primary',
+								img: 'object-cover',
 							}}
 						/>
 						<div className="flex-1 min-w-0">

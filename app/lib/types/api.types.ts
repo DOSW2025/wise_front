@@ -8,23 +8,40 @@ export interface LoginRequest {
 	contraseña: string;
 }
 
-export interface UserDto {
+export interface AuthUserDto {
 	id: string;
-	name: string;
+	nombre: string;
+	apellido: string;
 	email: string;
-	role: 'estudiante' | 'tutor' | 'admin';
-	phoneNumber?: string;
-	avatar?: string | null;
+	rol: 'estudiante' | 'tutor' | 'admin';
+	avatarUrl?: string | null;
+}
+
+export interface RoleDto {
+	id: number;
+	nombre: string;
+}
+
+export interface StatusDto {
+	id: number;
+	nombre: string;
+}
+
+export interface AdminUserDto {
+	id: string;
+	nombre: string;
+	apellido: string;
+	email: string;
+	rol: RoleDto;
+	estado: StatusDto;
+	avatar_url: string | null;
 	createdAt: string;
 	updatedAt: string;
-	isActive: boolean;
 }
 
 export interface LoginResponse {
-	token: string;
-	refreshToken: string;
-	user: UserDto;
-	expiresIn: number;
+	access_token: string;
+	user: AuthUserDto;
 }
 
 export interface ApiResponse<T> {
@@ -38,4 +55,32 @@ export interface ApiError {
 	success: false;
 	error: string | Record<string, string[]>;
 	message: string;
+}
+
+export interface PaginationParams {
+	page: number;
+	limit: number;
+	search?: string;
+	role?: 'estudiante' | 'tutor' | 'admin';
+	status?: 'active' | 'suspended';
+}
+
+export interface PaginatedResponse<T> {
+	data: T[];
+	pagination: {
+		currentPage: number;
+		totalPages: number;
+		totalItems: number;
+		itemsPerPage: number;
+		hasNextPage: boolean;
+		hasPreviousPage: boolean;
+	};
+}
+
+export interface UpdateRoleRequest {
+	role: 'estudiante' | 'tutor' | 'admin';
+}
+
+export interface UpdateUserStatusRequest {
+	estadoId: number;
 }

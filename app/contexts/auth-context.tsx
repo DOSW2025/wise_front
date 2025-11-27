@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import type { UserResponse } from '~/lib/api/auth';
+import { authService } from '~/lib/api/auth';
 
 export type UserRole = 'student' | 'tutor' | 'admin';
 
@@ -8,7 +10,7 @@ export interface User {
 	name: string;
 	email: string;
 	role: UserRole;
-	avatar?: string;
+	avatarUrl?: string;
 }
 
 interface AuthContextType {
@@ -16,23 +18,73 @@ interface AuthContextType {
 	login: (user: User) => void;
 	logout: () => void;
 	isAuthenticated: boolean;
+	isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Función auxiliar para mapear el rol del backend al tipo del frontend
+function mapRoleToUserRole(rol: string): UserRole {
+	const roleLower = rol.toLowerCase();
+	if (roleLower === 'estudiante') return 'student';
+	if (roleLower === 'docente' || roleLower === 'tutor') return 'tutor';
+	if (roleLower === 'administrador' || roleLower === 'admin') return 'admin';
+	return 'student'; // Default
+}
+
+// Función auxiliar para convertir UserResponse a User
+function convertUserResponseToUser(userResponse: UserResponse): User {
+	console.log('Converting UserResponse to User:', userResponse);
+	console.log('Avatar URL from backend:', userResponse.avatarUrl);
+
+	const user = {
+		id: userResponse.id,
+		name: `${userResponse.nombre} ${userResponse.apellido}`,
+		email: userResponse.email,
+		role: mapRoleToUserRole(userResponse.rol),
+		avatarUrl: userResponse.avatarUrl ?? undefined,
+	};
+
+	console.log('✨ Converted user with avatar:', user);
+	return user;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
 	const [user, setUser] = useState<User | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
+
+	// Load user from storage on initialization
+	// Storage operations use secure utility functions (see ~/lib/utils/storage.ts)
+	// that follow OWASP best practices for client-side storage
+	useEffect(() => {
+		const loadUser = () => {
+			try {
+				const storedUser = authService.getUser();
+				console.log('Stored user from storage:', storedUser);
+				if (storedUser) {
+					const convertedUser = convertUserResponseToUser(storedUser);
+					console.log('Converted user:', convertedUser);
+					console.log('Avatar URL:', convertedUser.avatarUrl);
+					setUser(convertedUser);
+				}
+			} catch (error) {
+				console.error('Error al cargar usuario:', error);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		loadUser();
+	}, []);
 
 	const login = (userData: User) => {
 		setUser(userData);
-		// TODO: Guardar en localStorage o sessionStorage
-		// TODO: Configurar token de autenticación
+		// Authentication data is stored securely by authService
 	};
 
 	const logout = () => {
 		setUser(null);
-		// TODO: Limpiar localStorage
-		// TODO: Invalidar token
+		authService.logout();
 	};
 
 	return (
@@ -42,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				login,
 				logout,
 				isAuthenticated: !!user,
+				isLoading,
 			}}
 		>
 			{children}

@@ -48,49 +48,21 @@ export default function TutorRequests() {
 	const [actionType, setActionType] = useState<'confirm' | 'cancel'>('confirm');
 	const [responseMessage, setResponseMessage] = useState('');
 
+	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
 	const [requests, setRequests] = useState<SessionRequest[]>([
 		{
-			id: '1',
-			studentName: 'Ana García',
-			subject: 'Cálculo I',
-			topic: 'Límites y continuidad',
-			date: '2024-01-15',
-			time: '14:00',
-			duration: 120,
+			id: '-1',
+			studentName: 'Estudiante Ejemplo (Sin conexión)',
+			subject: 'Sin datos de API',
+			topic: 'Esperando conexión',
+			date: '1900-01-01',
+			time: '00:00',
+			duration: -1,
 			modality: 'virtual',
 			description:
-				'Necesito ayuda con ejercicios de límites, especialmente los indeterminados.',
+				'Este es un ejemplo con valores negativos. Conectar con API.',
 			status: 'pending',
-			createdAt: '2024-01-10',
-		},
-		{
-			id: '2',
-			studentName: 'Carlos Rodríguez',
-			subject: 'Álgebra Lineal',
-			topic: 'Matrices y determinantes',
-			date: '2024-01-16',
-			time: '10:00',
-			duration: 90,
-			modality: 'presencial',
-			location: 'Aula 205',
-			description:
-				'Tengo dificultades con las operaciones de matrices y el cálculo de determinantes.',
-			status: 'pending',
-			createdAt: '2024-01-11',
-		},
-		{
-			id: '3',
-			studentName: 'María López',
-			subject: 'Física I',
-			topic: 'Cinemática',
-			date: '2024-01-17',
-			time: '16:00',
-			duration: 60,
-			modality: 'virtual',
-			description:
-				'Necesito repasar movimiento rectilíneo uniformemente acelerado.',
-			status: 'pending',
-			createdAt: '2024-01-12',
+			createdAt: '1900-01-01',
 		},
 	]);
 

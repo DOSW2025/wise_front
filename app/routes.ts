@@ -1,24 +1,50 @@
 import { index, type RouteConfig, route } from '@react-router/dev/routes';
 
+// Helper function to create dashboard routes
+function createDashboardRoutes(role: string, pages: string[]) {
+	return route(`dashboard/${role}`, `routes/dashboard/${role}/dashboard.tsx`, [
+		index(`routes/dashboard/${role}/index.tsx`),
+		...pages.map((page) => route(page, `routes/dashboard/${role}/${page}.tsx`)),
+	]);
+}
+
 export default [
 	index('routes/home/home.tsx'),
 	route('login', 'routes/login/login.tsx'),
 	route('register', 'routes/register/register.tsx'),
+	route('auth/callback', 'routes/auth/callback.tsx'),
 
 	// Dashboard routes with layout
-	route('dashboard', 'routes/dashboard/dashboard.tsx', [
-		index('routes/dashboard/student/index.tsx'),
-		route('tutor', 'routes/dashboard/tutor/index.tsx', [
-			route('scheduled', 'routes/dashboard/tutor/scheduled.tsx'),
-			route('requests', 'routes/dashboard/tutor/requests.tsx'),
-			route('materials', 'routes/dashboard/tutor/materials.tsx'),
-			route('reports', 'routes/dashboard/tutor/reports.tsx'),
-			route('community', 'routes/dashboard/tutor/community.tsx'),
-			route('help', 'routes/dashboard/tutor/help.tsx'),
-			route('profile', 'routes/dashboard/tutor/profile.tsx'),
-		]),
-		route('tutoring', 'routes/dashboard/student/tutoring.tsx'),
-		route('tutor', 'routes/dashboard/tutor/index.tsx'),
-		route('admin', 'routes/dashboard/admin/index.tsx'),
+	route('dashboard', 'routes/dashboard/dashboard.tsx'),
+
+	// Student dashboard
+	createDashboardRoutes('student', [
+		'tutoring',
+		'materials',
+		'progress',
+		'statistics',
+		'community',
+		'profile',
+	]),
+
+	// Tutor dashboard
+	createDashboardRoutes('tutor', [
+		'scheduled',
+		'requests',
+		'materials',
+		'reports',
+		'community',
+		'help',
+		'profile',
+	]),
+
+	// Admin dashboard
+	createDashboardRoutes('admin', [
+		'users',
+		'validation',
+		'reports',
+		'settings',
+		'help',
+		'profile',
 	]),
 ] satisfies RouteConfig;

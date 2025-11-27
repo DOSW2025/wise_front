@@ -6,120 +6,157 @@
 import apiClient from '../api/client';
 import { API_ENDPOINTS } from '../config/api.config';
 import type {
-	ApiResponse,
+	AuthUserDto,
 	LoginRequest,
 	LoginResponse,
-	UserDto,
 } from '../types/api.types';
+import {
+	clearStorage,
+	getStorageItem,
+	getStorageJSON,
+	STORAGE_KEYS,
+	setStorageItem,
+	setStorageJSON,
+} from '../utils/storage';
 
-export class AuthService {
-	/**
-	 * Login de usuario
-	 */
-	static async login(credentials: LoginRequest): Promise<LoginResponse> {
-		try {
-			const response = await apiClient.post(
-				API_ENDPOINTS.AUTH.LOGIN,
-				credentials,
-			);
+/**
+ * Extrae el token de la respuesta (soporta 'token' o 'access_token')
+ */
+function extractToken(data: Record<string, unknown>): string | undefined {
+	if (typeof data.access_token === 'string') return data.access_token;
+	if (typeof data.token === 'string') return data.token;
+	if (typeof data.accessToken === 'string') return data.accessToken;
+	return undefined;
+}
 
-			const data = response.data as any;
+/**
+ * Extrae el usuario de la respuesta (soporta 'user' o 'usuario')
+ */
+function extractUser(data: Record<string, unknown>): AuthUserDto | undefined {
+	if (typeof data.user === 'object' && data.user !== null) {
+		return data.user as AuthUserDto;
+	}
+	if (typeof data.usuario === 'object' && data.usuario !== null) {
+		return data.usuario as AuthUserDto;
+	}
+	return undefined;
+}
 
-			// Soportar dos formas de respuesta:
-			// 1) { success: true, data: { token|accessToken, user|usuario, refreshToken?, expiresIn|metadata.expiresIn } }
-			// 2) { mensaje, accessToken|token, usuario|user, metadata.expiresIn|expiresIn, refreshToken? }
+/**
+ * Verifica si la respuesta tiene estructura envuelta ({ success: true, data: {...} })
+ */
+function isWrappedResponse(data: Record<string, unknown>): boolean {
+	return (
+		'success' in data &&
+		data.success === true &&
+		'data' in data &&
+		typeof data.data === 'object' &&
+		data.data !== null
+	);
+}
 
-			let token: string | undefined;
-			let refreshToken: string = '';
-			let user: UserDto | undefined;
-			let expiresIn: number = 0;
+/**
+ * Parsea la respuesta del login y extrae los datos de autenticación
+ */
+function parseLoginResponse(data: Record<string, unknown>): LoginResponse {
+	const responseData = isWrappedResponse(data)
+		? (data.data as Record<string, unknown>)
+		: data;
 
-			if (data?.success && data?.data) {
-				token = data.data.token ?? data.data.accessToken;
-				refreshToken = data.data.refreshToken ?? '';
-				user = data.data.user ?? data.data.usuario;
-				expiresIn =
-					typeof data.data.expiresIn === 'number'
-						? data.data.expiresIn
-						: (data.data.metadata?.expiresIn ?? 0);
-			} else if (data) {
-				token = data.token ?? data.accessToken;
-				refreshToken = data.refreshToken ?? '';
-				user = data.user ?? data.usuario;
-				expiresIn =
-					typeof data.expiresIn === 'number'
-						? data.expiresIn
-						: (data.metadata?.expiresIn ?? 0);
-			}
+	const access_token = extractToken(responseData);
+	const user = extractUser(responseData);
 
-			if (token && user) {
-				// Guardar en localStorage
-				localStorage.setItem('token', token);
-				localStorage.setItem('refreshToken', refreshToken);
-				localStorage.setItem('user', JSON.stringify(user));
-				localStorage.setItem('expiresIn', expiresIn.toString());
+	if (!access_token || !user) {
+		const message =
+			typeof data.message === 'string' ? data.message : 'Error en el login';
+		throw new Error(message);
+	}
 
-				return { token, refreshToken, user, expiresIn } as LoginResponse;
-			}
+	return { access_token, user };
+}
 
-			throw new Error(data?.message || 'Error en el login');
-		} catch (error: any) {
-			if (error.response?.data) {
-				const apiError = error.response.data;
-				const message =
-					apiError?.message || apiError?.error || 'Error al iniciar sesión';
-				throw new Error(message);
-			}
-			throw new Error('Error de conexión con el servidor');
+/**
+ * Almacena los datos de autenticación en el storage
+ */
+function storeAuthData(authData: LoginResponse): void {
+	setStorageItem(STORAGE_KEYS.TOKEN, authData.access_token);
+	setStorageJSON(STORAGE_KEYS.USER, authData.user);
+}
+
+/**
+ * Extrae el mensaje de error de la respuesta de la API
+ */
+function extractErrorMessage(error: unknown): string {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		'response' in error &&
+		typeof (error as { response?: { data?: unknown } }).response === 'object'
+	) {
+		const response = (error as { response: { data?: unknown } }).response;
+		if (response.data && typeof response.data === 'object') {
+			const apiError = response.data as Record<string, unknown>;
+			if (typeof apiError.message === 'string') return apiError.message;
+			if (typeof apiError.error === 'string') return apiError.error;
 		}
 	}
+	return 'Error de conexión con el servidor';
+}
 
-	/**
-	 * Logout de usuario
-	 */
-	static async logout(): Promise<void> {
-		// Limpiar localStorage
-		localStorage.removeItem('token');
-		localStorage.removeItem('refreshToken');
-		localStorage.removeItem('user');
-		localStorage.removeItem('expiresIn');
-	}
+/**
+ * Login de usuario
+ */
+export async function login(credentials: LoginRequest): Promise<LoginResponse> {
+	try {
+		const response = await apiClient.post(
+			API_ENDPOINTS.AUTH.LOGIN,
+			credentials,
+		);
 
-	/**
-	 * Obtener usuario actual desde localStorage
-	 */
-	static getCurrentUser(): UserDto | null {
-		const userStr = localStorage.getItem('user');
-		if (userStr) {
-			try {
-				return JSON.parse(userStr);
-			} catch {
-				return null;
-			}
-		}
-		return null;
-	}
+		const data = response.data as unknown as Record<string, unknown>;
+		const authData = parseLoginResponse(data);
+		storeAuthData(authData);
 
-	/**
-	 * Verificar si el usuario está autenticado
-	 */
-	static isAuthenticated(): boolean {
-		const token = localStorage.getItem('token');
-		const user = AuthService.getCurrentUser();
-		return !!(token && user);
+		return authData;
+	} catch (error: unknown) {
+		throw new Error(extractErrorMessage(error));
 	}
+}
 
-	/**
-	 * Obtener token de acceso
-	 */
-	static getToken(): string | null {
-		return localStorage.getItem('token');
-	}
+/**
+ * Logout de usuario
+ */
+export async function logout(): Promise<void> {
+	// Clear all authentication data using secure storage utility
+	clearStorage();
+}
 
-	/**
-	 * Obtener refresh token
-	 */
-	static getRefreshToken(): string | null {
-		return localStorage.getItem('refreshToken');
-	}
+/**
+ * Obtener usuario actual desde localStorage
+ */
+export function getCurrentUser(): AuthUserDto | null {
+	return getStorageJSON<AuthUserDto>(STORAGE_KEYS.USER);
+}
+
+/**
+ * Verificar si el usuario está autenticado
+ */
+export function isAuthenticated(): boolean {
+	const token = getStorageItem(STORAGE_KEYS.TOKEN);
+	const user = getCurrentUser();
+	return !!(token && user);
+}
+
+/**
+ * Obtener token de acceso
+ */
+export function getToken(): string | null {
+	return getStorageItem(STORAGE_KEYS.TOKEN);
+}
+
+/**
+ * Obtener refresh token
+ */
+export function getRefreshToken(): string | null {
+	return getStorageItem(STORAGE_KEYS.REFRESH_TOKEN);
 }

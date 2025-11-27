@@ -5,6 +5,11 @@
 
 import axios, { type AxiosError, type AxiosInstance } from 'axios';
 import { API_CONFIG } from '../config/api.config';
+import {
+	getStorageItem,
+	removeStorageItem,
+	STORAGE_KEYS,
+} from '../utils/storage';
 
 // Crear instancia de Axios
 const apiClient: AxiosInstance = axios.create({
@@ -19,7 +24,8 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor - Agregar token de autenticación
 apiClient.interceptors.request.use(
 	(config) => {
-		const token = localStorage.getItem('token');
+		// Retrieve token using secure storage utility
+		const token = getStorageItem(STORAGE_KEYS.TOKEN);
 		if (token) {
 			config.headers.Authorization = `Bearer ${token}`;
 		}
@@ -30,18 +36,20 @@ apiClient.interceptors.request.use(
 	},
 );
 
-// Response interceptor - Manejo de errores y refresh token
+// Response interceptor - Manejo de errores
 apiClient.interceptors.response.use(
 	(response) => response,
 	async (error: AxiosError) => {
-		// Si el error es 401 y no es la ruta de login, intentar refresh
+		// Si el error es 401, limpiar sesión y redirigir a login
 		if (error.response?.status === 401) {
-			// Limpiar sesión y redirigir a login
-			localStorage.removeItem('token');
-			localStorage.removeItem('refreshToken');
-			localStorage.removeItem('user');
+			// Clear session using secure storage utility
+			removeStorageItem(STORAGE_KEYS.TOKEN);
+			removeStorageItem(STORAGE_KEYS.USER);
 
-			if (window.location.pathname !== '/login') {
+			if (
+				window.location.pathname !== '/login' &&
+				window.location.pathname !== '/register'
+			) {
 				window.location.href = '/login';
 			}
 		}

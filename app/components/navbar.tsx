@@ -19,9 +19,15 @@ interface NavbarProps {
 	userRole?: 'student' | 'tutor' | 'admin';
 	userName?: string;
 	userAvatar?: string;
+	onLogout?: () => void;
 }
 
-export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
+export function Navbar({
+	userRole,
+	userName,
+	userAvatar,
+	onLogout,
+}: NavbarProps) {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const location = useLocation();
 
@@ -31,21 +37,22 @@ export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
 
 		if (userRole === 'student') {
 			return [
-				...commonItems,
-				{ name: 'Tutorías', path: '/dashboard/tutoring' },
-				{ name: 'Materiales', path: '/dashboard/materials' },
-				{ name: 'Mi Progreso', path: '/dashboard/progress' },
-				{ name: 'Comunidad', path: '/dashboard/community' },
+				{ name: 'Inicio', path: '/dashboard/student' },
+				{ name: 'Tutorías', path: '/dashboard/student/tutoring' },
+				{ name: 'Materiales', path: '/dashboard/student/materials' },
+				{ name: 'Mi Progreso', path: '/dashboard/student/progress' },
+				{ name: 'Comunidad', path: '/dashboard/student/community' },
 			];
 		}
 
 		if (userRole === 'tutor') {
 			return [
-				...commonItems,
-				{ name: 'Mis Tutorías', path: '/dashboard/my-tutoring' },
-				{ name: 'Materiales', path: '/dashboard/materials' },
-				{ name: 'Estadísticas', path: '/dashboard/stats' },
-				{ name: 'Comunidad', path: '/dashboard/community' },
+				{ name: 'Inicio', path: '/dashboard/tutor' },
+				{ name: 'Programadas', path: '/dashboard/tutor/scheduled' },
+				{ name: 'Solicitudes', path: '/dashboard/tutor/requests' },
+				{ name: 'Materiales', path: '/dashboard/tutor/materials' },
+				{ name: 'Reportes', path: '/dashboard/tutor/reports' },
+				{ name: 'Comunidad', path: '/dashboard/tutor/community' },
 			];
 		}
 
@@ -63,6 +70,8 @@ export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
 	};
 
 	const menuItems = getMenuItems();
+
+	console.log('Navbar avatar prop:', userAvatar);
 
 	return (
 		<HeroNavbar
@@ -147,7 +156,27 @@ export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
 								color="primary"
 								name={userName || 'Usuario'}
 								size="sm"
-								src={userAvatar}
+								src={
+									userAvatar
+										? userAvatar.includes('googleusercontent.com')
+											? userAvatar.split('=')[0] + '=s200-c'
+											: userAvatar
+										: undefined
+								}
+								showFallback
+								imgProps={{
+									referrerPolicy: 'no-referrer',
+									onError: (e) => {
+										console.error('Navbar: Error loading avatar:', userAvatar);
+										e.currentTarget.style.display = 'none';
+									},
+									onLoad: () => {
+										console.log('Navbar: Avatar loaded successfully');
+									},
+								}}
+								classNames={{
+									img: 'object-cover',
+								}}
 							/>
 						</DropdownTrigger>
 						<DropdownMenu aria-label="Acciones de usuario" variant="flat">
@@ -155,9 +184,33 @@ export function Navbar({ userRole, userName, userAvatar }: NavbarProps) {
 								<p className="font-semibold">Sesión iniciada como</p>
 								<p className="font-semibold">{userName || 'Usuario'}</p>
 							</DropdownItem>
-							<DropdownItem key="settings">Mi Perfil</DropdownItem>
-							<DropdownItem key="help_and_feedback">Ayuda</DropdownItem>
-							<DropdownItem key="logout" color="danger">
+							<DropdownItem key="settings">
+								<Link
+									to={
+										userRole === 'tutor'
+											? '/dashboard/tutor/profile'
+											: userRole === 'admin'
+												? '/dashboard/admin/profile'
+												: '/dashboard/student/profile'
+									}
+								>
+									Mi Perfil
+								</Link>
+							</DropdownItem>
+							<DropdownItem key="help_and_feedback">
+								<Link
+									to={
+										userRole === 'tutor'
+											? '/dashboard/tutor/help'
+											: userRole === 'admin'
+												? '/dashboard/admin/help'
+												: '/dashboard/student/help'
+									}
+								>
+									Ayuda
+								</Link>
+							</DropdownItem>
+							<DropdownItem key="logout" color="danger" onPress={onLogout}>
 								Cerrar Sesión
 							</DropdownItem>
 						</DropdownMenu>
