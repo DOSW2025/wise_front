@@ -131,7 +131,7 @@ export default function TutorMaterials() {
 			>
 				<Tab key="all" title="Todos los Materiales" />
 				<Tab key="mine" title="Mis Materiales" />
-				<Tab key="popular" title="Populares" />
+				<Tab key="popular" title="Estadísticas Generales" />
 			</Tabs>
 
 			{/* Buscador y controles de vista - solo en tab "all" */}
