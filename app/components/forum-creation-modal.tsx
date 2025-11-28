@@ -201,7 +201,7 @@ export function ForumCreationModal({
 				<ModalHeader className="flex flex-col gap-1">
 					<div className="flex items-center gap-2">
 						<Plus className="w-5 h-5 text-primary" />
-						<span className="text-xl font-bold text-foreground">
+						<span className="text-xl font-bold text-foreground font-heading">
 							Crear Nuevo Foro
 						</span>
 					</div>
@@ -353,15 +353,9 @@ export function ForumCreationModal({
 													${formData.subject === subject.key ? 'text-primary-700' : 'text-foreground'}
 												`}
 											>
-												<span className="text-2xl flex-shrink-0">
-													{subject.icon}
-												</span>
 												<div className="flex-1 min-w-0">
 													<p className="font-medium text-sm truncate">
 														{subject.label}
-													</p>
-													<p className="text-xs text-default-400">
-														{subject.key}
 													</p>
 												</div>
 												{formData.subject === subject.key && (
@@ -405,37 +399,32 @@ export function ForumCreationModal({
 												: 'bg-danger-50 border-danger-200'
 								}`}
 							>
-								<div className="flex items-center gap-3">
-									<span className="text-4xl">{selectedSubjectInfo.icon}</span>
-									<div className="flex-1">
-										<p
-											className={`text-xs font-medium uppercase tracking-wide ${
-												selectedSubjectInfo.color === 'primary'
-													? 'text-primary-600'
-													: selectedSubjectInfo.color === 'success'
-														? 'text-success-600'
-														: selectedSubjectInfo.color === 'warning'
-															? 'text-warning-600'
-															: 'text-danger-600'
-											}`}
-										>
-											✓ Materia Seleccionada
-										</p>
-										<p
-											className={`text-lg font-bold ${
-												selectedSubjectInfo.color === 'primary'
-													? 'text-primary-900'
-													: selectedSubjectInfo.color === 'success'
-														? 'text-success-900'
-														: selectedSubjectInfo.color === 'warning'
-															? 'text-warning-900'
-															: 'text-danger-900'
-											}`}
-										>
-											{selectedSubjectInfo.label}
-										</p>
-									</div>
-								</div>
+								<p
+									className={`text-xs font-medium uppercase tracking-wide ${
+										selectedSubjectInfo.color === 'primary'
+											? 'text-primary-600'
+											: selectedSubjectInfo.color === 'success'
+												? 'text-success-600'
+												: selectedSubjectInfo.color === 'warning'
+													? 'text-warning-600'
+													: 'text-danger-600'
+									}`}
+								>
+									✓ Materia Seleccionada
+								</p>
+								<p
+									className={`text-lg font-bold ${
+										selectedSubjectInfo.color === 'primary'
+											? 'text-primary-900'
+											: selectedSubjectInfo.color === 'success'
+												? 'text-success-900'
+												: selectedSubjectInfo.color === 'warning'
+													? 'text-warning-900'
+													: 'text-danger-900'
+									}`}
+								>
+									{selectedSubjectInfo.label}
+								</p>
 							</div>
 						)}
 
