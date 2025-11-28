@@ -120,7 +120,7 @@ export default function StudentCommunity() {
 	]);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-	const [creationError, setCreationError] = useState<string | null>(null);
+	const [_creationError, setCreationError] = useState<string | null>(null);
 
 	const allSubjects = ['Todos', ...Object.values(SUBJECT_NAMES)];
 
@@ -148,6 +148,12 @@ export default function StudentCommunity() {
 			subject: data.subject,
 			createdAt: new Date(),
 			members: 1,
+			replies: 0,
+			likes: 0,
+			views: 1,
+			author: 'Tú',
+			isPinned: false,
+			isResolved: false,
 		};
 		setForums((prev) => [newForum, ...prev]);
 		setCreationError(null);
