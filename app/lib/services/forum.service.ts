@@ -22,6 +22,20 @@ export interface ForumResponse {
 	status: 'active' | 'inactive';
 }
 
+export type ForumErrorType =
+	| 'duplicate'
+	| 'invalid-subject'
+	| 'invalid-data'
+	| 'permission-denied'
+	| 'network'
+	| 'timeout'
+	| 'unknown';
+
+export interface ForumError extends Error {
+	type: ForumErrorType;
+	message: string;
+}
+
 /**
  * Extraer datos de respuesta API
  */
@@ -125,28 +139,36 @@ export async function createForum(
 		) {
 			const status = error.response.status;
 
-			if (status === 400) {
-				throw new Error(
-					'Datos inválidos. Verifica el nombre y la materia seleccionada.',
-				);
-			}
-
 			if (status === 409) {
-				throw new Error(
-					'Ya existe un foro con este nombre. Intenta con otro nombre.',
-				);
+				const err = new Error(
+					'Ya existe un foro con este nombre. Por favor, elige otro nombre para tu foro.',
+				) as ForumError;
+				err.type = 'duplicate';
+				throw err;
 			}
 
 			if (status === 422) {
-				throw new Error(
-					'La materia seleccionada no existe. Verifica tu selección.',
-				);
+				const err = new Error(
+					'La materia seleccionada no existe. Verifica tu selección en la lista disponible.',
+				) as ForumError;
+				err.type = 'invalid-subject';
+				throw err;
+			}
+
+			if (status === 400) {
+				const err = new Error(
+					'Datos inválidos. Verifica que el nombre tenga entre 3 y 50 caracteres.',
+				) as ForumError;
+				err.type = 'invalid-data';
+				throw err;
 			}
 
 			if (status === 401 || status === 403) {
-				throw new Error(
+				const err = new Error(
 					'No tienes permiso para crear foros. Contacta al administrador.',
-				);
+				) as ForumError;
+				err.type = 'permission-denied';
+				throw err;
 			}
 		}
 
@@ -155,7 +177,16 @@ export async function createForum(
 			error,
 			'Error al crear el foro. Intenta nuevamente.',
 		);
-		throw new Error(message);
+
+		const err = new Error(message) as ForumError;
+		if (message.includes('conexión') || message.includes('Connection')) {
+			err.type = 'network';
+		} else if (message.includes('tardó') || message.includes('timeout')) {
+			err.type = 'timeout';
+		} else {
+			err.type = 'unknown';
+		}
+		throw err;
 	}
 }
 

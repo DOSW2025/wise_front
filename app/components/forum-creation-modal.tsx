@@ -10,6 +10,7 @@ import {
 } from '@heroui/react';
 import { AlertCircle, BookOpen, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import type { ForumErrorType } from '~/lib/services/forum.service';
 import { createForum } from '~/lib/services/forum.service';
 
 interface ForumCreationModalProps {
@@ -66,6 +67,7 @@ export function ForumCreationModal({
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [isLoading, setIsLoading] = useState(false);
 	const [apiError, setApiError] = useState<string | null>(null);
+	const [errorType, setErrorType] = useState<ForumErrorType | null>(null);
 	const [searchSubject, setSearchSubject] = useState('');
 	const [isSubjectInputFocused, setIsSubjectInputFocused] = useState(false);
 
@@ -127,6 +129,12 @@ export function ForumCreationModal({
 		const value = e.target.value;
 		setFormData((prev) => ({ ...prev, name: value }));
 
+		// Limpiar error de duplicado si el usuario cambia el nombre
+		if (errorType === 'duplicate' || errorType === 'invalid-data') {
+			setApiError(null);
+			setErrorType(null);
+		}
+
 		// Validar en tiempo real
 		const error = validateForumName(value);
 		setErrors((prev) => ({
@@ -156,6 +164,7 @@ export function ForumCreationModal({
 
 		setIsLoading(true);
 		setApiError(null);
+		setErrorType(null);
 		try {
 			// Llamar al endpoint para crear foro
 			const response = await createForum({
@@ -171,11 +180,18 @@ export function ForumCreationModal({
 			setSearchSubject('');
 			setErrors({});
 			setApiError(null);
+			setErrorType(null);
 			onClose();
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : 'Error desconocido';
 			setApiError(errorMessage);
+
+			// Detectar tipo de error
+			const type = (error as any)?.type as ForumErrorType | undefined;
+			if (type) {
+				setErrorType(type);
+			}
 
 			// Notificar error si hay callback
 			if (onError) {
@@ -192,6 +208,7 @@ export function ForumCreationModal({
 		setSearchSubject('');
 		setErrors({});
 		setApiError(null);
+		setErrorType(null);
 		onClose();
 	};
 
@@ -211,16 +228,30 @@ export function ForumCreationModal({
 					</p>
 				</ModalHeader>
 
-				<ModalBody className="gap-6 py-4">
+				<ModalBody className={`gap-4 ${apiError ? 'py-3' : 'py-4'}`}>
 					{/* Indicador de error */}
 					{apiError && (
-						<div className="flex items-start gap-3 p-3 bg-danger-50 border border-danger-200 rounded-lg">
-							<AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" />
-							<div className="flex-1">
-								<p className="text-sm font-semibold text-danger-700">
-									Error al crear el foro
+						<div className="flex items-start gap-2 p-3 bg-danger-50 border border-danger-200 rounded-lg">
+							<AlertCircle className="w-4 h-4 text-danger-600 flex-shrink-0 mt-0.5" />
+							<div className="flex-1 min-w-0">
+								<p className="text-xs font-semibold text-danger-700 font-heading">
+									{errorType === 'duplicate'
+										? 'Nombre de foro duplicado'
+										: errorType === 'invalid-subject'
+											? 'Materia no válida'
+											: 'Error al crear el foro'}
 								</p>
-								<p className="text-sm text-danger-600 mt-1">{apiError}</p>
+								<p className="text-xs text-danger-600 mt-0.5">{apiError}</p>
+								{errorType === 'duplicate' && (
+									<p className="text-xs text-danger-500 mt-1 font-medium">
+										💡 Prueba agregando más palabras al nombre.
+									</p>
+								)}
+								{errorType === 'invalid-subject' && (
+									<p className="text-xs text-danger-500 mt-1 font-medium">
+										💡 Selecciona una materia de la lista.
+									</p>
+								)}
 							</div>
 						</div>
 					)}
@@ -341,6 +372,12 @@ export function ForumCreationModal({
 													setSearchSubject(subject.label);
 													setIsSubjectInputFocused(false);
 													setErrors((prev) => ({ ...prev, subject: '' }));
+
+													// Limpiar error de materia inválida si el usuario selecciona una materia válida
+													if (errorType === 'invalid-subject') {
+														setApiError(null);
+														setErrorType(null);
+													}
 												}}
 												className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors
 													${
