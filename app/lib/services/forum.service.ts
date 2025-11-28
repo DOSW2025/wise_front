@@ -93,18 +93,18 @@ function extractErrorMessage(error: unknown, defaultMessage: string): string {
 		errorMessage.includes('404') ||
 		errorMessage.includes('Not Found')
 	) {
-		return 'Parece que el servicio no está disponible. Intenta más tarde.';
+		return 'El backend aún no está conectado. Proximamente funcional.';
 	}
 
 	if (
 		errorMessage.includes('Network') ||
 		errorMessage.includes('ECONNREFUSED')
 	) {
-		return 'Error de conexión. Verifica tu conexión a internet.';
+		return 'No se puede conectar al servidor. Verifica que el backend esté disponible.';
 	}
 
 	if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
-		return 'La solicitud tardó demasiado. Intenta nuevamente.';
+		return 'La solicitud tardó demasiado. Intenta nuevamente en unos momentos.';
 	}
 
 	return errorMessage || defaultMessage;

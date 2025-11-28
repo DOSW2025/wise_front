@@ -7,7 +7,7 @@ import {
 	Input,
 	useDisclosure,
 } from '@heroui/react';
-import { Plus, Search } from 'lucide-react';
+import { Eye, MessageCircle, Plus, Search, ThumbsUp } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ForumCreationModal } from '~/components/forum-creation-modal';
 
@@ -17,22 +17,26 @@ interface Forum {
 	subject: string;
 	createdAt: Date;
 	members: number;
+	replies?: number;
+	likes?: number;
+	views?: number;
+	author?: string;
 }
 
 const SUBJECT_COLORS: Record<
 	string,
-	'primary' | 'success' | 'warning' | 'danger'
+	'primary' | 'success' | 'warning' | 'danger' | 'secondary' | 'default'
 > = {
-	matematicas: 'primary',
-	programacion: 'success',
-	fisica: 'warning',
-	quimica: 'danger',
-	ingles: 'primary',
-	historia: 'success',
-	literatura: 'warning',
-	biologia: 'success',
-	economia: 'primary',
-	arte: 'danger',
+	matematicas: 'primary', // Azul - Precisión y lógica
+	programacion: 'secondary', // Morado - Creatividad y tecnología
+	fisica: 'warning', // Naranja - Energía y movimiento
+	quimica: 'danger', // Rojo - Reacciones y transformaciones
+	ingles: 'success', // Verde - Crecimiento y comunicación
+	historia: 'default', // Gris - Neutralidad y tradición
+	literatura: 'secondary', // Morado - Creatividad
+	biologia: 'success', // Verde - Naturaleza y vida
+	economia: 'warning', // Naranja - Transacciones
+	arte: 'secondary', // Morado - Creatividad
 };
 
 const SUBJECT_NAMES: Record<string, string> = {
@@ -50,7 +54,41 @@ const SUBJECT_NAMES: Record<string, string> = {
 
 export default function TutorCommunity() {
 	const { isOpen, onOpen, onClose } = useDisclosure();
-	const [forums, setForums] = useState<Forum[]>([]);
+	const [forums, setForums] = useState<Forum[]>([
+		{
+			id: 'forum-1',
+			name: 'Dudas de Cálculo Diferencial',
+			subject: 'matematicas',
+			createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 días atrás
+			members: 12,
+			replies: 9,
+			likes: 14,
+			views: 156,
+			author: 'María García',
+		},
+		{
+			id: 'forum-2',
+			name: 'Ayuda con React Hooks',
+			subject: 'programacion',
+			createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 día atrás
+			members: 8,
+			replies: 5,
+			likes: 23,
+			views: 89,
+			author: 'Carlos López',
+		},
+		{
+			id: 'forum-3',
+			name: 'Leyes de Newton y Movimiento',
+			subject: 'fisica',
+			createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 horas atrás
+			members: 5,
+			replies: 3,
+			likes: 7,
+			views: 42,
+			author: 'Juan Pérez',
+		},
+	]);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 	const [creationError, setCreationError] = useState<string | null>(null);
@@ -152,9 +190,13 @@ export default function TutorCommunity() {
 									onClick={() =>
 										setSelectedSubject(isSelected ? null : subject)
 									}
-									color="primary"
-									variant={isSelected ? 'solid' : 'flat'}
-									className="cursor-pointer font-medium"
+									color={isSelected ? 'primary' : 'default'}
+									variant="bordered"
+									className={`cursor-pointer font-medium transition-colors ${
+										isSelected
+											? 'border-primary text-primary bg-primary-50'
+											: 'border-default-300 text-default-700 hover:border-primary hover:text-primary'
+									}`}
 								>
 									{subject}
 								</Chip>
@@ -179,11 +221,6 @@ export default function TutorCommunity() {
 					) : (
 						<div className="space-y-3">
 							{filteredForums.map((forum) => {
-								const subjectKey =
-									Object.entries(SUBJECT_NAMES).find(
-										([, label]) => label === SUBJECT_NAMES[forum.subject],
-									)?.[0] || forum.subject;
-
 								return (
 									<Card
 										key={forum.id}
@@ -202,37 +239,67 @@ export default function TutorCommunity() {
 												</Chip>
 												<Chip
 													size="sm"
-													variant="flat"
-													color={SUBJECT_COLORS[subjectKey]}
-													className="font-medium"
+													variant="solid"
+													color={SUBJECT_COLORS[forum.subject]}
+													className="font-heading font-semibold"
 												>
-													{SUBJECT_NAMES[subjectKey]}
+													{SUBJECT_NAMES[forum.subject]}
 												</Chip>
-											</div>
-
+											</div>{' '}
 											{/* Título */}
 											<h3 className="text-lg font-bold text-foreground">
 												{forum.name}
 											</h3>
-
 											{/* Descripción */}
 											<p className="text-default-600 text-sm line-clamp-2">
-												Tengo dudas sobre cuando aplicar sustitución
-												trigonométrica en integrales. ¿Alguien puede explicar
-												los casos más comunes?
+												{forum.id === 'forum-1'
+													? 'Tengo dudas sobre cuándo aplicar sustitución trigonométrica en integrales. ¿Alguien puede explicar los casos más comunes?'
+													: forum.id === 'forum-2'
+														? 'Necesito ayuda para entender cómo funcionan los hooks en React. ¿Cuál es la diferencia entre useState y useEffect?'
+														: 'Alguien me puede aclarar las leyes de Newton y cómo se aplican en problemas de movimiento simple y compuesto.'}
 											</p>
-
 											{/* Metadata */}
 											<div className="flex items-center gap-4 text-xs text-default-500 pt-2 flex-wrap">
-												<span>Por María García</span>
-												<span>• Hace 5 min</span>
+												<span>Por {forum.author}</span>
+												<span>
+													• {(() => {
+														const now = new Date();
+														const diff =
+															now.getTime() - forum.createdAt.getTime();
+														const hours = Math.floor(diff / (1000 * 60 * 60));
+														const days = Math.floor(hours / 24);
+														return days > 0
+															? `Hace ${days} día${days > 1 ? 's' : ''}`
+															: `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+													})()}
+												</span>
 											</div>
-
 											{/* Estadísticas */}
-											<div className="flex items-center gap-4 text-sm text-default-600 pt-2 flex-wrap">
-												<span>💬 15 respuestas</span>
-												<span>👍 23</span>
-												<span>👁 234</span>
+											<div className="flex items-center gap-2 pt-3 flex-wrap">
+												<Chip
+													startContent={
+														<MessageCircle className="w-3.5 h-3.5" />
+													}
+													size="sm"
+													variant="flat"
+												>
+													{forum.replies} respuestas
+												</Chip>
+												<Chip
+													startContent={<ThumbsUp className="w-3.5 h-3.5" />}
+													size="sm"
+													variant="flat"
+													color="success"
+												>
+													{forum.likes} votos
+												</Chip>
+												<Chip
+													startContent={<Eye className="w-3.5 h-3.5" />}
+													size="sm"
+													variant="flat"
+												>
+													{forum.views} vistas
+												</Chip>
 											</div>
 										</CardBody>
 									</Card>

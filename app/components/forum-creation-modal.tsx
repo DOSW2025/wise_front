@@ -8,7 +8,7 @@ import {
 	ModalHeader,
 	Spinner,
 } from '@heroui/react';
-import { AlertCircle, BookOpen, Plus, Search } from 'lucide-react';
+import { AlertCircle, BookOpen, CheckCircle, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { ForumErrorType } from '~/lib/services/forum.service';
 import { createForum } from '~/lib/services/forum.service';
@@ -68,6 +68,9 @@ export function ForumCreationModal({
 	const [isLoading, setIsLoading] = useState(false);
 	const [apiError, setApiError] = useState<string | null>(null);
 	const [errorType, setErrorType] = useState<ForumErrorType | null>(null);
+	const [isSuccess, setIsSuccess] = useState(false);
+	const [createdForumData, setCreatedForumData] =
+		useState<ForumFormData | null>(null);
 	const [searchSubject, setSearchSubject] = useState('');
 	const [isSubjectInputFocused, setIsSubjectInputFocused] = useState(false);
 
@@ -172,16 +175,24 @@ export function ForumCreationModal({
 				subject: formData.subject,
 			});
 
-			// Notificar éxito
-			onSubmit(formData);
+			// Mostrar estado de éxito
+			setIsSuccess(true);
+			setCreatedForumData(formData);
 
-			// Limpiar formulario
-			setFormData({ name: '', subject: '' });
-			setSearchSubject('');
-			setErrors({});
-			setApiError(null);
-			setErrorType(null);
-			onClose();
+			// Notificar éxito después de un delay para que vea el mensaje
+			setTimeout(() => {
+				onSubmit(formData);
+
+				// Limpiar formulario
+				setFormData({ name: '', subject: '' });
+				setSearchSubject('');
+				setErrors({});
+				setApiError(null);
+				setErrorType(null);
+				setIsSuccess(false);
+				setCreatedForumData(null);
+				onClose();
+			}, 2000);
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : 'Error desconocido';
@@ -213,173 +224,252 @@ export function ForumCreationModal({
 	};
 
 	return (
-		<Modal isOpen={isOpen} onClose={handleClose} size="lg">
+		<Modal
+			isOpen={isOpen}
+			onClose={handleClose}
+			size="lg"
+			closeButton={!isSuccess}
+		>
 			<ModalContent>
-				<ModalHeader className="flex flex-col gap-1">
-					<div className="flex items-center gap-2">
-						<Plus className="w-5 h-5 text-primary" />
-						<span className="text-xl font-bold text-foreground font-heading">
-							Crear Nuevo Foro
-						</span>
-					</div>
-					<p className="text-sm text-default-500 font-normal mt-1">
-						Crea un espacio de comunicación temático para discutir sobre una
-						materia
-					</p>
-				</ModalHeader>
-
-				<ModalBody className={`gap-4 ${apiError ? 'py-3' : 'py-4'}`}>
-					{/* Indicador de error */}
-					{apiError && (
-						<div className="flex items-start gap-2 p-3 bg-danger-50 border border-danger-200 rounded-lg">
-							<AlertCircle className="w-4 h-4 text-danger-600 flex-shrink-0 mt-0.5" />
-							<div className="flex-1 min-w-0">
-								<p className="text-xs font-semibold text-danger-700 font-heading">
-									{errorType === 'duplicate'
-										? 'Nombre de foro duplicado'
-										: errorType === 'invalid-subject'
-											? 'Materia no válida'
-											: 'Error al crear el foro'}
-								</p>
-								<p className="text-xs text-danger-600 mt-0.5">{apiError}</p>
-								{errorType === 'duplicate' && (
-									<p className="text-xs text-danger-500 mt-1 font-medium">
-										💡 Prueba agregando más palabras al nombre.
-									</p>
-								)}
-								{errorType === 'invalid-subject' && (
-									<p className="text-xs text-danger-500 mt-1 font-medium">
-										💡 Selecciona una materia de la lista.
-									</p>
-								)}
+				{isSuccess && createdForumData ? (
+					<>
+						<ModalHeader className="flex flex-col gap-1">
+							<div className="flex items-center gap-2">
+								<CheckCircle className="w-5 h-5 text-success" />
+								<span className="text-xl font-bold text-foreground font-heading">
+									¡Foro Creado Exitosamente!
+								</span>
 							</div>
-						</div>
-					)}
+						</ModalHeader>
 
-					{/* Indicador de carga en progreso */}
-					{isLoading && (
-						<div className="flex items-center justify-center gap-3 p-4 bg-primary-50 border border-primary-200 rounded-lg">
-							<Spinner
-								size="sm"
-								color="primary"
-								classNames={{
-									circle1: 'border-b-primary',
-									circle2: 'border-b-primary',
-								}}
-							/>
-							<div className="flex-1">
-								<p className="text-sm font-semibold text-primary-700">
-									Creando foro...
+						<ModalBody className="gap-4 py-4">
+							<div className="flex flex-col items-center gap-4">
+								<div className="p-4 bg-success-50 rounded-full">
+									<CheckCircle className="w-12 h-12 text-success-600" />
+								</div>
+
+								<div className="text-center">
+									<p className="text-sm text-foreground mb-1">
+										Tu nuevo foro está listo
+									</p>
+									<p className="text-xs text-default-500">
+										El espacio para tu comunidad ha sido creado correctamente
+									</p>
+								</div>
+
+								<div className="w-full p-3 bg-success-50 border border-success-200 rounded-lg">
+									<p className="text-xs font-medium text-success-700 mb-2">
+										Información del foro
+									</p>
+									<div className="space-y-1.5">
+										<div>
+											<p className="text-xs text-default-500">Nombre</p>
+											<p className="text-sm font-semibold text-foreground">
+												{createdForumData.name}
+											</p>
+										</div>
+										<div>
+											<p className="text-xs text-default-500">Materia</p>
+											<p className="text-sm font-semibold text-foreground">
+												{
+													AVAILABLE_SUBJECTS.find(
+														(s) => s.key === createdForumData.subject,
+													)?.label
+												}
+											</p>
+										</div>
+									</div>
+								</div>
+
+								<p className="text-xs text-default-400 text-center">
+									Se cerrará automáticamente en unos segundos...
 								</p>
 							</div>
-						</div>
-					)}
-					{/* Campo Nombre del Foro */}
-					<div className="space-y-2">
-						<label
-							htmlFor="forum-name"
-							className="text-sm font-semibold text-foreground"
-						>
-							Nombre del Foro
-						</label>
-						<Input
-							id="forum-name"
-							placeholder="ej: Dudas de Álgebra Lineal"
-							value={formData.name}
-							onChange={handleNameChange}
-							isInvalid={!!errors.name}
-							errorMessage={errors.name}
-							color={
-								errors.name ? 'danger' : formData.name ? 'success' : 'default'
-							}
-							variant="bordered"
-							size="lg"
-							isClearable
-							onClear={() => {
-								setFormData((prev) => ({ ...prev, name: '' }));
-								setErrors((prev) => ({ ...prev, name: '' }));
-							}}
-							classNames={{
-								input: 'text-base',
-								label: 'text-sm',
-							}}
-							description={
-								formData.name && !errors.name ? (
-									<span className="text-xs text-success">
-										✓ Nombre válido ({formData.name.length}/50 caracteres)
-									</span>
-								) : null
-							}
-						/>
-					</div>
+						</ModalBody>
 
-					{/* Campo Materia con Búsqueda y Autocompletado */}
-					<div className="space-y-3">
-						<label
-							htmlFor="forum-subject-search"
-							className="text-sm font-semibold text-foreground"
-						>
-							Selecciona una Materia
-						</label>
+						<ModalFooter className="justify-center">
+							<Button
+								color="success"
+								onPress={handleClose}
+								className="font-semibold"
+							>
+								Cerrar y Ver Foros
+							</Button>
+						</ModalFooter>
+					</>
+				) : (
+					<>
+						<ModalHeader className="flex flex-col gap-1">
+							<div className="flex items-center gap-2">
+								<Plus className="w-5 h-5 text-primary" />
+								<span className="text-xl font-bold text-foreground font-heading">
+									Crear Nuevo Foro
+								</span>
+							</div>
+							<p className="text-sm text-default-500 font-normal mt-1">
+								Crea un espacio de comunicación temático para discutir sobre una
+								materia
+							</p>
+						</ModalHeader>
 
-						{/* Input de búsqueda con autocompletado */}
-						<div className="relative">
-							<Input
-								id="forum-subject-search"
-								placeholder="Escribe para buscar (ej: Mat, Pro, Fís...)"
-								value={searchSubject}
-								onChange={(e) => setSearchSubject(e.target.value)}
-								onFocus={() => setIsSubjectInputFocused(true)}
-								onBlur={() =>
-									setTimeout(() => setIsSubjectInputFocused(false), 200)
-								}
-								startContent={<Search className="w-4 h-4 text-default-400" />}
-								variant="bordered"
-								size="lg"
-								isClearable
-								onClear={() => {
-									setSearchSubject('');
-									setFormData((prev) => ({ ...prev, subject: '' }));
-									setErrors((prev) => ({ ...prev, subject: '' }));
-								}}
-								isInvalid={!!errors.subject && !formData.subject}
-								classNames={{
-									input: 'text-sm',
-									clearButton: 'text-default-400',
-								}}
-								description={
-									!formData.subject ? (
-										<span className="text-xs text-default-500">
-											💡 Empieza a escribir para ver sugerencias
-										</span>
-									) : null
-								}
-							/>
+						<ModalBody className={`gap-4 ${apiError ? 'py-3' : 'py-4'}`}>
+							{/* Indicador de error */}
+							{apiError && (
+								<div className="flex items-start gap-2 p-3 bg-danger-50 border border-danger-200 rounded-lg">
+									<AlertCircle className="w-4 h-4 text-danger-600 flex-shrink-0 mt-0.5" />
+									<div className="flex-1 min-w-0">
+										<p className="text-xs font-semibold text-danger-700 font-heading">
+											{errorType === 'duplicate'
+												? 'Nombre de foro duplicado'
+												: errorType === 'invalid-subject'
+													? 'Materia no válida'
+													: 'Error al crear el foro'}
+										</p>
+										<p className="text-xs text-danger-600 mt-0.5">{apiError}</p>
+										{errorType === 'duplicate' && (
+											<p className="text-xs text-danger-500 mt-1 font-medium">
+												💡 Prueba agregando más palabras al nombre.
+											</p>
+										)}
+										{errorType === 'invalid-subject' && (
+											<p className="text-xs text-danger-500 mt-1 font-medium">
+												💡 Selecciona una materia de la lista.
+											</p>
+										)}
+									</div>
+								</div>
+							)}
 
-							{/* Dropdown de materias filtradas */}
-							{isSubjectInputFocused && filteredSubjects.length > 0 && (
-								<div className="absolute top-full left-0 right-0 mt-2 bg-white border border-default-200 rounded-lg shadow-lg z-50">
-									<div className="max-h-64 overflow-y-auto">
-										{filteredSubjects.map((subject, index) => (
-											<button
-												type="button"
-												key={subject.key}
-												onClick={() => {
-													setFormData((prev) => ({
-														...prev,
-														subject: subject.key,
-													}));
-													setSearchSubject(subject.label);
-													setIsSubjectInputFocused(false);
-													setErrors((prev) => ({ ...prev, subject: '' }));
+							{/* Indicador de carga en progreso */}
+							{isLoading && (
+								<div className="flex items-center justify-center gap-3 p-4 bg-primary-50 border border-primary-200 rounded-lg">
+									<Spinner
+										size="sm"
+										color="primary"
+										classNames={{
+											circle1: 'border-b-primary',
+											circle2: 'border-b-primary',
+										}}
+									/>
+									<div className="flex-1">
+										<p className="text-sm font-semibold text-primary-700">
+											Creando foro...
+										</p>
+									</div>
+								</div>
+							)}
+							{/* Campo Nombre del Foro */}
+							<div className="space-y-2">
+								<label
+									htmlFor="forum-name"
+									className="text-sm font-semibold text-foreground"
+								>
+									Nombre del Foro
+								</label>
+								<Input
+									id="forum-name"
+									placeholder="ej: Dudas de Álgebra Lineal"
+									value={formData.name}
+									onChange={handleNameChange}
+									isInvalid={!!errors.name}
+									errorMessage={errors.name}
+									color={
+										errors.name
+											? 'danger'
+											: formData.name
+												? 'success'
+												: 'default'
+									}
+									variant="bordered"
+									size="lg"
+									isClearable
+									onClear={() => {
+										setFormData((prev) => ({ ...prev, name: '' }));
+										setErrors((prev) => ({ ...prev, name: '' }));
+									}}
+									classNames={{
+										input: 'text-base',
+										label: 'text-sm',
+									}}
+									description={
+										formData.name && !errors.name ? (
+											<span className="text-xs text-success">
+												✓ Nombre válido ({formData.name.length}/50 caracteres)
+											</span>
+										) : null
+									}
+								/>
+							</div>
 
-													// Limpiar error de materia inválida si el usuario selecciona una materia válida
-													if (errorType === 'invalid-subject') {
-														setApiError(null);
-														setErrorType(null);
-													}
-												}}
-												className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors
+							{/* Campo Materia con Búsqueda y Autocompletado */}
+							<div className="space-y-3">
+								<label
+									htmlFor="forum-subject-search"
+									className="text-sm font-semibold text-foreground"
+								>
+									Selecciona una Materia
+								</label>
+
+								{/* Input de búsqueda con autocompletado */}
+								<div className="relative">
+									<Input
+										id="forum-subject-search"
+										placeholder="Escribe para buscar (ej: Mat, Pro, Fís...)"
+										value={searchSubject}
+										onChange={(e) => setSearchSubject(e.target.value)}
+										onFocus={() => setIsSubjectInputFocused(true)}
+										onBlur={() =>
+											setTimeout(() => setIsSubjectInputFocused(false), 200)
+										}
+										startContent={
+											<Search className="w-4 h-4 text-default-400" />
+										}
+										variant="bordered"
+										size="lg"
+										isClearable
+										onClear={() => {
+											setSearchSubject('');
+											setFormData((prev) => ({ ...prev, subject: '' }));
+											setErrors((prev) => ({ ...prev, subject: '' }));
+										}}
+										isInvalid={!!errors.subject && !formData.subject}
+										classNames={{
+											input: 'text-sm',
+											clearButton: 'text-default-400',
+										}}
+										description={
+											!formData.subject ? (
+												<span className="text-xs text-default-500">
+													💡 Empieza a escribir para ver sugerencias
+												</span>
+											) : null
+										}
+									/>
+
+									{/* Dropdown de materias filtradas */}
+									{isSubjectInputFocused && filteredSubjects.length > 0 && (
+										<div className="absolute top-full left-0 right-0 mt-2 bg-white border border-default-200 rounded-lg shadow-lg z-50">
+											<div className="max-h-64 overflow-y-auto">
+												{filteredSubjects.map((subject, index) => (
+													<button
+														type="button"
+														key={subject.key}
+														onClick={() => {
+															setFormData((prev) => ({
+																...prev,
+																subject: subject.key,
+															}));
+															setSearchSubject(subject.label);
+															setIsSubjectInputFocused(false);
+															setErrors((prev) => ({ ...prev, subject: '' }));
+
+															// Limpiar error de materia inválida si el usuario selecciona una materia válida
+															if (errorType === 'invalid-subject') {
+																setApiError(null);
+																setErrorType(null);
+															}
+														}}
+														className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors
 													${
 														formData.subject === subject.key
 															? 'bg-primary-50 border-l-4 border-primary'
@@ -389,142 +479,148 @@ export function ForumCreationModal({
 													}
 													${formData.subject === subject.key ? 'text-primary-700' : 'text-foreground'}
 												`}
-											>
-												<div className="flex-1 min-w-0">
-													<p className="font-medium text-sm truncate">
-														{subject.label}
-													</p>
-												</div>
-												{formData.subject === subject.key && (
-													<span className="text-primary text-lg flex-shrink-0">
-														✓
-													</span>
-												)}
-											</button>
-										))}
-									</div>
-								</div>
-							)}
+													>
+														<div className="flex-1 min-w-0">
+															<p className="font-medium text-sm truncate">
+																{subject.label}
+															</p>
+														</div>
+														{formData.subject === subject.key && (
+															<span className="text-primary text-lg flex-shrink-0">
+																✓
+															</span>
+														)}
+													</button>
+												))}
+											</div>
+										</div>
+									)}
 
-							{/* Mensaje cuando no hay resultados */}
-							{isSubjectInputFocused &&
-								filteredSubjects.length === 0 &&
-								searchSubject && (
-									<div className="absolute top-full left-0 right-0 mt-2 bg-white border border-warning-200 rounded-lg shadow-lg p-4 z-50">
-										<p className="text-sm text-warning-700 flex items-center gap-2">
-											<span>⚠️</span>
-											<span>No encontramos "{searchSubject}"</span>
+									{/* Mensaje cuando no hay resultados */}
+									{isSubjectInputFocused &&
+										filteredSubjects.length === 0 &&
+										searchSubject && (
+											<div className="absolute top-full left-0 right-0 mt-2 bg-white border border-warning-200 rounded-lg shadow-lg p-4 z-50">
+												<p className="text-sm text-warning-700 flex items-center gap-2">
+													<span>⚠️</span>
+													<span>No encontramos "{searchSubject}"</span>
+												</p>
+												<p className="text-xs text-default-500 mt-2">
+													Disponibles:{' '}
+													{AVAILABLE_SUBJECTS.map((s) => s.label).join(', ')}
+												</p>
+											</div>
+										)}
+								</div>
+
+								{/* Materia seleccionada - Tarjeta de confirmación */}
+								{formData.subject && selectedSubjectInfo && (
+									<div
+										className={`p-4 rounded-lg border-2 transition-all ${
+											selectedSubjectInfo.color === 'primary'
+												? 'bg-primary-50 border-primary-200'
+												: selectedSubjectInfo.color === 'success'
+													? 'bg-success-50 border-success-200'
+													: selectedSubjectInfo.color === 'warning'
+														? 'bg-warning-50 border-warning-200'
+														: 'bg-danger-50 border-danger-200'
+										}`}
+									>
+										<p
+											className={`text-xs font-medium uppercase tracking-wide ${
+												selectedSubjectInfo.color === 'primary'
+													? 'text-primary-600'
+													: selectedSubjectInfo.color === 'success'
+														? 'text-success-600'
+														: selectedSubjectInfo.color === 'warning'
+															? 'text-warning-600'
+															: 'text-danger-600'
+											}`}
+										>
+											✓ Materia Seleccionada
 										</p>
-										<p className="text-xs text-default-500 mt-2">
-											Disponibles:{' '}
-											{AVAILABLE_SUBJECTS.map((s) => s.label).join(', ')}
+										<p
+											className={`text-lg font-bold ${
+												selectedSubjectInfo.color === 'primary'
+													? 'text-primary-900'
+													: selectedSubjectInfo.color === 'success'
+														? 'text-success-900'
+														: selectedSubjectInfo.color === 'warning'
+															? 'text-warning-900'
+															: 'text-danger-900'
+											}`}
+										>
+											{selectedSubjectInfo.label}
 										</p>
 									</div>
 								)}
-						</div>
 
-						{/* Materia seleccionada - Tarjeta de confirmación */}
-						{formData.subject && selectedSubjectInfo && (
-							<div
-								className={`p-4 rounded-lg border-2 transition-all ${
-									selectedSubjectInfo.color === 'primary'
-										? 'bg-primary-50 border-primary-200'
-										: selectedSubjectInfo.color === 'success'
-											? 'bg-success-50 border-success-200'
-											: selectedSubjectInfo.color === 'warning'
-												? 'bg-warning-50 border-warning-200'
-												: 'bg-danger-50 border-danger-200'
-								}`}
+								{/* Error de validación */}
+								{errors.subject && (
+									<div className="text-xs text-danger-600 p-2 bg-danger-50 rounded border border-danger-200 flex items-center gap-2">
+										<span>❌</span>
+										<span>{errors.subject}</span>
+									</div>
+								)}
+							</div>
+
+							{/* Información de ayuda */}
+							<div className="bg-primary-50 border border-primary-200 rounded-lg p-4 space-y-2">
+								<div className="flex items-center gap-2">
+									<BookOpen className="w-4 h-4 text-primary-700" />
+									<h4 className="text-sm font-semibold text-primary-700">
+										Información importante
+									</h4>
+								</div>
+								<ul className="text-xs text-primary-600 space-y-1 ml-6">
+									<li>
+										✓ El espacio estará vacío y disponible para tu comunidad
+									</li>
+									<li>
+										✓ Podrás invitar a otros estudiantes y tutores a participar
+									</li>
+									<li>
+										✓ Se aplicarán las reglas de la comunidad automáticamente
+									</li>
+								</ul>
+							</div>
+						</ModalBody>
+
+						<ModalFooter>
+							<Button
+								color="default"
+								variant="light"
+								onPress={handleClose}
+								isDisabled={isLoading}
 							>
-								<p
-									className={`text-xs font-medium uppercase tracking-wide ${
-										selectedSubjectInfo.color === 'primary'
-											? 'text-primary-600'
-											: selectedSubjectInfo.color === 'success'
-												? 'text-success-600'
-												: selectedSubjectInfo.color === 'warning'
-													? 'text-warning-600'
-													: 'text-danger-600'
-									}`}
-								>
-									✓ Materia Seleccionada
-								</p>
-								<p
-									className={`text-lg font-bold ${
-										selectedSubjectInfo.color === 'primary'
-											? 'text-primary-900'
-											: selectedSubjectInfo.color === 'success'
-												? 'text-success-900'
-												: selectedSubjectInfo.color === 'warning'
-													? 'text-warning-900'
-													: 'text-danger-900'
-									}`}
-								>
-									{selectedSubjectInfo.label}
-								</p>
-							</div>
-						)}
-
-						{/* Error de validación */}
-						{errors.subject && (
-							<div className="text-xs text-danger-600 p-2 bg-danger-50 rounded border border-danger-200 flex items-center gap-2">
-								<span>❌</span>
-								<span>{errors.subject}</span>
-							</div>
-						)}
-					</div>
-
-					{/* Información de ayuda */}
-					<div className="bg-primary-50 border border-primary-200 rounded-lg p-4 space-y-2">
-						<div className="flex items-center gap-2">
-							<BookOpen className="w-4 h-4 text-primary-700" />
-							<h4 className="text-sm font-semibold text-primary-700">
-								Información importante
-							</h4>
-						</div>
-						<ul className="text-xs text-primary-600 space-y-1 ml-6">
-							<li>✓ El espacio estará vacío y disponible para tu comunidad</li>
-							<li>
-								✓ Podrás invitar a otros estudiantes y tutores a participar
-							</li>
-							<li>✓ Se aplicarán las reglas de la comunidad automáticamente</li>
-						</ul>
-					</div>
-				</ModalBody>
-
-				<ModalFooter>
-					<Button
-						color="default"
-						variant="light"
-						onPress={handleClose}
-						isDisabled={isLoading}
-					>
-						Cancelar
-					</Button>
-					<Button
-						color="primary"
-						onPress={handleSubmit}
-						isLoading={isLoading}
-						isDisabled={
-							!formData.name ||
-							!formData.subject ||
-							!!errors.name ||
-							!!errors.subject ||
-							isLoading
-						}
-						startContent={!isLoading && <Plus className="w-4 h-4" />}
-						className="font-semibold"
-					>
-						{isLoading ? (
-							<span className="flex items-center gap-2">
-								<Spinner size="sm" color="current" />
-								Creando foro...
-							</span>
-						) : (
-							'Crear Foro'
-						)}
-					</Button>
-				</ModalFooter>
+								Cancelar
+							</Button>
+							<Button
+								color="primary"
+								onPress={handleSubmit}
+								isLoading={isLoading}
+								isDisabled={
+									!formData.name ||
+									!formData.subject ||
+									!!errors.name ||
+									!!errors.subject ||
+									isLoading
+								}
+								startContent={!isLoading && <Plus className="w-4 h-4" />}
+								className="font-semibold"
+							>
+								{isLoading ? (
+									<span className="flex items-center gap-2">
+										<Spinner size="sm" color="current" />
+										Creando foro...
+									</span>
+								) : (
+									'Crear Foro'
+								)}
+							</Button>
+						</ModalFooter>
+					</>
+				)}
 			</ModalContent>
 		</Modal>
 	);
