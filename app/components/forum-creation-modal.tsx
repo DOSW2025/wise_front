@@ -6,11 +6,9 @@ import {
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
-	Select,
-	SelectItem,
 } from '@heroui/react';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { BookOpen, Plus, Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 interface ForumCreationModalProps {
 	isOpen: boolean;
@@ -23,15 +21,33 @@ interface ForumFormData {
 	subject: string;
 }
 
-// Materias disponibles
+// Mapeo de materias con información adicional
 const AVAILABLE_SUBJECTS = [
-	{ key: 'matematicas', label: 'Matemáticas' },
-	{ key: 'programacion', label: 'Programación' },
-	{ key: 'fisica', label: 'Física' },
-	{ key: 'quimica', label: 'Química' },
-	{ key: 'ingles', label: 'Inglés' },
-	{ key: 'historia', label: 'Historia' },
-	{ key: 'literatura', label: 'Literatura' },
+	{
+		key: 'matematicas',
+		label: 'Matemáticas',
+		icon: '🔢',
+		color: 'primary' as const,
+	},
+	{
+		key: 'programacion',
+		label: 'Programación',
+		icon: '💻',
+		color: 'success' as const,
+	},
+	{ key: 'fisica', label: 'Física', icon: '⚛️', color: 'warning' as const },
+	{ key: 'quimica', label: 'Química', icon: '🧪', color: 'danger' as const },
+	{ key: 'ingles', label: 'Inglés', icon: '🌐', color: 'primary' as const },
+	{ key: 'historia', label: 'Historia', icon: '📚', color: 'success' as const },
+	{
+		key: 'literatura',
+		label: 'Literatura',
+		icon: '📖',
+		color: 'warning' as const,
+	},
+	{ key: 'biologia', label: 'Biología', icon: '🔬', color: 'success' as const },
+	{ key: 'economia', label: 'Economía', icon: '💰', color: 'primary' as const },
+	{ key: 'arte', label: 'Arte', icon: '🎨', color: 'danger' as const },
 ];
 
 export function ForumCreationModal({
@@ -45,6 +61,33 @@ export function ForumCreationModal({
 	});
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [isLoading, setIsLoading] = useState(false);
+	const [searchSubject, setSearchSubject] = useState('');
+	const [isSubjectInputFocused, setIsSubjectInputFocused] = useState(false);
+
+	// Filtrar materias basado en búsqueda con puntuación de relevancia
+	const filteredSubjects = useMemo(() => {
+		if (!searchSubject) return AVAILABLE_SUBJECTS;
+
+		const searchLower = searchSubject.toLowerCase();
+		return AVAILABLE_SUBJECTS.filter((subject) => {
+			const labelLower = subject.label.toLowerCase();
+			return (
+				labelLower.includes(searchLower) ||
+				labelLower.startsWith(searchLower) ||
+				subject.key.includes(searchLower)
+			);
+		}).sort((a, b) => {
+			// Priorizar coincidencias exactas al inicio
+			const aStartsWith = a.label.toLowerCase().startsWith(searchLower);
+			const bStartsWith = b.label.toLowerCase().startsWith(searchLower);
+			return aStartsWith === bStartsWith ? 0 : aStartsWith ? -1 : 1;
+		});
+	}, [searchSubject]);
+
+	// Obtener información de la materia seleccionada
+	const selectedSubjectInfo = useMemo(() => {
+		return AVAILABLE_SUBJECTS.find((s) => s.key === formData.subject);
+	}, [formData.subject]);
 
 	// Validación del nombre del foro
 	const validateForumName = (name: string): string | null => {
@@ -68,6 +111,9 @@ export function ForumCreationModal({
 		if (!subject) {
 			return 'Debe seleccionar una materia';
 		}
+		if (!AVAILABLE_SUBJECTS.find((s) => s.key === subject)) {
+			return 'La materia seleccionada no es válida';
+		}
 		return null;
 	};
 
@@ -81,19 +127,6 @@ export function ForumCreationModal({
 		setErrors((prev) => ({
 			...prev,
 			name: error || '',
-		}));
-	};
-
-	// Manejar cambio en la materia
-	const handleSubjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		const value = e.target.value;
-		setFormData((prev) => ({ ...prev, subject: value }));
-
-		// Validar
-		const error = validateSubject(value);
-		setErrors((prev) => ({
-			...prev,
-			subject: error || '',
 		}));
 	};
 
@@ -123,6 +156,7 @@ export function ForumCreationModal({
 
 			onSubmit(formData);
 			setFormData({ name: '', subject: '' });
+			setSearchSubject('');
 			setErrors({});
 			onClose();
 		} finally {
@@ -133,6 +167,7 @@ export function ForumCreationModal({
 	// Manejar cierre del modal
 	const handleClose = () => {
 		setFormData({ name: '', subject: '' });
+		setSearchSubject('');
 		setErrors({});
 		onClose();
 	};
@@ -193,49 +228,181 @@ export function ForumCreationModal({
 						/>
 					</div>
 
-					{/* Campo Materia */}
-					<div className="space-y-2">
+					{/* Campo Materia con Búsqueda y Autocompletado */}
+					<div className="space-y-3">
 						<label
-							htmlFor="forum-subject"
+							htmlFor="forum-subject-search"
 							className="text-sm font-semibold text-foreground"
 						>
-							Materia
+							Selecciona una Materia
 						</label>
-						<Select
-							id="forum-subject"
-							placeholder="Selecciona una materia"
-							value={formData.subject}
-							onChange={handleSubjectChange}
-							isInvalid={!!errors.subject}
-							errorMessage={errors.subject}
-							color={
-								errors.subject
-									? 'danger'
-									: formData.subject
-										? 'success'
-										: 'default'
-							}
-							variant="bordered"
-							size="lg"
-							classNames={{
-								trigger: 'text-base',
-								label: 'text-sm',
-							}}
-						>
-							{AVAILABLE_SUBJECTS.map((subject) => (
-								<SelectItem key={subject.key} value={subject.key}>
-									{subject.label}
-								</SelectItem>
-							))}
-						</Select>
+
+						{/* Input de búsqueda con autocompletado */}
+						<div className="relative">
+							<Input
+								id="forum-subject-search"
+								placeholder="Escribe para buscar (ej: Mat, Pro, Fís...)"
+								value={searchSubject}
+								onChange={(e) => setSearchSubject(e.target.value)}
+								onFocus={() => setIsSubjectInputFocused(true)}
+								onBlur={() =>
+									setTimeout(() => setIsSubjectInputFocused(false), 200)
+								}
+								startContent={<Search className="w-4 h-4 text-default-400" />}
+								variant="bordered"
+								size="lg"
+								isClearable
+								onClear={() => {
+									setSearchSubject('');
+									setFormData((prev) => ({ ...prev, subject: '' }));
+									setErrors((prev) => ({ ...prev, subject: '' }));
+								}}
+								isInvalid={!!errors.subject && !formData.subject}
+								classNames={{
+									input: 'text-sm',
+									clearButton: 'text-default-400',
+								}}
+								description={
+									!formData.subject ? (
+										<span className="text-xs text-default-500">
+											💡 Empieza a escribir para ver sugerencias
+										</span>
+									) : null
+								}
+							/>
+
+							{/* Dropdown de materias filtradas */}
+							{isSubjectInputFocused && filteredSubjects.length > 0 && (
+								<div className="absolute top-full left-0 right-0 mt-2 bg-white border border-default-200 rounded-lg shadow-lg z-50">
+									<div className="max-h-64 overflow-y-auto">
+										{filteredSubjects.map((subject, index) => (
+											<button
+												type="button"
+												key={subject.key}
+												onClick={() => {
+													setFormData((prev) => ({
+														...prev,
+														subject: subject.key,
+													}));
+													setSearchSubject(subject.label);
+													setIsSubjectInputFocused(false);
+													setErrors((prev) => ({ ...prev, subject: '' }));
+												}}
+												className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors
+													${
+														formData.subject === subject.key
+															? 'bg-primary-50 border-l-4 border-primary'
+															: index % 2 === 0
+																? 'bg-default-50 hover:bg-default-100'
+																: 'bg-white hover:bg-default-50'
+													}
+													${formData.subject === subject.key ? 'text-primary-700' : 'text-foreground'}
+												`}
+											>
+												<span className="text-2xl flex-shrink-0">
+													{subject.icon}
+												</span>
+												<div className="flex-1 min-w-0">
+													<p className="font-medium text-sm truncate">
+														{subject.label}
+													</p>
+													<p className="text-xs text-default-400">
+														{subject.key}
+													</p>
+												</div>
+												{formData.subject === subject.key && (
+													<span className="text-primary text-lg flex-shrink-0">
+														✓
+													</span>
+												)}
+											</button>
+										))}
+									</div>
+								</div>
+							)}
+
+							{/* Mensaje cuando no hay resultados */}
+							{isSubjectInputFocused &&
+								filteredSubjects.length === 0 &&
+								searchSubject && (
+									<div className="absolute top-full left-0 right-0 mt-2 bg-white border border-warning-200 rounded-lg shadow-lg p-4 z-50">
+										<p className="text-sm text-warning-700 flex items-center gap-2">
+											<span>⚠️</span>
+											<span>No encontramos "{searchSubject}"</span>
+										</p>
+										<p className="text-xs text-default-500 mt-2">
+											Disponibles:{' '}
+											{AVAILABLE_SUBJECTS.map((s) => s.label).join(', ')}
+										</p>
+									</div>
+								)}
+						</div>
+
+						{/* Materia seleccionada - Tarjeta de confirmación */}
+						{formData.subject && selectedSubjectInfo && (
+							<div
+								className={`p-4 rounded-lg border-2 transition-all ${
+									selectedSubjectInfo.color === 'primary'
+										? 'bg-primary-50 border-primary-200'
+										: selectedSubjectInfo.color === 'success'
+											? 'bg-success-50 border-success-200'
+											: selectedSubjectInfo.color === 'warning'
+												? 'bg-warning-50 border-warning-200'
+												: 'bg-danger-50 border-danger-200'
+								}`}
+							>
+								<div className="flex items-center gap-3">
+									<span className="text-4xl">{selectedSubjectInfo.icon}</span>
+									<div className="flex-1">
+										<p
+											className={`text-xs font-medium uppercase tracking-wide ${
+												selectedSubjectInfo.color === 'primary'
+													? 'text-primary-600'
+													: selectedSubjectInfo.color === 'success'
+														? 'text-success-600'
+														: selectedSubjectInfo.color === 'warning'
+															? 'text-warning-600'
+															: 'text-danger-600'
+											}`}
+										>
+											✓ Materia Seleccionada
+										</p>
+										<p
+											className={`text-lg font-bold ${
+												selectedSubjectInfo.color === 'primary'
+													? 'text-primary-900'
+													: selectedSubjectInfo.color === 'success'
+														? 'text-success-900'
+														: selectedSubjectInfo.color === 'warning'
+															? 'text-warning-900'
+															: 'text-danger-900'
+											}`}
+										>
+											{selectedSubjectInfo.label}
+										</p>
+									</div>
+								</div>
+							</div>
+						)}
+
+						{/* Error de validación */}
+						{errors.subject && (
+							<div className="text-xs text-danger-600 p-2 bg-danger-50 rounded border border-danger-200 flex items-center gap-2">
+								<span>❌</span>
+								<span>{errors.subject}</span>
+							</div>
+						)}
 					</div>
 
 					{/* Información de ayuda */}
 					<div className="bg-primary-50 border border-primary-200 rounded-lg p-4 space-y-2">
-						<h4 className="text-sm font-semibold text-primary-700">
-							📋 Información importante
-						</h4>
-						<ul className="text-xs text-primary-600 space-y-1">
+						<div className="flex items-center gap-2">
+							<BookOpen className="w-4 h-4 text-primary-700" />
+							<h4 className="text-sm font-semibold text-primary-700">
+								Información importante
+							</h4>
+						</div>
+						<ul className="text-xs text-primary-600 space-y-1 ml-6">
 							<li>✓ El foro se creará en máximo 10 segundos</li>
 							<li>✓ El espacio estará vacío y disponible para tu comunidad</li>
 							<li>
