@@ -7,7 +7,15 @@ import {
 	Input,
 	useDisclosure,
 } from '@heroui/react';
-import { Eye, MessageCircle, Plus, Search, ThumbsUp } from 'lucide-react';
+import {
+	CheckCircle2,
+	Eye,
+	MessageCircle,
+	Pin,
+	Plus,
+	Search,
+	ThumbsUp,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ForumCreationModal } from '~/components/forum-creation-modal';
 
@@ -21,6 +29,8 @@ interface Forum {
 	likes?: number;
 	views?: number;
 	author?: string;
+	isPinned?: boolean;
+	isResolved?: boolean;
 }
 
 const SUBJECT_COLORS: Record<
@@ -57,36 +67,55 @@ export default function TutorCommunity() {
 	const [forums, setForums] = useState<Forum[]>([
 		{
 			id: 'forum-1',
-			name: 'Dudas de Cálculo Diferencial',
+			name: '¿Cómo resolver integrales por sustitución trigonométrica?',
 			subject: 'matematicas',
-			createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 días atrás
+			createdAt: new Date(Date.now() - 5 * 60 * 1000), // 5 min atrás
 			members: 12,
-			replies: 9,
-			likes: 14,
-			views: 156,
+			replies: 15,
+			likes: 23,
+			views: 234,
 			author: 'María García',
+			isPinned: true,
+			isResolved: false,
 		},
 		{
 			id: 'forum-2',
-			name: 'Ayuda con React Hooks',
+			name: 'Mejores prácticas para estructuras de datos en Python',
 			subject: 'programacion',
-			createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 día atrás
+			createdAt: new Date(Date.now() - 15 * 60 * 1000), // 15 min atrás
 			members: 8,
-			replies: 5,
-			likes: 23,
-			views: 89,
-			author: 'Carlos López',
+			replies: 28,
+			likes: 45,
+			views: 567,
+			author: 'Carlos Méndez',
+			isPinned: false,
+			isResolved: true,
 		},
 		{
 			id: 'forum-3',
-			name: 'Leyes de Newton y Movimiento',
+			name: 'Duda sobre la segunda ley de Newton',
 			subject: 'fisica',
-			createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 horas atrás
+			createdAt: new Date(Date.now() - 60 * 60 * 1000), // 1 hora atrás
 			members: 5,
-			replies: 3,
-			likes: 7,
-			views: 42,
-			author: 'Juan Pérez',
+			replies: 12,
+			likes: 18,
+			views: 189,
+			author: 'Laura Martínez',
+			isPinned: false,
+			isResolved: false,
+		},
+		{
+			id: 'forum-4',
+			name: 'Reacciones de oxidación-reducción',
+			subject: 'quimica',
+			createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 horas atrás
+			members: 6,
+			replies: 9,
+			likes: 14,
+			views: 156,
+			author: 'Roberto Sánchez',
+			isPinned: false,
+			isResolved: false,
 		},
 	]);
 	const [searchQuery, setSearchQuery] = useState('');
@@ -226,28 +255,34 @@ export default function TutorCommunity() {
 										key={forum.id}
 										className="border border-default-200 hover:border-primary transition-colors cursor-pointer"
 									>
-										<CardBody className="space-y-2">
-											{/* Header del foro */}
+										<CardBody className="space-y-3 py-4">
+											{/* Header del foro - Badges */}
 											<div className="flex items-center gap-2 flex-wrap">
+												{forum.isPinned && (
+													<div className="flex items-center gap-1.5 text-danger-500">
+														<Pin className="w-4 h-4" />
+														<span className="text-xs font-medium">Fijado</span>
+													</div>
+												)}
+												{forum.isResolved && (
+													<div className="flex items-center gap-1.5 text-success-600">
+														<CheckCircle2 className="w-4 h-4" />
+														<span className="text-xs font-medium">
+															Resuelto
+														</span>
+													</div>
+												)}
 												<Chip
 													size="sm"
 													variant="flat"
-													color="primary"
-													className="font-medium"
-												>
-													Fijado
-												</Chip>
-												<Chip
-													size="sm"
-													variant="solid"
 													color={SUBJECT_COLORS[forum.subject]}
-													className="font-heading font-semibold"
+													className="font-heading text-xs"
 												>
 													{SUBJECT_NAMES[forum.subject]}
 												</Chip>
-											</div>{' '}
+											</div>
 											{/* Título */}
-											<h3 className="text-lg font-bold text-foreground">
+											<h3 className="text-base font-bold text-foreground leading-tight">
 												{forum.name}
 											</h3>
 											{/* Descripción */}
@@ -255,51 +290,47 @@ export default function TutorCommunity() {
 												{forum.id === 'forum-1'
 													? 'Tengo dudas sobre cuándo aplicar sustitución trigonométrica en integrales. ¿Alguien puede explicar los casos más comunes?'
 													: forum.id === 'forum-2'
-														? 'Necesito ayuda para entender cómo funcionan los hooks en React. ¿Cuál es la diferencia entre useState y useEffect?'
-														: 'Alguien me puede aclarar las leyes de Newton y cómo se aplican en problemas de movimiento simple y compuesto.'}
+														? '¿Qué estructura de datos recomiendan usar para implementar un sistema de caché? Estoy considerando usar diccionarios pero me gustaría conocer otras opciones.'
+														: forum.id === 'forum-3'
+															? 'En problemas con fricción, ¿cómo identifico correctamente todas las fuerzas que actúan sobre un cuerpo?'
+															: '¿Alguien tiene tips para balancear ecuaciones redox más fácilmente? Siempre me confundo con los números de oxidación.'}
 											</p>
-											{/* Metadata */}
-											<div className="flex items-center gap-4 text-xs text-default-500 pt-2 flex-wrap">
+											{/* Metadata - Autor y Tiempo */}
+											<div className="flex items-center gap-3 text-xs text-default-500">
 												<span>Por {forum.author}</span>
+												<span>•</span>
 												<span>
-													• {(() => {
-														const now = new Date();
-														const diff =
-															now.getTime() - forum.createdAt.getTime();
-														const hours = Math.floor(diff / (1000 * 60 * 60));
+													{(() => {
+														const minutes = Math.floor(
+															(Date.now() - forum.createdAt.getTime()) /
+																(1000 * 60),
+														);
+														const hours = Math.floor(minutes / 60);
 														const days = Math.floor(hours / 24);
-														return days > 0
-															? `Hace ${days} día${days > 1 ? 's' : ''}`
-															: `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+
+														if (minutes < 60) return `Hace ${minutes} min`;
+														if (hours < 24)
+															return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+														return `Hace ${days} día${days > 1 ? 's' : ''}`;
 													})()}
 												</span>
 											</div>
-											{/* Estadísticas */}
-											<div className="flex items-center gap-2 pt-3 flex-wrap">
-												<Chip
-													startContent={
-														<MessageCircle className="w-3.5 h-3.5" />
-													}
-													size="sm"
-													variant="flat"
-												>
-													{forum.replies} respuestas
-												</Chip>
-												<Chip
-													startContent={<ThumbsUp className="w-3.5 h-3.5" />}
-													size="sm"
-													variant="flat"
-													color="success"
-												>
-													{forum.likes} votos
-												</Chip>
-												<Chip
-													startContent={<Eye className="w-3.5 h-3.5" />}
-													size="sm"
-													variant="flat"
-												>
-													{forum.views} vistas
-												</Chip>
+											{/* Separador */}
+											<div className="h-px bg-default-200" />
+											{/* Estadísticas - Solo iconos y números */}
+											<div className="flex items-center gap-4 text-sm text-default-600">
+												<div className="flex items-center gap-1.5">
+													<MessageCircle className="w-4 h-4" />
+													<span>{forum.replies} respuestas</span>
+												</div>
+												<div className="flex items-center gap-1.5">
+													<ThumbsUp className="w-4 h-4 text-success-600" />
+													<span>{forum.likes}</span>
+												</div>
+												<div className="flex items-center gap-1.5">
+													<Eye className="w-4 h-4" />
+													<span>{forum.views}</span>
+												</div>
 											</div>
 										</CardBody>
 									</Card>
