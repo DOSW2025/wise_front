@@ -18,9 +18,17 @@ import type {
 } from '../types/api.types';
 
 export class MaterialsService {
-	// Obtener todos los materiales
-	async getMaterials(filters?: MaterialFilters): Promise<Material[]> {
+	// Obtener materiales con paginación
+	async getMaterials(
+		filters?: MaterialFilters,
+	): Promise<PaginatedResponse<Material>> {
 		const params = new URLSearchParams();
+
+		// Parámetros de paginación
+		if (filters?.page) params.append('page', filters.page.toString());
+		if (filters?.limit) params.append('limit', filters.limit.toString());
+
+		// Parámetros de filtrado
 		if (filters?.subject) params.append('subject', filters.subject);
 		if (filters?.resourceType)
 			params.append('resourceType', filters.resourceType);
@@ -31,8 +39,8 @@ export class MaterialsService {
 		const url = params.toString()
 			? `/api/materials?${params}`
 			: '/api/materials';
-		const response = await apiClient.get<ApiResponse<Material[]>>(url);
-		return response.data.data || [];
+		const response = await apiClient.get<PaginatedResponse<Material>>(url);
+		return response.data;
 	}
 
 	// Obtener material por ID

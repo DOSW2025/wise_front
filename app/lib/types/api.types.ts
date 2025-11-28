@@ -68,12 +68,10 @@ export interface PaginationParams {
 export interface PaginatedResponse<T> {
 	data: T[];
 	pagination: {
-		currentPage: number;
+		page: number;
+		limit: number;
 		totalPages: number;
 		totalItems: number;
-		itemsPerPage: number;
-		hasNextPage: boolean;
-		hasPreviousPage: boolean;
 	};
 }
 
@@ -117,6 +115,8 @@ export interface MaterialFilters {
 	resourceType?: string;
 	semester?: number;
 	search?: string;
+	page?: number;
+	limit?: number;
 }
 
 export interface MaterialRating {

@@ -32,7 +32,10 @@ export function useMaterials(filters?: MaterialFilters) {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.list(filters),
 		queryFn: () => {
-			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.getMaterials(filters);
+			// TODO: PRODUCCIÓN - Descomentar para usar backend real:
+			// return materialsService.getMaterials(filters);
+
+			// MOCK DATA - Eliminar cuando se conecte con backend
 			// MOCK DATA completo
 			const allMaterials = [
 				{
@@ -123,7 +126,23 @@ export function useMaterials(filters?: MaterialFilters) {
 				);
 			}
 
-			return Promise.resolve(filtered);
+			// Simular paginación del backend
+			const page = filters?.page || 1;
+			const limit = filters?.limit || 12;
+			const startIndex = (page - 1) * limit;
+			const endIndex = startIndex + limit;
+			const paginatedData = filtered.slice(startIndex, endIndex);
+
+			// Retornar estructura esperada del backend
+			return Promise.resolve({
+				data: paginatedData,
+				pagination: {
+					page,
+					limit,
+					totalItems: filtered.length,
+					totalPages: Math.ceil(filtered.length / limit),
+				},
+			});
 		},
 		staleTime: 5 * 60 * 1000, // 5 minutos
 	});
