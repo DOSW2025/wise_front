@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router';
+import { ChatbotWidget } from './chatbot-widget';
 import { Sidebar } from './sidebar';
 
 interface DashboardLayoutProps {
@@ -28,6 +29,7 @@ export function DashboardLayout({
 			<main className="flex-1 lg:ml-64 p-4 pt-16 lg:pt-8 lg:p-8 overflow-y-auto">
 				<Outlet />
 			</main>
+			<ChatbotWidget />
 		</div>
 	);
 }
