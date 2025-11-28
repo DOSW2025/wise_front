@@ -53,6 +53,7 @@ export default function TutorCommunity() {
 	const [forums, setForums] = useState<Forum[]>([]);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+	const [creationError, setCreationError] = useState<string | null>(null);
 
 	const allSubjects = ['Todos', ...Object.values(SUBJECT_NAMES)];
 
@@ -82,6 +83,10 @@ export default function TutorCommunity() {
 			members: 1,
 		};
 		setForums((prev) => [newForum, ...prev]);
+	};
+
+	const handleCreationError = (error: string) => {
+		setCreationError(error);
 	};
 
 	return (
@@ -120,6 +125,7 @@ export default function TutorCommunity() {
 						isOpen={isOpen}
 						onClose={onClose}
 						onSubmit={handleCreateForum}
+						onError={handleCreationError}
 					/>
 					{/* Búsqueda */}
 					<div className="flex gap-3">

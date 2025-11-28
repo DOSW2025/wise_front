@@ -6,14 +6,17 @@ import {
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
+	Spinner,
 } from '@heroui/react';
-import { BookOpen, Plus, Search } from 'lucide-react';
+import { AlertCircle, BookOpen, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { createForum } from '~/lib/services/forum.service';
 
 interface ForumCreationModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onSubmit: (data: ForumFormData) => void;
+	onError?: (error: string) => void;
 }
 
 interface ForumFormData {
@@ -54,6 +57,7 @@ export function ForumCreationModal({
 	isOpen,
 	onClose,
 	onSubmit,
+	onError,
 }: ForumCreationModalProps) {
 	const [formData, setFormData] = useState<ForumFormData>({
 		name: '',
@@ -61,6 +65,7 @@ export function ForumCreationModal({
 	});
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [isLoading, setIsLoading] = useState(false);
+	const [apiError, setApiError] = useState<string | null>(null);
 	const [searchSubject, setSearchSubject] = useState('');
 	const [isSubjectInputFocused, setIsSubjectInputFocused] = useState(false);
 
@@ -150,15 +155,32 @@ export function ForumCreationModal({
 		}
 
 		setIsLoading(true);
+		setApiError(null);
 		try {
-			// Simular delay de creación (máximo 10 segundos según requisitos)
-			await new Promise((resolve) => setTimeout(resolve, 1500));
+			// Llamar al endpoint para crear foro
+			const response = await createForum({
+				name: formData.name,
+				subject: formData.subject,
+			});
 
+			// Notificar éxito
 			onSubmit(formData);
+
+			// Limpiar formulario
 			setFormData({ name: '', subject: '' });
 			setSearchSubject('');
 			setErrors({});
+			setApiError(null);
 			onClose();
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'Error desconocido';
+			setApiError(errorMessage);
+
+			// Notificar error si hay callback
+			if (onError) {
+				onError(errorMessage);
+			}
 		} finally {
 			setIsLoading(false);
 		}
@@ -169,6 +191,7 @@ export function ForumCreationModal({
 		setFormData({ name: '', subject: '' });
 		setSearchSubject('');
 		setErrors({});
+		setApiError(null);
 		onClose();
 	};
 
@@ -189,6 +212,37 @@ export function ForumCreationModal({
 				</ModalHeader>
 
 				<ModalBody className="gap-6 py-4">
+					{/* Indicador de error */}
+					{apiError && (
+						<div className="flex items-start gap-3 p-3 bg-danger-50 border border-danger-200 rounded-lg">
+							<AlertCircle className="w-5 h-5 text-danger-600 flex-shrink-0 mt-0.5" />
+							<div className="flex-1">
+								<p className="text-sm font-semibold text-danger-700">
+									Error al crear el foro
+								</p>
+								<p className="text-sm text-danger-600 mt-1">{apiError}</p>
+							</div>
+						</div>
+					)}
+
+					{/* Indicador de carga en progreso */}
+					{isLoading && (
+						<div className="flex items-center justify-center gap-3 p-4 bg-primary-50 border border-primary-200 rounded-lg">
+							<Spinner
+								size="sm"
+								color="primary"
+								classNames={{
+									circle1: 'border-b-primary',
+									circle2: 'border-b-primary',
+								}}
+							/>
+							<div className="flex-1">
+								<p className="text-sm font-semibold text-primary-700">
+									Creando foro...
+								</p>
+							</div>
+						</div>
+					)}
 					{/* Campo Nombre del Foro */}
 					<div className="space-y-2">
 						<label
@@ -403,7 +457,6 @@ export function ForumCreationModal({
 							</h4>
 						</div>
 						<ul className="text-xs text-primary-600 space-y-1 ml-6">
-							<li>✓ El foro se creará en máximo 10 segundos</li>
 							<li>✓ El espacio estará vacío y disponible para tu comunidad</li>
 							<li>
 								✓ Podrás invitar a otros estudiantes y tutores a participar
@@ -430,11 +483,20 @@ export function ForumCreationModal({
 							!formData.name ||
 							!formData.subject ||
 							!!errors.name ||
-							!!errors.subject
+							!!errors.subject ||
+							isLoading
 						}
 						startContent={!isLoading && <Plus className="w-4 h-4" />}
+						className="font-semibold"
 					>
-						{isLoading ? 'Creando foro...' : 'Crear Foro'}
+						{isLoading ? (
+							<span className="flex items-center gap-2">
+								<Spinner size="sm" color="current" />
+								Creando foro...
+							</span>
+						) : (
+							'Crear Foro'
+						)}
 					</Button>
 				</ModalFooter>
 			</ModalContent>

@@ -51,4 +51,8 @@ export const API_ENDPOINTS = {
 		SUSPEND: '/wise/gestion-usuarios/:id/estado',
 		ACTIVATE: '/wise/gestion-usuarios/:id/estado',
 	},
+	FORUMS: {
+		CREATE: '/wise/foros',
+		LIST: '/wise/foros',
+	},
 } as const;

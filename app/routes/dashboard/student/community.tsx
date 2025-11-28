@@ -53,6 +53,7 @@ export default function StudentCommunity() {
 	const [forums, setForums] = useState<Forum[]>([]);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+	const [creationError, setCreationError] = useState<string | null>(null);
 
 	const allSubjects = ['Todos', ...Object.values(SUBJECT_NAMES)];
 
@@ -82,6 +83,11 @@ export default function StudentCommunity() {
 			members: 1,
 		};
 		setForums((prev) => [newForum, ...prev]);
+		setCreationError(null);
+	};
+
+	const handleCreationError = (error: string) => {
+		setCreationError(error);
 	};
 
 	return (
@@ -120,6 +126,7 @@ export default function StudentCommunity() {
 						isOpen={isOpen}
 						onClose={onClose}
 						onSubmit={handleCreateForum}
+						onError={handleCreationError}
 					/>
 					{/* Búsqueda */}
 					<div className="flex gap-3">
