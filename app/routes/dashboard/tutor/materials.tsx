@@ -6,6 +6,7 @@ import {
 	Input,
 	Modal,
 	ModalContent,
+	Pagination,
 	Select,
 	SelectItem,
 	Spinner,
@@ -43,10 +44,13 @@ import {
 } from '~/lib/hooks/useMaterials';
 import type { MaterialFilters } from '~/lib/types/api.types';
 
+const ITEMS_PER_PAGE = 12;
+
 export default function TutorMaterials() {
 	const [filters, setFilters] = useState<MaterialFilters>({});
 	const [showFilters, setShowFilters] = useState(false);
 	const [searchTerm, setSearchTerm] = useState('');
+	const [page, setPage] = useState(1);
 	const debouncedSearch = useDebounce(searchTerm, 500);
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const {
@@ -78,13 +82,18 @@ export default function TutorMaterials() {
 	const [activeTab, setActiveTab] = useState('all');
 	const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
-	// Combinar filtros con búsqueda debounced
+	// Combinar filtros con búsqueda debounced y paginación
 	const combinedFilters = {
 		...filters,
 		search: debouncedSearch || undefined,
+		page,
+		limit: ITEMS_PER_PAGE,
 	};
 
-	const { data: materials = [], isLoading } = useMaterials(combinedFilters);
+	const { data: materialsResponse, isLoading } = useMaterials(combinedFilters);
+	const materials = materialsResponse?.data || [];
+	const totalPages = materialsResponse?.pagination?.totalPages || 1;
+	const totalItems = materialsResponse?.pagination?.totalItems || 0;
 	const { data: userMaterials = [] } = useUserMaterials('dev-tutor-1');
 	const { data: subjects = [] } = useSubjects();
 
@@ -93,11 +102,18 @@ export default function TutorMaterials() {
 		value: string | number | undefined,
 	) => {
 		setFilters((prev) => ({ ...prev, [key]: value || undefined }));
+		setPage(1); // Reset to first page when filters change
 	};
 
 	const clearFilters = () => {
 		setFilters({});
 		setSearchTerm('');
+		setPage(1);
+	};
+
+	const handleSearch = (value: string) => {
+		setSearchTerm(value);
+		setPage(1); // Reset to first page on search
 	};
 
 	const hasActiveFilters = filters.subject || filters.semester || searchTerm;
@@ -141,10 +157,10 @@ export default function TutorMaterials() {
 						<Input
 							placeholder="Buscar materiales..."
 							value={searchTerm}
-							onValueChange={setSearchTerm}
+							onValueChange={handleSearch}
 							startContent={<Search className="w-4 h-4 text-default-400" />}
 							isClearable
-							onClear={() => setSearchTerm('')}
+							onClear={() => handleSearch('')}
 							classNames={{
 								input: 'text-sm',
 							}}
@@ -309,98 +325,116 @@ export default function TutorMaterials() {
 
 					{/* Lista/Cuadrícula de materiales */}
 					{!isLoading && materials.length > 0 && (
-						<div
-							className={
-								viewMode === 'grid'
-									? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
-									: 'grid gap-4'
-							}
-						>
-							{materials.map((material) => (
-								<Card
-									key={material.id}
-									className="hover:shadow-md transition-shadow cursor-pointer"
-									isPressable
-									onPress={() => {
-										setSelectedMaterialId(material.id);
-										onDetailOpen();
-									}}
-								>
-									<CardBody className={viewMode === 'grid' ? 'p-4' : 'p-6'}>
-										{viewMode === 'list' ? (
-											<div className="flex justify-between items-start">
-												<div className="flex-1">
-													<div className="flex items-start justify-between mb-3">
-														<div>
-															<h3 className="text-lg font-semibold mb-1">
-																{material.nombre}
-															</h3>
-															<p className="text-sm text-default-600">
-																Por: {material.tutor}
-															</p>
+						<>
+							<div
+								className={
+									viewMode === 'grid'
+										? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
+										: 'grid gap-4'
+								}
+							>
+								{materials.map((material) => (
+									<Card
+										key={material.id}
+										className="hover:shadow-md transition-shadow cursor-pointer"
+										isPressable
+										onPress={() => {
+											setSelectedMaterialId(material.id);
+											onDetailOpen();
+										}}
+									>
+										<CardBody className={viewMode === 'grid' ? 'p-4' : 'p-6'}>
+											{viewMode === 'list' ? (
+												<div className="flex justify-between items-start">
+													<div className="flex-1">
+														<div className="flex items-start justify-between mb-3">
+															<div>
+																<h3 className="text-lg font-semibold mb-1">
+																	{material.nombre}
+																</h3>
+																<p className="text-sm text-default-600">
+																	Por: {material.tutor}
+																</p>
+															</div>
+															<div className="flex items-center gap-1">
+																<Star className="w-4 h-4 text-yellow-500 fill-current" />
+																<span className="text-sm font-medium">
+																	{material.calificacion.toFixed(1)}
+																</span>
+															</div>
 														</div>
-														<div className="flex items-center gap-1">
-															<Star className="w-4 h-4 text-yellow-500 fill-current" />
-															<span className="text-sm font-medium">
-																{material.calificacion.toFixed(1)}
-															</span>
+														<div className="flex flex-wrap gap-2 mb-3">
+															<Chip size="sm" variant="flat" color="primary">
+																{material.materia}
+															</Chip>
+															<Chip size="sm" variant="flat">
+																Semestre {material.semestre}
+															</Chip>
+														</div>
+														<div className="flex items-center gap-4 text-sm text-default-500">
+															<div className="flex items-center gap-1">
+																<Eye className="w-4 h-4" />
+																<span>{material.vistas} vistas</span>
+															</div>
+															<div className="flex items-center gap-1">
+																<Download className="w-4 h-4" />
+																<span>{material.descargas} descargas</span>
+															</div>
 														</div>
 													</div>
-													<div className="flex flex-wrap gap-2 mb-3">
-														<Chip size="sm" variant="flat" color="primary">
+												</div>
+											) : (
+												<div className="text-center">
+													<FileText className="w-12 h-12 text-[#8B1A1A] mx-auto mb-3" />
+													<h3 className="font-semibold text-sm mb-1 line-clamp-2">
+														{material.nombre}
+													</h3>
+													<p className="text-xs text-default-600 mb-2">
+														{material.tutor}
+													</p>
+													<div className="flex flex-wrap gap-1 justify-center mb-2">
+														<Chip
+															size="sm"
+															variant="flat"
+															color="primary"
+															className="text-xs"
+														>
 															{material.materia}
 														</Chip>
-														<Chip size="sm" variant="flat">
-															Semestre {material.semestre}
-														</Chip>
 													</div>
-													<div className="flex items-center gap-4 text-sm text-default-500">
+													<div className="flex items-center justify-between text-xs text-default-500">
 														<div className="flex items-center gap-1">
-															<Eye className="w-4 h-4" />
-															<span>{material.vistas} vistas</span>
+															<Star className="w-3 h-3 text-yellow-500 fill-current" />
+															<span>{material.calificacion.toFixed(1)}</span>
 														</div>
 														<div className="flex items-center gap-1">
-															<Download className="w-4 h-4" />
-															<span>{material.descargas} descargas</span>
+															<Eye className="w-3 h-3" />
+															<span>{material.vistas}</span>
 														</div>
 													</div>
 												</div>
-											</div>
-										) : (
-											<div className="text-center">
-												<FileText className="w-12 h-12 text-[#8B1A1A] mx-auto mb-3" />
-												<h3 className="font-semibold text-sm mb-1 line-clamp-2">
-													{material.nombre}
-												</h3>
-												<p className="text-xs text-default-600 mb-2">
-													{material.tutor}
-												</p>
-												<div className="flex flex-wrap gap-1 justify-center mb-2">
-													<Chip
-														size="sm"
-														variant="flat"
-														color="primary"
-														className="text-xs"
-													>
-														{material.materia}
-													</Chip>
-												</div>
-												<div className="flex items-center justify-between text-xs text-default-500">
-													<div className="flex items-center gap-1">
-														<Star className="w-3 h-3 text-yellow-500 fill-current" />
-														<span>{material.calificacion.toFixed(1)}</span>
-													</div>
-													<div className="flex items-center gap-1">
-														<Eye className="w-3 h-3" />
-														<span>{material.vistas}</span>
-													</div>
-												</div>
-											</div>
-										)}
-									</CardBody>
-								</Card>
-							))}
-						</div>
+											)}
+										</CardBody>
+									</Card>
+								))}
+							</div>
+
+							{/* Paginación */}
+							<div className="flex w-full justify-between items-center mt-6">
+								<span className="text-small text-default-400">
+									Total {totalItems} materiales
+								</span>
+								<Pagination
+									isCompact
+									showControls
+									showShadow
+									color="primary"
+									page={page}
+									total={totalPages}
+									onChange={setPage}
+								/>
+							</div>
+						</>
 					)}
 				</>
 			)}
@@ -454,6 +488,7 @@ export default function TutorMaterials() {
 						onClose={onClose}
 						onSuccess={() => {
 							// Refrescar la lista de materiales
+							setPage(1);
 							window.location.reload();
 						}}
 					/>
