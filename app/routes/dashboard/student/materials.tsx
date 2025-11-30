@@ -6,8 +6,16 @@ import {
 	DropdownTrigger,
 	Input,
 } from '@heroui/react';
-import { Filter, Grid3x3, List, Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+
+import {
+	ChevronLeft,
+	ChevronRight,
+	Filter,
+	Grid3x3,
+	List,
+	Search,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import CommentsModal from '~/components/materials/CommentsModal';
 import FiltersPanel from '~/components/materials/filtersPanel';
 import MaterialCard from '~/components/materials/materialCard';
@@ -29,6 +37,9 @@ export default function StudentMaterials() {
 		null,
 	);
 	const [userRating, setUserRating] = useState(0);
+
+	// ESTADOS para paginación
+	const [currentPage, setCurrentPage] = useState(1);
 
 	// Filtrar y ordenar materiales
 	const filteredMaterials = useMemo(() => {
@@ -59,8 +70,6 @@ export default function StudentMaterials() {
 			case 'Más descargados':
 				filtered.sort((a, b) => b.downloads - a.downloads);
 				break;
-			case 'Todos':
-			case 'Más relevantes':
 			default:
 				filtered.sort(
 					(a, b) => b.rating * b.downloads - a.rating * a.downloads,
@@ -70,6 +79,24 @@ export default function StudentMaterials() {
 
 		return filtered;
 	}, [searchQuery, selectedSubject, selectedSemester, sortBy]);
+
+	// Calcular items por página basado en la vista
+	const itemsPerPage = viewMode === 'grid' ? 12 : 15;
+
+	// Calcular materiales paginados
+	const paginatedMaterials = useMemo(() => {
+		const startIndex = (currentPage - 1) * itemsPerPage;
+		const endIndex = startIndex + itemsPerPage;
+		return filteredMaterials.slice(startIndex, endIndex);
+	}, [filteredMaterials, currentPage, itemsPerPage]);
+
+	// Calcular total de páginas
+	const totalPages = Math.ceil(filteredMaterials.length / itemsPerPage);
+
+	// Resetear a página 1 cuando cambien los filtros o la vista
+	useEffect(() => {
+		setCurrentPage(1);
+	}, []);
 
 	// Handlers
 	const handleDownload = async (materialId: string) => {
@@ -129,7 +156,7 @@ export default function StudentMaterials() {
 		console.log('Agregando comentario:', { materialId, content });
 
 		// Simular agregar comentario
-		const newComment: Comment = {
+		const _newComment: Comment = {
 			id: `c${Date.now()}`,
 			userId: 'current-user', // En una app real, esto vendría del auth
 			userName: 'Tú', // En una app real, esto vendría del perfil
@@ -149,6 +176,13 @@ export default function StudentMaterials() {
 		// Pero como estamos usando mock data, solo mostramos el alert
 	};
 
+	//Handler para cambio de página
+	const handlePageChange = (page: number) => {
+		setCurrentPage(page);
+		// Scroll to top cuando cambie de página
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
+
 	return (
 		<div className="space-y-6">
 			{/* Header SIN botón Subir material */}
@@ -159,6 +193,13 @@ export default function StudentMaterials() {
 					</h1>
 					<p className="text-default-500">
 						{filteredMaterials.length} materiales disponibles
+						{filteredMaterials.length > itemsPerPage && (
+							<span className="text-sm text-gray-500 ml-2">
+								(Mostrando {(currentPage - 1) * itemsPerPage + 1}-
+								{Math.min(currentPage * itemsPerPage, filteredMaterials.length)}
+								)
+							</span>
+						)}
 					</p>
 				</div>
 			</div>
@@ -237,7 +278,7 @@ export default function StudentMaterials() {
 						: 'space-y-4'
 				}
 			>
-				{filteredMaterials.map((material) => (
+				{paginatedMaterials.map((material) => (
 					<MaterialCard
 						key={material.id}
 						material={material}
@@ -264,6 +305,122 @@ export default function StudentMaterials() {
 				onRatingChange={setUserRating}
 				onAddComment={handleAddComment}
 			/>
+
+			{/* paginacion */}
+			{totalPages > 1 && (
+				<div className="flex flex-col sm:flex-row justify-center items-center gap-4 py-6 border-t">
+					{/* Información de página */}
+					<div className="text-sm text-gray-600">
+						Página {currentPage} de {totalPages}
+					</div>
+
+					{/* Controles de paginación */}
+					<div className="flex items-center gap-2">
+						{/* Botón anterior */}
+						<Button
+							isIconOnly
+							variant="light"
+							size="sm"
+							onClick={() => handlePageChange(currentPage - 1)}
+							isDisabled={currentPage === 1}
+							type="button"
+						>
+							<ChevronLeft size={16} />
+						</Button>
+
+						{/* Números de página */}
+						<div className="flex gap-1">
+							{/* Mostrar primeras páginas */}
+							{Array.from(
+								{ length: Math.min(5, totalPages) },
+								(_, i) => i + 1,
+							).map((page) => (
+								<Button
+									key={page}
+									variant={page === currentPage ? 'solid' : 'light'}
+									className={
+										page === currentPage
+											? 'bg-[#8B1A1A] text-white min-w-8 h-8'
+											: 'min-w-8 h-8'
+									}
+									onClick={() => handlePageChange(page)}
+									type="button"
+									size="sm"
+								>
+									{page}
+								</Button>
+							))}
+
+							{/* Mostrar elipsis si hay muchas páginas */}
+							{totalPages > 5 &&
+								currentPage > 3 &&
+								currentPage < totalPages - 2 && (
+									<span className="flex items-center px-2 text-gray-500">
+										...
+									</span>
+								)}
+
+							{/* Mostrar páginas alrededor de la actual si hay muchas */}
+							{totalPages > 5 &&
+								currentPage > 3 &&
+								currentPage < totalPages - 2 && (
+									<Button
+										variant="light"
+										className="min-w-8 h-8"
+										onClick={() => handlePageChange(currentPage)}
+										type="button"
+										size="sm"
+									>
+										{currentPage}
+									</Button>
+								)}
+
+							{/* Mostrar últimas páginas */}
+							{totalPages > 5 &&
+								Array.from(
+									{ length: Math.min(2, totalPages) },
+									(_, i) => totalPages - i,
+								)
+									.reverse()
+									.map((page) => (
+										<Button
+											key={page}
+											variant={page === currentPage ? 'solid' : 'light'}
+											className={
+												page === currentPage
+													? 'bg-[#8B1A1A] text-white min-w-8 h-8'
+													: 'min-w-8 h-8'
+											}
+											onClick={() => handlePageChange(page)}
+											type="button"
+											size="sm"
+										>
+											{page}
+										</Button>
+									))}
+						</div>
+
+						{/* Botón siguiente */}
+						<Button
+							isIconOnly
+							variant="light"
+							size="sm"
+							onClick={() => handlePageChange(currentPage + 1)}
+							isDisabled={currentPage === totalPages}
+							type="button"
+						>
+							<ChevronRight size={16} />
+						</Button>
+					</div>
+
+					{/* Información de rango */}
+					<div className="text-sm text-gray-500">
+						{(currentPage - 1) * itemsPerPage + 1} -{' '}
+						{Math.min(currentPage * itemsPerPage, filteredMaterials.length)} de{' '}
+						{filteredMaterials.length}
+					</div>
+				</div>
+			)}
 
 			{/*  Modal solo para comentarios */}
 			<CommentsModal
