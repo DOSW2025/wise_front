@@ -86,7 +86,7 @@ const StudentTutoringPage: React.FC = () => {
 				<p className="text-default-600">{tutors.length} tutores encontrados</p>
 				<Button
 					variant="light"
-					color="danger"
+					color="primary"
 					startContent={<Calendar className="w-5 h-5" />}
 				>
 					Ver calendario

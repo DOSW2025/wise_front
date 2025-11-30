@@ -119,8 +119,8 @@ const TutorFilter: React.FC<TutorFilterProps> = ({ onApplyFilters }) => {
 						onSelectionChange={setDisponibilidad}
 						onClose={handleApply}
 						variant="bordered"
-						color="danger"
-						className="border-danger"
+						color="primary"
+						className="border-primary"
 					>
 						{disponibilidadOptions.map((item) => (
 							<SelectItem key={item.key}>{item.label}</SelectItem>

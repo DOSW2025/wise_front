@@ -27,21 +27,21 @@ interface TutorCardProps {
 const getAvatarColor = (
 	avatarColor?: string,
 ): 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger' => {
-	// If no specific color provided, use danger (brand red)
-	if (!avatarColor) return 'danger';
+	// If no specific color provided, use primary (brand red)
+	if (!avatarColor) return 'primary';
 
 	// Map common hex colors to semantic colors
 	const colorMap: Record<
 		string,
 		'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger'
 	> = {
-		'#b81d24': 'danger', // Red -> danger
+		'#b81d24': 'primary', // Red -> primary (brand)
 		'#ff9900': 'warning', // Orange -> warning
 		'#8a2be2': 'secondary', // Purple -> secondary
 		'#008000': 'success', // Green -> success
 	};
 
-	return colorMap[avatarColor] || 'danger';
+	return colorMap[avatarColor] || 'primary';
 };
 
 const TutorCard: React.FC<TutorCardProps> = ({ tutor }) => {
@@ -65,8 +65,8 @@ const TutorCard: React.FC<TutorCardProps> = ({ tutor }) => {
 						<p className="text-sm text-default-500">{tutor.title}</p>
 						{/* Rating */}
 						<div className="flex items-center mt-1">
-							<Star className="w-4 h-4 mr-1 text-danger fill-danger" />
-							<span className="text-sm font-medium text-danger">
+							<Star className="w-4 h-4 mr-1 text-primary fill-primary" />
+							<span className="text-sm font-medium text-primary">
 								{tutor.rating}
 							</span>
 							<span className="text-xs text-default-400 ml-1">
@@ -79,7 +79,7 @@ const TutorCard: React.FC<TutorCardProps> = ({ tutor }) => {
 				{/* Tags de Materias using HeroUI Chip */}
 				<div className="flex flex-wrap gap-2 mb-4">
 					{tutor.tags.map((tag, index) => (
-						<Chip key={index} color="danger" variant="flat" size="sm">
+						<Chip key={index} color="primary" variant="flat" size="sm">
 							{tag}
 						</Chip>
 					))}
@@ -97,7 +97,7 @@ const TutorCard: React.FC<TutorCardProps> = ({ tutor }) => {
 					<Button
 						as={Link}
 						to={`/dashboard/tutor/${tutor.id}`}
-						color="danger"
+						color="primary"
 						className="flex-grow mr-2 font-semibold"
 					>
 						Ver perfil
