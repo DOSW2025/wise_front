@@ -36,25 +36,11 @@ export function useProfileSave() {
 		}
 	};
 
-	const changePassword = async (): Promise<boolean> => {
-		try {
-			// Simular llamada a API
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-			setSuccess('Contraseña actualizada exitosamente');
-			setTimeout(() => setSuccess(null), 3000);
-			return true;
-		} catch {
-			setError('Error al cambiar la contraseña');
-			return false;
-		}
-	};
-
 	return {
 		isSaving,
 		error,
 		success,
 		setError,
 		saveProfile,
-		changePassword,
 	};
 }
