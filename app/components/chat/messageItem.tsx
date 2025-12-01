@@ -37,6 +37,7 @@ export default function MessageItem({ message, tutorName }: MessageItemProps) {
         {message.type === "text" && (
           <p className="text-sm break-words">{message.content}</p>
         )}
+
         {message.type === "file" && (
           <a
             href={message.content}
@@ -48,10 +49,15 @@ export default function MessageItem({ message, tutorName }: MessageItemProps) {
             {message.name}
           </a>
         )}
-        <span className={`text-xs mt-1 block ${isStudent ? "text-red-100" : "text-gray-500"}`}>
-          {message.timestamp.toLocaleTimeString("es-ES", { 
-            hour: "2-digit", 
-            minute: "2-digit" 
+
+        <span
+          className={`text-xs mt-1 block ${
+            isStudent ? "text-red-100" : "text-gray-500"
+          }`}
+        >
+          {message.timestamp.toLocaleTimeString("es-ES", {
+            hour: "2-digit",
+            minute: "2-digit",
           })}
         </span>
       </div>
