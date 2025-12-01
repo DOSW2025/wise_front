@@ -8,7 +8,8 @@ import {
 	DropdownTrigger,
 } from '@heroui/react';
 import { Bell, MessageCircle, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useChat } from '~/contexts/chat-context';
 import { useChatNotifications } from '~/lib/hooks/use-chat-notifications';
 import { ChatWindow } from './chat-window';
 
@@ -39,9 +40,8 @@ const getRoleColor = (role: string) => {
 export function ChatNotifications() {
 	const [isChatOpen, setIsChatOpen] = useState(false);
 	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-	const [selectedConversation, setSelectedConversation] = useState<
-		string | null
-	>(null);
+	const { selectedConversation, setSelectedConversation, conversationData } =
+		useChat();
 
 	const {
 		conversations,
@@ -57,6 +57,14 @@ export function ChatNotifications() {
 		setIsChatOpen(false);
 		markConversationAsRead(conversationId);
 	};
+
+	// Cerrar dropdown cuando se abre chat desde contexto externo
+	useEffect(() => {
+		if (selectedConversation) {
+			setIsChatOpen(false);
+			setIsNotificationsOpen(false);
+		}
+	}, [selectedConversation]);
 
 	const handleNotificationClick = (notificationId: string) => {
 		markNotificationAsRead(notificationId);
@@ -309,13 +317,21 @@ export function ChatNotifications() {
 			</Dropdown>
 
 			{/* Chat Window */}
-			{selectedConv && (
+			{selectedConversation && (
 				<ChatWindow
 					isOpen={!!selectedConversation}
 					onClose={() => setSelectedConversation(null)}
-					participantName={selectedConv.participantName}
-					participantAvatar={selectedConv.participantAvatar}
-					participantRole={selectedConv.participantRole}
+					participantName={
+						selectedConv?.participantName ||
+						conversationData[selectedConversation]?.name ||
+						'Usuario'
+					}
+					participantAvatar={selectedConv?.participantAvatar}
+					participantRole={
+						(selectedConv?.participantRole ||
+							conversationData[selectedConversation]?.role ||
+							'tutor') as 'student' | 'tutor' | 'admin'
+					}
 					messages={mockMessages}
 					currentUserId="current-user"
 				/>

@@ -4,6 +4,7 @@ import { Avatar, Button, Card, CardBody, Chip } from '@heroui/react';
 import { Calendar, MessageCircle, Star } from 'lucide-react';
 import type React from 'react';
 import { Link } from 'react-router';
+import { useChat } from '~/contexts/chat-context';
 
 interface Tutor {
 	id: number;
@@ -45,6 +46,12 @@ const getAvatarColor = (
 };
 
 const TutorCard: React.FC<TutorCardProps> = ({ tutor }) => {
+	const { openChatWith } = useChat();
+
+	const handleMessageClick = () => {
+		openChatWith(tutor.id.toString(), tutor.name, 'tutor');
+	};
+
 	return (
 		<Card isHoverable className="border-default-100">
 			<CardBody className="p-4 flex flex-col">
@@ -108,7 +115,7 @@ const TutorCard: React.FC<TutorCardProps> = ({ tutor }) => {
 						isIconOnly
 						variant="bordered"
 						aria-label="Enviar Mensaje"
-						onPress={() => {}}
+						onPress={handleMessageClick}
 					>
 						<MessageCircle className="w-5 h-5" />
 					</Button>
