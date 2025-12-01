@@ -99,18 +99,21 @@ export function ForumCreationModal({
 		return AVAILABLE_SUBJECTS.find((s) => s.key === formData.subject);
 	}, [formData.subject]);
 
-	// Validación del nombre del foro
+	// Validación del nombre del foro (mínimo visual ≥15)
+	const MIN_LEN = 15;
+	const OPTIMAL_LEN = 19; // guía visual sugerida
 	const validateForumName = (name: string): string | null => {
-		if (!name.trim()) {
+		const trimmed = name.trim();
+		if (!trimmed) {
 			return 'El nombre del foro es obligatorio';
 		}
-		if (name.trim().length < 3) {
-			return 'El nombre debe tener al menos 3 caracteres';
+		if (trimmed.length < MIN_LEN) {
+			return `El nombre debe tener al menos ${MIN_LEN} caracteres`;
 		}
-		if (name.trim().length > 50) {
+		if (trimmed.length > 50) {
 			return 'El nombre no puede exceder 50 caracteres';
 		}
-		if (!/^[a-zA-Z0-9\s\-áéíóúñÁÉÍÓÚÑ]+$/.test(name)) {
+		if (!/^[a-zA-Z0-9\s\-áéíóúñÁÉÍÓÚÑ]+$/.test(trimmed)) {
 			return 'El nombre solo puede contener letras, números y guiones';
 		}
 		return null;
@@ -366,6 +369,7 @@ export function ForumCreationModal({
 								>
 									Nombre del Foro
 								</label>
+								{/* Campo con validación visual de longitud mínima */}
 								<Input
 									id="forum-name"
 									placeholder="ej: Dudas de Álgebra Lineal"
@@ -376,9 +380,11 @@ export function ForumCreationModal({
 									color={
 										errors.name
 											? 'danger'
-											: formData.name
+											: formData.name && formData.name.trim().length >= MIN_LEN
 												? 'success'
-												: 'default'
+												: formData.name
+													? 'warning'
+													: 'default'
 									}
 									variant="bordered"
 									size="lg"
@@ -391,14 +397,55 @@ export function ForumCreationModal({
 										input: 'text-base',
 										label: 'text-sm',
 									}}
-									description={
-										formData.name && !errors.name ? (
-											<span className="text-xs text-success">
-												✓ Nombre válido ({formData.name.length}/50 caracteres)
+									description={(() => {
+										const len = formData.name.trim().length;
+										if (!formData.name) return null;
+										if (errors.name) {
+											return (
+												<span className="text-xs text-danger-600">
+													{errors.name} ({len}/50)
+												</span>
+											);
+										}
+										if (len < MIN_LEN) {
+											return (
+												<span className="text-xs text-warning-700">
+													{`Añade ${MIN_LEN - len} caracteres más para continuar`}
+												</span>
+											);
+										}
+										return (
+											<span className="text-xs text-success-700">
+												{`✓ Nombre válido (${len}/50). Ideal: ≥${OPTIMAL_LEN}`}
 											</span>
-										) : null
-									}
+										);
+									})()}
 								/>
+
+								{/* Medidor visual de longitud */}
+								{formData.name && (
+									<div className="mt-1">
+										<div className="h-1 rounded bg-default-200 overflow-hidden">
+											<div
+												className={`h-1 transition-all ${
+													formData.name.trim().length >= MIN_LEN
+														? 'bg-success-500'
+														: 'bg-warning-500'
+												}`}
+												style={{
+													width: `${Math.min(
+														(formData.name.trim().length / MIN_LEN) * 100,
+														100,
+													)}%`,
+												}}
+											/>
+										</div>
+										<p className="text-[10px] mt-1 text-default-500">
+											Mínimo requerido: {MIN_LEN} caracteres. Sugerido:{' '}
+											{OPTIMAL_LEN}.
+										</p>
+									</div>
+								)}
 							</div>
 
 							{/* Campo Materia con Búsqueda y Autocompletado */}
