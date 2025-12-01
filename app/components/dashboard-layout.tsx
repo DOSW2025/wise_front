@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router';
+import { ChatNotifications } from './chat-notifications';
 import { Sidebar } from './sidebar';
 
 interface DashboardLayoutProps {
@@ -26,6 +27,10 @@ export function DashboardLayout({
 				onLogout={onLogout}
 			/>
 			<main className="flex-1 lg:ml-64 p-4 pt-16 lg:pt-8 lg:p-8 overflow-y-auto">
+				{/* Header con chat y notificaciones */}
+				<div className="flex justify-end mb-3">
+					<ChatNotifications />
+				</div>
 				<Outlet />
 			</main>
 		</div>

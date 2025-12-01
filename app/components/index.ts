@@ -1,4 +1,6 @@
 export { AlertMessage } from './alert-message';
+export { ChatNotifications } from './chat-notifications';
+export { ChatWindow } from './chat-window';
 export { DashboardLayout } from './dashboard-layout';
 export { DateRangeFilter } from './date-range-filter';
 export { EmptyState } from './empty-state';
