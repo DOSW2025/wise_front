@@ -101,7 +101,6 @@ export function ForumCreationModal({
 
 	// Validación del nombre del foro (mínimo visual ≥15)
 	const MIN_LEN = 15;
-	const OPTIMAL_LEN = 19; // guía visual sugerida
 	const validateForumName = (name: string): string | null => {
 		const trimmed = name.trim();
 		if (!trimmed) {
@@ -118,6 +117,8 @@ export function ForumCreationModal({
 		}
 		return null;
 	};
+
+	// (Descripción no requerida según US-043)
 
 	// Validación de materia
 	const validateSubject = (subject: string): string | null => {
@@ -416,7 +417,7 @@ export function ForumCreationModal({
 										}
 										return (
 											<span className="text-xs text-success-700">
-												{`✓ Nombre válido (${len}/50). Ideal: ≥${OPTIMAL_LEN}`}
+												{`✓ Nombre válido (${len}/50)`}
 											</span>
 										);
 									})()}
@@ -441,11 +442,12 @@ export function ForumCreationModal({
 											/>
 										</div>
 										<p className="text-[10px] mt-1 text-default-500">
-											Mínimo requerido: {MIN_LEN} caracteres. Sugerido:{' '}
-											{OPTIMAL_LEN}.
+											Mínimo requerido: {MIN_LEN} caracteres.
 										</p>
 									</div>
 								)}
+
+								{/* Descripción opcional removida: US-043 solo requiere nombre y materia */}
 							</div>
 
 							{/* Campo Materia con Búsqueda y Autocompletado */}
