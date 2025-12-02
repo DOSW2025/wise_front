@@ -108,9 +108,10 @@ export default function ChatOverlay({ tutor, onClose }: ChatOverlayProps) {
         onClose={onClose}
         size="2xl"
         scrollBehavior="inside"
+        isDismissable={false}
         hideCloseButton={true} 
         classNames={{
-          backdrop: "bg-black/50",
+          backdrop: "bg-transparent",
           wrapper: "!justify-end !items-stretch",
           base: "rounded-3xl",
           body: "rounded-3xl",
