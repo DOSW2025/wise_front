@@ -65,10 +65,10 @@ export default function AdminReports() {
 					</Button>
 					<Button
 						variant="solid"
-						color="danger"
+						color="primary"
 						size="md"
 						startContent={<Download className="w-4 h-4" />}
-						className="font-medium px-5 py-2.5 text-sm bg-[#990000] text-white hover:opacity-90 focus-visible:outline-none"
+						className="font-medium px-5 py-2.5 text-sm text-white hover:opacity-90 focus-visible:outline-none"
 					>
 						Excel
 					</Button>
