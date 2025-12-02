@@ -24,7 +24,7 @@ import {
 	Search,
 	ThumbsUp,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ForumCreationModal } from '~/components/forum-creation-modal';
 import { useAuth } from '~/contexts/auth-context';
 import { createForumReply, getForumById } from '~/lib/services/forum.service';
@@ -85,14 +85,14 @@ export default function StudentCommunity() {
 		image?: string;
 		link?: string;
 	}>({});
-	const [forums, setForums] = useState<Forum[]>([
+	const DEMO_FORUMS: Forum[] = [
 		{
 			id: 'forum-1',
 			name: '¿Cómo resolver integrales por sustitución trigonométrica?',
 			subject: 'matematicas',
-			createdAt: new Date(Date.now() - 5 * 60 * 1000), // 5 min atrás
+			createdAt: new Date(Date.now() - 5 * 60 * 1000),
 			members: 12,
-			replies: 15,
+			replies: 2,
 			likes: 23,
 			views: 234,
 			author: 'María García',
@@ -103,42 +103,19 @@ export default function StudentCommunity() {
 			id: 'forum-2',
 			name: 'Mejores prácticas para estructuras de datos en Python',
 			subject: 'programacion',
-			createdAt: new Date(Date.now() - 15 * 60 * 1000), // 15 min atrás
+			createdAt: new Date(Date.now() - 15 * 60 * 1000),
 			members: 8,
-			replies: 28,
+			replies: 1,
 			likes: 45,
 			views: 567,
 			author: 'Carlos Méndez',
 			isPinned: false,
 			isResolved: true,
 		},
-		{
-			id: 'forum-3',
-			name: 'Duda sobre la segunda ley de Newton',
-			subject: 'fisica',
-			createdAt: new Date(Date.now() - 60 * 60 * 1000), // 1 hora atrás
-			members: 5,
-			replies: 12,
-			likes: 18,
-			views: 189,
-			author: 'Laura Martínez',
-			isPinned: false,
-			isResolved: false,
-		},
-		{
-			id: 'forum-4',
-			name: 'Reacciones de oxidación-reducción',
-			subject: 'quimica',
-			createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 horas atrás
-			members: 6,
-			replies: 9,
-			likes: 14,
-			views: 156,
-			author: 'Roberto Sánchez',
-			isPinned: false,
-			isResolved: false,
-		},
-	]);
+	];
+	const [forums, setForums] = useState<Forum[]>(DEMO_FORUMS);
+
+	// Fallback por si llega vacío desde otras ramas / pruebas
 	const [searchQuery, setSearchQuery] = useState('');
 	const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 	const [_creationError, setCreationError] = useState<string | null>(null);
@@ -356,16 +333,61 @@ export default function StudentCommunity() {
 							<div className="bg-primary rounded-lg px-4 py-2 text-white font-semibold">
 								Foros de Discusión
 							</div>
-							<Button
-								color="primary"
-								size="lg"
-								startContent={<Plus className="w-5 h-5" />}
-								onPress={onOpen}
-								className="font-semibold sm:w-auto"
-							>
-								Nuevo tema
-							</Button>
-						</div>{' '}
+							<div className="flex gap-2">
+								<Button
+									color="primary"
+									size="lg"
+									startContent={<Plus className="w-5 h-5" />}
+									onPress={onOpen}
+									className="font-semibold"
+								>
+									Nuevo tema
+								</Button>
+								<Button
+									variant="bordered"
+									color="success"
+									size="lg"
+									onPress={() => {
+										const id = 'forum-1';
+										setSelectedForumId(id);
+										// Carga directa de hilo demo
+										setThreadReplies([
+											{
+												id: 'r-demo-1',
+												forumId: id,
+												authorId: 'mock-user-student',
+												authorName: 'Tú',
+												type: 'text',
+												content:
+													'Mensaje de ejemplo editable para demostrar el flujo.',
+												createdAt: new Date(Date.now() - 2 * 60 * 1000),
+											},
+											{
+												id: 'r-demo-2',
+												forumId: id,
+												authorId: 'other-user-1',
+												authorName: 'Ana Torres',
+												type: 'text',
+												content:
+													'Respuesta de otra persona para comparar permisos.',
+												createdAt: new Date(Date.now() - 9 * 60 * 1000),
+											},
+										]);
+										setTimeout(() => {
+											const el = document.querySelector('#thread-panel');
+											if (el)
+												el.scrollIntoView({
+													behavior: 'smooth',
+													block: 'start',
+												});
+										}, 50);
+									}}
+									className="font-semibold"
+								>
+									Ver Ejemplo
+								</Button>
+							</div>
+						</div>
 						{/* Modal */}
 						<ForumCreationModal
 							isOpen={isOpen}
