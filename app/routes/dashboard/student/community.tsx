@@ -43,6 +43,9 @@ interface Forum {
 	isResolved?: boolean;
 }
 
+// Alias de tipo para Sonar (evita union literal repetida)
+type ReplyKind = 'text' | 'image' | 'link';
+
 // Helpers para reducir ternarios/anidaciones
 function getForumDescription(forumId: string): string {
 	switch (forumId) {
@@ -110,7 +113,7 @@ const SUBJECT_NAMES: Record<string, string> = {
 export default function StudentCommunity() {
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [selectedForumId, setSelectedForumId] = useState<string | null>(null);
-	const [replyType, setReplyType] = useState<'text' | 'image' | 'link'>('text');
+	const [replyType, setReplyType] = useState<ReplyKind>('text');
 	const [textReply, setTextReply] = useState('');
 	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -299,6 +302,61 @@ export default function StudentCommunity() {
 			reader.readAsDataURL(file);
 		} else {
 			setImagePreview(null);
+		}
+	};
+
+	// Helpers para acciones de modal (reduce anidación >4 niveles)
+	const applyEdit = async (
+		forumId: string | null,
+		replyId: string | null,
+		content: string,
+		onCloseFn: () => void,
+	) => {
+		const validationError = validateEditedContent(content);
+		if (validationError) {
+			setEditError(validationError);
+			return;
+		}
+		setEditError(null);
+		setSavingEdit(true);
+		try {
+			if (!forumId || !replyId) {
+				throw new Error('No hay foro/respuesta seleccionada');
+			}
+			setThreadReplies((prev) =>
+				prev.map((r) =>
+					r.id === replyId
+						? {
+								...r,
+								content,
+								editedAt: new Date(),
+								isEdited: true,
+							}
+						: r,
+				),
+			);
+			setEditingReplyId(null);
+			setEditingContent('');
+			onCloseFn();
+		} catch (error_) {
+			setEditError('Error al guardar. Intenta nuevamente.');
+		} finally {
+			setSavingEdit(false);
+		}
+	};
+
+	const applyDelete = async (replyId: string | null, onCloseFn: () => void) => {
+		setDeleteError(null);
+		setDeleting(true);
+		try {
+			if (!replyId) throw new Error('No hay respuesta seleccionada');
+			setThreadReplies((prev) => prev.filter((r) => r.id !== replyId));
+			setDeletingReplyId(null);
+			onCloseFn();
+		} catch (error_) {
+			setDeleteError('No se pudo eliminar. Intenta nuevamente.');
+		} finally {
+			setDeleting(false);
 		}
 	};
 
@@ -929,41 +987,14 @@ export default function StudentCommunity() {
 										color="primary"
 										isLoading={savingEdit}
 										isDisabled={savingEdit}
-										onPress={async () => {
-											const validationError =
-												validateEditedContent(editingContent);
-											if (validationError) {
-												setEditError(validationError);
-												return;
-											}
-											setEditError(null);
-											setSavingEdit(true);
-											try {
-												if (!selectedForumId || !editingReplyId) {
-													throw new Error('No hay foro/respuesta seleccionada');
-												}
-												// Actualización local (sin backend por ahora)
-												setThreadReplies((prev) =>
-													prev.map((r) =>
-														r.id === editingReplyId
-															? {
-																	...r,
-																	content: editingContent,
-																	editedAt: new Date(),
-																	isEdited: true,
-																}
-															: r,
-													),
-												);
-												setEditingReplyId(null);
-												setEditingContent('');
-												onClose();
-											} catch (error_) {
-												setEditError('Error al guardar. Intenta nuevamente.');
-											} finally {
-												setSavingEdit(false);
-											}
-										}}
+										onPress={() =>
+											applyEdit(
+												selectedForumId,
+												editingReplyId,
+												editingContent,
+												onClose,
+											)
+										}
 									>
 										Guardar cambios
 									</Button>
@@ -1013,24 +1044,7 @@ export default function StudentCommunity() {
 									<Button
 										color="danger"
 										isLoading={deleting}
-										onPress={async () => {
-											setDeleteError(null);
-											setDeleting(true);
-											try {
-												// Simular eliminación local
-												setThreadReplies((prev) =>
-													prev.filter((r) => r.id !== deletingReplyId),
-												);
-												setDeletingReplyId(null);
-												onClose();
-											} catch (error_) {
-												setDeleteError(
-													'No se pudo eliminar. Intenta nuevamente.',
-												);
-											} finally {
-												setDeleting(false);
-											}
-										}}
+										onPress={() => applyDelete(deletingReplyId, onClose)}
 									>
 										Eliminar
 									</Button>
