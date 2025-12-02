@@ -5,6 +5,9 @@ import {
 	CardHeader,
 	Chip,
 	Input,
+	Tab,
+	Tabs,
+	Textarea,
 	useDisclosure,
 } from '@heroui/react';
 import {
@@ -64,6 +67,17 @@ const SUBJECT_NAMES: Record<string, string> = {
 
 export default function StudentCommunity() {
 	const { isOpen, onOpen, onClose } = useDisclosure();
+	const [selectedForumId, setSelectedForumId] = useState<string | null>(null);
+	const [replyType, setReplyType] = useState<'text' | 'image' | 'link'>('text');
+	const [textReply, setTextReply] = useState('');
+	const [imageFile, setImageFile] = useState<File | null>(null);
+	const [imagePreview, setImagePreview] = useState<string | null>(null);
+	const [linkUrl, setLinkUrl] = useState('');
+	const [replyErrors, setReplyErrors] = useState<{
+		text?: string;
+		image?: string;
+		link?: string;
+	}>({});
 	const [forums, setForums] = useState<Forum[]>([
 		{
 			id: 'forum-1',
@@ -163,6 +177,53 @@ export default function StudentCommunity() {
 		setCreationError(error);
 	};
 
+	const validateLink = (url: string) => {
+		const pattern =
+			/^(https?:\/\/)[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/i;
+		return pattern.test(url.trim());
+	};
+
+	const onImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0] || null;
+		setImageFile(file);
+		setReplyErrors((prev) => ({ ...prev, image: '' }));
+		if (file) {
+			const reader = new FileReader();
+			reader.onload = () => setImagePreview(reader.result as string);
+			reader.readAsDataURL(file);
+		} else {
+			setImagePreview(null);
+		}
+	};
+
+	const canSubmitReply = () => {
+		if (!selectedForumId) return false;
+		if (replyType === 'text') return textReply.trim().length >= 1;
+		if (replyType === 'image') return !!imageFile;
+		if (replyType === 'link') return validateLink(linkUrl);
+		return false;
+	};
+
+	const handleSubmitReply = () => {
+		const newErrors: { text?: string; image?: string; link?: string } = {};
+		if (replyType === 'text' && textReply.trim().length < 1)
+			newErrors.text = 'Escribe un mensaje';
+		if (replyType === 'image' && !imageFile)
+			newErrors.image = 'Selecciona una imagen';
+		if (replyType === 'link' && !validateLink(linkUrl))
+			newErrors.link = 'Ingresa una URL válida (http/https)';
+		setReplyErrors(newErrors);
+		if (Object.keys(newErrors).length > 0) return;
+
+		const payload =
+			replyType === 'text'
+				? { type: 'text', text: textReply.trim(), forumId: selectedForumId }
+				: replyType === 'image'
+					? { type: 'image', name: imageFile?.name, forumId: selectedForumId }
+					: { type: 'link', url: linkUrl.trim(), forumId: selectedForumId };
+		console.log('Demo reply payload:', payload);
+	};
+
 	return (
 		<div className="space-y-6">
 			{/* Encabezado */}
@@ -260,7 +321,8 @@ export default function StudentCommunity() {
 								return (
 									<Card
 										key={forum.id}
-										className="border border-default-200 hover:border-primary transition-colors cursor-pointer"
+										className={`border border-default-200 transition-colors cursor-pointer ${selectedForumId === forum.id ? 'border-primary' : 'hover:border-primary'}`}
+										onClick={() => setSelectedForumId(forum.id)}
 									>
 										<CardBody className="space-y-3 py-4">
 											{/* Header del foro - Badges */}
@@ -278,6 +340,16 @@ export default function StudentCommunity() {
 															Resuelto
 														</span>
 													</div>
+												)}
+												{selectedForumId === forum.id && (
+													<Chip
+														size="sm"
+														color="primary"
+														variant="flat"
+														className="font-heading text-xs"
+													>
+														Seleccionado
+													</Chip>
 												)}
 												<Chip
 													size="sm"
@@ -324,8 +396,8 @@ export default function StudentCommunity() {
 											</div>
 											{/* Separador */}
 											<div className="h-px bg-default-200" />
-											{/* Estadísticas - Solo iconos y números */}
-											<div className="flex items-center gap-4 text-sm text-default-600">
+											{/* Estadísticas + Acción */}
+											<div className="flex items-center justify-between gap-4 text-sm text-default-600">
 												<div className="flex items-center gap-1.5">
 													<MessageCircle className="w-4 h-4" />
 													<span>{forum.replies} respuestas</span>
@@ -338,11 +410,111 @@ export default function StudentCommunity() {
 													<Eye className="w-4 h-4" />
 													<span>{forum.views}</span>
 												</div>
+												<div className="ml-auto">
+													<Button
+														size="sm"
+														color="primary"
+														variant="flat"
+														onPress={() => {
+															setSelectedForumId(forum.id);
+															// Desplaza al panel de respuesta si existe
+															setTimeout(() => {
+																const el =
+																	document.querySelector('#reply-panel');
+																if (el)
+																	el.scrollIntoView({
+																		behavior: 'smooth',
+																		block: 'start',
+																	});
+															}, 50);
+														}}
+													>
+														Responder
+													</Button>
+												</div>
 											</div>
 										</CardBody>
 									</Card>
 								);
 							})}
+
+							{selectedForumId && (
+								<Card id="reply-panel" className="border border-primary-200">
+									<CardHeader className="py-3">
+										<p className="text-sm font-semibold text-foreground">
+											Responder al foro seleccionado
+										</p>
+									</CardHeader>
+									<CardBody className="space-y-4">
+										<Tabs
+											aria-label="Selecciona el tipo de respuesta"
+											selectedKey={replyType}
+											onSelectionChange={(key) =>
+												setReplyType(key as 'text' | 'image' | 'link')
+											}
+											variant="underlined"
+											color="primary"
+										>
+											<Tab key="text" title="Texto" />
+											<Tab key="image" title="Imagen" />
+											<Tab key="link" title="Link" />
+										</Tabs>
+
+										{replyType === 'text' && (
+											<Textarea
+												label="Mensaje"
+												placeholder="Escribe tu respuesta..."
+												value={textReply}
+												onChange={(e) => setTextReply(e.target.value)}
+												isInvalid={!!replyErrors.text}
+												errorMessage={replyErrors.text}
+												minRows={4}
+											/>
+										)}
+
+										{replyType === 'image' && (
+											<div className="space-y-2">
+												<Input
+													type="file"
+													accept="image/*"
+													onChange={onImageChange}
+													isInvalid={!!replyErrors.image}
+													errorMessage={replyErrors.image}
+												/>
+												{imagePreview && (
+													<img
+														src={imagePreview}
+														alt="previsualización"
+														className="rounded-md border border-default-200 max-h-64 object-contain"
+													/>
+												)}
+											</div>
+										)}
+
+										{replyType === 'link' && (
+											<Input
+												type="url"
+												label="URL"
+												placeholder="https://ejemplo.com/articulo"
+												value={linkUrl}
+												onChange={(e) => setLinkUrl(e.target.value)}
+												isInvalid={!!replyErrors.link}
+												errorMessage={replyErrors.link}
+											/>
+										)}
+
+										<div className="flex justify-end">
+											<Button
+												color="primary"
+												isDisabled={!canSubmitReply()}
+												onPress={handleSubmitReply}
+											>
+												Enviar respuesta (Demo)
+											</Button>
+										</div>
+									</CardBody>
+								</Card>
+							)}
 						</div>
 					)}
 				</div>
