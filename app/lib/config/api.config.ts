@@ -54,5 +54,6 @@ export const API_ENDPOINTS = {
 	FORUMS: {
 		CREATE: '/wise/foros',
 		LIST: '/wise/foros',
+		REPLIES: (forumId: string) => `/wise/foros/${forumId}/respuestas`,
 	},
 } as const;

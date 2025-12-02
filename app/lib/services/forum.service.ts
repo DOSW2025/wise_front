@@ -22,6 +22,24 @@ export interface ForumResponse {
 	status: 'active' | 'inactive';
 }
 
+export type ReplyType = 'text' | 'image' | 'link';
+
+export interface ForumReplyCreateRequest {
+	forumId: string;
+	type: ReplyType;
+	text?: string;
+	imageName?: string;
+	url?: string;
+}
+
+export interface ForumReplyResponse {
+	id: string;
+	forumId: string;
+	type: ReplyType;
+	createdAt: string;
+	createdBy: string;
+}
+
 export type ForumErrorType =
 	| 'duplicate'
 	| 'invalid-subject'
@@ -229,5 +247,43 @@ export async function getForumById(id: string): Promise<ForumResponse> {
 			'Error al obtener el foro. Intenta nuevamente.',
 		);
 		throw new Error(message);
+	}
+}
+
+/**
+ * Crear respuesta en un foro
+ * POST /wise/foros/:id/respuestas
+ */
+export async function createForumReply(
+	payload: ForumReplyCreateRequest,
+): Promise<ForumReplyResponse> {
+	try {
+		const body: Record<string, unknown> = { type: payload.type };
+		if (payload.type === 'text') body.text = payload.text?.trim();
+		if (payload.type === 'image') body.imageName = payload.imageName;
+		if (payload.type === 'link') body.url = payload.url?.trim();
+
+		const response = await apiClient.post<ApiResponse<ForumReplyResponse>>(
+			API_ENDPOINTS.FORUMS.REPLIES(payload.forumId),
+			body,
+			{ timeout: 15000 },
+		);
+		return extractResponseData<ForumReplyResponse>(response.data);
+	} catch (error) {
+		const message = extractErrorMessage(
+			error,
+			'Error al crear la respuesta. Intenta nuevamente.',
+		);
+		const err = new Error(message) as ForumError;
+		err.type = message.includes('permiso')
+			? 'permission-denied'
+			: message.includes('materia')
+				? 'invalid-data'
+				: message.includes('conectar')
+					? 'network'
+					: message.includes('tardó')
+						? 'timeout'
+						: 'unknown';
+		throw err;
 	}
 }

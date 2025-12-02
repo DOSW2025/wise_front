@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ForumCreationModal } from '~/components/forum-creation-modal';
+import { createForumReply } from '~/lib/services/forum.service';
 
 interface Forum {
 	id: string;
@@ -204,7 +205,10 @@ export default function StudentCommunity() {
 		return false;
 	};
 
-	const handleSubmitReply = () => {
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+
+	const handleSubmitReply = async () => {
 		const newErrors: { text?: string; image?: string; link?: string } = {};
 		if (replyType === 'text' && textReply.trim().length < 1)
 			newErrors.text = 'Escribe un mensaje';
@@ -215,13 +219,42 @@ export default function StudentCommunity() {
 		setReplyErrors(newErrors);
 		if (Object.keys(newErrors).length > 0) return;
 
-		const payload =
-			replyType === 'text'
-				? { type: 'text', text: textReply.trim(), forumId: selectedForumId }
-				: replyType === 'image'
-					? { type: 'image', name: imageFile?.name, forumId: selectedForumId }
-					: { type: 'link', url: linkUrl.trim(), forumId: selectedForumId };
-		console.log('Demo reply payload:', payload);
+		if (!selectedForumId) return;
+		setIsSubmitting(true);
+		setSubmitMessage(null);
+		try {
+			const payload =
+				replyType === 'text'
+					? {
+							forumId: selectedForumId,
+							type: 'text' as const,
+							text: textReply.trim(),
+						}
+					: replyType === 'image'
+						? {
+								forumId: selectedForumId,
+								type: 'image' as const,
+								imageName: imageFile?.name,
+							}
+						: {
+								forumId: selectedForumId,
+								type: 'link' as const,
+								url: linkUrl.trim(),
+							};
+
+			await createForumReply(payload);
+			setSubmitMessage('✅ Respuesta enviada');
+			setTextReply('');
+			setImageFile(null);
+			setImagePreview(null);
+			setLinkUrl('');
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : 'Error desconocido';
+			setSubmitMessage(`❌ ${message}`);
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	return (
@@ -503,13 +536,34 @@ export default function StudentCommunity() {
 											/>
 										)}
 
+										{submitMessage && (
+											<div
+												className="text-xs px-3 py-2 rounded border"
+												style={{
+													borderColor: submitMessage.startsWith('✅')
+														? 'var(--heroui-success-200)'
+														: 'var(--heroui-danger-200)',
+												}}
+											>
+												<span
+													className={
+														submitMessage.startsWith('✅')
+															? 'text-success-700'
+															: 'text-danger-700'
+													}
+												>
+													{submitMessage}
+												</span>
+											</div>
+										)}
 										<div className="flex justify-end">
 											<Button
 												color="primary"
-												isDisabled={!canSubmitReply()}
+												isDisabled={!canSubmitReply() || isSubmitting}
+												isLoading={isSubmitting}
 												onPress={handleSubmitReply}
 											>
-												Enviar respuesta (Demo)
+												Enviar respuesta
 											</Button>
 										</div>
 									</CardBody>
