@@ -136,7 +136,7 @@ export default function StudentDashboard() {
 							</Button>
 							<Button
 								as={Link}
-								to="/dashboard/community"
+								to="/dashboard/student/community"
 								color="default"
 								variant="bordered"
 								fullWidth

@@ -13,6 +13,7 @@ import {
 	Tab,
 	Tabs,
 	Textarea,
+	Tooltip,
 	useDisclosure,
 } from '@heroui/react';
 import {
@@ -573,7 +574,7 @@ export default function StudentCommunity() {
 									<Card id="thread-panel" className="border border-default-200">
 										<CardHeader className="py-2">
 											<p className="text-sm font-semibold text-foreground">
-												Hilo seleccionado
+												Foro seleccionado
 											</p>
 										</CardHeader>
 										<CardBody className="space-y-4">
@@ -603,7 +604,10 @@ export default function StudentCommunity() {
 														</div>
 													)}
 													{threadReplies.map((reply) => {
-														const canEdit = reply.authorId === currentUserId;
+														const isAuthor = reply.authorId === currentUserId;
+														const withinTime =
+															Date.now() - reply.createdAt.getTime() <=
+															60 * 60 * 1000; // 60 minutos
 														return (
 															<div
 																key={reply.id}
@@ -622,33 +626,61 @@ export default function StudentCommunity() {
 																			return `Hace ${hrs} h`;
 																		})()}
 																	</span>
-																	{canEdit && (
+																	{isAuthor && (
 																		<div className="flex gap-2">
-																			<Button
-																				variant="light"
-																				color="primary"
-																				size="sm"
-																				onPress={() => {
-																					setEditingReplyId(reply.id);
-																					setEditingContent(reply.content);
-																					setEditError(null);
-																					editModal.onOpen();
-																				}}
+																			<Tooltip
+																				content="Tiempo para editar/eliminar expirado (60 min)"
+																				isDisabled={withinTime}
 																			>
-																				Editar
-																			</Button>
-																			<Button
-																				variant="light"
-																				color="danger"
-																				size="sm"
-																				onPress={() => {
-																					setDeletingReplyId(reply.id);
-																					setDeleteError(null);
-																					deleteModal.onOpen();
-																				}}
+																				<span>
+																					<Button
+																						variant="light"
+																						color="primary"
+																						size="sm"
+																						isDisabled={!withinTime}
+																						onPress={
+																							withinTime
+																								? () => {
+																										setEditingReplyId(reply.id);
+																										setEditingContent(
+																											reply.content,
+																										);
+																										setEditError(null);
+																										editModal.onOpen();
+																									}
+																								: undefined
+																						}
+																					>
+																						Editar
+																					</Button>
+																				</span>
+																			</Tooltip>
+																			<Tooltip
+																				content="Tiempo para editar/eliminar expirado (60 min)"
+																				isDisabled={withinTime}
 																			>
-																				Eliminar
-																			</Button>
+																				<span>
+																					<Button
+																						variant="light"
+																						color="danger"
+																						size="sm"
+																						isDisabled={!withinTime}
+																						onPress={
+																							withinTime
+																								? () => {
+																										setDeletingReplyId(
+																											reply.id,
+																										);
+																										setDeleteError(null);
+																										deleteModal.onOpen();
+																									}
+																								: undefined
+																						}
+																					>
+																						Eliminar
+																					</Button>
+																				</span>
+																			</Tooltip>
 																		</div>
 																	)}
 																</div>
@@ -818,8 +850,7 @@ export default function StudentCommunity() {
 										placeholder="Actualiza tu mensaje manteniendo claridad y respeto"
 									/>
 									<p className="text-[11px] text-default-500">
-										Recuerda ser claro (Heurística: prevenir errores, proveer
-										control). No se guardará si el texto queda vacío.
+										No se guardará si el texto queda vacío.
 									</p>
 								</ModalBody>
 								<ModalFooter>
