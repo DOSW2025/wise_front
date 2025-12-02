@@ -43,6 +43,41 @@ interface Forum {
 	isResolved?: boolean;
 }
 
+// Helpers para reducir ternarios/anidaciones
+function getForumDescription(forumId: string): string {
+	switch (forumId) {
+		case 'forum-1':
+			return 'Tengo dudas sobre cuándo aplicar sustitución trigonométrica en integrales. ¿Alguien puede explicar los casos más comunes?';
+		case 'forum-2':
+			return '¿Qué estructura de datos recomiendan usar para implementar un sistema de caché? Estoy considerando usar diccionarios pero me gustaría conocer otras opciones.';
+		case 'forum-3':
+			return 'En problemas con fricción, ¿cómo identifico correctamente todas las fuerzas que actúan sobre un cuerpo?';
+		default:
+			return '¿Alguien tiene tips para balancear ecuaciones redox más fácilmente? Siempre me confundo con los números de oxidación.';
+	}
+}
+
+type ReplyPayload =
+	| { forumId: string; type: 'text'; text: string }
+	| { forumId: string; type: 'image'; imageName?: string }
+	| { forumId: string; type: 'link'; url: string };
+
+function buildReplyPayload(
+	replyType: 'text' | 'image' | 'link',
+	forumId: string,
+	textReply: string,
+	imageFile: File | null,
+	linkUrl: string,
+): ReplyPayload {
+	if (replyType === 'text') {
+		return { forumId, type: 'text', text: textReply.trim() };
+	}
+	if (replyType === 'image') {
+		return { forumId, type: 'image', imageName: imageFile?.name };
+	}
+	return { forumId, type: 'link', url: linkUrl.trim() };
+}
+
 const SUBJECT_COLORS: Record<
 	string,
 	'primary' | 'success' | 'warning' | 'danger' | 'secondary' | 'default'
@@ -476,13 +511,7 @@ export default function StudentCommunity() {
 												</h3>
 												{/* Descripción */}
 												<p className="text-default-600 text-sm line-clamp-2">
-													{forum.id === 'forum-1'
-														? 'Tengo dudas sobre cuándo aplicar sustitución trigonométrica en integrales. ¿Alguien puede explicar los casos más comunes?'
-														: forum.id === 'forum-2'
-															? '¿Qué estructura de datos recomiendan usar para implementar un sistema de caché? Estoy considerando usar diccionarios pero me gustaría conocer otras opciones.'
-															: forum.id === 'forum-3'
-																? 'En problemas con fricción, ¿cómo identifico correctamente todas las fuerzas que actúan sobre un cuerpo?'
-																: '¿Alguien tiene tips para balancear ecuaciones redox más fácilmente? Siempre me confundo con los números de oxidación.'}
+													{getForumDescription(forum.id)}
 												</p>
 												{/* Metadata - Autor y Tiempo */}
 												<div className="flex items-center gap-3 text-xs text-default-500">
@@ -959,8 +988,9 @@ export default function StudentCommunity() {
 								</ModalHeader>
 								<ModalBody>
 									<p className="text-sm text-default-600">
-										¿Seguro que deseas eliminar esta respuesta? Esta acción es
-										<i>visual</i> por ahora y se usará para pruebas de flujo.
+										¿Seguro que deseas eliminar esta respuesta? Esta acción es{' '}
+										<span className="italic">visual</span> por ahora y se usará
+										para pruebas de flujo.
 									</p>
 									{deleteError && (
 										<p className="text-xs text-danger-600 mt-2">
