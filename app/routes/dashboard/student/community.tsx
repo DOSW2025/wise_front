@@ -343,49 +343,6 @@ export default function StudentCommunity() {
 								>
 									Nuevo tema
 								</Button>
-								<Button
-									variant="bordered"
-									color="success"
-									size="lg"
-									onPress={() => {
-										const id = 'forum-1';
-										setSelectedForumId(id);
-										// Carga directa de hilo demo
-										setThreadReplies([
-											{
-												id: 'r-demo-1',
-												forumId: id,
-												authorId: 'mock-user-student',
-												authorName: 'Tú',
-												type: 'text',
-												content:
-													'Mensaje de ejemplo editable para demostrar el flujo.',
-												createdAt: new Date(Date.now() - 2 * 60 * 1000),
-											},
-											{
-												id: 'r-demo-2',
-												forumId: id,
-												authorId: 'other-user-1',
-												authorName: 'Ana Torres',
-												type: 'text',
-												content:
-													'Respuesta de otra persona para comparar permisos.',
-												createdAt: new Date(Date.now() - 9 * 60 * 1000),
-											},
-										]);
-										setTimeout(() => {
-											const el = document.querySelector('#thread-panel');
-											if (el)
-												el.scrollIntoView({
-													behavior: 'smooth',
-													block: 'start',
-												});
-										}, 50);
-									}}
-									className="font-semibold"
-								>
-									Ver Ejemplo
-								</Button>
 							</div>
 						</div>
 						{/* Modal */}
@@ -554,6 +511,33 @@ export default function StudentCommunity() {
 															variant="flat"
 															onPress={() => {
 																setSelectedForumId(forum.id);
+																// Cargar respuestas demo al presionar Responder (sustituye antiguo botón Ver Ejemplo)
+																setThreadReplies([
+																	{
+																		id: `r-demo-1-${forum.id}`,
+																		forumId: forum.id,
+																		authorId: currentUserId,
+																		authorName: 'Tú',
+																		type: 'text',
+																		content:
+																			'Mensaje de ejemplo editable para demostrar el flujo.',
+																		createdAt: new Date(
+																			Date.now() - 2 * 60 * 1000,
+																		),
+																	},
+																	{
+																		id: `r-demo-2-${forum.id}`,
+																		forumId: forum.id,
+																		authorId: 'other-user-1',
+																		authorName: 'Ana Torres',
+																		type: 'text',
+																		content:
+																			'Respuesta de otra persona para comparar permisos.',
+																		createdAt: new Date(
+																			Date.now() - 9 * 60 * 1000,
+																		),
+																	},
+																]);
 																setTimeout(() => {
 																	const el =
 																		document.querySelector('#reply-panel');
