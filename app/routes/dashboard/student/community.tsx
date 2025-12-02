@@ -28,14 +28,9 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { ForumCreationModal } from '~/components/forum-creation-modal';
 import { useAuth } from '~/contexts/auth-context';
-import {
-	createForumReply,
-	getForumById,
-	updateForumReply,
-} from '~/lib/services/forum.service';
+import { createForumReply, getForumById } from '~/lib/services/forum.service';
 
 interface Forum {
-	id: string;
 	name: string;
 	subject: string;
 	createdAt: Date;
@@ -136,6 +131,8 @@ export default function StudentCommunity() {
 			type: 'text';
 			content: string;
 			createdAt: Date;
+			editedAt?: Date;
+			isEdited?: boolean;
 		}[]
 	>([]);
 	// Edición de respuesta
@@ -643,6 +640,18 @@ export default function StudentCommunity() {
 																			const hrs = Math.floor(mins / 60);
 																			return `Hace ${hrs} h`;
 																		})()}
+																		{reply.isEdited && (
+																			<span className="ml-2 align-middle">
+																				<Chip
+																					size="sm"
+																					variant="flat"
+																					color="secondary"
+																					className="font-heading text-[10px]"
+																				>
+																					Editado
+																				</Chip>
+																			</span>
+																		)}
 																	</span>
 																	{isAuthor && (
 																		<div className="flex gap-2">
@@ -904,17 +913,16 @@ export default function StudentCommunity() {
 												if (!selectedForumId || !editingReplyId) {
 													throw new Error('No hay foro/respuesta seleccionada');
 												}
-												// Llamada al backend para actualizar
-												await updateForumReply(
-													selectedForumId,
-													editingReplyId,
-													editingContent,
-												);
-												// Actualización local optimista
+												// Actualización local (sin backend por ahora)
 												setThreadReplies((prev) =>
 													prev.map((r) =>
 														r.id === editingReplyId
-															? { ...r, content: editingContent }
+															? {
+																	...r,
+																	content: editingContent,
+																	editedAt: new Date(),
+																	isEdited: true,
+																}
 															: r,
 													),
 												);
