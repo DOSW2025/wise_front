@@ -162,6 +162,11 @@ export default function StudentCommunity() {
 	const [editingContent, setEditingContent] = useState('');
 	const [savingEdit, setSavingEdit] = useState(false);
 	const [editError, setEditError] = useState<string | null>(null);
+	// Eliminación de respuesta
+	const deleteModal = useDisclosure();
+	const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
+	const [deleting, setDeleting] = useState(false);
+	const [deleteError, setDeleteError] = useState<string | null>(null);
 	const { user } = useAuth();
 	const currentUserId = user?.id || 'mock-user-student';
 
@@ -626,6 +631,18 @@ export default function StudentCommunity() {
 																			>
 																				Editar
 																			</Button>
+																			<Button
+																				variant="light"
+																				color="danger"
+																				size="sm"
+																				onPress={() => {
+																					setDeletingReplyId(reply.id);
+																					setDeleteError(null);
+																					deleteModal.onOpen();
+																				}}
+																			>
+																				Eliminar
+																			</Button>
 																		</div>
 																	)}
 																</div>
@@ -844,6 +861,72 @@ export default function StudentCommunity() {
 										}}
 									>
 										Guardar cambios
+									</Button>
+								</ModalFooter>
+							</>
+						)}
+					</ModalContent>
+				</Modal>
+			)}
+			{/* Modal de confirmación de eliminación */}
+			{deletingReplyId && (
+				<Modal
+					isOpen={deleteModal.isOpen}
+					onClose={deleteModal.onClose}
+					size="md"
+				>
+					<ModalContent>
+						{(onClose) => (
+							<>
+								<ModalHeader className="flex flex-col gap-1">
+									Confirmar eliminación
+								</ModalHeader>
+								<ModalBody>
+									<p className="text-sm text-default-600">
+										¿Seguro que deseas eliminar esta respuesta? Esta acción es
+										<i>visual</i> por ahora y se usará para pruebas de flujo.
+									</p>
+									{deleteError && (
+										<p className="text-xs text-danger-600 mt-2">
+											{deleteError}
+										</p>
+									)}
+								</ModalBody>
+								<ModalFooter>
+									<Button
+										variant="light"
+										color="default"
+										onPress={() => {
+											setDeletingReplyId(null);
+											setDeleteError(null);
+											onClose();
+										}}
+									>
+										Cancelar
+									</Button>
+									<Button
+										color="danger"
+										isLoading={deleting}
+										onPress={async () => {
+											setDeleteError(null);
+											setDeleting(true);
+											try {
+												// Simular eliminación local
+												setThreadReplies((prev) =>
+													prev.filter((r) => r.id !== deletingReplyId),
+												);
+												setDeletingReplyId(null);
+												onClose();
+											} catch (_e) {
+												setDeleteError(
+													'No se pudo eliminar. Intenta nuevamente.',
+												);
+											} finally {
+												setDeleting(false);
+											}
+										}}
+									>
+										Eliminar
 									</Button>
 								</ModalFooter>
 							</>

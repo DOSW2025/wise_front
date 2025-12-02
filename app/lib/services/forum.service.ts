@@ -287,3 +287,33 @@ export async function createForumReply(
 		throw err;
 	}
 }
+
+/**
+ * Actualizar una respuesta existente del foro (placeholder hasta backend real)
+ * PATCH /wise/foros/:forumId/respuestas/:id
+ */
+export async function updateForumReply(
+	forumId: string,
+	replyId: string,
+	content: string,
+): Promise<{ id: string; forumId: string; content: string }> {
+	// Placeholder: simulamos latencia y retorno
+	return new Promise((resolve) => {
+		setTimeout(() => {
+			resolve({ id: replyId, forumId, content });
+		}, 600);
+	});
+}
+
+/**
+ * Eliminar una respuesta del foro (placeholder hasta backend real)
+ * DELETE /wise/foros/:forumId/respuestas/:id
+ */
+export async function deleteForumReply(
+	forumId: string,
+	replyId: string,
+): Promise<{ id: string; forumId: string; deleted: true }> {
+	return new Promise((resolve) => {
+		setTimeout(() => resolve({ id: replyId, forumId, deleted: true }), 500);
+	});
+}
