@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router';
 import { ChatProvider } from '~/contexts/chat-context';
 import { ChatNotifications } from './chat-notifications';
+import { ChatbotWidget } from './chatbot-widget';
 import { Sidebar } from './sidebar';
 
 interface DashboardLayoutProps {
@@ -35,6 +36,7 @@ export function DashboardLayout({
 					</div>
 					<Outlet />
 				</main>
+				<ChatbotWidget />
 			</div>
 		</ChatProvider>
 	);
