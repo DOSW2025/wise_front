@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ForumCreationModal } from '~/components/forum-creation-modal';
-import { createForumReply } from '~/lib/services/forum.service';
+import { createForumReply, getForumById } from '~/lib/services/forum.service';
 
 interface Forum {
 	id: string;
@@ -136,6 +136,8 @@ export default function StudentCommunity() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 	const [_creationError, setCreationError] = useState<string | null>(null);
+	const [threadError, setThreadError] = useState<string | null>(null);
+	const [threadLoading, setThreadLoading] = useState<boolean>(false);
 
 	const allSubjects = ['Todos', ...Object.values(SUBJECT_NAMES)];
 
@@ -176,6 +178,27 @@ export default function StudentCommunity() {
 
 	const handleCreationError = (error: string) => {
 		setCreationError(error);
+	};
+
+	const viewThread = async (forumId: string) => {
+		setSelectedForumId(forumId);
+		setThreadError(null);
+		setThreadLoading(true);
+		try {
+			await getForumById(forumId);
+			// Éxito: no hacemos nada específico, sólo limpiar error
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : 'Error desconocido';
+			setThreadError(message);
+		} finally {
+			setThreadLoading(false);
+			// Desplaza al panel de hilo si existe
+			setTimeout(() => {
+				const el = document.querySelector('#thread-panel');
+				if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}, 50);
+		}
 	};
 
 	const validateLink = (url: string) => {
@@ -443,14 +466,13 @@ export default function StudentCommunity() {
 													<Eye className="w-4 h-4" />
 													<span>{forum.views}</span>
 												</div>
-												<div className="ml-auto">
+												<div className="ml-auto flex items-center gap-2">
 													<Button
 														size="sm"
 														color="primary"
 														variant="flat"
 														onPress={() => {
 															setSelectedForumId(forum.id);
-															// Desplaza al panel de respuesta si existe
 															setTimeout(() => {
 																const el =
 																	document.querySelector('#reply-panel');
@@ -464,12 +486,58 @@ export default function StudentCommunity() {
 													>
 														Responder
 													</Button>
+													<Button
+														size="sm"
+														color="default"
+														variant="bordered"
+														onPress={() => viewThread(forum.id)}
+														isLoading={
+															threadLoading && selectedForumId === forum.id
+														}
+													>
+														Ver hilo
+													</Button>
 												</div>
 											</div>
 										</CardBody>
 									</Card>
 								);
 							})}
+
+							{selectedForumId && (
+								<Card id="thread-panel" className="border border-default-200">
+									<CardHeader className="py-2">
+										<p className="text-sm font-semibold text-foreground">
+											Hilo seleccionado
+										</p>
+									</CardHeader>
+									<CardBody className="space-y-3">
+										{threadError ? (
+											<div className="flex items-start gap-2 p-3 bg-danger-50 border border-danger-200 rounded-lg">
+												<span className="text-danger-600">❌</span>
+												<div className="flex-1 min-w-0">
+													<p className="text-xs font-semibold text-danger-700">
+														Error al cargar el hilo
+													</p>
+													<p className="text-xs text-danger-600 mt-0.5">
+														{threadError}
+													</p>
+												</div>
+											</div>
+										) : (
+											<div className="p-3 bg-default-50 border border-default-200 rounded-lg">
+												<p className="text-xs text-default-600">
+													Este hilo aún no tiene respuestas.
+												</p>
+												<p className="text-[11px] text-default-500">
+													Usa el panel de abajo para responder con texto, imagen
+													o link.
+												</p>
+											</div>
+										)}
+									</CardBody>
+								</Card>
+							)}
 
 							{selectedForumId && (
 								<Card id="reply-panel" className="border border-primary-200">
