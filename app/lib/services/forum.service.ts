@@ -54,6 +54,15 @@ export interface ForumError extends Error {
 	message: string;
 }
 
+// Helper para mapear tipo de error desde mensaje (reduce complejidad cognitiva)
+function mapErrorType(message: string): ForumErrorType {
+	if (message.includes('permiso')) return 'permission-denied';
+	if (message.includes('materia')) return 'invalid-data';
+	if (message.includes('conectar')) return 'network';
+	if (message.includes('tardó')) return 'timeout';
+	return 'unknown';
+}
+
 /**
  * Extraer datos de respuesta API
  */
@@ -214,11 +223,7 @@ export async function createForum(
  */
 export async function getForums(subject?: string): Promise<ForumResponse[]> {
 	try {
-		const params = subject ? { subject } : {};
-		const response = await apiClient.get<ApiResponse<ForumResponse[]>>(
-			API_ENDPOINTS.FORUMS.LIST,
-			{ params },
-		);
+		err.type = mapErrorType(message);
 
 		return extractResponseData<ForumResponse[]>(response.data);
 	} catch (error) {
@@ -275,15 +280,7 @@ export async function createForumReply(
 			'Error al crear la respuesta. Intenta nuevamente.',
 		);
 		const err = new Error(message) as ForumError;
-		err.type = message.includes('permiso')
-			? 'permission-denied'
-			: message.includes('materia')
-				? 'invalid-data'
-				: message.includes('conectar')
-					? 'network'
-					: message.includes('tardó')
-						? 'timeout'
-						: 'unknown';
+		err.type = mapErrorType(message);
 		throw err;
 	}
 }

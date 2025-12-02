@@ -25,7 +25,7 @@ import {
 	Search,
 	ThumbsUp,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ForumCreationModal } from '~/components/forum-creation-modal';
 import { useAuth } from '~/contexts/auth-context';
 import { createForumReply, getForumById } from '~/lib/services/forum.service';
@@ -118,7 +118,7 @@ export default function StudentCommunity() {
 	// Fallback por si llega vacío desde otras ramas / pruebas
 	const [searchQuery, setSearchQuery] = useState('');
 	const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-	const [_creationError, setCreationError] = useState<string | null>(null);
+	const [creationError, setCreationError] = useState<string | null>(null);
 	const [threadError, setThreadError] = useState<string | null>(null);
 	const [threadLoading, setThreadLoading] = useState<boolean>(false);
 	// Estado local de respuestas del hilo (ejemplo temporal hasta conectar backend)
@@ -250,7 +250,7 @@ export default function StudentCommunity() {
 
 	const validateLink = (url: string) => {
 		const pattern =
-			/^(https?:\/\/)[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/i;
+			/^(https?:\/\/)[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#@!$&'()*+,;=.]+$/i;
 		return pattern.test(url.trim());
 	};
 
@@ -929,7 +929,7 @@ export default function StudentCommunity() {
 												setEditingReplyId(null);
 												setEditingContent('');
 												onClose();
-											} catch (_e) {
+											} catch (error_) {
 												setEditError('Error al guardar. Intenta nuevamente.');
 											} finally {
 												setSavingEdit(false);
@@ -993,7 +993,7 @@ export default function StudentCommunity() {
 												);
 												setDeletingReplyId(null);
 												onClose();
-											} catch (_e) {
+											} catch (error_) {
 												setDeleteError(
 													'No se pudo eliminar. Intenta nuevamente.',
 												);
