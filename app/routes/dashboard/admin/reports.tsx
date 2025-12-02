@@ -161,28 +161,28 @@ export default function AdminReports() {
 									value={1234}
 									icon={<Users className="w-6 h-6" />}
 									color="success"
-									trend={{ value: '+12%', isPositive: true }}
+									trend={{ value: '12%', isPositive: true }}
 								/>
 								<StatsCard
 									title="Sesiones este Mes"
 									value={342}
 									icon={<Calendar className="w-6 h-6" />}
 									color="primary"
-									trend={{ value: '+8%', isPositive: true }}
+									trend={{ value: '8%', isPositive: true }}
 								/>
 								<StatsCard
 									title="Materiales Publicados"
 									value={856}
 									icon={<BookOpen className="w-6 h-6" />}
 									color="warning"
-									trend={{ value: '+15%', isPositive: true }}
+									trend={{ value: '15%', isPositive: true }}
 								/>
 								<StatsCard
 									title="Horas Totales"
 									value={1527}
 									icon={<TrendingUp className="w-6 h-6" />}
 									color="success"
-									trend={{ value: '+10%', isPositive: true }}
+									trend={{ value: '10%', isPositive: true }}
 								/>
 							</div>
 
