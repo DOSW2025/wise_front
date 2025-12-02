@@ -12,7 +12,7 @@ const getBaseUrl = () => {
 		return '/api';
 	}
 
-	let url = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3002';
+	let url = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:3000';
 
 	// Ensure HTTPS for non-local environments to avoid Mixed Content errors
 	if (
