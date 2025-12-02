@@ -123,7 +123,7 @@ export default function AdminDashboardIndex() {
 							</Button>
 							<Button
 								as={Link}
-								to="/dashboard/reports"
+								to="/dashboard/admin/reports"
 								color="default"
 								variant="bordered"
 								fullWidth

@@ -1,10 +1,100 @@
-import { Button, Card, CardBody } from '@heroui/react';
+import { Button, Card, CardBody, CardHeader, Tab, Tabs } from '@heroui/react';
+import { useMemo, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
 
 export default function TutorDashboard() {
 	const location = useLocation();
 	const isMainDashboard = location.pathname === '/dashboard/tutor';
+
+	const [growthTab, setGrowthTab] = useState<'usuarios' | 'tutorias'>(
+		'usuarios',
+	);
+
+	const growthData = useMemo(() => {
+		const months = ['Jun', 'Jul', 'Ago', 'Sep', 'Oct'];
+		return growthTab === 'usuarios'
+			? months.map((m, i) => ({ label: m, value: 100 + i * 20 }))
+			: months.map((m, i) => ({ label: m, value: 15 + i * 3 }));
+	}, [growthTab]);
+
+	function MiniLineChart({
+		data,
+		color = '#990000',
+		width = 900,
+		height = 260,
+	}: {
+		data: { label: string; value: number }[];
+		color?: string;
+		width?: number;
+		height?: number;
+	}) {
+		const padding = { top: 20, right: 20, bottom: 30, left: 40 };
+		const innerW = width - padding.left - padding.right;
+		const innerH = height - padding.top - padding.bottom;
+		const values = data.map((d) => d.value);
+		const min = Math.min(...values);
+		const max = Math.max(...values);
+		const y = (v: number) =>
+			innerH - (innerH * (v - min)) / (max === min ? 1 : max - min);
+		const x = (idx: number) => (innerW / (data.length - 1)) * idx;
+		const points = data.map((d, i) => `${x(i)},${y(d.value)}`).join(' ');
+
+		return (
+			<svg viewBox={`0 0 ${width} ${height}`} className="w-full">
+				<g transform={`translate(${padding.left}, ${padding.top})`}>
+					{/* grid lines */}
+					{Array.from({ length: 6 }).map((_, i) => (
+						<line
+							key={i}
+							x1={0}
+							y1={(innerH / 5) * i}
+							x2={innerW}
+							y2={(innerH / 5) * i}
+							stroke="#e5e7eb"
+							strokeWidth={1}
+						/>
+					))}
+
+					{/* polyline */}
+					<polyline
+						fill="none"
+						stroke={color}
+						strokeWidth={3}
+						points={points}
+					/>
+
+					{/* points */}
+					{data.map((d, i) => (
+						<g key={d.label} transform={`translate(${x(i)}, ${y(d.value)})`}>
+							<circle r={5} fill={color} />
+							<circle
+								r={7}
+								fill="white"
+								fillOpacity={0}
+								stroke={color}
+								strokeWidth={1}
+							/>
+						</g>
+					))}
+
+					{/* x labels */}
+					{data.map((d, i) => (
+						<text
+							key={`lbl-${d.label}`}
+							x={x(i)}
+							y={innerH + 20}
+							textAnchor="middle"
+							fontSize={12}
+							fill="#6b7280"
+						>
+							{d.label}
+						</text>
+					))}
+				</g>
+			</svg>
+		);
+	}
 
 	if (!isMainDashboard) {
 		return <Outlet />;
@@ -111,6 +201,28 @@ export default function TutorDashboard() {
 					}
 				/>
 			</div>
+
+			{/* Crecimiento (Usuarios/Tutorías) */}
+			<Card>
+				<CardHeader className="flex items-center justify-between px-6 py-5">
+					<h2 className="text-lg font-semibold">Crecimiento de Usuarios</h2>
+					<Tabs
+						selectedKey={growthTab}
+						onSelectionChange={(k) =>
+							setGrowthTab(k as 'usuarios' | 'tutorias')
+						}
+						variant="bordered"
+						color="danger"
+						size="sm"
+					>
+						<Tab key="usuarios" title="Usuarios" />
+						<Tab key="tutorias" title="Tutorías" />
+					</Tabs>
+				</CardHeader>
+				<CardBody className="px-2 pb-6">
+					<MiniLineChart data={growthData} />
+				</CardBody>
+			</Card>
 
 			{/* Quick Actions */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
