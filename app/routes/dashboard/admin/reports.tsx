@@ -157,32 +157,32 @@ export default function AdminReports() {
 							{/* Métricas principales */}
 							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 								<StatsCard
-									title="Usuarios Activos"
-									value={1248}
+									title="Total de Usuarios"
+									value={1234}
 									icon={<Users className="w-6 h-6" />}
 									color="success"
-									trend={{ value: '12%', isPositive: true }}
+									trend={{ value: '+12%', isPositive: true }}
 								/>
 								<StatsCard
-									title="Tutorías Activas"
+									title="Sesiones este Mes"
 									value={342}
-									icon={<Activity className="w-6 h-6" />}
+									icon={<Calendar className="w-6 h-6" />}
 									color="primary"
-									trend={{ value: '3%', isPositive: true }}
+									trend={{ value: '+8%', isPositive: true }}
 								/>
 								<StatsCard
 									title="Materiales Publicados"
-									value={2156}
+									value={856}
 									icon={<BookOpen className="w-6 h-6" />}
 									color="warning"
-									trend={{ value: '7%', isPositive: true }}
+									trend={{ value: '+15%', isPositive: true }}
 								/>
 								<StatsCard
-									title="Reportes Abiertos"
-									value={7}
-									icon={<AlertTriangle className="w-6 h-6" />}
-									color="danger"
-									trend={{ value: '2', isPositive: false }}
+									title="Horas Totales"
+									value={1527}
+									icon={<TrendingUp className="w-6 h-6" />}
+									color="success"
+									trend={{ value: '+10%', isPositive: true }}
 								/>
 							</div>
 
@@ -329,29 +329,33 @@ export default function AdminReports() {
 							<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 								<Card>
 									<CardBody className="text-center">
-										<div className="text-2xl font-bold text-success">1248</div>
-										<div className="text-sm text-default-500">Usuarios</div>
+										<div className="text-2xl font-bold text-success">1,234</div>
+										<div className="text-sm text-default-500">
+											Total de Usuarios
+										</div>
 									</CardBody>
 								</Card>
 								<Card>
 									<CardBody className="text-center">
 										<div className="text-2xl font-bold text-primary">342</div>
 										<div className="text-sm text-default-500">
-											Tutorías Activas
+											Sesiones este Mes
 										</div>
 									</CardBody>
 								</Card>
 								<Card>
 									<CardBody className="text-center">
-										<div className="text-2xl font-bold text-warning">2156</div>
-										<div className="text-sm text-default-500">Materiales</div>
+										<div className="text-2xl font-bold text-warning">856</div>
+										<div className="text-sm text-default-500">
+											Materiales Publicados
+										</div>
 									</CardBody>
 								</Card>
 								<Card>
 									<CardBody className="text-center">
-										<div className="text-2xl font-bold text-danger">7</div>
+										<div className="text-2xl font-bold text-success">1,527</div>
 										<div className="text-sm text-default-500">
-											Reportes Abiertos
+											Horas Totales
 										</div>
 									</CardBody>
 								</Card>
