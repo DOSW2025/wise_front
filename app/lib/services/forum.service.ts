@@ -297,12 +297,34 @@ export async function updateForumReply(
 	replyId: string,
 	content: string,
 ): Promise<{ id: string; forumId: string; content: string }> {
-	// Placeholder: simulamos latencia y retorno
-	return new Promise((resolve) => {
-		setTimeout(() => {
-			resolve({ id: replyId, forumId, content });
-		}, 600);
-	});
+	try {
+		const response = await apiClient.patch<
+			ApiResponse<{ id: string; forumId: string; content: string }>
+		>(
+			API_ENDPOINTS.FORUMS.REPLY(forumId, replyId),
+			{ text: content?.trim() },
+			{ timeout: 15000 },
+		);
+		return extractResponseData<{
+			id: string;
+			forumId: string;
+			content: string;
+		}>(response.data);
+	} catch (error) {
+		const message = extractErrorMessage(
+			error,
+			'Error al actualizar la respuesta. Intenta nuevamente.',
+		);
+		const err = new Error(message) as ForumError;
+		err.type = message.includes('permiso')
+			? 'permission-denied'
+			: message.includes('conectar')
+				? 'network'
+				: message.includes('tardó')
+					? 'timeout'
+					: 'unknown';
+		throw err;
+	}
 }
 
 /**
@@ -313,7 +335,26 @@ export async function deleteForumReply(
 	forumId: string,
 	replyId: string,
 ): Promise<{ id: string; forumId: string; deleted: true }> {
-	return new Promise((resolve) => {
-		setTimeout(() => resolve({ id: replyId, forumId, deleted: true }), 500);
-	});
+	try {
+		const response = await apiClient.delete<
+			ApiResponse<{ id: string; forumId: string; deleted: true }>
+		>(API_ENDPOINTS.FORUMS.REPLY(forumId, replyId), { timeout: 12000 });
+		return extractResponseData<{ id: string; forumId: string; deleted: true }>(
+			response.data,
+		);
+	} catch (error) {
+		const message = extractErrorMessage(
+			error,
+			'Error al eliminar la respuesta. Intenta nuevamente.',
+		);
+		const err = new Error(message) as ForumError;
+		err.type = message.includes('permiso')
+			? 'permission-denied'
+			: message.includes('conectar')
+				? 'network'
+				: message.includes('tardó')
+					? 'timeout'
+					: 'unknown';
+		throw err;
+	}
 }

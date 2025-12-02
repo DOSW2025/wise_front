@@ -28,7 +28,11 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { ForumCreationModal } from '~/components/forum-creation-modal';
 import { useAuth } from '~/contexts/auth-context';
-import { createForumReply, getForumById } from '~/lib/services/forum.service';
+import {
+	createForumReply,
+	getForumById,
+	updateForumReply,
+} from '~/lib/services/forum.service';
 
 interface Forum {
 	id: string;
@@ -140,6 +144,20 @@ export default function StudentCommunity() {
 	const [editingContent, setEditingContent] = useState('');
 	const [savingEdit, setSavingEdit] = useState(false);
 	const [editError, setEditError] = useState<string | null>(null);
+
+	// Validación del contenido editado (reglas básicas de higiene de texto)
+	const validateEditedContent = (text: string): string | null => {
+		const trimmed = text.trim();
+		if (trimmed.length < 5)
+			return 'El mensaje debe tener al menos 5 caracteres';
+		// Evitar solo signos o caracteres repetidos
+		if (/^([\p{P}\p{S}\s]|.)\1{4,}$/u.test(trimmed))
+			return 'Evita texto repetitivo o sin contenido claro';
+		// Evitar solo espacios/nuevas líneas
+		if (!/[\p{L}\p{N}]/u.test(trimmed))
+			return 'El mensaje debe contener letras o números';
+		return null;
+	};
 	// Eliminación de respuesta
 	const deleteModal = useDisclosure();
 	const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
@@ -848,6 +866,10 @@ export default function StudentCommunity() {
 										isInvalid={!!editError}
 										errorMessage={editError || ''}
 										placeholder="Actualiza tu mensaje manteniendo claridad y respeto"
+										classNames={{
+											inputWrapper:
+												'border-default-300 focus:border-primary-300',
+										}}
 									/>
 									<p className="text-[11px] text-default-500">
 										No se guardará si el texto queda vacío.
@@ -868,18 +890,27 @@ export default function StudentCommunity() {
 									<Button
 										color="primary"
 										isLoading={savingEdit}
-										isDisabled={
-											editingContent.trim().length === 0 || savingEdit
-										}
+										isDisabled={savingEdit}
 										onPress={async () => {
-											if (editingContent.trim().length === 0) {
-												setEditError('El mensaje no puede estar vacío');
+											const validationError =
+												validateEditedContent(editingContent);
+											if (validationError) {
+												setEditError(validationError);
 												return;
 											}
 											setEditError(null);
 											setSavingEdit(true);
 											try {
-												// Simular guardado local (backend futuro)
+												if (!selectedForumId || !editingReplyId) {
+													throw new Error('No hay foro/respuesta seleccionada');
+												}
+												// Llamada al backend para actualizar
+												await updateForumReply(
+													selectedForumId,
+													editingReplyId,
+													editingContent,
+												);
+												// Actualización local optimista
 												setThreadReplies((prev) =>
 													prev.map((r) =>
 														r.id === editingReplyId
