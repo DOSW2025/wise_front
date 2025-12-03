@@ -148,6 +148,7 @@ export default function TutorCommunity() {
 	const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 	const [_creationError, setCreationError] = useState<string | null>(null);
 	const [selectedForumId, setSelectedForumId] = useState<string | null>(null);
+	const [viewingForum, setViewingForum] = useState<Forum | null>(null);
 
 	// Estado de respuestas del hilo (visual)
 	const [threadReplies, setThreadReplies] = useState<
@@ -217,6 +218,14 @@ export default function TutorCommunity() {
 
 	const handleCreationError = (error: string) => {
 		setCreationError(error);
+	};
+
+	const openForumView = (forum: Forum) => {
+		setViewingForum(forum);
+	};
+
+	const closeForumView = () => {
+		setViewingForum(null);
 	};
 
 	const openEditForum = (forum: Forum) => {
@@ -491,7 +500,12 @@ export default function TutorCommunity() {
 											</p>
 											{/* Metadata - Autor y Tiempo */}
 											<div className="flex items-center gap-3 text-xs text-default-500">
-												<span>Por {forum.author}</span>
+												<span>
+													Por{' '}
+													{forum.authorId === currentUserId
+														? 'Ti'
+														: forum.author}
+												</span>
 												<span>•</span>
 												<span>
 													{(() => {
@@ -543,15 +557,140 @@ export default function TutorCommunity() {
 														size="sm"
 														color="default"
 														variant="bordered"
-														onPress={() => openThreadDemo(forum.id)}
+														onPress={() => {
+															setSelectedForumId(forum.id);
+															openForumView(forum);
+														}}
 														isLoading={
 															threadLoading && selectedForumId === forum.id
 														}
 													>
-														Ver hilo
+														Ver foro
 													</Button>
 													{/* Acciones principales movidas al encabezado */}
 												</div>
+												{/* Modal de detalle del foro (vista centrada) */}
+												{viewingForum && (
+													<Modal
+														isOpen={!!viewingForum}
+														onClose={closeForumView}
+														size="lg"
+														placement="center"
+														backdrop="opaque"
+														classNames={{ backdrop: 'bg-black/60' }}
+													>
+														<ModalContent>
+															{(onClose) => (
+																<>
+																	<ModalHeader className="flex flex-col gap-1">
+																		<div className="flex items-center gap-2 flex-wrap">
+																			<Chip
+																				size="sm"
+																				variant="flat"
+																				color={
+																					SUBJECT_COLORS[viewingForum.subject]
+																				}
+																				className="font-heading"
+																			>
+																				{SUBJECT_NAMES[viewingForum.subject]}
+																			</Chip>
+																			{viewingForum.isPinned && (
+																				<Chip
+																					size="sm"
+																					color="danger"
+																					variant="flat"
+																					className="font-heading"
+																				>
+																					Fijado
+																				</Chip>
+																			)}
+																			{viewingForum.isResolved && (
+																				<Chip
+																					size="sm"
+																					color="success"
+																					variant="flat"
+																					className="font-heading"
+																				>
+																					Resuelto
+																				</Chip>
+																			)}
+																		</div>
+																		<h2 className="text-xl font-bold text-foreground">
+																			{viewingForum.name}
+																		</h2>
+																	</ModalHeader>
+																	<ModalBody>
+																		<div className="space-y-3">
+																			<div className="flex items-center gap-2 text-sm text-default-600">
+																				<span>Por {viewingForum.author}</span>
+																				<span>•</span>
+																				<span>
+																					{(() => {
+																						const minutes = Math.floor(
+																							(Date.now() -
+																								viewingForum.createdAt.getTime()) /
+																								(1000 * 60),
+																						);
+																						const hours = Math.floor(
+																							minutes / 60,
+																						);
+																						const days = Math.floor(hours / 24);
+																						if (minutes < 60)
+																							return `Hace ${minutes} min`;
+																						if (hours < 24)
+																							return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+																						return `Hace ${days} día${days > 1 ? 's' : ''}`;
+																					})()}
+																				</span>
+																				{viewingForum.authorId ===
+																					currentUserId && (
+																					<Chip
+																						size="sm"
+																						color="secondary"
+																						variant="flat"
+																						className="font-heading"
+																					>
+																						Propio
+																					</Chip>
+																				)}
+																			</div>
+																			<p className="text-default-700 text-sm">
+																				{viewingForum.id === 'forum-1'
+																					? 'Tengo dudas sobre cuándo aplicar sustitución trigonométrica en integrales. ¿Alguien puede explicar los casos más comunes?'
+																					: viewingForum.id === 'forum-2'
+																						? '¿Qué estructura de datos recomiendan usar para implementar un sistema de caché? Estoy considerando usar diccionarios pero me gustaría conocer otras opciones.'
+																						: viewingForum.id === 'forum-3'
+																							? 'En problemas con fricción, ¿cómo identifico correctamente todas las fuerzas que actúan sobre un cuerpo?'
+																							: 'Descripción del foro no disponible.'}
+																			</p>
+																			<div className="grid grid-cols-3 gap-3 text-sm">
+																				<div className="flex items-center gap-1.5 text-default-600">
+																					<MessageCircle className="w-4 h-4" />
+																					<span>
+																						{viewingForum.replies} respuestas
+																					</span>
+																				</div>
+																				<div className="flex items-center gap-1.5 text-success-600">
+																					<ThumbsUp className="w-4 h-4" />
+																					<span>{viewingForum.likes}</span>
+																				</div>
+																				<div className="flex items-center gap-1.5 text-default-600">
+																					<Eye className="w-4 h-4" />
+																					<span>{viewingForum.views}</span>
+																				</div>
+																			</div>
+																		</div>
+																	</ModalBody>
+																	<ModalFooter>
+																		<Button variant="light" onPress={onClose}>
+																			Cerrar
+																		</Button>
+																	</ModalFooter>
+																</>
+															)}
+														</ModalContent>
+													</Modal>
+												)}
 											</div>
 										</CardBody>
 									</Card>
@@ -604,7 +743,10 @@ export default function TutorCommunity() {
 												>
 													<div className="flex items-center justify-between">
 														<span className="text-xs font-medium text-default-700 flex items-center gap-2">
-															{reply.authorName} • {(() => {
+															{reply.authorId === currentUserId
+																? 'Ti'
+																: reply.authorName}{' '}
+															• {(() => {
 																const mins = Math.floor(
 																	(Date.now() - reply.createdAt.getTime()) /
 																		(1000 * 60),
@@ -763,6 +905,7 @@ export default function TutorCommunity() {
 							isOpen={editModal.isOpen}
 							onClose={editModal.onClose}
 							size="lg"
+							backdrop="opaque"
 						>
 							<ModalContent>
 								{(onClose) => (
@@ -868,6 +1011,7 @@ export default function TutorCommunity() {
 							isOpen={deleteModal.isOpen}
 							onClose={deleteModal.onClose}
 							size="md"
+							backdrop="opaque"
 						>
 							<ModalContent>
 								{(onClose) => (
@@ -977,6 +1121,7 @@ export default function TutorCommunity() {
 							isOpen={editForumModal.isOpen}
 							onClose={editForumModal.onClose}
 							size="md"
+							backdrop="opaque"
 						>
 							<ModalContent>
 								{(onClose) => (
