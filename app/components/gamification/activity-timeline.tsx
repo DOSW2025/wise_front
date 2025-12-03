@@ -82,11 +82,11 @@ export function ActivityTimeline({ activities }: ActivityTimelineProps) {
 	return (
 		<Card>
 			<CardBody className="gap-0">
-				<h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+				<h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2 pl-3 pt-3">
 					<BarChart3 className="w-5 h-5" />
 					Actividad Reciente
 				</h3>
-				<div className="space-y-0">
+				<div className="space-y-0 px-5">
 					{activities.map((activity, index) => (
 						<div
 							key={activity.id}
