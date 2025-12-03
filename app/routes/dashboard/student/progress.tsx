@@ -62,7 +62,7 @@ export default function StudentProgress() {
 			{/* Tabs for different sections */}
 			<Tabs color="primary" variant="underlined" size="lg">
 				<Tab key="challenges" title="Desafíos Activos">
-					<div className="mt-6">
+					<div className="">
 						<ChallengesList
 							challenges={challenges}
 							onClaim={handleClaimChallenge}
@@ -71,7 +71,7 @@ export default function StudentProgress() {
 				</Tab>
 
 				<Tab key="badges" title="Mis Insignias">
-					<div className="mt-6 space-y-4">
+					<div className="space-y-4">
 						<div className="flex items-center justify-between">
 							<div>
 								<h3 className="text-xl font-bold text-foreground">
@@ -88,7 +88,7 @@ export default function StudentProgress() {
 				</Tab>
 
 				<Tab key="progress" title="Progreso por Categorías">
-					<div className="mt-6 space-y-4">
+					<div className="space-y-4">
 						<div>
 							<h3 className="text-xl font-bold text-foreground">
 								Avance en Categorías
@@ -102,7 +102,7 @@ export default function StudentProgress() {
 				</Tab>
 
 				<Tab key="leaderboard" title="Clasificaciones">
-					<div className="mt-6">
+					<div className="">
 						<Leaderboard
 							globalEntries={mockLeaderboardGlobal}
 							global30dEntries={mockLeaderboard30d}
@@ -111,7 +111,7 @@ export default function StudentProgress() {
 				</Tab>
 
 				<Tab key="activity" title="Actividad Reciente">
-					<div className="mt-6">
+					<div className="">
 						<ActivityTimeline activities={mockActivityEvents} />
 					</div>
 				</Tab>

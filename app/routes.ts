@@ -32,6 +32,7 @@ export default [
 		'scheduled',
 		'requests',
 		'materials',
+		'performance',
 		'reports',
 		'community',
 		'help',
