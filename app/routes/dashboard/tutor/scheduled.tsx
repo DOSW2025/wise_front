@@ -5,16 +5,8 @@ import {
 	CardBody,
 	CardHeader,
 	Chip,
-	Modal,
-	ModalBody,
-	ModalContent,
-	ModalFooter,
-	ModalHeader,
-	Select,
-	SelectItem,
-	useDisclosure,
 } from '@heroui/react';
-import { Calendar, Clock, MapPin, Plus, Video, X } from 'lucide-react';
+import { Calendar, Clock, MapPin, Video } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
@@ -82,7 +74,6 @@ const generateAllTimeSlots = () => {
 };
 
 export default function TutorScheduled() {
-	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [searchParams] = useSearchParams();
 	const [activeTab, setActiveTab] = useState<'scheduled' | 'availability'>(
 		'scheduled',

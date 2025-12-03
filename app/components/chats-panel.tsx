@@ -21,9 +21,9 @@ interface Chat {
 }
 
 interface ChatsPanelProps {
-	isOpen: boolean;
-	onClose: () => void;
-	onSelectChat: (tutor: {
+	readonly isOpen: boolean;
+	readonly onClose: () => void;
+	readonly onSelectChat: (tutor: {
 		id: number;
 		name: string;
 		title: string;
@@ -68,7 +68,7 @@ export function ChatsPanel({ isOpen, onClose, onSelectChat }: ChatsPanelProps) {
 
 	const handleCreateGroup = (groupName: string, selectedContacts: string[]) => {
 		console.log('Grupo creado:', { groupName, selectedContacts });
-		// TODO: Aquí se conectaría con la API
+		// Aquí se conectaría con la API
 	};
 
 	if (!isOpen) return null;

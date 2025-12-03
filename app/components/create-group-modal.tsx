@@ -20,10 +20,17 @@ interface Contact {
 }
 
 interface CreateGroupModalProps {
-	isOpen: boolean;
-	onClose: () => void;
-	onCreateGroup: (groupName: string, selectedContacts: string[]) => void;
-	recentChats?: { id: string; tutorName: string; tutorInitials: string }[];
+	readonly isOpen: boolean;
+	readonly onClose: () => void;
+	readonly onCreateGroup: (
+		groupName: string,
+		selectedContacts: string[],
+	) => void;
+	readonly recentChats?: {
+		id: string;
+		tutorName: string;
+		tutorInitials: string;
+	}[];
 }
 
 export function CreateGroupModal({

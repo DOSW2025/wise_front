@@ -13,8 +13,8 @@ interface Notification {
 }
 
 interface NotificationsPanelProps {
-	isOpen: boolean;
-	onClose: () => void;
+	readonly isOpen: boolean;
+	readonly onClose: () => void;
 }
 
 export function NotificationsPanel({

@@ -3,8 +3,8 @@ import { Bell, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 
 interface TopNavbarProps {
-	onOpenChats?: () => void;
-	onOpenNotifications?: () => void;
+	readonly onOpenChats?: () => void;
+	readonly onOpenNotifications?: () => void;
 }
 
 export function TopNavbar({

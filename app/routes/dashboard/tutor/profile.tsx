@@ -66,11 +66,8 @@ export default function TutorProfile() {
 
 	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
 
-	const {
-		isOpen: isAvailabilityModalOpen,
-		onOpen: onAvailabilityModalOpen,
-		onClose: onAvailabilityModalClose,
-	} = useDisclosure();
+	const { isOpen: isAvailabilityModalOpen, onClose: onAvailabilityModalClose } =
+		useDisclosure();
 
 	useEffect(() => {
 		if (user) {
