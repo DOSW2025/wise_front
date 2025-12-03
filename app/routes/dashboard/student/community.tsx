@@ -377,29 +377,26 @@ export default function StudentCommunity() {
 								classNames={{ input: 'text-base' }}
 							/>
 						</div>
-						{/* Filtros */}
-						<div className="flex flex-wrap gap-2">
-							{allSubjects.map((subject) => {
-								const isSelected = selectedSubject === subject;
-
-								return (
-									<Chip
+						{/* Filtro por materia (solo desplegable) */}
+						<div className="max-w-sm mt-3">
+							<p className="text-sm font-semibold text-foreground mb-1">
+								Filtrar por materia
+							</p>
+							<select
+								aria-label="Filtrar por materia"
+								className="w-full border border-default-300 rounded-lg px-3 py-2 text-sm bg-white"
+								value={selectedSubject ?? ''}
+								onChange={(e) => setSelectedSubject(e.target.value || null)}
+							>
+								{allSubjects.map((subject) => (
+									<option
 										key={subject}
-										onClick={() =>
-											setSelectedSubject(isSelected ? null : subject)
-										}
-										color={isSelected ? 'primary' : 'default'}
-										variant="bordered"
-										className={`cursor-pointer font-medium transition-colors ${
-											isSelected
-												? 'border-primary text-primary bg-primary-50'
-												: 'border-default-300 text-default-700 hover:border-primary hover:text-primary'
-										}`}
+										value={subject === 'Todos' ? '' : subject}
 									>
 										{subject}
-									</Chip>
-								);
-							})}
+									</option>
+								))}
+							</select>
 						</div>
 						{/* Lista de foros */}
 						{filteredForums.length === 0 ? (
