@@ -15,7 +15,8 @@ import {
 	useDisclosure,
 } from '@heroui/react';
 import { Calendar, Clock, MapPin, Plus, Video, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 
 interface TimeSlot {
 	id: string;
@@ -47,44 +48,57 @@ const DAYS = [
 	{ key: 'saturday', label: 'Sábado' },
 ];
 
-const TIME_OPTIONS = [
-	'07:00',
-	'08:00',
-	'09:00',
-	'10:00',
-	'11:00',
-	'12:00',
-	'13:00',
-	'14:00',
-	'15:00',
-	'16:00',
-	'17:00',
-	'18:00',
-	'19:00',
-];
+// Generar horarios automáticamente de 1.5 horas
+const generateTimeSlots = (day: string) => {
+	const slots = [];
+	const endHour = day === 'saturday' ? 13 : 19; // Sábado hasta 1pm, otros hasta 7pm
+
+	for (let hour = 7; hour < endHour; hour += 1.5) {
+		const startHour = Math.floor(hour);
+		const startMinute = (hour % 1) * 60;
+		const endHour = Math.floor(hour + 1.5);
+		const endMinute = ((hour + 1.5) % 1) * 60;
+
+		const startTime = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+		const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+
+		slots.push({
+			id: `${day}-${startTime}`,
+			day,
+			startTime,
+			endTime,
+			isAvailable: false,
+		});
+	}
+	return slots;
+};
+
+const generateAllTimeSlots = () => {
+	const allSlots = [];
+	for (const day of DAYS) {
+		allSlots.push(...generateTimeSlots(day.key));
+	}
+	return allSlots;
+};
 
 export default function TutorScheduled() {
 	const { isOpen, onOpen, onClose } = useDisclosure();
+	const [searchParams] = useSearchParams();
 	const [activeTab, setActiveTab] = useState<'scheduled' | 'availability'>(
 		'scheduled',
 	);
 
-	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
-	const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
-		{
-			id: '-1',
-			day: 'monday',
-			startTime: '00:00',
-			endTime: '00:00',
-			isAvailable: false,
-		},
-	]);
+	// Detectar parámetro de URL para activar tab específico
+	useEffect(() => {
+		const tab = searchParams.get('tab');
+		if (tab === 'availability') {
+			setActiveTab('availability');
+		}
+	}, [searchParams]);
 
-	const [newSlot, setNewSlot] = useState({
-		day: '',
-		startTime: '',
-		endTime: '',
-	});
+	const [timeSlots, setTimeSlots] = useState<TimeSlot[]>(() =>
+		generateAllTimeSlots(),
+	);
 
 	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
 	const confirmedSessions: ConfirmedSession[] = [
@@ -99,25 +113,6 @@ export default function TutorScheduled() {
 			modality: 'virtual',
 		},
 	];
-
-	const addTimeSlot = () => {
-		if (newSlot.day && newSlot.startTime && newSlot.endTime) {
-			const slot: TimeSlot = {
-				id: Date.now().toString(),
-				day: newSlot.day,
-				startTime: newSlot.startTime,
-				endTime: newSlot.endTime,
-				isAvailable: true,
-			};
-			setTimeSlots([...timeSlots, slot]);
-			setNewSlot({ day: '', startTime: '', endTime: '' });
-			onClose();
-		}
-	};
-
-	const removeTimeSlot = (id: string) => {
-		setTimeSlots(timeSlots.filter((slot) => slot.id !== id));
-	};
 
 	const toggleAvailability = (id: string) => {
 		setTimeSlots(
@@ -252,13 +247,9 @@ export default function TutorScheduled() {
 				<div className="space-y-6">
 					<div className="flex items-center justify-between">
 						<h2 className="text-xl font-semibold">Configurar Horarios</h2>
-						<Button
-							color="primary"
-							startContent={<Plus className="w-4 h-4" />}
-							onPress={onOpen}
-						>
-							Agregar Horario
-						</Button>
+						<p className="text-sm text-default-500">
+							Haz clic en los horarios para cambiar tu disponibilidad
+						</p>
 					</div>
 
 					{/* Horarios por día */}
@@ -281,43 +272,29 @@ export default function TutorScheduled() {
 										</div>
 									</CardHeader>
 									<CardBody className="pt-0">
-										{daySlots.length > 0 ? (
-											<div className="flex flex-wrap gap-2">
-												{daySlots.map((slot) => (
-													<div
-														key={slot.id}
-														className="flex items-center gap-2 p-2 bg-default-100 rounded-lg"
-													>
-														<Clock className="w-4 h-4 text-default-500" />
-														<span className="text-sm font-medium">
-															{slot.startTime} - {slot.endTime}
-														</span>
-														<Chip
-															size="sm"
-															color={slot.isAvailable ? 'success' : 'warning'}
-															variant="flat"
-															className="cursor-pointer"
-															onClick={() => toggleAvailability(slot.id)}
-														>
-															{slot.isAvailable ? 'Disponible' : 'Ocupado'}
-														</Chip>
-														<Button
-															isIconOnly
-															size="sm"
-															variant="light"
-															color="danger"
-															onPress={() => removeTimeSlot(slot.id)}
-														>
-															<X className="w-3 h-3" />
-														</Button>
+										<div className="flex gap-2 overflow-x-auto pb-2">
+											{daySlots.map((slot) => (
+												<Button
+													key={slot.id}
+													size="sm"
+													variant={slot.isAvailable ? 'solid' : 'bordered'}
+													color={slot.isAvailable ? 'primary' : 'default'}
+													onPress={() => toggleAvailability(slot.id)}
+													className={`h-16 flex flex-col justify-center p-2 min-w-24 flex-shrink-0 ${
+														slot.isAvailable
+															? 'bg-green-100 text-green-800 border-green-300'
+															: 'bg-gray-100 text-gray-600 border-gray-300'
+													}`}
+												>
+													<div className="text-xs font-medium">
+														{slot.startTime} - {slot.endTime}
 													</div>
-												))}
-											</div>
-										) : (
-											<p className="text-default-400 text-sm">
-												Sin horarios configurados
-											</p>
-										)}
+													<div className="text-xs opacity-80 mt-1">
+														{slot.isAvailable ? 'Disponible' : 'Ocupado'}
+													</div>
+												</Button>
+											))}
+										</div>
 									</CardBody>
 								</Card>
 							);
@@ -325,64 +302,6 @@ export default function TutorScheduled() {
 					</div>
 				</div>
 			)}
-
-			{/* Modal para agregar horario */}
-			<Modal isOpen={isOpen} onClose={onClose}>
-				<ModalContent>
-					<ModalHeader>Agregar Nuevo Horario</ModalHeader>
-					<ModalBody>
-						<div className="space-y-4">
-							<Select
-								label="Día de la semana"
-								placeholder="Selecciona un día"
-								selectedKeys={newSlot.day ? [newSlot.day] : []}
-								onSelectionChange={(keys) => {
-									const selectedDay = Array.from(keys)[0] as string;
-									setNewSlot({ ...newSlot, day: selectedDay });
-								}}
-							>
-								{DAYS.map((day) => (
-									<SelectItem key={day.key}>{day.label}</SelectItem>
-								))}
-							</Select>
-							<Select
-								label="Hora de inicio"
-								placeholder="Selecciona hora de inicio"
-								selectedKeys={newSlot.startTime ? [newSlot.startTime] : []}
-								onSelectionChange={(keys) => {
-									const selectedTime = Array.from(keys)[0] as string;
-									setNewSlot({ ...newSlot, startTime: selectedTime });
-								}}
-							>
-								{TIME_OPTIONS.map((time) => (
-									<SelectItem key={time}>{time}</SelectItem>
-								))}
-							</Select>
-							<Select
-								label="Hora de fin"
-								placeholder="Selecciona hora de fin"
-								selectedKeys={newSlot.endTime ? [newSlot.endTime] : []}
-								onSelectionChange={(keys) => {
-									const selectedTime = Array.from(keys)[0] as string;
-									setNewSlot({ ...newSlot, endTime: selectedTime });
-								}}
-							>
-								{TIME_OPTIONS.map((time) => (
-									<SelectItem key={time}>{time}</SelectItem>
-								))}
-							</Select>
-						</div>
-					</ModalBody>
-					<ModalFooter>
-						<Button variant="light" onPress={onClose}>
-							Cancelar
-						</Button>
-						<Button color="primary" onPress={addTimeSlot}>
-							Agregar
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
 		</div>
 	);
 }
