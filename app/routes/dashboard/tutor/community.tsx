@@ -20,8 +20,10 @@ import {
 	CheckCircle2,
 	Eye,
 	MessageCircle,
+	Pencil,
 	Pin,
 	Plus,
+	RotateCcw,
 	Search,
 	ThumbsUp,
 } from 'lucide-react';
@@ -38,6 +40,7 @@ interface Forum {
 	likes?: number;
 	views?: number;
 	author?: string;
+	authorId?: string;
 	isPinned?: boolean;
 	isResolved?: boolean;
 }
@@ -72,7 +75,17 @@ const SUBJECT_NAMES: Record<string, string> = {
 };
 
 export default function TutorCommunity() {
+	// Usuario actual (tutor)
+	const currentUserId = 'mock-user-tutor';
+
 	const { isOpen, onOpen, onClose } = useDisclosure();
+	// Modal de edición de foro
+	const editForumModal = useDisclosure();
+	const [editingForum, setEditingForum] = useState<Forum | null>(null);
+	const [forumNameInput, setForumNameInput] = useState('');
+	const [forumSubjectInput, setForumSubjectInput] =
+		useState<string>('matematicas');
+	const [forumEditError, setForumEditError] = useState<string | null>(null);
 	const [forums, setForums] = useState<Forum[]>([
 		{
 			id: 'forum-1',
@@ -84,6 +97,7 @@ export default function TutorCommunity() {
 			likes: 23,
 			views: 234,
 			author: 'María García',
+			authorId: 'user-maria',
 			isPinned: true,
 			isResolved: false,
 		},
@@ -97,6 +111,7 @@ export default function TutorCommunity() {
 			likes: 45,
 			views: 567,
 			author: 'Carlos Méndez',
+			authorId: 'user-carlos',
 			isPinned: false,
 			isResolved: true,
 		},
@@ -109,7 +124,8 @@ export default function TutorCommunity() {
 			replies: 12,
 			likes: 18,
 			views: 189,
-			author: 'Laura Martínez',
+			author: 'Tú',
+			authorId: currentUserId,
 			isPinned: false,
 			isResolved: false,
 		},
@@ -123,6 +139,7 @@ export default function TutorCommunity() {
 			likes: 14,
 			views: 156,
 			author: 'Roberto Sánchez',
+			authorId: 'user-roberto',
 			isPinned: false,
 			isResolved: false,
 		},
@@ -153,17 +170,13 @@ export default function TutorCommunity() {
 	const editModal = useDisclosure();
 	const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
 	const [editingContent, setEditingContent] = useState('');
-	const [savingEdit, setSavingEdit] = useState(false);
 	const [editError, setEditError] = useState<string | null>(null);
-
+	const [savingEdit, setSavingEdit] = useState(false);
 	// Eliminación de respuesta
 	const deleteModal = useDisclosure();
 	const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
 	const [deleting, setDeleting] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
-
-	// Usuario actual (tutor)
-	const currentUserId = 'mock-user-tutor';
 
 	const allSubjects = ['Todos', ...Object.values(SUBJECT_NAMES)];
 
@@ -195,6 +208,7 @@ export default function TutorCommunity() {
 			likes: 0,
 			views: 1,
 			author: 'Tú',
+			authorId: currentUserId,
 			isPinned: false,
 			isResolved: false,
 		};
@@ -205,11 +219,51 @@ export default function TutorCommunity() {
 		setCreationError(error);
 	};
 
+	const openEditForum = (forum: Forum) => {
+		setEditingForum(forum);
+		setForumNameInput(forum.name);
+		setForumSubjectInput(forum.subject);
+		setForumEditError(null);
+		editForumModal.onOpen();
+	};
+
+	const saveForumEdit = () => {
+		const err = validateForumTitle(forumNameInput);
+		if (err) {
+			setForumEditError(err);
+			return;
+		}
+		setForums((prev) =>
+			prev.map((f) =>
+				editingForum && f.id === editingForum.id
+					? { ...f, name: forumNameInput.trim(), subject: forumSubjectInput }
+					: f,
+			),
+		);
+		setEditingForum(null);
+		editForumModal.onClose();
+	};
+
+	const toggleForumResolved = (forumId: string) => {
+		setForums((prev) =>
+			prev.map((f) =>
+				f.id === forumId ? { ...f, isResolved: !f.isResolved } : f,
+			),
+		);
+	};
+
 	// Validación de edición (mínimo 5)
 	const validateEditedContent = (val: string): string | null => {
 		const len = val.trim().length;
 		if (len === 0) return 'El mensaje no puede estar vacío';
 		if (len < 5) return 'El mensaje debe tener al menos 5 caracteres';
+		return null;
+	};
+
+	const validateForumTitle = (val: string): string | null => {
+		const len = val.trim().length;
+		if (len === 0) return 'El título no puede estar vacío';
+		if (len < 5) return 'El título debe tener al menos 5 caracteres';
 		return null;
 	};
 
@@ -345,30 +399,81 @@ export default function TutorCommunity() {
 										onClick={() => setSelectedForumId(forum.id)}
 									>
 										<CardBody className="space-y-3 py-4">
-											{/* Header del foro - Badges */}
-											<div className="flex items-center gap-2 flex-wrap">
-												{forum.isPinned && (
-													<div className="flex items-center gap-1.5 text-danger-500">
-														<Pin className="w-4 h-4" />
-														<span className="text-xs font-medium">Fijado</span>
-													</div>
-												)}
-												{forum.isResolved && (
-													<div className="flex items-center gap-1.5 text-success-600">
-														<CheckCircle2 className="w-4 h-4" />
-														<span className="text-xs font-medium">
-															Resuelto
-														</span>
-													</div>
-												)}
-												<Chip
-													size="sm"
-													variant="flat"
-													color={SUBJECT_COLORS[forum.subject]}
-													className="font-heading text-xs"
-												>
-													{SUBJECT_NAMES[forum.subject]}
-												</Chip>
+											{/* Header del foro - Badges + Acciones principales */}
+											<div className="flex items-start justify-between gap-2">
+												<div className="flex items-center gap-2 flex-wrap">
+													{forum.isPinned && (
+														<div className="flex items-center gap-1.5 text-danger-500">
+															<Pin className="w-4 h-4" />
+															<span className="text-xs font-medium">
+																Fijado
+															</span>
+														</div>
+													)}
+													{forum.isResolved && (
+														<div className="flex items-center gap-1.5 text-success-600">
+															<CheckCircle2 className="w-4 h-4" />
+															<span className="text-xs font-medium">
+																Resuelto
+															</span>
+														</div>
+													)}
+													<Chip
+														size="sm"
+														variant="flat"
+														color={SUBJECT_COLORS[forum.subject]}
+														className="font-heading text-xs"
+													>
+														{SUBJECT_NAMES[forum.subject]}
+													</Chip>
+													{forum.authorId === currentUserId && (
+														<Chip
+															size="sm"
+															color="secondary"
+															variant="flat"
+															className="font-heading text-xs"
+														>
+															Propio
+														</Chip>
+													)}
+												</div>
+												<div className="ml-auto flex items-center gap-1">
+													<Tooltip content="Editar foro">
+														<Button
+															isIconOnly
+															variant="light"
+															size="sm"
+															onPress={() => openEditForum(forum)}
+															aria-label="Editar foro"
+														>
+															<Pencil className="w-4 h-4" />
+														</Button>
+													</Tooltip>
+													<Tooltip
+														content={
+															forum.isResolved ? 'Reabrir foro' : 'Cerrar foro'
+														}
+													>
+														<Button
+															isIconOnly
+															variant="light"
+															size="sm"
+															color={forum.isResolved ? 'warning' : 'success'}
+															onPress={() => toggleForumResolved(forum.id)}
+															aria-label={
+																forum.isResolved
+																	? 'Reabrir foro'
+																	: 'Cerrar foro'
+															}
+														>
+															{forum.isResolved ? (
+																<RotateCcw className="w-4 h-4" />
+															) : (
+																<CheckCircle2 className="w-4 h-4" />
+															)}
+														</Button>
+													</Tooltip>
+												</div>
 											</div>
 											{/* Título */}
 											<h3 className="text-base font-bold text-foreground leading-tight">
@@ -421,6 +526,7 @@ export default function TutorCommunity() {
 													<span>{forum.views}</span>
 												</div>
 												<div className="ml-auto flex items-center gap-2">
+													{/* Cualquiera puede responder */}
 													<Button
 														size="sm"
 														color="primary"
@@ -432,6 +538,7 @@ export default function TutorCommunity() {
 													>
 														Responder
 													</Button>
+													{/* Ver hilo (todos) */}
 													<Button
 														size="sm"
 														color="default"
@@ -443,6 +550,7 @@ export default function TutorCommunity() {
 													>
 														Ver hilo
 													</Button>
+													{/* Acciones principales movidas al encabezado */}
 												</div>
 											</div>
 										</CardBody>
@@ -863,6 +971,74 @@ export default function TutorCommunity() {
 							</Button>
 						</CardBody>
 					</Card>
+					{/* Modal de edición de foro */}
+					{editingForum && (
+						<Modal
+							isOpen={editForumModal.isOpen}
+							onClose={editForumModal.onClose}
+							size="md"
+						>
+							<ModalContent>
+								{(onClose) => (
+									<>
+										<ModalHeader className="flex flex-col gap-1">
+											Editar foro
+										</ModalHeader>
+										<ModalBody>
+											<Input
+												label="Título"
+												placeholder="Actualiza el título del foro"
+												value={forumNameInput}
+												onChange={(e) => {
+													setForumNameInput(e.target.value);
+													setForumEditError(validateForumTitle(e.target.value));
+												}}
+												isInvalid={!!forumEditError}
+												errorMessage={forumEditError || ''}
+											/>
+											<div className="mt-3">
+												<label
+													htmlFor="edit-forum-subject-tutor"
+													className="text-xs font-semibold text-foreground"
+												>
+													Materia
+												</label>
+												<select
+													id="edit-forum-subject-tutor"
+													aria-label="Materia"
+													className="w-full border border-default-300 rounded-lg px-3 py-2 text-sm bg-white"
+													value={forumSubjectInput}
+													onChange={(e) => setForumSubjectInput(e.target.value)}
+												>
+													{Object.keys(SUBJECT_NAMES).map((key) => (
+														<option key={key} value={key}>
+															{SUBJECT_NAMES[key]}
+														</option>
+													))}
+												</select>
+											</div>
+										</ModalBody>
+										<ModalFooter>
+											<Button variant="light" onPress={onClose}>
+												Cancelar
+											</Button>
+											<Tooltip
+												content={forumEditError ? forumEditError : undefined}
+											>
+												<Button
+													color="primary"
+													isDisabled={!!forumEditError}
+													onPress={saveForumEdit}
+												>
+													Guardar
+												</Button>
+											</Tooltip>
+										</ModalFooter>
+									</>
+								)}
+							</ModalContent>
+						</Modal>
+					)}
 				</div>
 			</div>
 		</div>
