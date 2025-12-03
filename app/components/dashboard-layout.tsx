@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router';
-import ChatOverlay from './chat/chatOverlay'; // ← Importa el chat
+import ChatOverlay from './chat/chatOverlay';
 import { ChatbotWidget } from './chatbot-widget';
+import { ChatsPanel } from './chats-panel';
+import { NotificationsPanel } from './notifications-panel';
 import { Sidebar } from './sidebar';
+import { TopNavbar } from './top-navbar';
 
 interface DashboardLayoutProps {
 	userRole?: 'student' | 'tutor' | 'admin';
@@ -19,13 +22,15 @@ export function DashboardLayout({
 	userAvatar,
 	onLogout,
 }: DashboardLayoutProps) {
-	// ← AGREGA ESTO: Estado para el chat
 	const [selectedTutor, setSelectedTutor] = useState<{
 		id: number;
 		name: string;
 		title: string;
 		avatarInitials: string;
 	} | null>(null);
+
+	const [isChatsOpen, setIsChatsOpen] = useState(false);
+	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
 	return (
 		<div className="min-h-screen bg-background flex">
@@ -36,15 +41,43 @@ export function DashboardLayout({
 				userAvatar={userAvatar}
 				onLogout={onLogout}
 			/>
-			<main className="flex-1 lg:ml-64 p-4 pt-16 lg:pt-8 lg:p-8 overflow-y-auto">
-				{/* ← AGREGA ESTO: Pasa setSelectedTutor al contexto */}
+
+			{/* Top Navigation Bar */}
+			<TopNavbar
+				onOpenChats={() => {
+					setIsChatsOpen(true);
+					setIsNotificationsOpen(false);
+				}}
+				onOpenNotifications={() => {
+					setIsNotificationsOpen(true);
+					setIsChatsOpen(false);
+				}}
+			/>
+
+			<main className="flex-1 lg:ml-64 p-4 pt-24 lg:pt-28 lg:p-8 overflow-y-auto">
 				<Outlet context={{ onOpenChat: setSelectedTutor }} />
 			</main>
 
-			{/* ← AGREGA ESTO: Chat overlay global */}
+			{/* Chat overlay global */}
 			<ChatOverlay
 				tutor={selectedTutor}
 				onClose={() => setSelectedTutor(null)}
+			/>
+
+			{/* Chats Panel */}
+			<ChatsPanel
+				isOpen={isChatsOpen}
+				onClose={() => setIsChatsOpen(false)}
+				onSelectChat={(tutor) => {
+					setSelectedTutor(tutor);
+					setIsChatsOpen(false);
+				}}
+			/>
+
+			{/* Notifications Panel */}
+			<NotificationsPanel
+				isOpen={isNotificationsOpen}
+				onClose={() => setIsNotificationsOpen(false)}
 			/>
 
 			{/* Chatbot Widget */}
