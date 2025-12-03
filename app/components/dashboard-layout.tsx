@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router';
+import ChatOverlay from './chat/chatOverlay'; // ← Importa el chat
 import { ChatbotWidget } from './chatbot-widget';
 import { Sidebar } from './sidebar';
-import ChatOverlay from './chat/chatOverlay'; // ← Importa el chat
 
 interface DashboardLayoutProps {
 	userRole?: 'student' | 'tutor' | 'admin';
@@ -26,7 +26,7 @@ export function DashboardLayout({
 		title: string;
 		avatarInitials: string;
 	} | null>(null);
-	
+
 	return (
 		<div className="min-h-screen bg-background flex">
 			<Sidebar
@@ -46,6 +46,9 @@ export function DashboardLayout({
 				tutor={selectedTutor}
 				onClose={() => setSelectedTutor(null)}
 			/>
+
+			{/* Chatbot Widget */}
+			<ChatbotWidget />
 		</div>
 	);
 }
