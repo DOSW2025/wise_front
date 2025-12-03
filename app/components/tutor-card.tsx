@@ -1,121 +1,107 @@
-// app/components/tutor-card.tsx
-
-import { Avatar, Button, Card, CardBody, Chip } from '@heroui/react';
 import { Calendar, MessageCircle, Star } from 'lucide-react';
 import type React from 'react';
 import { Link } from 'react-router';
 
 interface Tutor {
-	id: number;
-	name: string;
-	title: string;
-	department: string;
-	avatarInitials: string;
-	avatarColor?: string; // Optional now, will use semantic colors
-	rating: number;
-	reviews: number;
-	tags: string[];
-	availability: string;
-	isAvailableToday: boolean;
+  id: number;
+  name: string;
+  title: string;
+  department: string;
+  avatarInitials: string;
+  avatarColor?: string;
+  rating: number;
+  reviews: number;
+  tags: string[];
+  availability: string;
+  isAvailableToday: boolean;
 }
 
 interface TutorCardProps {
-	tutor: Tutor;
+  tutor: Tutor;
+  onOpenChat?: (tutor: Tutor) => void;
 }
 
-// Map avatar color variants to HeroUI semantic colors
-const getAvatarColor = (
-	avatarColor?: string,
-): 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger' => {
-	// If no specific color provided, use danger (brand red)
-	if (!avatarColor) return 'danger';
+const getAvatarBg = (avatarColor?: string): string => {
+  if (!avatarColor) return 'bg-red-500';
 
-	// Map common hex colors to semantic colors
-	const colorMap: Record<
-		string,
-		'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger'
-	> = {
-		'#b81d24': 'danger', // Red -> danger
-		'#ff9900': 'warning', // Orange -> warning
-		'#8a2be2': 'secondary', // Purple -> secondary
-		'#008000': 'success', // Green -> success
-	};
+  const colorMap: Record<string, string> = {
+    '#b81d24': 'bg-red-500',
+    '#ff9900': 'bg-orange-500',
+    '#8a2be2': 'bg-purple-500',
+    '#008000': 'bg-green-500',
+  };
 
-	return colorMap[avatarColor] || 'danger';
+  return colorMap[avatarColor] || 'bg-red-500';
 };
 
-const TutorCard: React.FC<TutorCardProps> = ({ tutor }) => {
-	return (
-		<Card isHoverable className="border-default-100">
-			<CardBody className="p-4 flex flex-col">
-				{/* Info Principal */}
-				<div className="flex items-start mb-4">
-					{/* Avatar with semantic color */}
-					<Avatar
-						name={tutor.avatarInitials}
-						color={getAvatarColor(tutor.avatarColor)}
-						className="flex-shrink-0"
-						size="lg"
-					/>
+const TutorCard: React.FC<TutorCardProps> = ({ tutor, onOpenChat }) => {
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow">
+      <div className="p-4 flex flex-col">
+        {/* Info principal */}
+        <div className="flex items-start mb-4">
+          <div
+            className={`${getAvatarBg(tutor.avatarColor)} w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0`}
+          >
+            {tutor.avatarInitials}
+          </div>
 
-					<div className="ml-4 flex-grow">
-						<h3 className="text-lg font-semibold text-foreground">
-							{tutor.name}
-						</h3>
-						<p className="text-sm text-default-500">{tutor.title}</p>
-						{/* Rating */}
-						<div className="flex items-center mt-1">
-							<Star className="w-4 h-4 mr-1 text-danger fill-danger" />
-							<span className="text-sm font-medium text-danger">
-								{tutor.rating}
-							</span>
-							<span className="text-xs text-default-400 ml-1">
-								({tutor.reviews})
-							</span>
-						</div>
-					</div>
-				</div>
+          <div className="ml-4 flex-grow">
+            <h3 className="text-lg font-semibold text-gray-800">
+              {tutor.name}
+            </h3>
+            <p className="text-sm text-gray-600">{tutor.title}</p>
 
-				{/* Tags de Materias using HeroUI Chip */}
-				<div className="flex flex-wrap gap-2 mb-4">
-					{tutor.tags.map((tag, index) => (
-						<Chip key={index} color="danger" variant="flat" size="sm">
-							{tag}
-						</Chip>
-					))}
-				</div>
+            <div className="flex items-center mt-1">
+              <Star className="w-4 h-4 mr-1 text-red-700 fill-red-700" />
+              <span className="text-sm font-medium text-red-700">
+                {tutor.rating}
+              </span>
+              <span className="text-xs text-gray-400 ml-1">
+                ({tutor.reviews})
+              </span>
+            </div>
+          </div>
+        </div>
 
-				{/* Disponibilidad */}
-				<p className="text-sm font-medium text-default-600 mb-4 flex items-center">
-					<Calendar className="w-4 h-4 mr-1 text-default-500" />
-					{tutor.availability}
-				</p>
+        {/* Tags */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {tutor.tags.map((tag, index) => (
+            <span
+              key={index}
+              className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
 
-				{/* Acciones */}
-				<div className="flex justify-between items-center mt-auto pt-2 border-t border-default-100">
-					{/* Botón Ver Perfil */}
-					<Button
-						as={Link}
-						to={`/dashboard/tutor/${tutor.id}`}
-						color="danger"
-						className="flex-grow mr-2 font-semibold"
-					>
-						Ver perfil
-					</Button>
+        {/* Disponibilidad */}
+        <p className="text-sm font-medium text-gray-600 mb-4 flex items-center">
+          <Calendar className="w-4 h-4 mr-2 text-gray-500" />
+          {tutor.availability}
+        </p>
 
-					{/* ICONO DE MENSAJE */}
-					<Button
-						isIconOnly
-						variant="bordered"
-						aria-label="Enviar Mensaje"
-						onPress={() => {}}
-					>
-						<MessageCircle className="w-5 h-5" />
-					</Button>
-				</div>
-			</CardBody>
-		</Card>
-	);
+        {/* Acciones */}
+        <div className="flex gap-2 mt-auto pt-2 border-t border-gray-200">
+          <Link
+            to={`/dashboard/tutor/${tutor.id}`}
+            className="flex-grow bg-red-800 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors text-center"
+          >
+            Ver perfil
+          </Link>
+
+          <button
+            onClick={() => onOpenChat?.(tutor)}
+            className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+            aria-label="Enviar Mensaje"
+          >
+            <MessageCircle className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default TutorCard;
