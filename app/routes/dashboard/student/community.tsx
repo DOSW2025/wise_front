@@ -25,7 +25,7 @@ import {
 	Search,
 	ThumbsUp,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ForumCreationModal } from '~/components/forum-creation-modal';
 import { useAuth } from '~/contexts/auth-context';
 import { createForumReply, getForumById } from '~/lib/services/forum.service';
@@ -140,6 +140,14 @@ export default function StudentCommunity() {
 	const [editingContent, setEditingContent] = useState('');
 	const [savingEdit, setSavingEdit] = useState(false);
 	const [editError, setEditError] = useState<string | null>(null);
+
+	// Validación de edición usando HeroUI MCP (mínimo 5 caracteres)
+	const validateEditedContent = (val: string): string | null => {
+		const len = val.trim().length;
+		if (len === 0) return 'El mensaje no puede estar vacío';
+		if (len < 5) return 'El mensaje debe tener al menos 5 caracteres';
+		return null;
+	};
 	// Eliminación de respuesta
 	const deleteModal = useDisclosure();
 	const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
@@ -638,18 +646,17 @@ export default function StudentCommunity() {
 																						color="primary"
 																						size="sm"
 																						isDisabled={!withinTime}
-																						onPress={
-																							withinTime
-																								? () => {
-																										setEditingReplyId(reply.id);
-																										setEditingContent(
-																											reply.content,
-																										);
-																										setEditError(null);
-																										editModal.onOpen();
-																									}
-																								: undefined
-																						}
+																						onPress={() => {
+																							if (!withinTime) return;
+																							setEditingReplyId(reply.id);
+																							setEditingContent(reply.content);
+																							setEditError(
+																								validateEditedContent(
+																									reply.content,
+																								),
+																							);
+																							editModal.onOpen();
+																						}}
 																					>
 																						Editar
 																					</Button>
@@ -843,12 +850,27 @@ export default function StudentCommunity() {
 								<ModalBody>
 									<Textarea
 										value={editingContent}
-										onChange={(e) => setEditingContent(e.target.value)}
+										onChange={(e) => {
+											const val = e.target.value;
+											setEditingContent(val);
+											setEditError(validateEditedContent(val));
+										}}
 										minRows={5}
 										isInvalid={!!editError}
 										errorMessage={editError || ''}
 										placeholder="Actualiza tu mensaje manteniendo claridad y respeto"
 									/>
+									<div className="mt-1 text-xs">
+										<span
+											className={
+												editingContent.trim().length < 5
+													? 'text-danger'
+													: 'text-success'
+											}
+										>
+											{editingContent.trim().length} / 5
+										</span>
+									</div>
 									<p className="text-[11px] text-default-500">
 										No se guardará si el texto queda vacío.
 									</p>
@@ -865,40 +887,50 @@ export default function StudentCommunity() {
 									>
 										Cancelar
 									</Button>
-									<Button
-										color="primary"
-										isLoading={savingEdit}
-										isDisabled={
-											editingContent.trim().length === 0 || savingEdit
+									<Tooltip
+										content={
+											editingContent.trim().length < 5
+												? 'Debe tener al menos 5 caracteres'
+												: undefined
 										}
-										onPress={async () => {
-											if (editingContent.trim().length === 0) {
-												setEditError('El mensaje no puede estar vacío');
-												return;
-											}
-											setEditError(null);
-											setSavingEdit(true);
-											try {
-												// Simular guardado local (backend futuro)
-												setThreadReplies((prev) =>
-													prev.map((r) =>
-														r.id === editingReplyId
-															? { ...r, content: editingContent }
-															: r,
-													),
-												);
-												setEditingReplyId(null);
-												setEditingContent('');
-												onClose();
-											} catch (_e) {
-												setEditError('Error al guardar. Intenta nuevamente.');
-											} finally {
-												setSavingEdit(false);
-											}
-										}}
 									>
-										Guardar cambios
-									</Button>
+										<Button
+											color="primary"
+											isLoading={savingEdit}
+											isDisabled={
+												savingEdit ||
+												editingContent.trim().length < 5 ||
+												!!editError
+											}
+											onPress={async () => {
+												const err = validateEditedContent(editingContent);
+												if (err) {
+													setEditError(err);
+													return;
+												}
+												setSavingEdit(true);
+												try {
+													// Simular guardado local (backend futuro)
+													setThreadReplies((prev) =>
+														prev.map((r) =>
+															r.id === editingReplyId
+																? { ...r, content: editingContent }
+																: r,
+														),
+													);
+													setEditingReplyId(null);
+													setEditingContent('');
+													onClose();
+												} catch (_e) {
+													setEditError('Error al guardar. Intenta nuevamente.');
+												} finally {
+													setSavingEdit(false);
+												}
+											}}
+										>
+											Guardar cambios
+										</Button>
+									</Tooltip>
 								</ModalFooter>
 							</>
 						)}
