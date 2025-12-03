@@ -14,12 +14,7 @@ import {
 	useDisclosure,
 } from '@heroui/react';
 import { useEffect, useState } from 'react';
-import {
-	AlertMessage,
-	PasswordChangeModal,
-	ProfileAvatar,
-	StatsCard,
-} from '~/components';
+import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
 import {
 	ProfileConfigurationSection,
 	ProfileEditButtons,
@@ -27,7 +22,6 @@ import {
 	ProfileHeader,
 } from '~/components/profile';
 import { useAuth } from '~/contexts/auth-context';
-import { usePasswordManager } from '~/lib/hooks/usePasswordManager';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
 
@@ -54,7 +48,7 @@ export default function TutorProfile() {
 		phone: '',
 		location: '',
 		description: '',
-		avatarUrl: user?.avatarUrl,
+		avatar: user?.avatarUrl,
 		availability: {
 			monday: false,
 			tuesday: false,
@@ -68,22 +62,7 @@ export default function TutorProfile() {
 		hourlyRate: '',
 	});
 
-	const {
-		passwordData,
-		setPasswordData,
-		passwordErrors,
-		validatePassword,
-		resetPassword,
-	} = usePasswordManager();
-
-	const { isSaving, error, success, setError, saveProfile, changePassword } =
-		useProfileSave();
-
-	const {
-		isOpen: isPasswordModalOpen,
-		onOpen: onPasswordModalOpen,
-		onClose: onPasswordModalClose,
-	} = useDisclosure();
+	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
 
 	const {
 		isOpen: isAvailabilityModalOpen,
@@ -118,16 +97,6 @@ export default function TutorProfile() {
 
 		if (saved) {
 			setIsEditing(false);
-		}
-	};
-
-	const handlePasswordChange = async () => {
-		if (!validatePassword()) return;
-
-		const changed = await changePassword();
-		if (changed) {
-			onPasswordModalClose();
-			resetPassword();
 		}
 	};
 
@@ -181,13 +150,12 @@ export default function TutorProfile() {
 
 					<div className="flex flex-col md:flex-row gap-6">
 						<ProfileAvatar
-							src={profile.avatarUrl}
+							src={profile.avatar}
 							name={profile.name}
 							isEditing={isEditing}
 							onImageChange={handleImageChange}
 							preview={avatarPreview}
-						/>
-
+						/>{' '}
 						<ProfileFormFields
 							profile={profile}
 							isEditing={isEditing}
@@ -360,7 +328,6 @@ export default function TutorProfile() {
 				<CardBody className="gap-4">
 					<h2 className="text-xl font-semibold">Configuración de Cuenta</h2>
 					<ProfileConfigurationSection
-						onPasswordChange={onPasswordModalOpen}
 						emailNotifications={emailNotifications}
 						onEmailNotificationsChange={setEmailNotifications}
 						emailNotificationsDescription="Recibe notificaciones de nuevas solicitudes"
@@ -402,16 +369,6 @@ export default function TutorProfile() {
 					</ProfileConfigurationSection>
 				</CardBody>
 			</Card>
-
-			{/* Modal de Cambio de Contraseña */}
-			<PasswordChangeModal
-				isOpen={isPasswordModalOpen}
-				onClose={onPasswordModalClose}
-				passwordData={passwordData}
-				passwordErrors={passwordErrors}
-				onPasswordDataChange={setPasswordData}
-				onSave={handlePasswordChange}
-			/>
 
 			{/* Modal de Disponibilidad */}
 			<Modal

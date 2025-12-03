@@ -6,7 +6,6 @@ export { EmptyState } from './empty-state';
 export { MaterialCard } from './material-card';
 export { Navbar } from './navbar';
 export { PageHeader } from './page-header';
-export { PasswordChangeModal } from './password-change-modal';
 export {
 	ProfileConfigurationSection,
 	ProfileEditButtons,
