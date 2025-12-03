@@ -123,6 +123,12 @@ export function Sidebar({
 					path: '/dashboard/tutor/materials',
 				},
 				{
+					key: 'performance',
+					label: 'Mi Desempeño',
+					icon: <BarChart3 className="w-5 h-5" />,
+					path: '/dashboard/tutor/performance',
+				},
+				{
 					key: 'reports',
 					label: 'Reportes y Métricas',
 					icon: <TrendingUp className="w-5 h-5" />,
