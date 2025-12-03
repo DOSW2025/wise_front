@@ -132,6 +132,8 @@ export default function StudentCommunity() {
 			type: 'text';
 			content: string;
 			createdAt: Date;
+			isEdited?: boolean;
+			editedAt?: Date;
 		}[]
 	>([]);
 	// Edición de respuesta
@@ -622,7 +624,7 @@ export default function StudentCommunity() {
 																className="p-3 rounded-lg border border-default-200 bg-white space-y-2"
 															>
 																<div className="flex items-center justify-between">
-																	<span className="text-xs font-medium text-default-700">
+																	<span className="text-xs font-medium text-default-700 flex items-center gap-2">
 																		{reply.authorName} • {(() => {
 																			const mins = Math.floor(
 																				(Date.now() -
@@ -633,6 +635,16 @@ export default function StudentCommunity() {
 																			const hrs = Math.floor(mins / 60);
 																			return `Hace ${hrs} h`;
 																		})()}
+																		{reply.isEdited && (
+																			<Chip
+																				size="sm"
+																				color="warning"
+																				variant="flat"
+																				className="font-heading"
+																			>
+																				Editado
+																			</Chip>
+																		)}
 																	</span>
 																	{isAuthor && (
 																		<div className="flex gap-2">
@@ -914,7 +926,12 @@ export default function StudentCommunity() {
 													setThreadReplies((prev) =>
 														prev.map((r) =>
 															r.id === editingReplyId
-																? { ...r, content: editingContent }
+																? {
+																		...r,
+																		content: editingContent,
+																		isEdited: true,
+																		editedAt: new Date(),
+																	}
 																: r,
 														),
 													);
@@ -983,6 +1000,22 @@ export default function StudentCommunity() {
 												// Simular eliminación local
 												setThreadReplies((prev) =>
 													prev.filter((r) => r.id !== deletingReplyId),
+												);
+
+												// Actualizar contador de respuestas del foro seleccionado
+												setForums((prev) =>
+													prev.map((f) =>
+														f.id === selectedForumId
+															? {
+																	...f,
+																	replies:
+																		typeof f.replies === 'number' &&
+																		f.replies > 0
+																			? f.replies - 1
+																			: f.replies,
+																}
+															: f,
+													),
 												);
 												setDeletingReplyId(null);
 												onClose();

@@ -99,6 +99,10 @@ export function ForumCreationModal({
 		return AVAILABLE_SUBJECTS.find((s) => s.key === formData.subject);
 	}, [formData.subject]);
 
+	// Booleans para evitar condiciones negadas y mejorar legibilidad
+	const isSubjectEmpty = formData.subject === '';
+	const hasSubjectError = Boolean(errors.subject) && isSubjectEmpty;
+
 	// Validación del nombre del foro (mínimo visual ≥15)
 	const MIN_LEN = 15;
 	const validateForumName = (name: string): string | null => {
@@ -481,13 +485,13 @@ export function ForumCreationModal({
 											setFormData((prev) => ({ ...prev, subject: '' }));
 											setErrors((prev) => ({ ...prev, subject: '' }));
 										}}
-										isInvalid={!!errors.subject && !formData.subject}
+										isInvalid={hasSubjectError}
 										classNames={{
 											input: 'text-sm',
 											clearButton: 'text-default-400',
 										}}
 										description={
-											!formData.subject ? (
+											isSubjectEmpty ? (
 												<span className="text-xs text-default-500">
 													💡 Empieza a escribir para ver sugerencias
 												</span>
