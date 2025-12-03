@@ -14,10 +14,10 @@ import type { ForumErrorType } from '~/lib/services/forum.service';
 import { createForum } from '~/lib/services/forum.service';
 
 interface ForumCreationModalProps {
-	isOpen: boolean;
-	onClose: () => void;
-	onSubmit: (data: ForumFormData) => void;
-	onError?: (error: string) => void;
+	readonly isOpen: boolean;
+	readonly onClose: () => void;
+	readonly onSubmit: (data: ForumFormData) => void;
+	readonly onError?: (error: string) => void;
 }
 
 interface ForumFormData {
@@ -125,10 +125,74 @@ export function ForumCreationModal({
 		if (!subject) {
 			return 'Debe seleccionar una materia';
 		}
-		if (!AVAILABLE_SUBJECTS.find((s) => s.key === subject)) {
+		if (!AVAILABLE_SUBJECTS.some((s) => s.key === subject)) {
 			return 'La materia seleccionada no es válida';
 		}
 		return null;
+	};
+
+	// Helpers para reducir ternarios en JSX
+	const getNameFieldColor = ():
+		| 'default'
+		| 'success'
+		| 'warning'
+		| 'danger' => {
+		if (errors.name) return 'danger';
+		const len = formData.name ? formData.name.trim().length : 0;
+		if (!formData.name) return 'default';
+		return len >= MIN_LEN ? 'success' : 'warning';
+	};
+
+	const getNameDescription = (): JSX.Element | null => {
+		const len = formData.name.trim().length;
+		if (!formData.name) return null;
+		if (errors.name) {
+			return (
+				<span className="text-xs text-danger-600">
+					{errors.name} ({len}/50)
+				</span>
+			);
+		}
+		if (len < MIN_LEN) {
+			return (
+				<span className="text-xs text-warning-700">
+					{`Añade ${MIN_LEN - len} caracteres más para continuar`}
+				</span>
+			);
+		}
+		return (
+			<span className="text-xs text-success-700">{`✓ Nombre válido (${len}/50)`}</span>
+		);
+	};
+
+	type SubjectColor = 'primary' | 'success' | 'warning' | 'danger';
+	const getSubjectColorClasses = (color: SubjectColor) => {
+		switch (color) {
+			case 'primary':
+				return {
+					container: 'bg-primary-50 border-primary-200',
+					tag: 'text-primary-600',
+					title: 'text-primary-900',
+				};
+			case 'success':
+				return {
+					container: 'bg-success-50 border-success-200',
+					tag: 'text-success-600',
+					title: 'text-success-900',
+				};
+			case 'warning':
+				return {
+					container: 'bg-warning-50 border-warning-200',
+					tag: 'text-warning-600',
+					title: 'text-warning-900',
+				};
+			default:
+				return {
+					container: 'bg-danger-50 border-danger-200',
+					tag: 'text-danger-600',
+					title: 'text-danger-900',
+				};
+		}
 	};
 
 	// Manejar cambio en el campo nombre
@@ -168,53 +232,28 @@ export function ForumCreationModal({
 		if (!validateForm()) {
 			return;
 		}
-
+		// Modo frontend-only: simulamos éxito sin llamar API
 		setIsLoading(true);
 		setApiError(null);
 		setErrorType(null);
-		try {
-			// Llamar al endpoint para crear foro
-			const response = await createForum({
-				name: formData.name,
-				subject: formData.subject,
-			});
 
-			// Mostrar estado de éxito
-			setIsSuccess(true);
-			setCreatedForumData(formData);
+		setIsSuccess(true);
+		setCreatedForumData(formData);
 
-			// Notificar éxito después de un delay para que vea el mensaje
-			setTimeout(() => {
-				onSubmit(formData);
+		setTimeout(() => {
+			onSubmit(formData);
 
-				// Limpiar formulario
-				setFormData({ name: '', subject: '' });
-				setSearchSubject('');
-				setErrors({});
-				setApiError(null);
-				setErrorType(null);
-				setIsSuccess(false);
-				setCreatedForumData(null);
-				onClose();
-			}, 2000);
-		} catch (error) {
-			const errorMessage =
-				error instanceof Error ? error.message : 'Error desconocido';
-			setApiError(errorMessage);
-
-			// Detectar tipo de error
-			const type = (error as any)?.type as ForumErrorType | undefined;
-			if (type) {
-				setErrorType(type);
-			}
-
-			// Notificar error si hay callback
-			if (onError) {
-				onError(errorMessage);
-			}
-		} finally {
+			// Limpiar formulario
+			setFormData({ name: '', subject: '' });
+			setSearchSubject('');
+			setErrors({});
+			setApiError(null);
+			setErrorType(null);
+			setIsSuccess(false);
+			setCreatedForumData(null);
 			setIsLoading(false);
-		}
+			onClose();
+		}, 1200);
 	};
 
 	// Manejar cierre del modal
@@ -378,15 +417,7 @@ export function ForumCreationModal({
 									onChange={handleNameChange}
 									isInvalid={!!errors.name}
 									errorMessage={errors.name}
-									color={
-										errors.name
-											? 'danger'
-											: formData.name && formData.name.trim().length >= MIN_LEN
-												? 'success'
-												: formData.name
-													? 'warning'
-													: 'default'
-									}
+									color={getNameFieldColor()}
 									variant="bordered"
 									size="lg"
 									isClearable
@@ -398,29 +429,7 @@ export function ForumCreationModal({
 										input: 'text-base',
 										label: 'text-sm',
 									}}
-									description={(() => {
-										const len = formData.name.trim().length;
-										if (!formData.name) return null;
-										if (errors.name) {
-											return (
-												<span className="text-xs text-danger-600">
-													{errors.name} ({len}/50)
-												</span>
-											);
-										}
-										if (len < MIN_LEN) {
-											return (
-												<span className="text-xs text-warning-700">
-													{`Añade ${MIN_LEN - len} caracteres más para continuar`}
-												</span>
-											);
-										}
-										return (
-											<span className="text-xs text-success-700">
-												{`✓ Nombre válido (${len}/50)`}
-											</span>
-										);
-									})()}
+									description={getNameDescription()}
 								/>
 
 								{/* Medidor visual de longitud */}
@@ -563,46 +572,27 @@ export function ForumCreationModal({
 								</div>
 
 								{/* Materia seleccionada - Tarjeta de confirmación */}
-								{formData.subject && selectedSubjectInfo && (
-									<div
-										className={`p-4 rounded-lg border-2 transition-all ${
-											selectedSubjectInfo.color === 'primary'
-												? 'bg-primary-50 border-primary-200'
-												: selectedSubjectInfo.color === 'success'
-													? 'bg-success-50 border-success-200'
-													: selectedSubjectInfo.color === 'warning'
-														? 'bg-warning-50 border-warning-200'
-														: 'bg-danger-50 border-danger-200'
-										}`}
-									>
-										<p
-											className={`text-xs font-medium uppercase tracking-wide ${
-												selectedSubjectInfo.color === 'primary'
-													? 'text-primary-600'
-													: selectedSubjectInfo.color === 'success'
-														? 'text-success-600'
-														: selectedSubjectInfo.color === 'warning'
-															? 'text-warning-600'
-															: 'text-danger-600'
-											}`}
-										>
-											✓ Materia Seleccionada
-										</p>
-										<p
-											className={`text-lg font-bold ${
-												selectedSubjectInfo.color === 'primary'
-													? 'text-primary-900'
-													: selectedSubjectInfo.color === 'success'
-														? 'text-success-900'
-														: selectedSubjectInfo.color === 'warning'
-															? 'text-warning-900'
-															: 'text-danger-900'
-											}`}
-										>
-											{selectedSubjectInfo.label}
-										</p>
-									</div>
-								)}
+								{formData.subject &&
+									selectedSubjectInfo &&
+									(() => {
+										const classes = getSubjectColorClasses(
+											selectedSubjectInfo.color,
+										);
+										return (
+											<div
+												className={`p-4 rounded-lg border-2 transition-all ${classes.container}`}
+											>
+												<p
+													className={`text-xs font-medium uppercase tracking-wide ${classes.tag}`}
+												>
+													✓ Materia Seleccionada
+												</p>
+												<p className={`text-lg font-bold ${classes.title}`}>
+													{selectedSubjectInfo.label}
+												</p>
+											</div>
+										);
+									})()}
 
 								{/* Error de validación */}
 								{errors.subject && (

@@ -223,9 +223,9 @@ export async function createForum(
  */
 export async function getForums(subject?: string): Promise<ForumResponse[]> {
 	try {
-		err.type = mapErrorType(message);
+		err.type = mapErrorType(onmessage);
 
-		return extractResponseData<ForumResponse[]>(response.data);
+		return extractResponseData<ForumResponse[]>(Response.data);
 	} catch (error) {
 		const message = extractErrorMessage(
 			error,

@@ -1,7 +1,65 @@
-import { useEffect } from 'react';
+// import { useEffect } from 'react';
+// import { useNavigate } from 'react-router';
+// import { DashboardLayout } from '~/components/dashboard-layout';
+// import { useAuth } from '~/contexts/auth-context';
+
+// interface RoleDashboardProps {
+// 	allowedRole: 'admin' | 'student' | 'tutor';
+// }
+
+// export function RoleDashboard({ allowedRole }: RoleDashboardProps) {
+// 	const navigate = useNavigate();
+// 	const { user, logout, isAuthenticated, isLoading } = useAuth();
+
+// 	useEffect(() => {
+// 		if (!isLoading && !isAuthenticated) {
+// 			navigate('/login', { replace: true });
+// 			return;
+// 		}
+
+// 		// Verificar que el usuario tenga el rol correcto
+// 		if (!isLoading && user && user.role !== allowedRole) {
+// 			// Redirigir al dashboard correcto según el rol
+// 			const dashboardPath = `/dashboard/${user.role}`;
+// 			navigate(dashboardPath, { replace: true });
+// 		}
+// 	}, [isLoading, isAuthenticated, user, navigate, allowedRole]);
+
+// 	const handleLogout = async () => {
+// 		await logout();
+// 		navigate('/login');
+// 	};
+
+// 	if (isLoading) {
+// 		return (
+// 			<div className="min-h-screen flex items-center justify-center">
+// 				<div className="text-center">
+// 					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+// 					<p className="mt-4 text-default-600">Cargando...</p>
+// 				</div>
+// 			</div>
+// 		);
+// 	}
+
+// 	if (!user) {
+// 		return null;
+// 	}
+
+// 	console.log('User in RoleDashboard:', user);
+// 	console.log('Avatar in RoleDashboard:', user.avatarUrl);
+
+// 	return (
+// 		<DashboardLayout
+// 			userRole={user.role}
+// 			userName={user.name}
+// 			userEmail={user.email}
+// 			userAvatar={user.avatarUrl}
+// 			onLogout={handleLogout}
+// 		/>
+// 	);
+// }
 import { useNavigate } from 'react-router';
 import { DashboardLayout } from '~/components/dashboard-layout';
-import { useAuth } from '~/contexts/auth-context';
 
 interface RoleDashboardProps {
 	allowedRole: 'admin' | 'student' | 'tutor';
@@ -9,51 +67,26 @@ interface RoleDashboardProps {
 
 export function RoleDashboard({ allowedRole }: RoleDashboardProps) {
 	const navigate = useNavigate();
-	const { user, logout, isAuthenticated, isLoading } = useAuth();
 
-	useEffect(() => {
-		if (!isLoading && !isAuthenticated) {
-			navigate('/login', { replace: true });
-			return;
-		}
+	// TEMPORAL: Usuario mock para desarrollo
+	const mockUser = {
+		id: 'dev-student-1',
+		name: 'Estudiante Desarrollo',
+		email: 'student@dev.com',
+		role: 'student' as const,
+		avatarUrl: undefined,
+	};
 
-		// Verificar que el usuario tenga el rol correcto
-		if (!isLoading && user && user.role !== allowedRole) {
-			// Redirigir al dashboard correcto según el rol
-			const dashboardPath = `/dashboard/${user.role}`;
-			navigate(dashboardPath, { replace: true });
-		}
-	}, [isLoading, isAuthenticated, user, navigate, allowedRole]);
-
-	const handleLogout = async () => {
-		await logout();
+	const handleLogout = () => {
 		navigate('/login');
 	};
 
-	if (isLoading) {
-		return (
-			<div className="min-h-screen flex items-center justify-center">
-				<div className="text-center">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-					<p className="mt-4 text-default-600">Cargando...</p>
-				</div>
-			</div>
-		);
-	}
-
-	if (!user) {
-		return null;
-	}
-
-	console.log('User in RoleDashboard:', user);
-	console.log('Avatar in RoleDashboard:', user.avatarUrl);
-
 	return (
 		<DashboardLayout
-			userRole={user.role}
-			userName={user.name}
-			userEmail={user.email}
-			userAvatar={user.avatarUrl}
+			userRole={mockUser.role}
+			userName={mockUser.name}
+			userEmail={mockUser.email}
+			userAvatar={mockUser.avatarUrl}
 			onLogout={handleLogout}
 		/>
 	);

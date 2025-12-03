@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ForumCreationModal } from '~/components/forum-creation-modal';
+import { getForumDescription } from '~/lib/utils/community-helpers';
 
 interface Forum {
 	id: string;
@@ -293,13 +294,7 @@ export default function TutorCommunity() {
 											</h3>
 											{/* Descripción */}
 											<p className="text-default-600 text-sm line-clamp-2">
-												{forum.id === 'forum-1'
-													? 'Tengo dudas sobre cuándo aplicar sustitución trigonométrica en integrales. ¿Alguien puede explicar los casos más comunes?'
-													: forum.id === 'forum-2'
-														? '¿Qué estructura de datos recomiendan usar para implementar un sistema de caché? Estoy considerando usar diccionarios pero me gustaría conocer otras opciones.'
-														: forum.id === 'forum-3'
-															? 'En problemas con fricción, ¿cómo identifico correctamente todas las fuerzas que actúan sobre un cuerpo?'
-															: '¿Alguien tiene tips para balancear ecuaciones redox más fácilmente? Siempre me confundo con los números de oxidación.'}
+												{getForumDescription(forum.id)}
 											</p>
 											{/* Metadata - Autor y Tiempo */}
 											<div className="flex items-center gap-3 text-xs text-default-500">

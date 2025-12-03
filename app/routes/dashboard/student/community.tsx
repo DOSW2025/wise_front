@@ -29,6 +29,11 @@ import { useMemo, useState } from 'react';
 import { ForumCreationModal } from '~/components/forum-creation-modal';
 import { useAuth } from '~/contexts/auth-context';
 import { createForumReply, getForumById } from '~/lib/services/forum.service';
+import {
+	buildReplyPayload,
+	getForumDescription,
+	type ReplyKind,
+} from '~/lib/utils/community-helpers';
 
 interface Forum {
 	name: string;
@@ -44,42 +49,9 @@ interface Forum {
 }
 
 // Alias de tipo para Sonar (evita union literal repetida)
-type ReplyKind = 'text' | 'image' | 'link';
+// ReplyKind compartido desde helpers para evitar duplicaciones
 
-// Helpers para reducir ternarios/anidaciones
-function getForumDescription(forumId: string): string {
-	switch (forumId) {
-		case 'forum-1':
-			return 'Tengo dudas sobre cuándo aplicar sustitución trigonométrica en integrales. ¿Alguien puede explicar los casos más comunes?';
-		case 'forum-2':
-			return '¿Qué estructura de datos recomiendan usar para implementar un sistema de caché? Estoy considerando usar diccionarios pero me gustaría conocer otras opciones.';
-		case 'forum-3':
-			return 'En problemas con fricción, ¿cómo identifico correctamente todas las fuerzas que actúan sobre un cuerpo?';
-		default:
-			return '¿Alguien tiene tips para balancear ecuaciones redox más fácilmente? Siempre me confundo con los números de oxidación.';
-	}
-}
-
-type ReplyPayload =
-	| { forumId: string; type: 'text'; text: string }
-	| { forumId: string; type: 'image'; imageName?: string }
-	| { forumId: string; type: 'link'; url: string };
-
-function buildReplyPayload(
-	replyType: 'text' | 'image' | 'link',
-	forumId: string,
-	textReply: string,
-	imageFile: File | null,
-	linkUrl: string,
-): ReplyPayload {
-	if (replyType === 'text') {
-		return { forumId, type: 'text', text: textReply.trim() };
-	}
-	if (replyType === 'image') {
-		return { forumId, type: 'image', imageName: imageFile?.name };
-	}
-	return { forumId, type: 'link', url: linkUrl.trim() };
-}
+// Helpers ahora importados desde '~/lib/utils/community-helpers'
 
 const SUBJECT_COLORS: Record<
 	string,
@@ -385,36 +357,56 @@ export default function StudentCommunity() {
 		if (!selectedForumId) return;
 		setIsSubmitting(true);
 		setSubmitMessage(null);
+		// Frontend-only: simular envío y agregar al hilo local
 		try {
-			const payload =
-				replyType === 'text'
-					? {
-							forumId: selectedForumId,
-							type: 'text' as const,
-							text: textReply.trim(),
-						}
-					: replyType === 'image'
-						? {
-								forumId: selectedForumId,
-								type: 'image' as const,
-								imageName: imageFile?.name,
-							}
-						: {
-								forumId: selectedForumId,
-								type: 'link' as const,
-								url: linkUrl.trim(),
-							};
+			const now = new Date();
+			const newId = `reply-${Date.now()}`;
+			if (replyType === 'text') {
+				setThreadReplies((prev) => [
+					{
+						id: newId,
+						forumId: selectedForumId,
+						authorId: currentUserId,
+						authorName: 'Tú',
+						type: 'text',
+						content: textReply.trim(),
+						createdAt: now,
+					},
+					...prev,
+				]);
+			} else if (replyType === 'image') {
+				setThreadReplies((prev) => [
+					{
+						id: newId,
+						forumId: selectedForumId,
+						authorId: currentUserId,
+						authorName: 'Tú',
+						type: 'text',
+						content: `Imagen: ${imageFile?.name || 'archivo'}`,
+						createdAt: now,
+					},
+					...prev,
+				]);
+			} else {
+				setThreadReplies((prev) => [
+					{
+						id: newId,
+						forumId: selectedForumId,
+						authorId: currentUserId,
+						authorName: 'Tú',
+						type: 'text',
+						content: `Link: ${linkUrl.trim()}`,
+						createdAt: now,
+					},
+					...prev,
+				]);
+			}
 
-			await createForumReply(payload);
 			setSubmitMessage('✅ Respuesta enviada');
 			setTextReply('');
 			setImageFile(null);
 			setImagePreview(null);
 			setLinkUrl('');
-		} catch (error) {
-			const message =
-				error instanceof Error ? error.message : 'Error desconocido';
-			setSubmitMessage(`❌ ${message}`);
 		} finally {
 			setIsSubmitting(false);
 		}
