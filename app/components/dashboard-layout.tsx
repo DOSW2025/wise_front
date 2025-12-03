@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router';
+import { ChatbotWidget } from './chatbot-widget';
 import { Sidebar } from './sidebar';
 import ChatOverlay from './chat/chatOverlay'; // ← Importa el chat
 
