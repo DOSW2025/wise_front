@@ -5,6 +5,15 @@ import {
 	CardHeader,
 	Chip,
 	Input,
+	Modal,
+	ModalBody,
+	ModalContent,
+	ModalFooter,
+	ModalHeader,
+	Tab,
+	Tabs,
+	Textarea,
+	Tooltip,
 	useDisclosure,
 } from '@heroui/react';
 import {
@@ -121,6 +130,40 @@ export default function TutorCommunity() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
 	const [_creationError, setCreationError] = useState<string | null>(null);
+	const [selectedForumId, setSelectedForumId] = useState<string | null>(null);
+
+	// Estado de respuestas del hilo (visual)
+	const [threadReplies, setThreadReplies] = useState<
+		{
+			id: string;
+			forumId: string;
+			authorId: string;
+			authorName: string;
+			type: 'text';
+			content: string;
+			createdAt: Date;
+			isEdited?: boolean;
+			editedAt?: Date;
+		}[]
+	>([]);
+	const [threadLoading, setThreadLoading] = useState(false);
+	const [threadError, setThreadError] = useState<string | null>(null);
+
+	// Edición de respuesta
+	const editModal = useDisclosure();
+	const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+	const [editingContent, setEditingContent] = useState('');
+	const [savingEdit, setSavingEdit] = useState(false);
+	const [editError, setEditError] = useState<string | null>(null);
+
+	// Eliminación de respuesta
+	const deleteModal = useDisclosure();
+	const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
+	const [deleting, setDeleting] = useState(false);
+	const [deleteError, setDeleteError] = useState<string | null>(null);
+
+	// Usuario actual (tutor)
+	const currentUserId = 'mock-user-tutor';
 
 	const allSubjects = ['Todos', ...Object.values(SUBJECT_NAMES)];
 
@@ -160,6 +203,48 @@ export default function TutorCommunity() {
 
 	const handleCreationError = (error: string) => {
 		setCreationError(error);
+	};
+
+	// Validación de edición (mínimo 5)
+	const validateEditedContent = (val: string): string | null => {
+		const len = val.trim().length;
+		if (len === 0) return 'El mensaje no puede estar vacío';
+		if (len < 5) return 'El mensaje debe tener al menos 5 caracteres';
+		return null;
+	};
+
+	const openThreadDemo = (forumId: string) => {
+		setSelectedForumId(forumId);
+		setThreadError(null);
+		setThreadLoading(true);
+		// Cargar respuestas demo
+		setTimeout(() => {
+			setThreadReplies([
+				{
+					id: `r-demo-1-${forumId}`,
+					forumId,
+					authorId: currentUserId,
+					authorName: 'Tú',
+					type: 'text',
+					content: 'Mensaje de ejemplo editable para demostrar el flujo.',
+					createdAt: new Date(Date.now() - 2 * 60 * 1000),
+				},
+				{
+					id: `r-demo-2-${forumId}`,
+					forumId,
+					authorId: 'other-user-1',
+					authorName: 'Estudiante',
+					type: 'text',
+					content: 'Respuesta de otra persona para comparar permisos.',
+					createdAt: new Date(Date.now() - 9 * 60 * 1000),
+				},
+			]);
+			setThreadLoading(false);
+			setTimeout(() => {
+				const el = document.querySelector('#tutor-reply-panel');
+				if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}, 50);
+		}, 200);
 	};
 
 	return (
@@ -214,29 +299,26 @@ export default function TutorCommunity() {
 							classNames={{ input: 'text-base' }}
 						/>
 					</div>
-					{/* Filtros */}
-					<div className="flex flex-wrap gap-2">
-						{allSubjects.map((subject) => {
-							const isSelected = selectedSubject === subject;
-
-							return (
-								<Chip
+					{/* Filtro por materia (solo desplegable, igual que estudiante) */}
+					<div className="max-w-sm mt-3">
+						<p className="text-sm font-semibold text-foreground mb-1">
+							Filtrar por materia
+						</p>
+						<select
+							aria-label="Filtrar por materia"
+							className="w-full border border-default-300 rounded-lg px-3 py-2 text-sm bg-white"
+							value={selectedSubject ?? ''}
+							onChange={(e) => setSelectedSubject(e.target.value || null)}
+						>
+							{allSubjects.map((subject) => (
+								<option
 									key={subject}
-									onClick={() =>
-										setSelectedSubject(isSelected ? null : subject)
-									}
-									color={isSelected ? 'primary' : 'default'}
-									variant="bordered"
-									className={`cursor-pointer font-medium transition-colors ${
-										isSelected
-											? 'border-primary text-primary bg-primary-50'
-											: 'border-default-300 text-default-700 hover:border-primary hover:text-primary'
-									}`}
+									value={subject === 'Todos' ? '' : subject}
 								>
 									{subject}
-								</Chip>
-							);
-						})}
+								</option>
+							))}
+						</select>
 					</div>
 					{/* Lista de foros */}
 					{filteredForums.length === 0 ? (
@@ -259,7 +341,8 @@ export default function TutorCommunity() {
 								return (
 									<Card
 										key={forum.id}
-										className="border border-default-200 hover:border-primary transition-colors cursor-pointer"
+										className={`border border-default-200 transition-colors cursor-pointer ${selectedForumId === forum.id ? 'border-primary' : 'hover:border-primary'}`}
+										onClick={() => setSelectedForumId(forum.id)}
 									>
 										<CardBody className="space-y-3 py-4">
 											{/* Header del foro - Badges */}
@@ -323,8 +406,8 @@ export default function TutorCommunity() {
 											</div>
 											{/* Separador */}
 											<div className="h-px bg-default-200" />
-											{/* Estadísticas - Solo iconos y números */}
-											<div className="flex items-center gap-4 text-sm text-default-600">
+											{/* Estadísticas + Acción */}
+											<div className="flex items-center justify-between gap-4 text-sm text-default-600">
 												<div className="flex items-center gap-1.5">
 													<MessageCircle className="w-4 h-4" />
 													<span>{forum.replies} respuestas</span>
@@ -337,12 +420,418 @@ export default function TutorCommunity() {
 													<Eye className="w-4 h-4" />
 													<span>{forum.views}</span>
 												</div>
+												<div className="ml-auto flex items-center gap-2">
+													<Button
+														size="sm"
+														color="primary"
+														variant="flat"
+														onPress={() => {
+															setSelectedForumId(forum.id);
+															openThreadDemo(forum.id);
+														}}
+													>
+														Responder
+													</Button>
+													<Button
+														size="sm"
+														color="default"
+														variant="bordered"
+														onPress={() => openThreadDemo(forum.id)}
+														isLoading={
+															threadLoading && selectedForumId === forum.id
+														}
+													>
+														Ver hilo
+													</Button>
+												</div>
 											</div>
 										</CardBody>
 									</Card>
 								);
 							})}
 						</div>
+					)}
+					{selectedForumId && (
+						<Card id="tutor-thread-panel" className="border border-default-200">
+							<CardHeader className="py-2">
+								<p className="text-sm font-semibold text-foreground">
+									Foro seleccionado
+								</p>
+							</CardHeader>
+							<CardBody className="space-y-4">
+								{threadError ? (
+									<div className="flex items-start gap-2 p-3 bg-danger-50 border border-danger-200 rounded-lg">
+										<span className="text-danger-600">❌</span>
+										<div className="flex-1 min-w-0">
+											<p className="text-xs font-semibold text-danger-700">
+												Error al cargar el hilo
+											</p>
+											<p className="text-xs text-danger-600 mt-0.5">
+												{threadError}
+											</p>
+										</div>
+									</div>
+								) : (
+									<div className="space-y-3">
+										{threadReplies.length === 0 && (
+											<div className="p-3 bg-default-50 border border-default-200 rounded-lg">
+												<p className="text-xs text-default-600">
+													Este hilo aún no tiene respuestas.
+												</p>
+												<p className="text-[11px] text-default-500">
+													Usa el panel de abajo para responder con texto, imagen
+													o link.
+												</p>
+											</div>
+										)}
+										{threadReplies.map((reply) => {
+											const isAuthor = reply.authorId === currentUserId;
+											const withinTime =
+												Date.now() - reply.createdAt.getTime() <=
+												60 * 60 * 1000; // 60 minutos
+											return (
+												<div
+													key={reply.id}
+													className="p-3 rounded-lg border border-default-200 bg-white space-y-2"
+												>
+													<div className="flex items-center justify-between">
+														<span className="text-xs font-medium text-default-700 flex items-center gap-2">
+															{reply.authorName} • {(() => {
+																const mins = Math.floor(
+																	(Date.now() - reply.createdAt.getTime()) /
+																		(1000 * 60),
+																);
+																if (mins < 60) return `Hace ${mins} min`;
+																const hrs = Math.floor(mins / 60);
+																return `Hace ${hrs} h`;
+															})()}
+															{reply.isEdited && (
+																<Chip
+																	size="sm"
+																	color="warning"
+																	variant="flat"
+																	className="font-heading"
+																>
+																	Editado
+																</Chip>
+															)}
+														</span>
+														{isAuthor && (
+															<div className="flex gap-2">
+																<Tooltip
+																	content="Tiempo para editar/eliminar expirado (60 min)"
+																	isDisabled={withinTime}
+																>
+																	<span>
+																		<Button
+																			variant="light"
+																			color="primary"
+																			size="sm"
+																			isDisabled={!withinTime}
+																			onPress={() => {
+																				if (!withinTime) return;
+																				setEditingReplyId(reply.id);
+																				setEditingContent(reply.content);
+																				setEditError(
+																					validateEditedContent(reply.content),
+																				);
+																				editModal.onOpen();
+																			}}
+																		>
+																			Editar
+																		</Button>
+																	</span>
+																</Tooltip>
+																<Tooltip
+																	content="Tiempo para editar/eliminar expirado (60 min)"
+																	isDisabled={withinTime}
+																>
+																	<span>
+																		<Button
+																			variant="light"
+																			color="danger"
+																			size="sm"
+																			isDisabled={!withinTime}
+																			onPress={
+																				withinTime
+																					? () => {
+																							setDeletingReplyId(reply.id);
+																							setDeleteError(null);
+																							deleteModal.onOpen();
+																						}
+																					: undefined
+																			}
+																		>
+																			Eliminar
+																		</Button>
+																	</span>
+																</Tooltip>
+															</div>
+														)}
+													</div>
+													<p className="text-sm text-default-700 leading-snug whitespace-pre-line">
+														{reply.content}
+													</p>
+												</div>
+											);
+										})}
+									</div>
+								)}
+							</CardBody>
+						</Card>
+					)}
+					{selectedForumId && (
+						<Card id="tutor-reply-panel" className="border border-primary-200">
+							<CardHeader className="py-3">
+								<p className="text-sm font-semibold text-foreground">
+									Responder al foro seleccionado
+								</p>
+							</CardHeader>
+							<CardBody className="space-y-4">
+								<Tabs
+									aria-label="Selecciona el tipo de respuesta"
+									selectedKey={'text'}
+									variant="underlined"
+									color="primary"
+								>
+									<Tab key="text" title="Texto" />
+									<Tab key="image" title="Imagen" />
+									<Tab key="link" title="Link" />
+								</Tabs>
+
+								<Textarea
+									label="Mensaje"
+									placeholder="Escribe tu respuesta..."
+									value={editingContent}
+									onChange={(e) => setEditingContent(e.target.value)}
+									isInvalid={!!editError}
+									errorMessage={editError || ''}
+									minRows={4}
+								/>
+								<div className="flex justify-end">
+									<Button
+										color="primary"
+										isDisabled={editingContent.trim().length < 1}
+										onPress={() => {
+											if (!selectedForumId) return;
+											const text = editingContent.trim();
+											if (!text) return;
+											const newReply = {
+												id: `r-${Date.now()}`,
+												forumId: selectedForumId,
+												authorId: currentUserId,
+												authorName: 'Tú',
+												type: 'text' as const,
+												content: text,
+												createdAt: new Date(),
+											};
+											setThreadReplies((prev) => [newReply, ...prev]);
+											setEditingContent('');
+											// actualizar contador
+											setForums((prev) =>
+												prev.map((f) =>
+													f.id === selectedForumId
+														? {
+																...f,
+																replies:
+																	typeof f.replies === 'number'
+																		? (f.replies || 0) + 1
+																		: f.replies,
+															}
+														: f,
+												),
+											);
+										}}
+									>
+										Enviar respuesta
+									</Button>
+								</div>
+							</CardBody>
+						</Card>
+					)}
+					{/* Modales de edición y eliminación */}
+					{editingReplyId && (
+						<Modal
+							isOpen={editModal.isOpen}
+							onClose={editModal.onClose}
+							size="lg"
+						>
+							<ModalContent>
+								{(onClose) => (
+									<>
+										<ModalHeader className="flex flex-col gap-1">
+											Editar respuesta
+										</ModalHeader>
+										<ModalBody>
+											<Textarea
+												value={editingContent}
+												onChange={(e) => {
+													const val = e.target.value;
+													setEditingContent(val);
+													setEditError(validateEditedContent(val));
+												}}
+												minRows={5}
+												isInvalid={!!editError}
+												errorMessage={editError || ''}
+												placeholder="Actualiza tu mensaje manteniendo claridad y respeto"
+											/>
+											<div className="mt-1 text-xs">
+												<span
+													className={
+														editingContent.trim().length < 5
+															? 'text-danger'
+															: 'text-success'
+													}
+												>
+													{editingContent.trim().length} / 5
+												</span>
+											</div>
+										</ModalBody>
+										<ModalFooter>
+											<Button
+												variant="light"
+												color="default"
+												onPress={() => {
+													setEditingReplyId(null);
+													setEditingContent('');
+													onClose();
+												}}
+											>
+												Cancelar
+											</Button>
+											<Tooltip
+												content={
+													editingContent.trim().length < 5
+														? 'Debe tener al menos 5 caracteres'
+														: undefined
+												}
+											>
+												<Button
+													color="primary"
+													isLoading={savingEdit}
+													isDisabled={
+														savingEdit ||
+														editingContent.trim().length < 5 ||
+														!!editError
+													}
+													onPress={async () => {
+														const err = validateEditedContent(editingContent);
+														if (err) {
+															setEditError(err);
+															return;
+														}
+														setSavingEdit(true);
+														try {
+															setThreadReplies((prev) =>
+																prev.map((r) =>
+																	r.id === editingReplyId
+																		? {
+																				...r,
+																				content: editingContent,
+																				isEdited: true,
+																				editedAt: new Date(),
+																			}
+																		: r,
+																),
+															);
+															setEditingReplyId(null);
+															setEditingContent('');
+															onClose();
+														} catch (_e) {
+															setEditError(
+																'Error al guardar. Intenta nuevamente.',
+															);
+														} finally {
+															setSavingEdit(false);
+														}
+													}}
+												>
+													Guardar cambios
+												</Button>
+											</Tooltip>
+										</ModalFooter>
+									</>
+								)}
+							</ModalContent>
+						</Modal>
+					)}
+					{deletingReplyId && (
+						<Modal
+							isOpen={deleteModal.isOpen}
+							onClose={deleteModal.onClose}
+							size="md"
+						>
+							<ModalContent>
+								{(onClose) => (
+									<>
+										<ModalHeader className="flex flex-col gap-1">
+											Confirmar eliminación
+										</ModalHeader>
+										<ModalBody>
+											<p className="text-sm text-default-600">
+												¿Seguro que deseas eliminar esta respuesta? Esta acción
+												es visual por ahora.
+											</p>
+											{deleteError && (
+												<p className="text-xs text-danger-600 mt-2">
+													{deleteError}
+												</p>
+											)}
+										</ModalBody>
+										<ModalFooter>
+											<Button
+												variant="light"
+												color="default"
+												onPress={() => {
+													setDeletingReplyId(null);
+													setDeleteError(null);
+													onClose();
+												}}
+											>
+												Cancelar
+											</Button>
+											<Button
+												color="danger"
+												isLoading={deleting}
+												onPress={async () => {
+													setDeleteError(null);
+													setDeleting(true);
+													try {
+														setThreadReplies((prev) =>
+															prev.filter((r) => r.id !== deletingReplyId),
+														);
+														setForums((prev) =>
+															prev.map((f) =>
+																f.id === selectedForumId
+																	? {
+																			...f,
+																			replies:
+																				typeof f.replies === 'number' &&
+																				f.replies > 0
+																					? f.replies - 1
+																					: f.replies,
+																		}
+																	: f,
+															),
+														);
+														setDeletingReplyId(null);
+														onClose();
+													} catch (_e) {
+														setDeleteError(
+															'No se pudo eliminar. Intenta nuevamente.',
+														);
+													} finally {
+														setDeleting(false);
+													}
+												}}
+											>
+												Eliminar
+											</Button>
+										</ModalFooter>
+									</>
+								)}
+							</ModalContent>
+						</Modal>
 					)}
 				</div>
 
