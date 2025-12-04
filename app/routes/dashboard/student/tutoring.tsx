@@ -53,7 +53,6 @@ interface StudentSession {
 	status: 'confirmada' | 'pendiente' | 'cancelada';
 }
 
-// TODO: Conectar con API - Ejemplo con valores negativos / datos dummy para referencia
 const mockTutors: Tutor[] = [
 	{
 		id: 1,
@@ -83,7 +82,6 @@ const mockTutors: Tutor[] = [
 	},
 ];
 
-// TODO: Conectar con API - Sesiones del estudiante (dummy)
 const mockSessions: StudentSession[] = [
 	{
 		id: '-1',
@@ -106,17 +104,14 @@ const StudentTutoringPage: React.FC = () => {
 	);
 	const [sessions, setSessions] = useState<StudentSession[]>(mockSessions);
 
-	// Recibe la función del contexto para abrir el chat
 	const { onOpenChat } = useOutletContext<{
 		onOpenChat: (tutor: Tutor) => void;
 	}>();
 
 	const handleSearch = (_filters: TutorFilters) => {
-		// Lógica de filtrado simulada (reemplazar con Axios/Zustand después)
 	};
 
 	const handleCancelSession = (id: string) => {
-		// Por ahora solo marcamos como cancelada en memoria
 		setSessions((prev) =>
 			prev.map((s) =>
 				s.id === id ? { ...s, status: 'cancelada' } : s,
@@ -126,13 +121,11 @@ const StudentTutoringPage: React.FC = () => {
 
 	return (
 		<div className="space-y-6 p-4 md:p-6">
-			{/* Header */}
 			<PageHeader
 				title="Mis Tutorías"
 				description="Agenda nuevas tutorías y revisa tus sesiones programadas."
 			/>
 
-			{/* Tabs: Agendar / Mis tutorías */}
 			<div className="flex gap-2">
 				<Button
 					variant={activeTab === 'search' ? 'solid' : 'light'}
@@ -150,7 +143,6 @@ const StudentTutoringPage: React.FC = () => {
 				</Button>
 			</div>
 
-			{/* TAB 1: Agendar tutoría (buscar tutores) */}
 			{activeTab === 'search' && (
 				<>
 					<Card>
@@ -174,7 +166,6 @@ const StudentTutoringPage: React.FC = () => {
 						</CardBody>
 					</Card>
 
-					{/* Resultados y Botón Ver Calendario */}
 					<div className="flex justify-between items-center pt-2 border-t border-default-200">
 						<p className="text-default-600">
 							{tutors.length} tutores encontrados
@@ -188,21 +179,18 @@ const StudentTutoringPage: React.FC = () => {
 						</Button>
 					</div>
 
-					{/* Grid de Tarjetas de Tutores */}
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
 						{tutors.map((tutor) => (
 							<TutorCard
 								key={tutor.id}
 								tutor={tutor}
 								onOpenChat={onOpenChat}
-								// Aquí podrías pasar también un onSchedule si lo agregas al TutorCard
 							/>
 						))}
 					</div>
 				</>
 			)}
 
-			{/* TAB 2: Mis tutorías (sesiones del estudiante) */}
 			{activeTab === 'my-sessions' && (
 				<div className="space-y-4">
 					<div className="flex items-center justify-between">
