@@ -108,6 +108,7 @@ function TopicCard({
 	onEditTopic,
 	onTogglePinned,
 	// onOpenDetails removed
+	edited,
 }: {
 	topic: Topic;
 	onReply: (id: string) => void;
@@ -117,6 +118,7 @@ function TopicCard({
 	onEditTopic: (id: string) => void;
 	onTogglePinned: (id: string) => void;
 	// onOpenDetails: (topic: Topic) => void;
+	edited?: boolean;
 }) {
 	return (
 		<Card
@@ -134,6 +136,11 @@ function TopicCard({
 					{topic.myTopic && (
 						<Chip size="sm" variant="flat" color="default">
 							Propio
+						</Chip>
+					)}
+					{edited && (
+						<Chip size="sm" variant="flat" color="primary">
+							Editado
 						</Chip>
 					)}
 					<Chip size="sm" variant="flat" color="secondary">
@@ -311,6 +318,9 @@ export function CommunityForums() {
 	const [subjectById, setSubjectById] = useState<Record<string, string>>(() =>
 		Object.fromEntries(SAMPLE_TOPICS.map((t) => [t.id, t.subject])),
 	);
+	const [editedById, setEditedById] = useState<Record<string, boolean>>(
+		() => ({}),
+	);
 
 	const [isTopicEditOpen, setIsTopicEditOpen] = useState(false);
 	const [editingTopicIdModal, setEditingTopicIdModal] = useState<string | null>(
@@ -422,6 +432,7 @@ export function CommunityForums() {
 		const id = editingTopicIdModal;
 		setTitleById((prev) => ({ ...prev, [id]: editTopicTitle }));
 		setSubjectById((prev) => ({ ...prev, [id]: editTopicSubject }));
+		setEditedById((prev) => ({ ...prev, [id]: true }));
 		setIsTopicEditOpen(false);
 		setEditingTopicIdModal(null);
 	};
@@ -488,6 +499,7 @@ export function CommunityForums() {
 									repliesCount={
 										(replies[t.id] ?? []).length || t.counts.replies
 									}
+									edited={!!editedById[t.id]}
 								/>
 								{replyingTo === t.id && (
 									<Card
