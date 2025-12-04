@@ -107,7 +107,7 @@ function TopicCard({
 	onToggleResolved,
 	onEditTopic,
 	onTogglePinned,
-	onOpenDetails,
+	// onOpenDetails removed
 }: {
 	topic: Topic;
 	onReply: (id: string) => void;
@@ -116,23 +116,19 @@ function TopicCard({
 	onToggleResolved: (id: string) => void;
 	onEditTopic: (id: string) => void;
 	onTogglePinned: (id: string) => void;
-	onOpenDetails: (topic: Topic) => void;
+	// onOpenDetails: (topic: Topic) => void;
 }) {
 	return (
 		<Card
 			shadow="sm"
 			className="border-1 border-default-200 cursor-pointer hover:border-primary-300 transition-colors"
-			onClick={() => onOpenDetails(topic)}
+			// onClick={() => onOpenDetails(topic)}
 		>
 			<CardBody className="gap-3">
 				<div className="flex items-center gap-2 text-sm">
 					{topic.resolved ? (
 						<Chip size="sm" color="success" variant="flat">
 							Resuelto
-						</Chip>
-					) : topic.pinned ? (
-						<Chip size="sm" color="warning" variant="flat">
-							Fijado
 						</Chip>
 					) : null}
 					{topic.myTopic && (
@@ -155,11 +151,14 @@ function TopicCard({
 								size="sm"
 								aria-label={topic.pinned ? 'Desfijar foro' : 'Fijar foro'}
 								className="rounded-medium"
-								color={topic.pinned ? 'warning' : 'default'}
+								color={topic.pinned ? 'primary' : 'default'}
 								onPress={() => onTogglePinned(topic.id)}
 								onClick={(e) => e.stopPropagation()}
 							>
-								<Pin size={16} />
+								<Pin
+									size={16}
+									className={topic.pinned ? 'text-primary' : undefined}
+								/>
 							</Button>
 						</Tooltip>
 
@@ -258,19 +257,12 @@ function TopicCard({
 					<div className="ml-auto flex items-center gap-2">
 						<Button
 							size="sm"
-							variant="flat"
-							startContent={<Eye size={16} />}
-							onPress={() => onOpenDetails(topic)}
-						>
-							Ver foro
-						</Button>
-						<Button
-							size="sm"
 							color="primary"
 							variant="flat"
+							startContent={<Plus size={16} />}
 							onPress={() => onReply(topic.id)}
 						>
-							Responder
+							Crear hilo
 						</Button>
 					</div>
 				</div>
@@ -340,8 +332,7 @@ export function CommunityForums() {
 	const [replyText, setReplyText] = useState('');
 	const [replyImage, setReplyImage] = useState<File | null>(null);
 	const [replyLink, setReplyLink] = useState('');
-	const [isViewOpen, setIsViewOpen] = useState(false);
-	const [viewTopic, setViewTopic] = useState<Topic | null>(null);
+	// Vista de detalle eliminada en favor de crear hilos directamente
 
 	const initialReplies: Record<string, Reply[]> = useMemo(
 		() => ({
@@ -435,10 +426,7 @@ export function CommunityForums() {
 		setEditingTopicIdModal(null);
 	};
 
-	const openDetails = (topic: Topic) => {
-		setViewTopic(topic);
-		setIsViewOpen(true);
-	};
+	// Detalle de foro desactivado
 
 	return (
 		<div className="space-y-6">
@@ -497,7 +485,6 @@ export function CommunityForums() {
 									onToggleResolved={toggleResolved}
 									onEditTopic={openEditTopic}
 									onTogglePinned={togglePinned}
-									onOpenDetails={openDetails}
 									repliesCount={
 										(replies[t.id] ?? []).length || t.counts.replies
 									}
@@ -884,70 +871,7 @@ export function CommunityForums() {
 				</ModalContent>
 			</Modal>
 
-			{/* Modal de detalle de foro */}
-			<Modal isOpen={isViewOpen} onOpenChange={setIsViewOpen} size="lg">
-				<ModalContent>
-					{(onClose) => (
-						<>
-							<ModalHeader className="flex items-center gap-2">
-								{viewTopic?.subject && (
-									<Chip size="sm" variant="flat" color="secondary">
-										{viewTopic.subject}
-									</Chip>
-								)}
-								{viewTopic?.pinned && (
-									<Chip size="sm" color="warning" variant="flat">
-										Fijado
-									</Chip>
-								)}
-								{viewTopic?.resolved && (
-									<Chip size="sm" color="success" variant="flat">
-										Resuelto
-									</Chip>
-								)}
-							</ModalHeader>
-							<ModalBody className="gap-2">
-								<h2 className="text-xl font-bold text-foreground">
-									{viewTopic?.title}
-								</h2>
-								<div className="text-xs text-default-500">
-									{viewTopic && (
-										<>
-											Por {viewTopic.author} · {viewTopic.timeAgo}
-										</>
-									)}
-								</div>
-								<p className="text-default-600 text-sm">{viewTopic?.excerpt}</p>
-								{viewTopic && (
-									<div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-default-600">
-										<div className="flex items-center gap-1">
-											<MessageCircle size={16} />
-											<span>
-												{(replies[viewTopic.id] ?? []).length ||
-													viewTopic.counts.replies}{' '}
-												respuestas
-											</span>
-										</div>
-										<div className="flex items-center gap-1">
-											<ThumbsUp size={16} />
-											<span>{viewTopic.counts.likes}</span>
-										</div>
-										<div className="flex items-center gap-1">
-											<Eye size={16} />
-											<span>{viewTopic.counts.views}</span>
-										</div>
-									</div>
-								)}
-							</ModalBody>
-							<ModalFooter>
-								<Button variant="light" onPress={onClose}>
-									Cerrar
-								</Button>
-							</ModalFooter>
-						</>
-					)}
-				</ModalContent>
-			</Modal>
+			{/* Vista de detalle de foro eliminada por ser redundante */}
 
 			{/* Modal de edición de foro */}
 			<Modal
