@@ -15,7 +15,8 @@ import {
 	useDisclosure,
 } from '@heroui/react';
 import { Calendar, Clock, MapPin, Plus, Video, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 
 interface TimeSlot {
 	id: string;
@@ -65,9 +66,18 @@ const TIME_OPTIONS = [
 
 export default function TutorScheduled() {
 	const { isOpen, onOpen, onClose } = useDisclosure();
+	const [searchParams] = useSearchParams();
 	const [activeTab, setActiveTab] = useState<'scheduled' | 'availability'>(
 		'scheduled',
 	);
+
+	// Detectar parámetro tab en la URL
+	useEffect(() => {
+		const tabParam = searchParams.get('tab');
+		if (tabParam === 'availability') {
+			setActiveTab('availability');
+		}
+	}, [searchParams]);
 
 	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
 	const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
