@@ -11,7 +11,6 @@ import type {
 	PaginatedResponse,
 	PaginationParams,
 	UpdateRoleRequest,
-	UpdateUserStatusRequest,
 } from '../types/api.types';
 
 /**
@@ -72,12 +71,10 @@ export async function getUsers(
 			return {
 				data: body.data,
 				pagination: {
-					currentPage: body.meta.page,
+					page: body.meta.page,
+					limit: body.meta.limit,
 					totalPages: body.meta.totalPages,
 					totalItems: body.meta.total,
-					itemsPerPage: body.meta.limit,
-					hasNextPage: body.meta.page < body.meta.totalPages,
-					hasPreviousPage: body.meta.page > 1,
 				},
 			};
 		}
@@ -111,7 +108,25 @@ export async function updateUserRole(
 ): Promise<AdminUserDto> {
 	try {
 		const endpoint = API_ENDPOINTS.USERS.UPDATE_ROLE.replace(':id', userId);
-		const rolId = ROLE_IDS[role];
+		// Accept either Spanish role keys or common English alternatives
+		const roleKey = (role || '').toString().toLowerCase();
+		const roleMap: Record<string, keyof typeof ROLE_IDS> = {
+			estudiante: 'estudiante',
+			student: 'estudiante',
+			estudiante_id: 'estudiante',
+			tutor: 'tutor',
+			teacher: 'tutor',
+			profesor: 'tutor',
+			admin: 'admin',
+			administrador: 'admin',
+		};
+
+		const mappedKey = roleMap[roleKey] || (roleKey as keyof typeof ROLE_IDS);
+		const rolId = ROLE_IDS[mappedKey as keyof typeof ROLE_IDS];
+
+		if (!rolId) {
+			throw new Error(`Unknown role value: ${role}`);
+		}
 
 		const response = await apiClient.patch<ApiResponse<AdminUserDto>>(
 			endpoint,
