@@ -14,6 +14,7 @@ import {
 	useDisclosure,
 } from '@heroui/react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
 import {
 	ProfileConfigurationSection,
@@ -27,6 +28,7 @@ import { useProfileSave } from './hooks/useProfileSave';
 
 export default function TutorProfile() {
 	const { user } = useAuth();
+	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
 
 	// Custom hooks for managing complex state
@@ -64,11 +66,8 @@ export default function TutorProfile() {
 
 	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
 
-	const {
-		isOpen: isAvailabilityModalOpen,
-		onOpen: onAvailabilityModalOpen,
-		onClose: onAvailabilityModalClose,
-	} = useDisclosure();
+	const { isOpen: isAvailabilityModalOpen, onClose: onAvailabilityModalClose } =
+		useDisclosure();
 
 	useEffect(() => {
 		if (user) {
@@ -360,7 +359,9 @@ export default function TutorProfile() {
 								<Button
 									color="primary"
 									variant="bordered"
-									onPress={onAvailabilityModalOpen}
+									onPress={() =>
+										navigate('/dashboard/tutor/scheduled?tab=availability')
+									}
 								>
 									Configurar
 								</Button>
