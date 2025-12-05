@@ -12,28 +12,24 @@ import { X } from 'lucide-react';
 import { useState } from 'react';
 import type {
 	Badge,
-	BadgeCode,
 	BadgeTier,
+	UserRole,
 } from '~/lib/types/gamification.types';
 
 interface BadgeFormProps {
 	badge?: Badge;
-	onSubmit: (badge: Omit<Badge, 'id' | 'earnedAt'>) => void;
+	onSubmit: (badge: Omit<Badge, 'id'>) => void; // Badge base no tiene earnedAt
 	onCancel: () => void;
 	isLoading?: boolean;
 }
 
-const badgeCodes: BadgeCode[] = [
-	'explorador',
-	'constante',
-	'mentor_en_accion',
-	'respuesta_util',
-	'aporte_valioso',
-	'guardian_de_materiales',
-	'comunidad_activa',
-];
-
 const tiers: BadgeTier[] = ['bronze', 'silver', 'gold'];
+
+const roles: { value: UserRole; label: string }[] = [
+	{ value: 'student', label: 'Estudiantes' },
+	{ value: 'tutor', label: 'Tutores/Docentes' },
+	{ value: 'both', label: 'Ambos' },
+];
 
 export function BadgeForm({
 	badge,
@@ -46,6 +42,7 @@ export function BadgeForm({
 		nombre: badge?.nombre || '',
 		descripcion: badge?.descripcion || '',
 		tier: badge?.tier || ('bronze' as BadgeTier),
+		targetRole: badge?.targetRole || ('student' as UserRole),
 		icon: badge?.icon || '🏅',
 	});
 
@@ -53,10 +50,11 @@ export function BadgeForm({
 		e.preventDefault();
 
 		onSubmit({
-			code: formData.code as BadgeCode,
+			code: formData.code.toLowerCase().replace(/\s+/g, '_'),
 			nombre: formData.nombre,
 			descripcion: formData.descripcion,
 			tier: formData.tier,
+			targetRole: formData.targetRole,
 			icon: formData.icon,
 		});
 	};
@@ -79,18 +77,16 @@ export function BadgeForm({
 			<CardBody>
 				<form onSubmit={handleSubmit} className="space-y-4">
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<Select
+						<Input
 							label="Código de Insignia"
-							selectedKeys={formData.code ? [formData.code] : []}
+							placeholder="Ej: maestro_frontend, experto_react"
+							value={formData.code}
 							onChange={(e) =>
 								setFormData({ ...formData, code: e.target.value })
 							}
+							description="Código único en minúsculas y guiones bajos"
 							isRequired
-						>
-							{badgeCodes.map((code) => (
-								<SelectItem key={code}>{code}</SelectItem>
-							))}
-						</Select>
+						/>
 						<Input
 							label="Icono"
 							placeholder="Ej: 🏅"
@@ -121,23 +117,42 @@ export function BadgeForm({
 						isRequired
 					/>
 
-					<Select
-						label="Nivel de Insignia"
-						selectedKeys={[formData.tier]}
-						onChange={(e) =>
-							setFormData({
-								...formData,
-								tier: e.target.value as BadgeTier,
-							})
-						}
-						isRequired
-					>
-						{tiers.map((tier) => (
-							<SelectItem key={tier}>
-								{tier.charAt(0).toUpperCase() + tier.slice(1)}
-							</SelectItem>
-						))}
-					</Select>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<Select
+							label="Dirigido a"
+							selectedKeys={[formData.targetRole]}
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									targetRole: e.target.value as UserRole,
+								})
+							}
+							description="Selecciona a quién aplica esta insignia"
+							isRequired
+						>
+							{roles.map((role) => (
+								<SelectItem key={role.value}>{role.label}</SelectItem>
+							))}
+						</Select>
+
+						<Select
+							label="Nivel de Insignia"
+							selectedKeys={[formData.tier]}
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									tier: e.target.value as BadgeTier,
+								})
+							}
+							isRequired
+						>
+							{tiers.map((tier) => (
+								<SelectItem key={tier}>
+									{tier.charAt(0).toUpperCase() + tier.slice(1)}
+								</SelectItem>
+							))}
+						</Select>
+					</div>
 
 					<div className="flex justify-end gap-2">
 						<Button

@@ -11,21 +11,22 @@ import {
 	mockUserGamification,
 } from '~/lib/mocks/gamification.mock';
 import {
-	mockTutorAchievements,
-	mockTutorGamification,
-	mockTutorRewards,
+	mockTutorAchievementsBase,
+	mockTutorRewardsBase,
 } from '~/lib/mocks/tutor-gamification.mock';
-import type { Challenge } from '~/lib/types/gamification.types';
 import type {
-	TutorAchievement,
-	TutorReward,
-} from '~/lib/types/tutor-gamification.types';
+	Achievement,
+	Challenge,
+	Reward,
+} from '~/lib/types/gamification.types';
 
 export default function AdminGamification() {
 	const [challenges, setChallenges] = useState(mockChallenges);
 	const [badges, setBadges] = useState(mockUserGamification.badges);
-	const [achievements, setAchievements] = useState(mockTutorAchievements);
-	const [rewards, setRewards] = useState(mockTutorRewards);
+	const [achievements, setAchievements] = useState<Achievement[]>(
+		mockTutorAchievementsBase,
+	);
+	const [rewards, setRewards] = useState<Reward[]>(mockTutorRewardsBase);
 
 	const handleAddChallenge = (
 		challenge: Omit<Challenge, 'id' | 'estadoUsuario' | 'progreso'>,
@@ -69,21 +70,17 @@ export default function AdminGamification() {
 		setBadges(badges.filter((b) => b.id !== id));
 	};
 
-	const handleAddAchievement = (
-		achievement: Omit<TutorAchievement, 'id' | 'progress' | 'completed'>,
-	) => {
-		const newAchievement: TutorAchievement = {
+	const handleAddAchievement = (achievement: Omit<Achievement, 'id'>) => {
+		const newAchievement: Achievement = {
 			id: `achievement-${Date.now()}`,
 			...achievement,
-			progress: 0,
-			completed: false,
 		};
 		setAchievements([...achievements, newAchievement]);
 	};
 
 	const handleUpdateAchievement = (
 		id: string,
-		achievement: Omit<TutorAchievement, 'id' | 'progress' | 'completed'>,
+		achievement: Omit<Achievement, 'id'>,
 	) => {
 		setAchievements(
 			achievements.map((a) => (a.id === id ? { ...a, ...achievement } : a)),
@@ -94,22 +91,15 @@ export default function AdminGamification() {
 		setAchievements(achievements.filter((a) => a.id !== id));
 	};
 
-	const handleAddReward = (
-		reward: Omit<TutorReward, 'id' | 'unlocked' | 'claimed'>,
-	) => {
-		const newReward: TutorReward = {
+	const handleAddReward = (reward: Omit<Reward, 'id'>) => {
+		const newReward: Reward = {
 			id: `reward-${Date.now()}`,
 			...reward,
-			unlocked: true,
-			claimed: false,
 		};
 		setRewards([...rewards, newReward]);
 	};
 
-	const handleUpdateReward = (
-		id: string,
-		reward: Omit<TutorReward, 'id' | 'unlocked' | 'claimed'>,
-	) => {
+	const handleUpdateReward = (id: string, reward: Omit<Reward, 'id'>) => {
 		setRewards(rewards.map((r) => (r.id === id ? { ...r, ...reward } : r)));
 	};
 

@@ -12,6 +12,7 @@ import {
 	TableCell,
 	TableColumn,
 	TableHeader,
+	TableRow,
 	useDisclosure,
 } from '@heroui/react';
 import { Edit2, Plus, Trash2 } from 'lucide-react';
@@ -21,8 +22,8 @@ import { BadgeForm } from './badge-form';
 
 interface BadgesManagementProps {
 	badges: Badge[];
-	onAdd: (badge: Omit<Badge, 'id' | 'earnedAt'>) => void;
-	onUpdate: (id: string, badge: Omit<Badge, 'id' | 'earnedAt'>) => void;
+	onAdd: (badge: Omit<Badge, 'id'>) => void;
+	onUpdate: (id: string, badge: Omit<Badge, 'id'>) => void;
 	onDelete: (id: string) => void;
 	isLoading?: boolean;
 }
@@ -106,11 +107,12 @@ export function BadgesManagement({
 							<TableColumn>CÓDIGO</TableColumn>
 							<TableColumn>DESCRIPCIÓN</TableColumn>
 							<TableColumn>NIVEL</TableColumn>
+							<TableColumn>DIRIGIDO A</TableColumn>
 							<TableColumn>ACCIONES</TableColumn>
 						</TableHeader>
 						<TableBody>
 							{badges.map((badge) => (
-								<tr key={badge.id}>
+								<TableRow key={badge.id}>
 									<TableCell>
 										<div className="text-2xl">{badge.icon}</div>
 									</TableCell>
@@ -130,6 +132,15 @@ export function BadgesManagement({
 											variant="flat"
 										>
 											{badge.tier.toUpperCase()}
+										</Chip>
+									</TableCell>
+									<TableCell>
+										<Chip size="sm" color="primary" variant="flat">
+											{badge.targetRole === 'student'
+												? 'Estudiantes'
+												: badge.targetRole === 'tutor'
+													? 'Tutores'
+													: 'Ambos'}
 										</Chip>
 									</TableCell>
 									<TableCell>
@@ -154,7 +165,7 @@ export function BadgesManagement({
 											</Button>
 										</div>
 									</TableCell>
-								</tr>
+								</TableRow>
 							))}
 						</TableBody>
 					</Table>

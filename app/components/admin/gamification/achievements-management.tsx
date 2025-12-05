@@ -12,21 +12,17 @@ import {
 	TableCell,
 	TableColumn,
 	TableHeader,
+	TableRow,
 } from '@heroui/react';
 import { Edit2, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import type { TutorAchievement } from '~/lib/types/tutor-gamification.types';
+import type { Achievement } from '~/lib/types/gamification.types';
 import { AchievementForm } from './achievement-form';
 
 interface AchievementsManagementProps {
-	achievements: TutorAchievement[];
-	onAdd: (
-		achievement: Omit<TutorAchievement, 'id' | 'progress' | 'completed'>,
-	) => void;
-	onUpdate: (
-		id: string,
-		achievement: Omit<TutorAchievement, 'id' | 'progress' | 'completed'>,
-	) => void;
+	achievements: Achievement[];
+	onAdd: (achievement: Omit<Achievement, 'id'>) => void;
+	onUpdate: (id: string, achievement: Omit<Achievement, 'id'>) => void;
 	onDelete: (id: string) => void;
 	isLoading?: boolean;
 }
@@ -38,27 +34,29 @@ export function AchievementsManagement({
 	onDelete,
 	isLoading = false,
 }: AchievementsManagementProps) {
+	const [isCreating, setIsCreating] = useState(false);
 	const [editingAchievement, setEditingAchievement] = useState<
-		TutorAchievement | undefined
+		Achievement | undefined
 	>();
 	const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
 
 	const handleAdd = () => {
+		setIsCreating(true);
 		setEditingAchievement(undefined);
 	};
 
-	const handleEdit = (achievement: TutorAchievement) => {
+	const handleEdit = (achievement: Achievement) => {
+		setIsCreating(false);
 		setEditingAchievement(achievement);
 	};
 
-	const handleSubmit = (
-		achievement: Omit<TutorAchievement, 'id' | 'progress' | 'completed'>,
-	) => {
+	const handleSubmit = (achievement: Omit<Achievement, 'id'>) => {
 		if (editingAchievement) {
 			onUpdate(editingAchievement.id, achievement);
 		} else {
 			onAdd(achievement);
 		}
+		setIsCreating(false);
 		setEditingAchievement(undefined);
 	};
 
@@ -89,11 +87,14 @@ export function AchievementsManagement({
 				</Button>
 			</div>
 
-			{editingAchievement !== undefined && (
+			{(isCreating || editingAchievement) && (
 				<AchievementForm
 					achievement={editingAchievement}
 					onSubmit={handleSubmit}
-					onCancel={() => setEditingAchievement(undefined)}
+					onCancel={() => {
+						setIsCreating(false);
+						setEditingAchievement(undefined);
+					}}
 					isLoading={isLoading}
 				/>
 			)}
@@ -110,7 +111,7 @@ export function AchievementsManagement({
 						</TableHeader>
 						<TableBody>
 							{achievements.map((achievement) => (
-								<tr key={achievement.id}>
+								<TableRow key={achievement.id}>
 									<TableCell>
 										<span className="font-semibold">{achievement.title}</span>
 									</TableCell>
@@ -149,7 +150,7 @@ export function AchievementsManagement({
 											</Button>
 										</div>
 									</TableCell>
-								</tr>
+								</TableRow>
 							))}
 						</TableBody>
 					</Table>

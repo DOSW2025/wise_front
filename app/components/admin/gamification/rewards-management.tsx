@@ -12,19 +12,17 @@ import {
 	TableCell,
 	TableColumn,
 	TableHeader,
+	TableRow,
 } from '@heroui/react';
 import { Edit2, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import type { TutorReward } from '~/lib/types/tutor-gamification.types';
+import type { Reward } from '~/lib/types/gamification.types';
 import { RewardForm } from './reward-form';
 
 interface RewardsManagementProps {
-	rewards: TutorReward[];
-	onAdd: (reward: Omit<TutorReward, 'id' | 'unlocked' | 'claimed'>) => void;
-	onUpdate: (
-		id: string,
-		reward: Omit<TutorReward, 'id' | 'unlocked' | 'claimed'>,
-	) => void;
+	rewards: Reward[];
+	onAdd: (reward: Omit<Reward, 'id'>) => void;
+	onUpdate: (id: string, reward: Omit<Reward, 'id'>) => void;
 	onDelete: (id: string) => void;
 	isLoading?: boolean;
 }
@@ -36,25 +34,27 @@ export function RewardsManagement({
 	onDelete,
 	isLoading = false,
 }: RewardsManagementProps) {
-	const [editingReward, setEditingReward] = useState<TutorReward | undefined>();
+	const [isCreating, setIsCreating] = useState(false);
+	const [editingReward, setEditingReward] = useState<Reward | undefined>();
 	const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
 
 	const handleAdd = () => {
+		setIsCreating(true);
 		setEditingReward(undefined);
 	};
 
-	const handleEdit = (reward: TutorReward) => {
+	const handleEdit = (reward: Reward) => {
+		setIsCreating(false);
 		setEditingReward(reward);
 	};
 
-	const handleSubmit = (
-		reward: Omit<TutorReward, 'id' | 'unlocked' | 'claimed'>,
-	) => {
+	const handleSubmit = (reward: Omit<Reward, 'id'>) => {
 		if (editingReward) {
 			onUpdate(editingReward.id, reward);
 		} else {
 			onAdd(reward);
 		}
+		setIsCreating(false);
 		setEditingReward(undefined);
 	};
 
@@ -85,11 +85,14 @@ export function RewardsManagement({
 				</Button>
 			</div>
 
-			{editingReward !== undefined && (
+			{(isCreating || editingReward) && (
 				<RewardForm
 					reward={editingReward}
 					onSubmit={handleSubmit}
-					onCancel={() => setEditingReward(undefined)}
+					onCancel={() => {
+						setIsCreating(false);
+						setEditingReward(undefined);
+					}}
 					isLoading={isLoading}
 				/>
 			)}
@@ -105,7 +108,7 @@ export function RewardsManagement({
 						</TableHeader>
 						<TableBody>
 							{rewards.map((reward) => (
-								<tr key={reward.id}>
+								<TableRow key={reward.id}>
 									<TableCell>
 										<span className="font-semibold">{reward.title}</span>
 									</TableCell>
@@ -139,7 +142,7 @@ export function RewardsManagement({
 											</Button>
 										</div>
 									</TableCell>
-								</tr>
+								</TableRow>
 							))}
 						</TableBody>
 					</Table>

@@ -2,21 +2,17 @@ import {
 	Button,
 	Card,
 	CardBody,
-	CardHeader,
 	Chip,
-	Modal,
-	ModalBody,
-	ModalContent,
-	ModalHeader,
 	Table,
 	TableBody,
 	TableCell,
 	TableColumn,
 	TableHeader,
-	useDisclosure,
+	TableRow,
 } from '@heroui/react';
 import { Edit2, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { Material } from '~/lib/types/api.types';
 import type { Challenge } from '~/lib/types/gamification.types';
 import { ChallengeForm } from './challenge-form';
 
@@ -40,20 +36,44 @@ export function ChallengesManagement({
 	onDelete,
 	isLoading = false,
 }: ChallengesManagementProps) {
-	const { isOpen, onOpen, onOpenChange } = useDisclosure();
+	const [isCreating, setIsCreating] = useState(false);
 	const [editingChallenge, setEditingChallenge] = useState<
 		Challenge | undefined
 	>();
 	const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
+	const [materials, setMaterials] = useState<Material[]>([]);
+	const [loadingMaterials, setLoadingMaterials] = useState(false);
+
+	// Cargar materiales disponibles
+	useEffect(() => {
+		const fetchMaterials = async () => {
+			setLoadingMaterials(true);
+			try {
+				const response = await fetch('/api/materials');
+				if (response.ok) {
+					const data = await response.json();
+					setMaterials(data.materials || []);
+				}
+			} catch (error) {
+				console.error('Error al cargar materiales:', error);
+			} finally {
+				setLoadingMaterials(false);
+			}
+		};
+
+		if (isCreating || editingChallenge) {
+			fetchMaterials();
+		}
+	}, [isCreating, editingChallenge]);
 
 	const handleAdd = () => {
+		setIsCreating(true);
 		setEditingChallenge(undefined);
-		onOpen();
 	};
 
 	const handleEdit = (challenge: Challenge) => {
+		setIsCreating(false);
 		setEditingChallenge(challenge);
-		onOpen();
 	};
 
 	const handleSubmit = (
@@ -64,7 +84,8 @@ export function ChallengesManagement({
 		} else {
 			onAdd(challenge);
 		}
-		onOpenChange();
+		setIsCreating(false);
+		setEditingChallenge(undefined);
 	};
 
 	const handleDelete = (id: string) => {
@@ -94,6 +115,19 @@ export function ChallengesManagement({
 				</Button>
 			</div>
 
+			{(isCreating || editingChallenge) && (
+				<ChallengeForm
+					challenge={editingChallenge}
+					onSubmit={handleSubmit}
+					onCancel={() => {
+						setIsCreating(false);
+						setEditingChallenge(undefined);
+					}}
+					isLoading={isLoading}
+					materials={materials}
+				/>
+			)}
+
 			<Card>
 				<CardBody>
 					<Table aria-label="Desafíos">
@@ -102,11 +136,12 @@ export function ChallengesManagement({
 							<TableColumn>XP</TableColumn>
 							<TableColumn>OBJETIVOS</TableColumn>
 							<TableColumn>PERÍODO</TableColumn>
+							<TableColumn>DIRIGIDO A</TableColumn>
 							<TableColumn>ACCIONES</TableColumn>
 						</TableHeader>
 						<TableBody>
 							{challenges.map((challenge) => (
-								<tr key={challenge.id}>
+								<TableRow key={challenge.id}>
 									<TableCell>
 										<div className="space-y-1">
 											<div className="font-semibold">
@@ -142,6 +177,15 @@ export function ChallengesManagement({
 										</div>
 									</TableCell>
 									<TableCell>
+										<Chip size="sm" color="primary" variant="flat">
+											{challenge.targetRole === 'student'
+												? 'Estudiantes'
+												: challenge.targetRole === 'tutor'
+													? 'Tutores'
+													: 'Ambos'}
+										</Chip>
+									</TableCell>
+									<TableCell>
 										<div className="flex gap-2">
 											<Button
 												isIconOnly
@@ -163,37 +207,19 @@ export function ChallengesManagement({
 											</Button>
 										</div>
 									</TableCell>
-								</tr>
+								</TableRow>
 							))}
 						</TableBody>
 					</Table>
 				</CardBody>
 			</Card>
 
-			<Modal isOpen={isOpen} onOpenChange={onOpenChange} size="2xl">
-				<ModalContent>
-					<ModalHeader>
-						{editingChallenge ? 'Editar Desafío' : 'Crear Nuevo Desafío'}
-					</ModalHeader>
-					<ModalBody>
-						<ChallengeForm
-							challenge={editingChallenge}
-							onSubmit={handleSubmit}
-							onCancel={() => onOpenChange()}
-							isLoading={isLoading}
-						/>
-					</ModalBody>
-				</ModalContent>
-			</Modal>
-
-			<Modal
-				isOpen={!!selectedDeleteId}
-				onOpenChange={() => setSelectedDeleteId(null)}
-			>
-				<ModalContent>
-					<ModalHeader>Confirmar eliminación</ModalHeader>
-					<ModalBody>
-						<p>¿Estás seguro de que deseas eliminar este desafío?</p>
+			{selectedDeleteId && (
+				<Card className="border-danger-200 bg-danger-50 dark:bg-danger-900/20">
+					<CardBody className="space-y-4">
+						<p className="font-semibold">
+							¿Estás seguro de que deseas eliminar este desafío?
+						</p>
 						<div className="flex justify-end gap-2">
 							<Button variant="light" onClick={() => setSelectedDeleteId(null)}>
 								Cancelar
@@ -202,9 +228,9 @@ export function ChallengesManagement({
 								Eliminar
 							</Button>
 						</div>
-					</ModalBody>
-				</ModalContent>
-			</Modal>
+					</CardBody>
+				</Card>
+			)}
 		</div>
 	);
 }

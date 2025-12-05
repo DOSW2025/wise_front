@@ -4,20 +4,26 @@ import {
 	CardBody,
 	CardHeader,
 	Input,
+	Select,
+	SelectItem,
 	Textarea,
 } from '@heroui/react';
 import { X } from 'lucide-react';
 import { useState } from 'react';
-import type { TutorAchievement } from '~/lib/types/tutor-gamification.types';
+import type { Achievement, UserRole } from '~/lib/types/gamification.types';
 
 interface AchievementFormProps {
-	achievement?: TutorAchievement;
-	onSubmit: (
-		achievement: Omit<TutorAchievement, 'id' | 'progress' | 'completed'>,
-	) => void;
+	achievement?: Achievement;
+	onSubmit: (achievement: Omit<Achievement, 'id'>) => void; // Achievement base no tiene progress ni completed
 	onCancel: () => void;
 	isLoading?: boolean;
 }
+
+const roles: { value: UserRole; label: string }[] = [
+	{ value: 'student', label: 'Estudiantes' },
+	{ value: 'tutor', label: 'Tutores/Docentes' },
+	{ value: 'both', label: 'Ambos' },
+];
 
 export function AchievementForm({
 	achievement,
@@ -31,6 +37,7 @@ export function AchievementForm({
 		icon: achievement?.icon || 'Target',
 		target: achievement?.target || 100,
 		reward: achievement?.reward || 100,
+		targetRole: achievement?.targetRole || ('tutor' as UserRole),
 	});
 
 	const handleSubmit = (e: React.FormEvent) => {
@@ -42,6 +49,7 @@ export function AchievementForm({
 			icon: formData.icon,
 			target: Number(formData.target),
 			reward: Number(formData.reward),
+			targetRole: formData.targetRole,
 		});
 	};
 
@@ -91,6 +99,23 @@ export function AchievementForm({
 						}
 						isRequired
 					/>
+
+					<Select
+						label="Dirigido a"
+						selectedKeys={[formData.targetRole]}
+						onChange={(e) =>
+							setFormData({
+								...formData,
+								targetRole: e.target.value as UserRole,
+							})
+						}
+						description="Selecciona a quién aplica este logro"
+						isRequired
+					>
+						{roles.map((role) => (
+							<SelectItem key={role.value}>{role.label}</SelectItem>
+						))}
+					</Select>
 
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<Input

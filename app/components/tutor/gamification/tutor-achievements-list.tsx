@@ -1,9 +1,9 @@
 import { Button, Card, CardBody, Progress } from '@heroui/react';
 import { Clock, Flame, Star, Target, Users, Zap } from 'lucide-react';
-import type { TutorAchievement } from '~/lib/types/tutor-gamification.types';
+import type { UserAchievement } from '~/lib/types/gamification.types';
 
 interface TutorAchievementsListProps {
-	achievements: TutorAchievement[];
+	achievements: UserAchievement[];
 	onClaim?: (achievementId: string) => void;
 }
 
