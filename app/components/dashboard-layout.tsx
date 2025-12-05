@@ -1,9 +1,10 @@
 import { Button } from '@heroui/react';
-import { Bell, MessageSquare } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 import { Outlet } from 'react-router';
 import ChatOverlay from './chat/chatOverlay';
 import { ChatbotWidget } from './chatbot-widget';
+import { NotificationsDropdown } from './notifications-dropdown';
 import { Sidebar } from './sidebar';
 
 interface DashboardLayoutProps {
@@ -46,10 +47,7 @@ export function DashboardLayout({
 							<MessageSquare className="w-6 h-6" />
 							<span className="absolute top-0 right-0 w-4 h-4 bg-primary rounded-full border-2 border-white"></span>
 						</Button>
-						<Button isIconOnly variant="light" size="md" className="relative">
-							<Bell className="w-6 h-6" />
-							<span className="absolute top-0 right-0 w-4 h-4 bg-primary rounded-full border-2 border-white"></span>
-						</Button>
+						<NotificationsDropdown />
 					</div>
 				</div>
 
