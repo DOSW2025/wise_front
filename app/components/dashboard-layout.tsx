@@ -1,8 +1,7 @@
-import { Button } from '@heroui/react';
-import { MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 import { Outlet } from 'react-router';
 import ChatOverlay from './chat/chatOverlay';
+import { ChatDropdown } from './chat-dropdown';
 import { ChatbotWidget } from './chatbot-widget';
 import { NotificationsDropdown } from './notifications-dropdown';
 import { Sidebar } from './sidebar';
@@ -43,10 +42,7 @@ export function DashboardLayout({
 				{/* Header con iconos de chat y notificaciones */}
 				<div className="flex justify-end items-center mb-6 mr-8">
 					<div className="flex items-center gap-6">
-						<Button isIconOnly variant="light" size="md" className="relative">
-							<MessageSquare className="w-6 h-6" />
-							<span className="absolute top-0 right-0 w-4 h-4 bg-primary rounded-full border-2 border-white"></span>
-						</Button>
+						<ChatDropdown onOpenChat={setSelectedTutor} />
 						<NotificationsDropdown />
 					</div>
 				</div>
