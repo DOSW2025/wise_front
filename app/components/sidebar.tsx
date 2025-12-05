@@ -13,6 +13,7 @@ import {
 	Menu,
 	MessageSquare,
 	Settings,
+	Sparkles,
 	TrendingUp,
 	UserCheck,
 	Users,
@@ -174,6 +175,12 @@ export function Sidebar({
 					label: 'Validación de Materiales',
 					icon: <FileText className="w-5 h-5" />,
 					path: '/dashboard/admin/validation',
+				},
+				{
+					key: 'gamification',
+					label: 'Gamificación',
+					icon: <Sparkles className="w-5 h-5" />,
+					path: '/dashboard/admin/gamification',
 				},
 				{
 					key: 'reports',

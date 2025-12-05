@@ -11,14 +11,10 @@ export type ActivityType =
 
 export type BadgeTier = 'bronze' | 'silver' | 'gold';
 
-export type BadgeCode =
-	| 'explorador'
-	| 'constante'
-	| 'mentor_en_accion'
-	| 'respuesta_util'
-	| 'aporte_valioso'
-	| 'guardian_de_materiales'
-	| 'comunidad_activa';
+// El código de insignia ahora es un string libre para permitir insignias personalizadas
+export type BadgeCode = string;
+
+export type UserRole = 'student' | 'tutor' | 'both';
 
 export type UserLevel =
 	| 'Novato'
@@ -28,14 +24,20 @@ export type UserLevel =
 	| 'Mentor'
 	| 'Embajador';
 
+// Definición base de una insignia (configurada por admin)
 export interface Badge {
 	id: string;
-	code: BadgeCode;
+	code: string; // Código único de la insignia (ej: 'explorador', 'maestro_react')
 	nombre: string;
 	descripcion: string;
 	tier: BadgeTier;
-	earnedAt: string;
+	targetRole: UserRole; // A quién aplica: estudiantes, tutores o ambos
 	icon: string;
+}
+
+// Insignia obtenida por un usuario
+export interface UserBadge extends Badge {
+	earnedAt: string; // Fecha en que el usuario obtuvo la insignia
 }
 
 export interface ActivityEvent {
@@ -56,7 +58,7 @@ export interface UserGamification {
 	nivel: UserLevel;
 	rachaSemanas: number;
 	ultimaActividadAt: string;
-	badges: Badge[];
+	badges: UserBadge[]; // Insignias obtenidas por el usuario
 	metaSemanalObjetivo: number;
 	metaSemanalProgreso: number;
 }
@@ -96,11 +98,18 @@ export interface Challenge {
 		| 'completado';
 	progreso: number;
 	icon: string;
+	targetRole: UserRole; // A quién aplica este desafío
 }
+
+export type ObjectiveType = 'material' | 'tutoring' | 'custom';
 
 export interface ChallengeObjective {
 	descripcion: string;
 	completado: boolean;
+	tipo?: ObjectiveType;
+	materialId?: string; // ID del material específico si tipo === 'material'
+	materialNombre?: string; // Nombre del material para mostrar
+	count?: number; // Cantidad requerida (ej: completar 3 materiales)
 }
 
 export const LEVEL_THRESHOLDS: Record<UserLevel, number> = {
@@ -112,75 +121,38 @@ export const LEVEL_THRESHOLDS: Record<UserLevel, number> = {
 	Embajador: 5000,
 };
 
-export const BADGE_DEFINITIONS: Record<
-	BadgeCode,
-	{
-		nombre: string;
-		descripcion: Record<BadgeTier, string>;
-		icon: string;
-	}
-> = {
-	explorador: {
-		nombre: 'Explorador',
-		descripcion: {
-			bronze: 'Completa 5 materiales',
-			silver: 'Completa 15 materiales',
-			gold: 'Completa 40 materiales',
-		},
-		icon: '🗺️',
-	},
-	constante: {
-		nombre: 'Constante',
-		descripcion: {
-			bronze: 'Racha de 2 semanas',
-			silver: 'Racha de 4 semanas',
-			gold: 'Racha de 8 semanas',
-		},
-		icon: '🔥',
-	},
-	mentor_en_accion: {
-		nombre: 'Mentor en Acción',
-		descripcion: {
-			bronze: 'Imparte 1 tutoría con rating ≥4.5',
-			silver: 'Imparte 5 tutorías con rating ≥4.5',
-			gold: 'Imparte 15 tutorías con rating ≥4.5',
-		},
-		icon: '👨‍🏫',
-	},
-	respuesta_util: {
-		nombre: 'Respuesta Útil',
-		descripcion: {
-			bronze: '1 respuesta aceptada',
-			silver: '5 respuestas aceptadas',
-			gold: '15 respuestas aceptadas',
-		},
-		icon: '💡',
-	},
-	aporte_valioso: {
-		nombre: 'Aporte Valioso',
-		descripcion: {
-			bronze: 'Publica 1 recurso aprobado',
-			silver: 'Publica 5 recursos aprobados',
-			gold: '5 recursos con 5 reacciones totales',
-		},
-		icon: '📚',
-	},
-	guardian_de_materiales: {
-		nombre: 'Guardián de Materiales',
-		descripcion: {
-			bronze: '1 reporte válido confirmado',
-			silver: '5 reportes válidos confirmados',
-			gold: '10 reportes válidos confirmados',
-		},
-		icon: '🛡️',
-	},
-	comunidad_activa: {
-		nombre: 'Comunidad Activa',
-		descripcion: {
-			bronze: 'Asiste a 2 eventos',
-			silver: 'Asiste a 6 eventos',
-			gold: 'Asiste a 12 eventos',
-		},
-		icon: '🌟',
-	},
-};
+// Logro/Achievement (configurado por admin)
+export interface Achievement {
+	id: string;
+	title: string;
+	description: string;
+	icon: string;
+	target: number; // Meta a alcanzar
+	reward: number; // Puntos de recompensa
+	targetRole: UserRole; // A quién aplica
+}
+
+// Logro con progreso de un usuario
+export interface UserAchievement extends Achievement {
+	progress: number; // Progreso actual
+	completed: boolean; // Si ya fue completado
+}
+
+// Recompensa/Reward (configurado por admin)
+export interface Reward {
+	id: string;
+	title: string;
+	description: string;
+	pointsCost: number; // Costo en puntos
+	icon: string;
+	targetRole: UserRole; // A quién aplica
+}
+
+// Recompensa con estado de un usuario
+export interface UserReward extends Reward {
+	unlocked: boolean; // Si el usuario tiene suficientes puntos
+	claimed: boolean; // Si ya fue reclamada
+}
+
+// BADGE_DEFINITIONS ha sido removido - ahora las insignias son dinámicas y configurables por el admin
+// La información de la insignia (nombre, descripción, icono) viene directamente de la base de datos

@@ -43,6 +43,7 @@ export default [
 	createDashboardRoutes('admin', [
 		'users',
 		'validation',
+		'gamification',
 		'reports',
 		'settings',
 		'help',
