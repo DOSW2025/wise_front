@@ -1,4 +1,16 @@
-import { Button, Card, CardBody, Chip, Input } from '@heroui/react';
+import {
+	Button,
+	Card,
+	CardBody,
+	Chip,
+	Input,
+	Modal,
+	ModalBody,
+	ModalContent,
+	ModalFooter,
+	ModalHeader,
+	useDisclosure,
+} from '@heroui/react';
 import { Calendar, Clock, MapPin, Search, Video } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
@@ -29,16 +41,25 @@ interface TutorFilters {
 
 interface StudentSession {
 	id: string;
+	tutorId: string;
+	studentId: string;
 	tutorName: string;
 	avatarInitials?: string;
 	avatarColor?: string;
+	codigoMateria: string;
 	subject: string;
 	topic: string;
-	date: string;
-	time: string;
-	duration: number;
-	modality: 'presencial' | 'virtual';
+	scheduledAt: string;
+	day: string;
+	startTime: string;
+	endTime: string;
+	mode: 'VIRTUAL' | 'PRESENCIAL';
+	comentarios?: string;
 	location?: string;
+	modality?: 'presencial' | 'virtual';
+	date?: string;
+	time?: string;
+	duration?: number;
 	status: 'confirmada' | 'pendiente' | 'cancelada';
 }
 
@@ -62,32 +83,59 @@ const getInitials = (name: string, fallback?: string): string => {
 	return initials || 'T';
 };
 
+const getModeLabel = (
+	mode: StudentSession['mode'],
+): 'presencial' | 'virtual' =>
+	mode === 'PRESENCIAL' ? 'presencial' : 'virtual';
+
+const getDayLabel = (day: string): string => {
+	const days: Record<string, string> = {
+		monday: 'Lunes',
+		tuesday: 'Martes',
+		wednesday: 'Miercoles',
+		thursday: 'Jueves',
+		friday: 'Viernes',
+		saturday: 'Sabado',
+		sunday: 'Domingo',
+	};
+
+	return days[day.toLowerCase()] ?? day;
+};
+
+const getDurationMinutes = (start: string, end: string): number => {
+	const toMinutes = (time: string) => {
+		const [h, m] = time.split(':').map(Number);
+		return h * 60 + m;
+	};
+	return Math.max(toMinutes(end) - toMinutes(start), 0);
+};
+
 // TODO: Conectar con API - Ejemplo con valores negativos para referencia
 const mockTutors: Tutor[] = [
 	{
 		id: 1,
-		name: 'Dr. María García',
-		title: 'Profesora de Matemáticas',
+		name: 'Dr. Maria Garcia',
+		title: 'Profesora de Matematicas',
 		department: 'Ciencias Exactas',
 		avatarInitials: 'MG',
 		avatarColor: '#b81d24',
 		rating: 4.9,
 		reviews: 127,
-		tags: ['Cálculo', 'Álgebra', 'Geometría'],
+		tags: ['Calculo', 'Algebra', 'Geometria'],
 		availability: 'Lun-Vie 9:00-17:00',
 		isAvailableToday: true,
 	},
 	{
 		id: 2,
-		name: 'Ing. Carlos Rodríguez',
-		title: 'Tutor de Programación',
-		department: 'Ingeniería',
+		name: 'Ing. Carlos Rodriguez',
+		title: 'Tutor de Programacion',
+		department: 'Ingenieria',
 		avatarInitials: 'CR',
 		avatarColor: '#008000',
 		rating: 4.8,
 		reviews: 89,
 		tags: ['React', 'TypeScript', 'Node.js'],
-		availability: 'Mar-Sáb 14:00-20:00',
+		availability: 'Mar-Sab 14:00-20:00',
 		isAvailableToday: false,
 	},
 ];
@@ -96,95 +144,57 @@ const mockTutors: Tutor[] = [
 const mockSessions: StudentSession[] = [
 	{
 		id: '101',
+		tutorId: '550e8400-e29b-41d4-a716-446655440000',
+		studentId: '660e8400-e29b-41d4-a716-446655440001',
 		tutorName: 'Dra. Paula Reyes',
 		avatarInitials: 'PR',
 		avatarColor: '#8a2be2',
-		subject: 'Calculo I',
-		topic: 'Repaso de integrales definidas',
-		date: '2024-09-12',
-		time: '10:30',
-		duration: 60,
-		modality: 'presencial',
-		location: 'Aula 204 - Ciencias',
-		status: 'confirmada',
+		codigoMateria: 'DOSW',
+		subject: 'Desarrollo de Software',
+		topic: 'Proyecto final y entregables',
+		scheduledAt: '2025-11-25T14:00:00.000Z',
+		day: 'monday',
+		startTime: '14:00',
+		endTime: '16:00',
+		mode: 'VIRTUAL',
+		comentarios: 'Necesito ayuda con el proyecto final de la materia',
+		status: 'pendiente',
 	},
 	{
 		id: '102',
-		tutorName: 'Ing. Javier Lopez',
-		avatarInitials: 'JL',
-		avatarColor: '#b81d24',
-		subject: 'Estructuras de Datos',
-		topic: 'Arboles AVL y complejidad',
-		date: '2024-09-14',
-		time: '18:00',
-		duration: 45,
-		modality: 'virtual',
-		status: 'pendiente',
-	},
-	{
-		id: '103',
-		tutorName: 'Lic. Sofia Mendez',
-		avatarInitials: 'SM',
-		avatarColor: '#008000',
-		subject: 'Ingles B2',
-		topic: 'Preparacion oral para presentaciones',
-		date: '2024-09-09',
-		time: '08:00',
-		duration: 30,
-		modality: 'virtual',
-		status: 'confirmada',
-	},
-	{
-		id: '104',
+		tutorId: '550e8400-e29b-41d4-a716-446655440002',
+		studentId: '660e8400-e29b-41d4-a716-446655440001',
 		tutorName: 'Mtro. Daniel Perez',
 		avatarInitials: 'DP',
 		avatarColor: '#ff9900',
+		codigoMateria: 'FIS2',
 		subject: 'Fisica II',
 		topic: 'Circuitos RLC y resonancia',
-		date: '2024-09-07',
-		time: '16:15',
-		duration: 50,
-		modality: 'virtual',
-		status: 'cancelada',
-	},
-	{
-		id: '105',
-		tutorName: 'Dra. Elena Torres',
-		avatarInitials: 'ET',
-		avatarColor: '#8a2be2',
-		subject: 'Quimica Organica',
-		topic: 'Reaccion de Friedel-Crafts',
-		date: '2024-09-18',
-		time: '12:00',
-		duration: 55,
-		modality: 'presencial',
-		location: 'Lab 3 - Quimica',
+		scheduledAt: '2024-09-07T16:15:00.000Z',
+		day: 'saturday',
+		startTime: '16:15',
+		endTime: '17:05',
+		mode: 'PRESENCIAL',
+		location: 'Aula 204 - Ciencias',
+		comentarios: 'Revisar ejercicios del laboratorio previo',
 		status: 'confirmada',
 	},
 	{
-		id: '106',
-		tutorName: 'Dr. Miguel Soto',
-		avatarInitials: 'MS',
-		avatarColor: '#b81d24',
-		subject: 'Algebra Lineal',
-		topic: 'Diagonalizacion y autovalores',
-		date: '2024-09-20',
-		time: '09:30',
-		duration: 40,
-		modality: 'virtual',
-		status: 'pendiente',
-	},
-	{
-		id: '107',
+		id: '103',
+		tutorId: '550e8400-e29b-41d4-a716-446655440003',
+		studentId: '660e8400-e29b-41d4-a716-446655440001',
 		tutorName: 'Lic. Ana Valdez',
 		avatarInitials: 'AV',
 		avatarColor: '#008000',
+		codigoMateria: 'REDAC',
 		subject: 'Redaccion Academica',
 		topic: 'Estructura de articulos de investigacion',
-		date: '2024-09-05',
-		time: '19:15',
-		duration: 35,
-		modality: 'virtual',
+		scheduledAt: '2024-09-05T19:15:00.000Z',
+		day: 'thursday',
+		startTime: '19:15',
+		endTime: '19:50',
+		mode: 'VIRTUAL',
+		comentarios: 'Practicar introduccion y conclusiones',
 		status: 'cancelada',
 	},
 ];
@@ -195,8 +205,12 @@ const StudentTutoringPage: React.FC = () => {
 	const [activeTab, setActiveTab] = useState<'search' | 'my-sessions'>(
 		'search',
 	);
-	// TODO: Reemplazar estado inicial de sesiones con datos del backend.
 	const [sessions, setSessions] = useState<StudentSession[]>(mockSessions);
+	const [selectedSession, setSelectedSession] = useState<StudentSession | null>(
+		null,
+	);
+
+	const { isOpen, onOpen, onClose } = useDisclosure();
 
 	const { onOpenChat } = useOutletContext<{
 		onOpenChat: (tutor: Tutor) => void;
@@ -210,9 +224,19 @@ const StudentTutoringPage: React.FC = () => {
 		);
 	};
 
+	const openSessionDetails = (session: StudentSession) => {
+		setSelectedSession(session);
+		onOpen();
+	};
+
+	const closeSessionDetails = () => {
+		setSelectedSession(null);
+		onClose();
+	};
+
 	return (
 		<div className="space-y-6 p-4 md:p-6">
-			<PageHeader title="Tutorías" description="Panel de Estudiante" />
+			<PageHeader title="Tutorias" description="Panel de Estudiante" />
 
 			<div className="flex gap-2">
 				<Button
@@ -220,14 +244,14 @@ const StudentTutoringPage: React.FC = () => {
 					color="primary"
 					onPress={() => setActiveTab('search')}
 				>
-					Agendar tutoría
+					Agendar tutoria
 				</Button>
 				<Button
 					variant={activeTab === 'my-sessions' ? 'solid' : 'light'}
 					color="primary"
 					onPress={() => setActiveTab('my-sessions')}
 				>
-					Mis tutorías
+					Mis tutorias
 				</Button>
 			</div>
 
@@ -284,109 +308,269 @@ const StudentTutoringPage: React.FC = () => {
 							<CardBody className="text-center py-12">
 								<Calendar className="w-12 h-12 text-default-300 mx-auto mb-4" />
 								<h3 className="text-lg font-semibold mb-2">
-									No tienes tutorías programadas
+									No tienes tutorias programadas
 								</h3>
 								<p className="text-default-500 mb-4">
-									Cuando confirmes una tutoría aparecerá aquí.
+									Cuando confirmes una tutoria aparecera aqui.
 								</p>
 								<Button color="primary" onPress={() => setActiveTab('search')}>
-									Agendar tutoría
+									Agendar tutoria
 								</Button>
 							</CardBody>
 						</Card>
 					) : (
 						<div className="grid gap-4">
-							{sessions.map((session) => (
-								<Card key={session.id}>
-									<CardBody>
-										<div className="flex items-start justify-between">
-											<div className="space-y-2">
-												<div className="flex items-center gap-3">
-													<div
-														className={`${getAvatarBg(
-															session.avatarColor,
-														)} w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold`}
-													>
-														{getInitials(
-															session.tutorName,
-															session.avatarInitials,
-														)}
+							{sessions.map((session) => {
+								const modalityLabel =
+									session.modality ?? getModeLabel(session.mode);
+								const sessionDate =
+									session.date ??
+									new Date(session.scheduledAt).toLocaleDateString();
+								const sessionDuration =
+									session.duration ??
+									getDurationMinutes(session.startTime, session.endTime);
+								const sessionTime =
+									session.time ?? `${session.startTime} - ${session.endTime}`;
+
+								return (
+									<Card key={session.id}>
+										<CardBody>
+											<div className="flex items-start justify-between">
+												<div className="space-y-2">
+													<div className="flex items-center gap-3">
+														<div
+															className={`${getAvatarBg(
+																session.avatarColor,
+															)} w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold`}
+														>
+															{getInitials(
+																session.tutorName,
+																session.avatarInitials,
+															)}
+														</div>
+														<div>
+															<h3 className="font-semibold">
+																{session.tutorName}
+															</h3>
+															<div className="flex gap-2 mt-1">
+																<Chip size="sm" color="primary" variant="flat">
+																	{session.subject}
+																</Chip>
+																<Chip
+																	size="sm"
+																	color={
+																		session.status === 'confirmada'
+																			? 'success'
+																			: session.status === 'pendiente'
+																				? 'warning'
+																				: 'danger'
+																	}
+																	variant="flat"
+																>
+																	{session.status}
+																</Chip>
+															</div>
+														</div>
 													</div>
-													<div>
-														<h3 className="font-semibold">
-															{session.tutorName}
-														</h3>
-														<div className="flex gap-2 mt-1">
-															<Chip size="sm" color="primary" variant="flat">
-																{session.subject}
-															</Chip>
-															<Chip
-																size="sm"
-																color={
-																	session.status === 'confirmada'
-																		? 'success'
-																		: session.status === 'pendiente'
-																			? 'warning'
-																			: 'danger'
-																}
-																variant="flat"
-															>
-																{session.status}
-															</Chip>
+													<p className="text-default-600 ml-11">
+														{session.topic}
+													</p>
+													<div className="flex flex-wrap gap-4 text-sm text-default-500 ml-11">
+														<div className="flex items-center gap-1">
+															<Calendar className="w-4 h-4" />
+															{sessionDate}
+														</div>
+														<div className="flex items-center gap-1">
+															<Clock className="w-4 h-4" />
+															{sessionTime} ({sessionDuration} min)
+														</div>
+														<div className="flex items-center gap-1">
+															{modalityLabel === 'virtual' ? (
+																<Video className="w-4 h-4" />
+															) : (
+																<MapPin className="w-4 h-4" />
+															)}
+															<span className="capitalize">
+																{modalityLabel}
+															</span>
+															{session.location && (
+																<span> - {session.location}</span>
+															)}
 														</div>
 													</div>
 												</div>
-												<p className="text-default-600 ml-11">
-													{session.topic}
-												</p>
-												<div className="flex flex-wrap gap-4 text-sm text-default-500 ml-11">
-													<div className="flex items-center gap-1">
-														<Calendar className="w-4 h-4" />
-														{new Date(session.date).toLocaleDateString()}
-													</div>
-													<div className="flex items-center gap-1">
-														<Clock className="w-4 h-4" />
-														{session.time} ({session.duration} min)
-													</div>
-													<div className="flex items-center gap-1">
-														{session.modality === 'virtual' ? (
-															<Video className="w-4 h-4" />
-														) : (
-															<MapPin className="w-4 h-4" />
-														)}
-														<span className="capitalize">
-															{session.modality}
-														</span>
-														{session.location && (
-															<span> - {session.location}</span>
-														)}
-													</div>
+												<div className="flex gap-2">
+													<Button
+														size="sm"
+														color="primary"
+														variant="flat"
+														onPress={() => openSessionDetails(session)}
+													>
+														Ver detalles
+													</Button>
+													<Button
+														size="sm"
+														variant="light"
+														color="danger"
+														isDisabled={session.status === 'cancelada'}
+														onPress={() => handleCancelSession(session.id)}
+													>
+														{session.status === 'cancelada'
+															? 'Cancelada'
+															: 'Cancelar'}
+													</Button>
 												</div>
 											</div>
-											<div className="flex gap-2">
-												<Button size="sm" color="primary" variant="flat">
-													Ver detalles
-												</Button>
-												<Button
-													size="sm"
-													variant="light"
-													color="danger"
-													isDisabled={session.status === 'cancelada'}
-													onPress={() => handleCancelSession(session.id)}
-												>
-													{session.status === 'cancelada'
-														? 'Cancelada'
-														: 'Cancelar'}
-												</Button>
-											</div>
-										</div>
-									</CardBody>
-								</Card>
-							))}
+										</CardBody>
+									</Card>
+								);
+							})}
 						</div>
 					)}
 				</div>
 			)}
+
+			<Modal
+				isOpen={isOpen}
+				onOpenChange={(open) => {
+					if (!open) closeSessionDetails();
+				}}
+				size="lg"
+			>
+				<ModalContent>
+					{(onCloseModal) => (
+						<>
+							<ModalHeader className="flex flex-col gap-1">
+								<span>Detalle de tutoría</span>
+								{selectedSession && (
+									<span className="text-sm text-default-500">
+										{selectedSession.subject} · {selectedSession.codigoMateria}
+									</span>
+								)}
+							</ModalHeader>
+							<ModalBody className="space-y-4">
+								{selectedSession && (
+									<>
+										<div className="flex items-center gap-3">
+											<div
+												className={`${getAvatarBg(
+													selectedSession.avatarColor,
+												)} w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold`}
+											>
+												{getInitials(
+													selectedSession.tutorName,
+													selectedSession.avatarInitials,
+												)}
+											</div>
+											<div>
+												<h3 className="font-semibold text-base">
+													{selectedSession.tutorName}
+												</h3>
+												<div className="flex gap-2 mt-1 flex-wrap">
+													<Chip size="sm" color="primary" variant="flat">
+														{selectedSession.subject}
+													</Chip>
+													<Chip
+														size="sm"
+														variant="flat"
+														color={
+															selectedSession.status === 'confirmada'
+																? 'success'
+																: selectedSession.status === 'pendiente'
+																	? 'warning'
+																	: 'danger'
+														}
+													>
+														{selectedSession.status}
+													</Chip>
+												</div>
+												<p className="text-sm text-default-500 mt-1">
+													Código: {selectedSession.codigoMateria}
+												</p>
+											</div>
+										</div>
+
+										<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-default-600">
+											<div className="flex items-center gap-2">
+												<Calendar className="w-4 h-4" />
+												<span>
+													{new Date(
+														selectedSession.scheduledAt,
+													).toLocaleDateString()}{' '}
+													({getDayLabel(selectedSession.day)})
+												</span>
+											</div>
+											<div className="flex items-center gap-2">
+												<Clock className="w-4 h-4" />
+												<span>
+													{selectedSession.startTime} -{' '}
+													{selectedSession.endTime} (
+													{getDurationMinutes(
+														selectedSession.startTime,
+														selectedSession.endTime,
+													)}{' '}
+													min)
+												</span>
+											</div>
+											<div className="flex items-center gap-2">
+												{getModeLabel(selectedSession.mode) === 'virtual' ? (
+													<Video className="w-4 h-4" />
+												) : (
+													<MapPin className="w-4 h-4" />
+												)}
+												<span className="capitalize">
+													{getModeLabel(selectedSession.mode)}
+												</span>
+												{selectedSession.location && (
+													<span>- {selectedSession.location}</span>
+												)}
+											</div>
+											<div className="flex items-center gap-2">
+												<span className="font-semibold text-default-700">
+													Tutor ID:
+												</span>
+												<span className="font-mono text-xs text-default-500">
+													{selectedSession.tutorId}
+												</span>
+											</div>
+										</div>
+
+										<div className="rounded-medium border border-default-200 bg-default-50 p-3 text-sm text-default-600">
+											<p className="font-semibold text-default-700 mb-1">
+												Comentarios
+											</p>
+											<p>
+												{selectedSession.comentarios ||
+													'Sin comentarios adicionales.'}
+											</p>
+										</div>
+									</>
+								)}
+							</ModalBody>
+							<ModalFooter>
+								<Button variant="light" onPress={onCloseModal}>
+									Cerrar
+								</Button>
+								{selectedSession && (
+									<Button
+										color="danger"
+										variant="flat"
+										isDisabled={selectedSession.status === 'cancelada'}
+										onPress={() => {
+											handleCancelSession(selectedSession.id);
+											onCloseModal();
+										}}
+									>
+										{selectedSession.status === 'cancelada'
+											? 'Cancelada'
+											: 'Cancelar tutoría'}
+									</Button>
+								)}
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
 		</div>
 	);
 };
