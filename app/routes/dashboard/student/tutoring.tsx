@@ -1,18 +1,5 @@
-import {
-	Avatar,
-	Button,
-	Card,
-	CardBody,
-	Chip,
-	Input,
-} from '@heroui/react';
-import {
-	Calendar,
-	Clock,
-	MapPin,
-	Search,
-	Video,
-} from 'lucide-react';
+import { Avatar, Button, Card, CardBody, Chip, Input } from '@heroui/react';
+import { Calendar, Clock, MapPin, Search, Video } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 import { useOutletContext } from 'react-router';
@@ -53,6 +40,7 @@ interface StudentSession {
 	status: 'confirmada' | 'pendiente' | 'cancelada';
 }
 
+// TODO: Reemplazar estos tutores mock con datos reales de backend cuando haya conexion.
 const mockTutors: Tutor[] = [
 	{
 		id: 1,
@@ -82,17 +70,86 @@ const mockTutors: Tutor[] = [
 	},
 ];
 
+// TODO: Reemplazar estas sesiones mock con datos reales de backend cuando haya conexion.
 const mockSessions: StudentSession[] = [
 	{
-		id: '-1',
-		tutorName: 'Prof. Ejemplo (Sin conexión)',
-		subject: 'Sin datos de API',
-		topic: 'Esperando conexión',
-		date: '1900-01-01',
-		time: '00:00',
-		duration: -1,
+		id: '101',
+		tutorName: 'Dra. Paula Reyes',
+		subject: 'Calculo I',
+		topic: 'Repaso de integrales definidas',
+		date: '2024-09-12',
+		time: '10:30',
+		duration: 60,
+		modality: 'presencial',
+		location: 'Aula 204 - Ciencias',
+		status: 'confirmada',
+	},
+	{
+		id: '102',
+		tutorName: 'Ing. Javier Lopez',
+		subject: 'Estructuras de Datos',
+		topic: 'Arboles AVL y complejidad',
+		date: '2024-09-14',
+		time: '18:00',
+		duration: 45,
 		modality: 'virtual',
 		status: 'pendiente',
+	},
+	{
+		id: '103',
+		tutorName: 'Lic. Sofia Mendez',
+		subject: 'Ingles B2',
+		topic: 'Preparacion oral para presentaciones',
+		date: '2024-09-09',
+		time: '08:00',
+		duration: 30,
+		modality: 'virtual',
+		status: 'confirmada',
+	},
+	{
+		id: '104',
+		tutorName: 'Mtro. Daniel Perez',
+		subject: 'Fisica II',
+		topic: 'Circuitos RLC y resonancia',
+		date: '2024-09-07',
+		time: '16:15',
+		duration: 50,
+		modality: 'virtual',
+		status: 'cancelada',
+	},
+	{
+		id: '105',
+		tutorName: 'Dra. Elena Torres',
+		subject: 'Quimica Organica',
+		topic: 'Reaccion de Friedel-Crafts',
+		date: '2024-09-18',
+		time: '12:00',
+		duration: 55,
+		modality: 'presencial',
+		location: 'Lab 3 - Quimica',
+		status: 'confirmada',
+	},
+	{
+		id: '106',
+		tutorName: 'Dr. Miguel Soto',
+		subject: 'Algebra Lineal',
+		topic: 'Diagonalizacion y autovalores',
+		date: '2024-09-20',
+		time: '09:30',
+		duration: 40,
+		modality: 'virtual',
+		status: 'pendiente',
+	},
+	{
+		id: '107',
+		tutorName: 'Lic. Ana Valdez',
+		subject: 'Redaccion Academica',
+		topic: 'Estructura de articulos de investigacion',
+		date: '2024-09-05',
+		time: '19:15',
+		duration: 35,
+		modality: 'virtual',
+		status: 'cancelada',
 	},
 ];
 
@@ -102,28 +159,27 @@ const StudentTutoringPage: React.FC = () => {
 	const [activeTab, setActiveTab] = useState<'search' | 'my-sessions'>(
 		'search',
 	);
+	// TODO: Reemplazar estado inicial de sesiones con datos del backend.
 	const [sessions, setSessions] = useState<StudentSession[]>(mockSessions);
 
 	const { onOpenChat } = useOutletContext<{
 		onOpenChat: (tutor: Tutor) => void;
 	}>();
 
-	const handleSearch = (_filters: TutorFilters) => {
-	};
+	// TODO: Conectar filtros y busqueda a la API de tutores.
+	const handleSearch = (_filters: TutorFilters) => {};
 
 	const handleCancelSession = (id: string) => {
 		setSessions((prev) =>
-			prev.map((s) =>
-				s.id === id ? { ...s, status: 'cancelada' } : s,
-			),
+			prev.map((s) => (s.id === id ? { ...s, status: 'cancelada' } : s)),
 		);
 	};
 
 	return (
 		<div className="space-y-6 p-4 md:p-6">
 			<PageHeader
-				title="Mis Tutorías"
-				description="Agenda nuevas tutorías y revisa tus sesiones programadas."
+				title="Mis Tutorias"
+				description="Agenda nuevas tutorias y revisa tus sesiones programadas."
 			/>
 
 			<div className="flex gap-2">
@@ -132,14 +188,14 @@ const StudentTutoringPage: React.FC = () => {
 					color="primary"
 					onPress={() => setActiveTab('search')}
 				>
-					Agendar tutoría
+					Agendar tutoria
 				</Button>
 				<Button
 					variant={activeTab === 'my-sessions' ? 'solid' : 'light'}
 					color="primary"
 					onPress={() => setActiveTab('my-sessions')}
 				>
-					Mis tutorías
+					Mis tutorias
 				</Button>
 			</div>
 
@@ -153,9 +209,7 @@ const StudentTutoringPage: React.FC = () => {
 									placeholder="Buscar por nombre, materia o tema..."
 									value={searchValue}
 									onValueChange={setSearchValue}
-									startContent={
-										<Search className="w-5 h-5 text-default-400" />
-									}
+									startContent={<Search className="w-5 h-5 text-default-400" />}
 									isClearable
 									onClear={() => setSearchValue('')}
 									variant="bordered"
@@ -181,11 +235,7 @@ const StudentTutoringPage: React.FC = () => {
 
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
 						{tutors.map((tutor) => (
-							<TutorCard
-								key={tutor.id}
-								tutor={tutor}
-								onOpenChat={onOpenChat}
-							/>
+							<TutorCard key={tutor.id} tutor={tutor} onOpenChat={onOpenChat} />
 						))}
 					</div>
 				</>
@@ -194,16 +244,7 @@ const StudentTutoringPage: React.FC = () => {
 			{activeTab === 'my-sessions' && (
 				<div className="space-y-4">
 					<div className="flex items-center justify-between">
-						<h2 className="text-xl font-semibold">
-							Sesiones programadas
-						</h2>
-						<Button
-							variant="light"
-							color="primary"
-							onPress={() => setActiveTab('search')}
-						>
-							Agendar nueva tutoría
-						</Button>
+						<h2 className="text-xl font-semibold">Sesiones programadas</h2>
 					</div>
 
 					{sessions.length === 0 ? (
@@ -216,10 +257,7 @@ const StudentTutoringPage: React.FC = () => {
 								<p className="text-default-500 mb-4">
 									Cuando confirmes una tutoría aparecerá aquí.
 								</p>
-								<Button
-									color="primary"
-									onPress={() => setActiveTab('search')}
-								>
+								<Button color="primary" onPress={() => setActiveTab('search')}>
 									Agendar tutoría
 								</Button>
 							</CardBody>
@@ -242,11 +280,7 @@ const StudentTutoringPage: React.FC = () => {
 															{session.tutorName}
 														</h3>
 														<div className="flex gap-2 mt-1">
-															<Chip
-																size="sm"
-																color="primary"
-																variant="flat"
-															>
+															<Chip size="sm" color="primary" variant="flat">
 																{session.subject}
 															</Chip>
 															<Chip
@@ -254,8 +288,7 @@ const StudentTutoringPage: React.FC = () => {
 																color={
 																	session.status === 'confirmada'
 																		? 'success'
-																		: session.status ===
-																				'pendiente'
+																		: session.status === 'pendiente'
 																			? 'warning'
 																			: 'danger'
 																}
@@ -272,14 +305,11 @@ const StudentTutoringPage: React.FC = () => {
 												<div className="flex flex-wrap gap-4 text-sm text-default-500 ml-11">
 													<div className="flex items-center gap-1">
 														<Calendar className="w-4 h-4" />
-														{new Date(
-															session.date,
-														).toLocaleDateString()}
+														{new Date(session.date).toLocaleDateString()}
 													</div>
 													<div className="flex items-center gap-1">
 														<Clock className="w-4 h-4" />
-														{session.time}{' '}
-														({session.duration} min)
+														{session.time} ({session.duration} min)
 													</div>
 													<div className="flex items-center gap-1">
 														{session.modality === 'virtual' ? (
@@ -291,32 +321,21 @@ const StudentTutoringPage: React.FC = () => {
 															{session.modality}
 														</span>
 														{session.location && (
-															<span>
-																{' '}
-																- {session.location}
-															</span>
+															<span> - {session.location}</span>
 														)}
 													</div>
 												</div>
 											</div>
 											<div className="flex gap-2">
-												<Button
-													size="sm"
-													color="primary"
-													variant="flat"
-												>
+												<Button size="sm" color="primary" variant="flat">
 													Ver detalles
 												</Button>
 												<Button
 													size="sm"
 													variant="light"
 													color="danger"
-													isDisabled={
-														session.status === 'cancelada'
-													}
-													onPress={() =>
-														handleCancelSession(session.id)
-													}
+													isDisabled={session.status === 'cancelada'}
+													onPress={() => handleCancelSession(session.id)}
 												>
 													{session.status === 'cancelada'
 														? 'Cancelada'
