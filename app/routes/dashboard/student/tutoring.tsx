@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, CardBody, Chip, Input } from '@heroui/react';
+import { Button, Card, CardBody, Chip, Input } from '@heroui/react';
 import { Calendar, Clock, MapPin, Search, Video } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
@@ -30,6 +30,8 @@ interface TutorFilters {
 interface StudentSession {
 	id: string;
 	tutorName: string;
+	avatarInitials?: string;
+	avatarColor?: string;
 	subject: string;
 	topic: string;
 	date: string;
@@ -40,7 +42,27 @@ interface StudentSession {
 	status: 'confirmada' | 'pendiente' | 'cancelada';
 }
 
-// TODO: Reemplazar estos tutores mock con datos reales de backend cuando haya conexion.
+const getAvatarBg = (avatarColor?: string): string => {
+	const colorMap: Record<string, string> = {
+		'#b81d24': 'bg-red-500',
+		'#ff9900': 'bg-orange-500',
+		'#8a2be2': 'bg-purple-500',
+		'#008000': 'bg-green-500',
+	};
+
+	return colorMap[avatarColor ?? ''] || 'bg-red-500';
+};
+
+const getInitials = (name: string, fallback?: string): string => {
+	if (fallback) return fallback;
+	const parts = name.split(' ').filter(Boolean);
+	const first = parts[0]?.[0] ?? '';
+	const last = parts[parts.length - 1]?.[0] ?? '';
+	const initials = `${first}${last || parts[0]?.[1] || ''}`.toUpperCase();
+	return initials || 'T';
+};
+
+// TODO: Conectar con API - Ejemplo con valores negativos para referencia
 const mockTutors: Tutor[] = [
 	{
 		id: 1,
@@ -75,6 +97,8 @@ const mockSessions: StudentSession[] = [
 	{
 		id: '101',
 		tutorName: 'Dra. Paula Reyes',
+		avatarInitials: 'PR',
+		avatarColor: '#8a2be2',
 		subject: 'Calculo I',
 		topic: 'Repaso de integrales definidas',
 		date: '2024-09-12',
@@ -87,6 +111,8 @@ const mockSessions: StudentSession[] = [
 	{
 		id: '102',
 		tutorName: 'Ing. Javier Lopez',
+		avatarInitials: 'JL',
+		avatarColor: '#b81d24',
 		subject: 'Estructuras de Datos',
 		topic: 'Arboles AVL y complejidad',
 		date: '2024-09-14',
@@ -98,6 +124,8 @@ const mockSessions: StudentSession[] = [
 	{
 		id: '103',
 		tutorName: 'Lic. Sofia Mendez',
+		avatarInitials: 'SM',
+		avatarColor: '#008000',
 		subject: 'Ingles B2',
 		topic: 'Preparacion oral para presentaciones',
 		date: '2024-09-09',
@@ -109,6 +137,8 @@ const mockSessions: StudentSession[] = [
 	{
 		id: '104',
 		tutorName: 'Mtro. Daniel Perez',
+		avatarInitials: 'DP',
+		avatarColor: '#ff9900',
 		subject: 'Fisica II',
 		topic: 'Circuitos RLC y resonancia',
 		date: '2024-09-07',
@@ -120,6 +150,8 @@ const mockSessions: StudentSession[] = [
 	{
 		id: '105',
 		tutorName: 'Dra. Elena Torres',
+		avatarInitials: 'ET',
+		avatarColor: '#8a2be2',
 		subject: 'Quimica Organica',
 		topic: 'Reaccion de Friedel-Crafts',
 		date: '2024-09-18',
@@ -132,6 +164,8 @@ const mockSessions: StudentSession[] = [
 	{
 		id: '106',
 		tutorName: 'Dr. Miguel Soto',
+		avatarInitials: 'MS',
+		avatarColor: '#b81d24',
 		subject: 'Algebra Lineal',
 		topic: 'Diagonalizacion y autovalores',
 		date: '2024-09-20',
@@ -143,6 +177,8 @@ const mockSessions: StudentSession[] = [
 	{
 		id: '107',
 		tutorName: 'Lic. Ana Valdez',
+		avatarInitials: 'AV',
+		avatarColor: '#008000',
 		subject: 'Redaccion Academica',
 		topic: 'Estructura de articulos de investigacion',
 		date: '2024-09-05',
@@ -166,7 +202,6 @@ const StudentTutoringPage: React.FC = () => {
 		onOpenChat: (tutor: Tutor) => void;
 	}>();
 
-	// TODO: Conectar filtros y busqueda a la API de tutores.
 	const handleSearch = (_filters: TutorFilters) => {};
 
 	const handleCancelSession = (id: string) => {
@@ -177,10 +212,7 @@ const StudentTutoringPage: React.FC = () => {
 
 	return (
 		<div className="space-y-6 p-4 md:p-6">
-			<PageHeader
-				title="Mis Tutorias"
-				description="Agenda nuevas tutorias y revisa tus sesiones programadas."
-			/>
+			<PageHeader title="Tutorías" description="Panel de Estudiante" />
 
 			<div className="flex gap-2">
 				<Button
@@ -188,14 +220,14 @@ const StudentTutoringPage: React.FC = () => {
 					color="primary"
 					onPress={() => setActiveTab('search')}
 				>
-					Agendar tutoria
+					Agendar tutoría
 				</Button>
 				<Button
 					variant={activeTab === 'my-sessions' ? 'solid' : 'light'}
 					color="primary"
 					onPress={() => setActiveTab('my-sessions')}
 				>
-					Mis tutorias
+					Mis tutorías
 				</Button>
 			</div>
 
@@ -270,11 +302,16 @@ const StudentTutoringPage: React.FC = () => {
 										<div className="flex items-start justify-between">
 											<div className="space-y-2">
 												<div className="flex items-center gap-3">
-													<Avatar
-														name={session.tutorName}
-														size="sm"
-														showFallback
-													/>
+													<div
+														className={`${getAvatarBg(
+															session.avatarColor,
+														)} w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold`}
+													>
+														{getInitials(
+															session.tutorName,
+															session.avatarInitials,
+														)}
+													</div>
 													<div>
 														<h3 className="font-semibold">
 															{session.tutorName}
