@@ -1,5 +1,6 @@
 export { AlertMessage } from './alert-message';
 export { ChatbotWidget } from './chatbot-widget';
+export { CommunityForums } from './community/community-forums';
 export { DashboardLayout } from './dashboard-layout';
 export { DateRangeFilter } from './date-range-filter';
 export { EmptyState } from './empty-state';
