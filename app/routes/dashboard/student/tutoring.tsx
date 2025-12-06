@@ -152,32 +152,13 @@ const mockSessions: StudentSession[] = [
 		codigoMateria: 'DOSW',
 		subject: 'Desarrollo de Software',
 		topic: 'Proyecto final y entregables',
-		scheduledAt: '2025-11-25T14:00:00.000Z',
+		scheduledAt: '2025-12-25T14:00:00.000Z',
 		day: 'monday',
 		startTime: '14:00',
 		endTime: '16:00',
 		mode: 'VIRTUAL',
 		comentarios: 'Necesito ayuda con el proyecto final de la materia',
 		status: 'pendiente',
-	},
-	{
-		id: '102',
-		tutorId: '550e8400-e29b-41d4-a716-446655440002',
-		studentId: '660e8400-e29b-41d4-a716-446655440001',
-		tutorName: 'Mtro. Daniel Perez',
-		avatarInitials: 'DP',
-		avatarColor: '#ff9900',
-		codigoMateria: 'FIS2',
-		subject: 'Fisica II',
-		topic: 'Circuitos RLC y resonancia',
-		scheduledAt: '2024-09-07T16:15:00.000Z',
-		day: 'saturday',
-		startTime: '16:15',
-		endTime: '17:05',
-		mode: 'PRESENCIAL',
-		location: 'Aula 204 - Ciencias',
-		comentarios: 'Revisar ejercicios del laboratorio previo',
-		status: 'confirmada',
 	},
 	{
 		id: '103',
@@ -189,35 +170,84 @@ const mockSessions: StudentSession[] = [
 		codigoMateria: 'REDAC',
 		subject: 'Redaccion Academica',
 		topic: 'Estructura de articulos de investigacion',
-		scheduledAt: '2024-09-05T19:15:00.000Z',
-		day: 'thursday',
+		scheduledAt: '2026-05-09T19:15:00.000Z',
+		day: 'saturday',
 		startTime: '19:15',
 		endTime: '19:50',
 		mode: 'VIRTUAL',
 		comentarios: 'Practicar introduccion y conclusiones',
 		status: 'cancelada',
 	},
+	{
+		id: '102',
+		tutorId: '550e8400-e29b-41d4-a716-446655440002',
+		studentId: '660e8400-e29b-41d4-a716-446655440001',
+		tutorName: 'Mtro. Daniel Perez',
+		avatarInitials: 'DP',
+		avatarColor: '#ff9900',
+		codigoMateria: 'FIS2',
+		subject: 'Fisica II',
+		topic: 'Circuitos RLC y resonancia',
+		scheduledAt: '2026-09-07T16:15:00.000Z',
+		day: 'monday',
+		startTime: '16:15',
+		endTime: '17:05',
+		mode: 'PRESENCIAL',
+		location: 'Aula 204 - Ciencias',
+		comentarios: 'Revisar ejercicios del laboratorio previo',
+		status: 'confirmada',
+	},
 ];
 
 const StudentTutoringPage: React.FC = () => {
 	const [tutors] = useState<Tutor[]>(mockTutors);
+	// TODO: Inicializar tutors con datos del backend
 	const [searchValue, setSearchValue] = useState('');
 	const [activeTab, setActiveTab] = useState<'search' | 'my-sessions'>(
 		'search',
 	);
 	const [sessions, setSessions] = useState<StudentSession[]>(mockSessions);
+	// TODO: Inicializar sessions con datos del backend
 	const [selectedSession, setSelectedSession] = useState<StudentSession | null>(
+		null,
+	);
+	const [sessionToCancel, setSessionToCancel] = useState<StudentSession | null>(
 		null,
 	);
 
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
+	const {
+		isOpen: isConfirmOpen,
+		onOpen: onOpenConfirm,
+		onClose: onCloseConfirm,
+	} = useDisclosure();
+
 	const { onOpenChat } = useOutletContext<{
 		onOpenChat: (tutor: Tutor) => void;
 	}>();
 
+	const getFutureSessionsSortedByProximity = (list: StudentSession[]) => {
+		const now = Date.now();
+
+		return [...list]
+			.filter((session) => new Date(session.scheduledAt).getTime() >= now)
+			.sort((a, b) => {
+				const timeA = new Date(a.scheduledAt).getTime();
+				const timeB = new Date(b.scheduledAt).getTime();
+
+				const diffA = Math.abs(timeA - now);
+				const diffB = Math.abs(timeB - now);
+
+				return diffA - diffB;
+			});
+	};
+
+	const futureSessions = getFutureSessionsSortedByProximity(sessions);
+
 	const handleSearch = (_filters: TutorFilters) => {};
 
+	// TODO: Llamar al backend para cancelar la tutoría
 	const handleCancelSession = (id: string) => {
 		setSessions((prev) =>
 			prev.map((s) => (s.id === id ? { ...s, status: 'cancelada' } : s)),
@@ -303,7 +333,7 @@ const StudentTutoringPage: React.FC = () => {
 						<h2 className="text-xl font-semibold">Sesiones programadas</h2>
 					</div>
 
-					{sessions.length === 0 ? (
+					{futureSessions.length === 0 ? (
 						<Card>
 							<CardBody className="text-center py-12">
 								<Calendar className="w-12 h-12 text-default-300 mx-auto mb-4" />
@@ -320,7 +350,7 @@ const StudentTutoringPage: React.FC = () => {
 						</Card>
 					) : (
 						<div className="grid gap-4">
-							{sessions.map((session) => {
+							{futureSessions.map((session) => {
 								const modalityLabel =
 									session.modality ?? getModeLabel(session.mode);
 								const sessionDate =
@@ -413,7 +443,10 @@ const StudentTutoringPage: React.FC = () => {
 														variant="light"
 														color="danger"
 														isDisabled={session.status === 'cancelada'}
-														onPress={() => handleCancelSession(session.id)}
+														onPress={() => {
+															setSessionToCancel(session);
+															onOpenConfirm();
+														}}
 													>
 														{session.status === 'cancelada'
 															? 'Cancelada'
@@ -430,6 +463,7 @@ const StudentTutoringPage: React.FC = () => {
 				</div>
 			)}
 
+			{/* Modal de detalle de tutoría */}
 			<Modal
 				isOpen={isOpen}
 				onOpenChange={(open) => {
@@ -557,8 +591,8 @@ const StudentTutoringPage: React.FC = () => {
 										variant="flat"
 										isDisabled={selectedSession.status === 'cancelada'}
 										onPress={() => {
-											handleCancelSession(selectedSession.id);
-											onCloseModal();
+											setSessionToCancel(selectedSession);
+											onOpenConfirm();
 										}}
 									>
 										{selectedSession.status === 'cancelada'
@@ -566,6 +600,70 @@ const StudentTutoringPage: React.FC = () => {
 											: 'Cancelar tutoría'}
 									</Button>
 								)}
+							</ModalFooter>
+						</>
+					)}
+				</ModalContent>
+			</Modal>
+
+			{/* Modal de confirmación de cancelación */}
+			<Modal
+				isOpen={isConfirmOpen}
+				onOpenChange={(open) => {
+					if (!open) {
+						setSessionToCancel(null);
+						onCloseConfirm();
+					}
+				}}
+				size="md"
+			>
+				<ModalContent>
+					{(onCloseConfirmModal) => (
+						<>
+							<ModalHeader className="flex flex-col gap-1">
+								Confirmar cancelación
+							</ModalHeader>
+							<ModalBody>
+								<p className="text-default-600">
+									¿Estás seguro de que deseas cancelar esta tutoría
+									{sessionToCancel && (
+										<>
+											{' con '}
+											<span className="font-semibold">
+												{sessionToCancel.tutorName}
+											</span>
+											{' el '}
+											{new Date(
+												sessionToCancel.scheduledAt,
+											).toLocaleDateString()}
+											?
+										</>
+									)}
+								</p>
+							</ModalBody>
+							<ModalFooter>
+								<Button
+									variant="light"
+									onPress={() => {
+										setSessionToCancel(null);
+										onCloseConfirmModal();
+									}}
+								>
+									Mantener tutoría
+								</Button>
+								<Button
+									color="danger"
+									variant="solid"
+									onPress={() => {
+										if (sessionToCancel) {
+											handleCancelSession(sessionToCancel.id);
+										}
+										setSessionToCancel(null);
+										onCloseConfirmModal();
+									}}
+								>
+									Cancelar tutoría
+								</Button>
 							</ModalFooter>
 						</>
 					)}
