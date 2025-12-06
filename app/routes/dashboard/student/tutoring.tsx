@@ -78,7 +78,7 @@ const getInitials = (name: string, fallback?: string): string => {
 	if (fallback) return fallback;
 	const parts = name.split(' ').filter(Boolean);
 	const first = parts[0]?.[0] ?? '';
-	const last = parts[parts.length - 1]?.[0] ?? '';
+	const last = parts.at(-1)?.[0] ?? '';
 	const initials = `${first}${last || parts[0]?.[1] || ''}`.toUpperCase();
 	return initials || 'T';
 };
@@ -110,7 +110,15 @@ const getDurationMinutes = (start: string, end: string): number => {
 	return Math.max(toMinutes(end) - toMinutes(start), 0);
 };
 
-// TODO: Conectar con API - Ejemplo con valores negativos para referencia
+const getStatusChipColor = (
+	status: StudentSession['status'],
+): 'success' | 'warning' | 'danger' => {
+	if (status === 'confirmada') return 'success';
+	if (status === 'pendiente') return 'warning';
+	return 'danger';
+};
+
+// Nota: por ahora se usan datos mock, pendientes de conectar al backend
 const mockTutors: Tutor[] = [
 	{
 		id: 1,
@@ -140,7 +148,7 @@ const mockTutors: Tutor[] = [
 	},
 ];
 
-// TODO: Reemplazar estas sesiones mock con datos reales de backend cuando haya conexion.
+// Nota: por ahora se usan sesiones mock, pendientes de conectar al backend
 const mockSessions: StudentSession[] = [
 	{
 		id: '101',
@@ -201,13 +209,13 @@ const mockSessions: StudentSession[] = [
 
 const StudentTutoringPage: React.FC = () => {
 	const [tutors] = useState<Tutor[]>(mockTutors);
-	// TODO: Inicializar tutors con datos del backend
+	// Nota: en el futuro, inicializar tutors con datos del backend
 	const [searchValue, setSearchValue] = useState('');
 	const [activeTab, setActiveTab] = useState<'search' | 'my-sessions'>(
 		'search',
 	);
 	const [sessions, setSessions] = useState<StudentSession[]>(mockSessions);
-	// TODO: Inicializar sessions con datos del backend
+	// Nota: en el futuro, inicializar sessions con datos del backend
 	const [selectedSession, setSelectedSession] = useState<StudentSession | null>(
 		null,
 	);
@@ -245,10 +253,12 @@ const StudentTutoringPage: React.FC = () => {
 
 	const futureSessions = getFutureSessionsSortedByProximity(sessions);
 
-	const handleSearch = (_filters: TutorFilters) => {};
+	const handleSearch = (_filters: TutorFilters) => {
+		// Pendiente: conectar filtros con backend
+	};
 
-	// TODO: Llamar al backend para cancelar la tutoría
 	const handleCancelSession = (id: string) => {
+		// Pendiente: llamar al backend para cancelar la tutoría
 		setSessions((prev) =>
 			prev.map((s) => (s.id === id ? { ...s, status: 'cancelada' } : s)),
 		);
@@ -388,13 +398,7 @@ const StudentTutoringPage: React.FC = () => {
 																</Chip>
 																<Chip
 																	size="sm"
-																	color={
-																		session.status === 'confirmada'
-																			? 'success'
-																			: session.status === 'pendiente'
-																				? 'warning'
-																				: 'danger'
-																	}
+																	color={getStatusChipColor(session.status)}
 																	variant="flat"
 																>
 																	{session.status}
@@ -507,13 +511,7 @@ const StudentTutoringPage: React.FC = () => {
 													<Chip
 														size="sm"
 														variant="flat"
-														color={
-															selectedSession.status === 'confirmada'
-																? 'success'
-																: selectedSession.status === 'pendiente'
-																	? 'warning'
-																	: 'danger'
-														}
+														color={getStatusChipColor(selectedSession.status)}
 													>
 														{selectedSession.status}
 													</Chip>
