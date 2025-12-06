@@ -5,6 +5,7 @@ import {
 	DropdownMenu,
 	DropdownTrigger,
 	Input,
+	Textarea,
 } from '@heroui/react';
 
 import {
@@ -37,6 +38,16 @@ export default function StudentMaterials() {
 		null,
 	);
 	const [userRating, setUserRating] = useState(0);
+const [isAssistOpen, setIsAssistOpen] = useState(false);
+const [assistDescription, setAssistDescription] = useState('');
+const isGridView = viewMode === 'grid';
+const layoutClass = isGridView
+	? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+	: 'space-y-4';
+const gridButtonVariant = isGridView ? 'solid' : 'flat';
+const gridButtonClass = isGridView ? 'bg-[#8B1A1A] text-white' : '';
+const listButtonVariant = isGridView ? 'flat' : 'solid';
+const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
 
 	// ESTADOS para paginación
 	const [currentPage, setCurrentPage] = useState(1);
@@ -81,7 +92,7 @@ export default function StudentMaterials() {
 	}, [searchQuery, selectedSubject, selectedSemester, sortBy]);
 
 	// Calcular items por página basado en la vista
-	const itemsPerPage = viewMode === 'grid' ? 12 : 15;
+	const itemsPerPage = isGridView ? 12 : 15;
 
 	// Calcular materiales paginados
 	const paginatedMaterials = useMemo(() => {
@@ -130,8 +141,7 @@ export default function StudentMaterials() {
 		if (rating > 0) {
 			console.log(`Valorando material ${material.id} con ${rating} estrellas`);
 			alert(
-				`¡Gracias por valorar "${material.title}" con ${rating} estrellas!`,
-			);
+				`¡Gracias por valorar "${material.title}" con ${rating} estrellas!`);
 			setUserRating(0);
 		}
 	};
@@ -183,6 +193,18 @@ export default function StudentMaterials() {
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
+	const handleAssistSubmit = () => {
+		if (!assistDescription.trim()) {
+			alert('Describe lo que buscas antes de enviar.');
+			return;
+		}
+		// TODO: Conectar con el backend/IA para enviar la descripcion y obtener recomendaciones.
+		console.log('Busqueda inteligente:', {
+			description: assistDescription,
+		});
+		alert('Busqueda inteligente enviada. (Simulado)');
+	};
+
 	return (
 		<div className="space-y-6">
 			{/* Header SIN botón Subir material */}
@@ -212,6 +234,33 @@ export default function StudentMaterials() {
 					value={searchQuery}
 					onValueChange={setSearchQuery}
 					className="flex-1"
+					endContent={
+						<Button
+							isIconOnly
+							variant="light"
+							className="min-w-10 h-10 rounded-full bg-[#2D9CDB] text-white shadow-sm"
+							title="Busqueda inteligente"
+							aria-label="Busqueda inteligente"
+							onClick={() => setIsAssistOpen((prev) => !prev)}
+							type="button"
+						>
+							<svg
+								viewBox="0 0 24 24"
+								className="w-6 h-6"
+								fill="none"
+								aria-hidden="true"
+							>
+								<path
+									d="M10 3.5 11.2 7l3.3 1.1-3.3 1.1L10 12.6 8.8 9.2 5.5 8.1 8.8 7 10 3.5Z"
+									fill="white"
+								/>
+								<path
+									d="m16.5 6 .6 1.7 1.6.5-1.6.5-.6 1.7-.6-1.7-1.6-.5 1.6-.5.6-1.7Z"
+									fill="white"
+								/>
+							</svg>
+						</Button>
+					}
 				/>
 
 				<Button
@@ -222,6 +271,50 @@ export default function StudentMaterials() {
 					Filtros
 				</Button>
 			</div>
+
+			{isAssistOpen && (
+				<div className="border rounded-lg p-4 shadow-sm bg-white/60 backdrop-blur-sm space-y-4">
+					<div className="flex items-center justify-between gap-3">
+						<div>
+							<p className="font-semibold text-foreground">Busqueda inteligente</p>
+							<p className="text-sm text-default-500">
+								Describe el material que necesitas.
+							</p>
+						</div>
+						<Button
+							size="sm"
+							variant="light"
+							onClick={() => setIsAssistOpen(false)}
+							type="button"
+						>
+							Cerrar
+						</Button>
+					</div>
+
+					<Textarea
+						label="Descripcion"
+						placeholder="Ej: Necesito una guia de estudio para algebra lineal enfocada en ejemplos practicos..."
+						minRows={3}
+						maxLength={5000}
+						value={assistDescription}
+						onValueChange={(value) => {
+							if (value.length <= 5000) setAssistDescription(value);
+						}}
+						description={`${assistDescription.length}/5000 caracteres`}
+						isRequired
+					/>
+
+					<div className="flex flex-col sm:flex-row sm:items-center gap-3">
+						<Button
+							color="primary"
+							onClick={handleAssistSubmit}
+							className="sm:ml-auto"
+						>
+							Enviar
+						</Button>
+					</div>
+				</div>
+			)}
 
 			{/* Panel de filtros */}
 			<FiltersPanel
@@ -251,8 +344,8 @@ export default function StudentMaterials() {
 				<div className="flex gap-2">
 					<Button
 						isIconOnly
-						variant={viewMode === 'grid' ? 'solid' : 'flat'}
-						className={viewMode === 'grid' ? 'bg-[#8B1A1A] text-white' : ''}
+						variant={gridButtonVariant}
+						className={gridButtonClass}
 						onClick={() => setViewMode('grid')}
 						type="button"
 					>
@@ -260,8 +353,8 @@ export default function StudentMaterials() {
 					</Button>
 					<Button
 						isIconOnly
-						variant={viewMode === 'list' ? 'solid' : 'flat'}
-						className={viewMode === 'list' ? 'bg-[#8B1A1A] text-white' : ''}
+						variant={listButtonVariant}
+						className={listButtonClass}
 						onClick={() => setViewMode('list')}
 						type="button"
 					>
@@ -271,13 +364,7 @@ export default function StudentMaterials() {
 			</div>
 
 			{/* Vista de materiales */}
-			<div
-				className={
-					viewMode === 'grid'
-						? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-						: 'space-y-4'
-				}
-			>
+			<div className={layoutClass}>
 				{paginatedMaterials.map((material) => (
 					<MaterialCard
 						key={material.id}
