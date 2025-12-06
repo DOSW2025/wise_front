@@ -27,8 +27,22 @@ export function useProfileSave() {
 			setTimeout(() => setSuccess(null), 3000);
 			return true;
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Error al guardar el perfil';
+			let errorMessage = 'Error al guardar el perfil';
+
+			if (err instanceof Error) {
+				errorMessage = err.message;
+
+				// Detectar error de endpoint no disponible
+				if (
+					errorMessage.includes('Cannot PUT') ||
+					errorMessage.includes('404') ||
+					errorMessage.includes('Not Found')
+				) {
+					errorMessage =
+						'El endpoint de actualización de perfil no está disponible en el backend. Por favor, contacta al equipo de desarrollo.';
+				}
+			}
+
 			setError(errorMessage);
 			return false;
 		} finally {

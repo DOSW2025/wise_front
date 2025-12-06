@@ -45,15 +45,29 @@ function extractErrorMessage(error: unknown, defaultMessage: string): string {
 		typeof error === 'object' &&
 		'response' in error &&
 		error.response &&
-		typeof error.response === 'object' &&
-		'data' in error.response
+		typeof error.response === 'object'
 	) {
-		const apiError = error.response.data as Record<string, unknown>;
-		return (
-			(apiError?.message as string) ||
-			(apiError?.error as string) ||
-			defaultMessage
-		);
+		const response = error.response as Record<string, unknown>;
+
+		// Detectar error 404 o método no permitido
+		if (response.status === 404 || response.status === 405) {
+			return 'El endpoint no está disponible en el backend';
+		}
+
+		if ('data' in response) {
+			const apiError = response.data as Record<string, unknown>;
+
+			// Detectar mensaje "Cannot PUT"
+			if (typeof apiError === 'string' && apiError.includes('Cannot PUT')) {
+				return 'El endpoint no está disponible en el backend';
+			}
+
+			return (
+				(apiError?.message as string) ||
+				(apiError?.error as string) ||
+				defaultMessage
+			);
+		}
 	}
 	return 'Error de conexión con el servidor';
 }
