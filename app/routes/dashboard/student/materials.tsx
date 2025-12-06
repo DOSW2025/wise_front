@@ -38,8 +38,16 @@ export default function StudentMaterials() {
 		null,
 	);
 	const [userRating, setUserRating] = useState(0);
-	const [isAssistOpen, setIsAssistOpen] = useState(false);
-	const [assistDescription, setAssistDescription] = useState('');
+const [isAssistOpen, setIsAssistOpen] = useState(false);
+const [assistDescription, setAssistDescription] = useState('');
+const isGridView = viewMode === 'grid';
+const layoutClass = isGridView
+	? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+	: 'space-y-4';
+const gridButtonVariant = isGridView ? 'solid' : 'flat';
+const gridButtonClass = isGridView ? 'bg-[#8B1A1A] text-white' : '';
+const listButtonVariant = isGridView ? 'flat' : 'solid';
+const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
 
 	// ESTADOS para paginación
 	const [currentPage, setCurrentPage] = useState(1);
@@ -84,7 +92,7 @@ export default function StudentMaterials() {
 	}, [searchQuery, selectedSubject, selectedSemester, sortBy]);
 
 	// Calcular items por página basado en la vista
-	const itemsPerPage = viewMode === 'grid' ? 12 : 15;
+	const itemsPerPage = isGridView ? 12 : 15;
 
 	// Calcular materiales paginados
 	const paginatedMaterials = useMemo(() => {
@@ -190,7 +198,7 @@ export default function StudentMaterials() {
 			alert('Describe lo que buscas antes de enviar.');
 			return;
 		}
-		// TODO: Conectar con el backend/IA para enviar la descripción y obtener recomendaciones.
+		// TODO: Conectar con el backend/IA para enviar la descripcion y obtener recomendaciones.
 		console.log('Busqueda inteligente:', {
 			description: assistDescription,
 		});
@@ -336,8 +344,8 @@ export default function StudentMaterials() {
 				<div className="flex gap-2">
 					<Button
 						isIconOnly
-						variant={viewMode === 'grid' ? 'solid' : 'flat'}
-						className={viewMode === 'grid' ? 'bg-[#8B1A1A] text-white' : ''}
+						variant={gridButtonVariant}
+						className={gridButtonClass}
 						onClick={() => setViewMode('grid')}
 						type="button"
 					>
@@ -345,8 +353,8 @@ export default function StudentMaterials() {
 					</Button>
 					<Button
 						isIconOnly
-						variant={viewMode === 'list' ? 'solid' : 'flat'}
-						className={viewMode === 'list' ? 'bg-[#8B1A1A] text-white' : ''}
+						variant={listButtonVariant}
+						className={listButtonClass}
 						onClick={() => setViewMode('list')}
 						type="button"
 					>
@@ -356,13 +364,7 @@ export default function StudentMaterials() {
 			</div>
 
 			{/* Vista de materiales */}
-			<div
-				className={
-					viewMode === 'grid'
-						? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-						: 'space-y-4'
-				}
-			>
+			<div className={layoutClass}>
 				{paginatedMaterials.map((material) => (
 					<MaterialCard
 						key={material.id}
