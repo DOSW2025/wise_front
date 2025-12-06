@@ -13,7 +13,7 @@ import {
 } from '@heroui/react';
 import { Calendar, Clock, MapPin, Search, Video } from 'lucide-react';
 import type React from 'react';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { PageHeader } from '~/components/page-header';
 import TutorCard from '~/components/tutor-card';
@@ -111,15 +111,321 @@ const getDurationMinutes = (start: string, end: string): number => {
 };
 
 const getStatusChipColor = (status: StudentSession['status']) => {
-	switch (status) {
-		case 'confirmada':
-			return 'success';
-		case 'pendiente':
-			return 'warning';
-		case 'cancelada':
-		default:
-			return 'danger';
-	}
+	if (status === 'confirmada') return 'success';
+	if (status === 'pendiente') return 'warning';
+	return 'danger';
+};
+
+type SessionModalityLabel = 'presencial' | 'virtual';
+
+type SessionStatusColor = 'success' | 'warning' | 'danger';
+
+interface SessionViewModel extends StudentSession {
+	modalityLabel: SessionModalityLabel;
+	dateLabel: string;
+	durationMinutes: number;
+	timeLabel: string;
+	statusColor: SessionStatusColor;
+	initials: string;
+	avatarBg: string;
+	dayLabel: string;
+}
+
+const buildSessionViewModel = (session: StudentSession): SessionViewModel => {
+	const modalityLabel = session.modality ?? getModeLabel(session.mode);
+	const dateLabel =
+		session.date ?? new Date(session.scheduledAt).toLocaleDateString();
+	const durationMinutes =
+		session.duration ?? getDurationMinutes(session.startTime, session.endTime);
+	const timeLabel = session.time ?? `${session.startTime} - ${session.endTime}`;
+	const statusColor = getStatusChipColor(session.status);
+	const initials = getInitials(session.tutorName, session.avatarInitials);
+	const avatarBg = getAvatarBg(session.avatarColor);
+	const dayLabel = getDayLabel(session.day);
+
+	return {
+		...session,
+		modalityLabel,
+		dateLabel,
+		durationMinutes,
+		timeLabel,
+		statusColor,
+		initials,
+		avatarBg,
+		dayLabel,
+	};
+};
+
+const SessionHeader: React.FC<{
+	session: SessionViewModel;
+	avatarSize?: 'sm' | 'lg';
+	subtitle?: React.ReactNode;
+	actionArea?: React.ReactNode;
+	showTopic?: boolean;
+}> = ({
+	session,
+	avatarSize = 'sm',
+	subtitle,
+	actionArea,
+	showTopic = true,
+}) => {
+	const sizeClass = avatarSize === 'lg' ? 'w-12 h-12' : 'w-10 h-10';
+
+	return (
+		<div className="flex items-start justify-between">
+			<div className="space-y-2">
+				<div className="flex items-center gap-3">
+					<div
+						className={`${session.avatarBg} ${sizeClass} rounded-full flex items-center justify-center text-white font-semibold`}
+					>
+						{session.initials}
+					</div>
+					<div>
+						<h3 className="font-semibold">{session.tutorName}</h3>
+						<div className="flex gap-2 mt-1 flex-wrap">
+							<Chip size="sm" color="primary" variant="flat">
+								{session.subject}
+							</Chip>
+							<Chip size="sm" color={session.statusColor} variant="flat">
+								{session.status}
+							</Chip>
+						</div>
+						{subtitle && (
+							<p className="text-sm text-default-500 mt-1">{subtitle}</p>
+						)}
+					</div>
+				</div>
+				{showTopic && <p className="text-default-600 ml-11">{session.topic}</p>}
+			</div>
+			{actionArea}
+		</div>
+	);
+};
+
+const SessionMeta: React.FC<{
+	session: SessionViewModel;
+	includeDay?: boolean;
+	className?: string;
+}> = ({ session, includeDay = false, className }) => (
+	<div
+		className={`flex flex-wrap gap-4 text-sm text-default-500 ${className ?? ''}`}
+	>
+		<div className="flex items-center gap-1">
+			<Calendar className="w-4 h-4" />
+			{includeDay
+				? `${session.dateLabel} (${session.dayLabel})`
+				: session.dateLabel}
+		</div>
+		<div className="flex items-center gap-1">
+			<Clock className="w-4 h-4" />
+			{session.timeLabel} ({session.durationMinutes} min)
+		</div>
+		<div className="flex items-center gap-1">
+			{session.modalityLabel === 'virtual' ? (
+				<Video className="w-4 h-4" />
+			) : (
+				<MapPin className="w-4 h-4" />
+			)}
+			<span className="capitalize">{session.modalityLabel}</span>
+			{session.location && <span> - {session.location}</span>}
+		</div>
+	</div>
+);
+
+const SessionCardItem: React.FC<{
+	session: StudentSession;
+	onViewDetails: (session: StudentSession) => void;
+	onCancel: (session: StudentSession) => void;
+}> = ({ session, onViewDetails, onCancel }) => {
+	const view = buildSessionViewModel(session);
+
+	return (
+		<Card>
+			<CardBody>
+				<SessionHeader
+					session={view}
+					actionArea={
+						<div className="flex gap-2">
+							<Button
+								size="sm"
+								color="primary"
+								variant="flat"
+								onPress={() => onViewDetails(session)}
+							>
+								Ver detalles
+							</Button>
+							<Button
+								size="sm"
+								variant="light"
+								color="danger"
+								isDisabled={view.status === 'cancelada'}
+								onPress={() => onCancel(session)}
+							>
+								{view.status === 'cancelada' ? 'Cancelada' : 'Cancelar'}
+							</Button>
+						</div>
+					}
+				/>
+				<SessionMeta session={view} className="ml-11 mt-2" />
+			</CardBody>
+		</Card>
+	);
+};
+
+const SessionDetailsModal: React.FC<{
+	session: StudentSession | null;
+	isOpen: boolean;
+	onClose: () => void;
+	onRequestCancel: (session: StudentSession) => void;
+}> = ({ session, isOpen, onClose, onRequestCancel }) => {
+	const view = session ? buildSessionViewModel(session) : null;
+
+	return (
+		<Modal
+			isOpen={isOpen}
+			onOpenChange={(open) => {
+				if (!open) onClose();
+			}}
+			size="lg"
+		>
+			<ModalContent>
+				{(onCloseModal) => {
+					const handleClose = () => {
+						onClose();
+						onCloseModal();
+					};
+
+					return (
+						<>
+							<ModalHeader className="flex flex-col gap-1">
+								<span>Detalle de tutoria</span>
+								{view && (
+									<span className="text-sm text-default-500">
+										{view.subject} - {view.codigoMateria}
+									</span>
+								)}
+							</ModalHeader>
+							<ModalBody className="space-y-4">
+								{view && (
+									<>
+										<SessionHeader
+											session={view}
+											avatarSize="lg"
+											subtitle={`Codigo: ${view.codigoMateria}`}
+											showTopic={false}
+										/>
+
+										<SessionMeta session={view} includeDay className="ml-11" />
+
+										<div className="flex items-center gap-2 text-sm text-default-600">
+											<span className="font-semibold text-default-700">
+												Tutor ID:
+											</span>
+											<span className="font-mono text-xs text-default-500">
+												{view.tutorId}
+											</span>
+										</div>
+
+										<div className="rounded-medium border border-default-200 bg-default-50 p-3 text-sm text-default-600">
+											<p className="font-semibold text-default-700 mb-1">
+												Comentarios
+											</p>
+											<p>
+												{view.comentarios || 'Sin comentarios adicionales.'}
+											</p>
+										</div>
+									</>
+								)}
+							</ModalBody>
+							<ModalFooter>
+								<Button variant="light" onPress={handleClose}>
+									Cerrar
+								</Button>
+								{session && (
+									<Button
+										color="danger"
+										variant="flat"
+										isDisabled={session.status === 'cancelada'}
+										onPress={() => onRequestCancel(session)}
+									>
+										{session.status === 'cancelada'
+											? 'Cancelada'
+											: 'Cancelar tutoria'}
+									</Button>
+								)}
+							</ModalFooter>
+						</>
+					);
+				}}
+			</ModalContent>
+		</Modal>
+	);
+};
+
+const CancelSessionModal: React.FC<{
+	session: StudentSession | null;
+	isOpen: boolean;
+	onClose: () => void;
+	onConfirm: (session: StudentSession) => void;
+}> = ({ session, isOpen, onClose, onConfirm }) => {
+	const view = session ? buildSessionViewModel(session) : null;
+
+	return (
+		<Modal
+			isOpen={isOpen}
+			onOpenChange={(open) => {
+				if (!open) onClose();
+			}}
+			size="md"
+		>
+			<ModalContent>
+				{(onCloseConfirmModal) => {
+					const handleClose = () => {
+						onClose();
+						onCloseConfirmModal();
+					};
+
+					return (
+						<>
+							<ModalHeader className="flex flex-col gap-1">
+								Confirmar cancelacion
+							</ModalHeader>
+							<ModalBody>
+								<p className="text-default-600">
+									?Estas seguro de que deseas cancelar esta tutoria
+									{view && (
+										<>
+											{' con '}
+											<span className="font-semibold">{view.tutorName}</span>
+											{' el '}
+											{view.dateLabel}?
+										</>
+									)}
+								</p>
+							</ModalBody>
+							<ModalFooter>
+								<Button variant="light" onPress={handleClose}>
+									Mantener tutoria
+								</Button>
+								<Button
+									color="danger"
+									variant="solid"
+									onPress={() => {
+										if (session) {
+											onConfirm(session);
+										}
+										handleClose();
+									}}
+								>
+									Cancelar tutoria
+								</Button>
+							</ModalFooter>
+						</>
+					);
+				}}
+			</ModalContent>
+		</Modal>
+	);
 };
 
 // Conectar con API - Ejemplo con valores negativos para referencia
@@ -239,27 +545,30 @@ const StudentTutoringPage: React.FC = () => {
 		onOpenChat: (tutor: Tutor) => void;
 	}>();
 
-	const getFutureSessionsSortedByProximity = (list: StudentSession[]) => {
-		const now = Date.now();
+	const getFutureSessionsSortedByProximity = useCallback(
+		(list: StudentSession[]) => {
+			const now = Date.now();
 
-		return [...list]
-			.filter((session) => new Date(session.scheduledAt).getTime() >= now)
-			.sort((a, b) => {
-				const timeA = new Date(a.scheduledAt).getTime();
-				const timeB = new Date(b.scheduledAt).getTime();
+			return [...list]
+				.filter((session) => new Date(session.scheduledAt).getTime() >= now)
+				.sort((a, b) => {
+					const timeA = new Date(a.scheduledAt).getTime();
+					const timeB = new Date(b.scheduledAt).getTime();
 
-				const diffA = Math.abs(timeA - now);
-				const diffB = Math.abs(timeB - now);
+					return timeA - now - (timeB - now);
+				});
+		},
+		[], // la función no depende de nada externo
+	);
 
-				return diffA - diffB;
-			});
-	};
-
-	const futureSessions = getFutureSessionsSortedByProximity(sessions);
+	const futureSessions = useMemo(
+		() => getFutureSessionsSortedByProximity(sessions),
+		[sessions, getFutureSessionsSortedByProximity],
+	);
 
 	const handleSearch = (_filters: TutorFilters) => {};
 
-	// Llamar al backend para cancelar la tutoría
+	// Llamar al backend para cancelar la tutoria
 	const handleCancelSession = (id: string) => {
 		setSessions((prev) =>
 			prev.map((s) => (s.id === id ? { ...s, status: 'cancelada' } : s)),
@@ -362,315 +671,43 @@ const StudentTutoringPage: React.FC = () => {
 						</Card>
 					) : (
 						<div className="grid gap-4">
-							{futureSessions.map((session) => {
-								const modalityLabel =
-									session.modality ?? getModeLabel(session.mode);
-								const sessionDate =
-									session.date ??
-									new Date(session.scheduledAt).toLocaleDateString();
-								const sessionDuration =
-									session.duration ??
-									getDurationMinutes(session.startTime, session.endTime);
-								const sessionTime =
-									session.time ?? `${session.startTime} - ${session.endTime}`;
-
-								const statusColor = getStatusChipColor(session.status);
-
-								return (
-									<Card key={session.id}>
-										<CardBody>
-											<div className="flex items-start justify-between">
-												<div className="space-y-2">
-													<div className="flex items-center gap-3">
-														<div
-															className={`${getAvatarBg(
-																session.avatarColor,
-															)} w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold`}
-														>
-															{getInitials(
-																session.tutorName,
-																session.avatarInitials,
-															)}
-														</div>
-														<div>
-															<h3 className="font-semibold">
-																{session.tutorName}
-															</h3>
-															<div className="flex gap-2 mt-1">
-																<Chip size="sm" color="primary" variant="flat">
-																	{session.subject}
-																</Chip>
-																<Chip
-																	size="sm"
-																	color={statusColor}
-																	variant="flat"
-																>
-																	{session.status}
-																</Chip>
-															</div>
-														</div>
-													</div>
-													<p className="text-default-600 ml-11">
-														{session.topic}
-													</p>
-													<div className="flex flex-wrap gap-4 text-sm text-default-500 ml-11">
-														<div className="flex items-center gap-1">
-															<Calendar className="w-4 h-4" />
-															{sessionDate}
-														</div>
-														<div className="flex items-center gap-1">
-															<Clock className="w-4 h-4" />
-															{sessionTime} ({sessionDuration} min)
-														</div>
-														<div className="flex items-center gap-1">
-															{modalityLabel === 'virtual' ? (
-																<Video className="w-4 h-4" />
-															) : (
-																<MapPin className="w-4 h-4" />
-															)}
-															<span className="capitalize">
-																{modalityLabel}
-															</span>
-															{session.location && (
-																<span> - {session.location}</span>
-															)}
-														</div>
-													</div>
-												</div>
-												<div className="flex gap-2">
-													<Button
-														size="sm"
-														color="primary"
-														variant="flat"
-														onPress={() => openSessionDetails(session)}
-													>
-														Ver detalles
-													</Button>
-													<Button
-														size="sm"
-														variant="light"
-														color="danger"
-														isDisabled={session.status === 'cancelada'}
-														onPress={() => {
-															setSessionToCancel(session);
-															onOpenConfirm();
-														}}
-													>
-														{session.status === 'cancelada'
-															? 'Cancelada'
-															: 'Cancelar'}
-													</Button>
-												</div>
-											</div>
-										</CardBody>
-									</Card>
-								);
-							})}
+							{futureSessions.map((session) => (
+								<SessionCardItem
+									key={session.id}
+									session={session}
+									onViewDetails={openSessionDetails}
+									onCancel={(currentSession) => {
+										setSessionToCancel(currentSession);
+										onOpenConfirm();
+									}}
+								/>
+							))}
 						</div>
 					)}
 				</div>
 			)}
 
-			{/* Modal de detalle de tutoría */}
-			<Modal
+			<SessionDetailsModal
+				session={selectedSession}
 				isOpen={isOpen}
-				onOpenChange={(open) => {
-					if (!open) closeSessionDetails();
+				onClose={closeSessionDetails}
+				onRequestCancel={(session) => {
+					setSessionToCancel(session);
+					onOpenConfirm();
 				}}
-				size="lg"
-			>
-				<ModalContent>
-					{(onCloseModal) => (
-						<>
-							<ModalHeader className="flex flex-col gap-1">
-								<span>Detalle de tutoría</span>
-								{selectedSession && (
-									<span className="text-sm text-default-500">
-										{selectedSession.subject} · {selectedSession.codigoMateria}
-									</span>
-								)}
-							</ModalHeader>
-							<ModalBody className="space-y-4">
-								{selectedSession && (
-									<>
-										<div className="flex items-center gap-3">
-											<div
-												className={`${getAvatarBg(
-													selectedSession.avatarColor,
-												)} w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold`}
-											>
-												{getInitials(
-													selectedSession.tutorName,
-													selectedSession.avatarInitials,
-												)}
-											</div>
-											<div>
-												<h3 className="font-semibold text-base">
-													{selectedSession.tutorName}
-												</h3>
-												<div className="flex gap-2 mt-1 flex-wrap">
-													<Chip size="sm" color="primary" variant="flat">
-														{selectedSession.subject}
-													</Chip>
-													<Chip
-														size="sm"
-														variant="flat"
-														color={getStatusChipColor(selectedSession.status)}
-													>
-														{selectedSession.status}
-													</Chip>
-												</div>
-												<p className="text-sm text-default-500 mt-1">
-													Código: {selectedSession.codigoMateria}
-												</p>
-											</div>
-										</div>
+			/>
 
-										<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-default-600">
-											<div className="flex items-center gap-2">
-												<Calendar className="w-4 h-4" />
-												<span>
-													{new Date(
-														selectedSession.scheduledAt,
-													).toLocaleDateString()}{' '}
-													({getDayLabel(selectedSession.day)})
-												</span>
-											</div>
-											<div className="flex items-center gap-2">
-												<Clock className="w-4 h-4" />
-												<span>
-													{selectedSession.startTime} -{' '}
-													{selectedSession.endTime} (
-													{getDurationMinutes(
-														selectedSession.startTime,
-														selectedSession.endTime,
-													)}{' '}
-													min)
-												</span>
-											</div>
-											<div className="flex items-center gap-2">
-												{getModeLabel(selectedSession.mode) === 'virtual' ? (
-													<Video className="w-4 h-4" />
-												) : (
-													<MapPin className="w-4 h-4" />
-												)}
-												<span className="capitalize">
-													{getModeLabel(selectedSession.mode)}
-												</span>
-												{selectedSession.location && (
-													<span>- {selectedSession.location}</span>
-												)}
-											</div>
-											<div className="flex items-center gap-2">
-												<span className="font-semibold text-default-700">
-													Tutor ID:
-												</span>
-												<span className="font-mono text-xs text-default-500">
-													{selectedSession.tutorId}
-												</span>
-											</div>
-										</div>
-
-										<div className="rounded-medium border border-default-200 bg-default-50 p-3 text-sm text-default-600">
-											<p className="font-semibold text-default-700 mb-1">
-												Comentarios
-											</p>
-											<p>
-												{selectedSession.comentarios ||
-													'Sin comentarios adicionales.'}
-											</p>
-										</div>
-									</>
-								)}
-							</ModalBody>
-							<ModalFooter>
-								<Button variant="light" onPress={onCloseModal}>
-									Cerrar
-								</Button>
-								{selectedSession && (
-									<Button
-										color="danger"
-										variant="flat"
-										isDisabled={selectedSession.status === 'cancelada'}
-										onPress={() => {
-											setSessionToCancel(selectedSession);
-											onOpenConfirm();
-										}}
-									>
-										{selectedSession.status === 'cancelada'
-											? 'Cancelada'
-											: 'Cancelar tutoría'}
-									</Button>
-								)}
-							</ModalFooter>
-						</>
-					)}
-				</ModalContent>
-			</Modal>
-
-			{/* Modal de confirmación de cancelación */}
-			<Modal
+			<CancelSessionModal
+				session={sessionToCancel}
 				isOpen={isConfirmOpen}
-				onOpenChange={(open) => {
-					if (!open) {
-						setSessionToCancel(null);
-						onCloseConfirm();
-					}
+				onClose={() => {
+					setSessionToCancel(null);
+					onCloseConfirm();
 				}}
-				size="md"
-			>
-				<ModalContent>
-					{(onCloseConfirmModal) => (
-						<>
-							<ModalHeader className="flex flex-col gap-1">
-								Confirmar cancelación
-							</ModalHeader>
-							<ModalBody>
-								<p className="text-default-600">
-									¿Estás seguro de que deseas cancelar esta tutoría
-									{sessionToCancel && (
-										<>
-											{' con '}
-											<span className="font-semibold">
-												{sessionToCancel.tutorName}
-											</span>
-											{' el '}
-											{new Date(
-												sessionToCancel.scheduledAt,
-											).toLocaleDateString()}
-											?
-										</>
-									)}
-								</p>
-							</ModalBody>
-							<ModalFooter>
-								<Button
-									variant="light"
-									onPress={() => {
-										setSessionToCancel(null);
-										onCloseConfirmModal();
-									}}
-								>
-									Mantener tutoría
-								</Button>
-								<Button
-									color="danger"
-									variant="solid"
-									onPress={() => {
-										if (sessionToCancel) {
-											handleCancelSession(sessionToCancel.id);
-										}
-										setSessionToCancel(null);
-										onCloseConfirmModal();
-									}}
-								>
-									Cancelar tutoría
-								</Button>
-							</ModalFooter>
-						</>
-					)}
-				</ModalContent>
-			</Modal>
+				onConfirm={(session) => {
+					handleCancelSession(session.id);
+				}}
+			/>
 		</div>
 	);
 };
