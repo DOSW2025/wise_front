@@ -166,8 +166,8 @@ export default function TutorProfile() {
 							onErrorClear={(field) =>
 								setFormErrors({ ...formErrors, [field]: undefined })
 							}
-							nameReadOnly={false}
-							emailReadOnly={false}
+							nameReadOnly={true}
+							emailReadOnly={true}
 							descriptionLabel="Descripción Profesional"
 							descriptionPlaceholder="Cuéntanos sobre tu experiencia y especialidades..."
 						>
