@@ -1,19 +1,25 @@
 import {
-	Avatar,
 	Button,
 	Dropdown,
 	DropdownItem,
 	DropdownMenu,
 	DropdownTrigger,
 } from '@heroui/react';
-import { Bell, Check, X } from 'lucide-react';
+import {
+	AlertTriangle,
+	Award,
+	Bell,
+	Calendar,
+	CheckCircle,
+	FileText,
+} from 'lucide-react';
 import { useState } from 'react';
 
 interface Notification {
 	id: string;
 	title: string;
 	message: string;
-	type: 'info' | 'success' | 'warning' | 'error';
+	type: 'info' | 'success' | 'warning' | 'error' | 'achievement';
 	timestamp: Date;
 	read: boolean;
 	avatar?: string;
@@ -49,20 +55,20 @@ const mockNotifications: Notification[] = [
 	},
 ];
 
-const getNotificationStyles = (type: string, read: boolean) => {
-	if (read) return 'data-[hover=true]:bg-transparent';
-
+const getNotificationIcon = (type: string) => {
 	switch (type) {
 		case 'info':
-			return 'bg-blue-50 border-l-4 border-blue-400 data-[hover=true]:bg-blue-50';
+			return <Calendar className="w-5 h-5 text-blue-500" />;
 		case 'success':
-			return 'bg-green-50 border-l-4 border-green-400 data-[hover=true]:bg-green-50';
+			return <CheckCircle className="w-5 h-5 text-green-500" />;
 		case 'warning':
-			return 'bg-yellow-50 border-l-4 border-yellow-400 data-[hover=true]:bg-yellow-50';
+			return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
 		case 'error':
-			return 'bg-red-50 border-l-4 border-red-400 data-[hover=true]:bg-red-50';
+			return <AlertTriangle className="w-5 h-5 text-red-500" />;
+		case 'achievement':
+			return <Award className="w-5 h-5 text-purple-500" />;
 		default:
-			return 'bg-default-50 data-[hover=true]:bg-default-50';
+			return <FileText className="w-5 h-5 text-gray-500" />;
 	}
 };
 
@@ -146,57 +152,44 @@ export function NotificationsDropdown() {
 					notifications.map((notification) => (
 						<DropdownItem
 							key={notification.id}
-							className={`h-auto py-3 ${getNotificationStyles(notification.type, notification.read)}`}
+							className="h-auto py-3 data-[hover=true]:bg-default-100"
 							textValue={notification.title}
 						>
-							<div className="flex gap-3 w-full">
-								{notification.avatar && (
-									<Avatar
-										name={notification.avatar}
-										size="sm"
-										color={
-											notification.type === 'success'
-												? 'success'
-												: notification.type === 'warning'
-													? 'warning'
-													: notification.type === 'error'
-														? 'danger'
-														: 'primary'
-										}
-									/>
-								)}
+							<div className="flex gap-3 w-full relative">
+								<div className="flex-shrink-0 mt-0.5">
+									{getNotificationIcon(notification.type)}
+								</div>
 								<div className="flex-1 min-w-0">
-									<div className="flex justify-between items-start">
-										<p className="font-semibold text-sm truncate">
+									<div className="flex justify-between items-start gap-2">
+										<p
+											className={`text-sm truncate ${!notification.read ? 'font-semibold' : 'font-medium'}`}
+										>
 											{notification.title}
 										</p>
-										<div className="flex gap-1 ml-2">
-											{!notification.read && (
-												<Button
-													isIconOnly
-													size="sm"
-													variant="light"
-													onPress={() => markAsRead(notification.id)}
-												>
-													<Check className="w-3 h-3" />
-												</Button>
-											)}
-											<Button
-												isIconOnly
-												size="sm"
-												variant="light"
-												onPress={() => removeNotification(notification.id)}
-											>
-												<X className="w-3 h-3" />
-											</Button>
-										</div>
+										{!notification.read && (
+											<span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5"></span>
+										)}
 									</div>
 									<p className="text-tiny text-default-600 mt-1">
 										{notification.message}
 									</p>
-									<p className="text-tiny text-default-400 mt-1">
-										{formatTime(notification.timestamp)}
-									</p>
+									<div className="flex justify-between items-center mt-2">
+										<p className="text-tiny text-default-400">
+											{formatTime(notification.timestamp)}
+										</p>
+										{!notification.read && (
+											<button
+												type="button"
+												onClick={(e) => {
+													e.stopPropagation();
+													markAsRead(notification.id);
+												}}
+												className="text-xs text-primary hover:underline"
+											>
+												Marcar como leída
+											</button>
+										)}
+									</div>
 								</div>
 							</div>
 						</DropdownItem>
