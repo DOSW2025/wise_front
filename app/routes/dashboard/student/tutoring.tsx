@@ -1,5 +1,5 @@
-import { Button, Card, CardBody, Input } from '@heroui/react';
-import { Calendar, Search } from 'lucide-react';
+import { Card, CardBody, Input } from '@heroui/react';
+import { Search } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 import { useOutletContext } from 'react-router';
@@ -96,25 +96,15 @@ const StudentTutoringPage: React.FC = () => {
 			</Card>
 
 			{/* Resultados y Botón Ver Calendario */}
+			{/* Resultados */}
 			<div className="flex justify-between items-center pt-2 border-t border-default-200">
 				<p className="text-default-600">{tutors.length} tutores encontrados</p>
-				<Button
-					variant="light"
-					color="danger"
-					startContent={<Calendar className="w-5 h-5" />}
-				>
-					Ver calendario
-				</Button>
 			</div>
 
 			{/* Grid de Tarjetas de Tutores */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
 				{tutors.map((tutor) => (
-					<TutorCard 
-						key={tutor.id} 
-						tutor={tutor}
-						onOpenChat={onOpenChat}
-					/>
+					<TutorCard key={tutor.id} tutor={tutor} onOpenChat={onOpenChat} />
 				))}
 			</div>
 		</div>
