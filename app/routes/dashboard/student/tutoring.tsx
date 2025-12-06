@@ -458,63 +458,124 @@ const mockTutors: Tutor[] = [
 	},
 ];
 
+const dayNames = [
+	'sunday',
+	'monday',
+	'tuesday',
+	'wednesday',
+	'thursday',
+	'friday',
+	'saturday',
+] as const;
+
+const buildScheduledAtFromNow = (daysFromNow: number, startTime: string) => {
+	const [hours, minutes] = startTime.split(':').map(Number);
+	const baseDate = new Date(Date.now() + daysFromNow * 24 * 60 * 60 * 1000);
+
+	const scheduledDate = new Date(
+		Date.UTC(
+			baseDate.getUTCFullYear(),
+			baseDate.getUTCMonth(),
+			baseDate.getUTCDate(),
+			hours,
+			minutes,
+			0,
+			0,
+		),
+	);
+
+	const day = dayNames[scheduledDate.getUTCDay()];
+
+	return { scheduledAt: scheduledDate.toISOString(), day };
+};
+
 // Reemplazar estas sesiones mock con datos reales de backend cuando haya conexion.
 const mockSessions: StudentSession[] = [
-	{
-		id: '101',
-		tutorId: '550e8400-e29b-41d4-a716-446655440000',
-		studentId: '660e8400-e29b-41d4-a716-446655440001',
-		tutorName: 'Dra. Paula Reyes',
-		avatarInitials: 'PR',
-		avatarColor: '#8a2be2',
-		codigoMateria: 'DOSW',
-		subject: 'Desarrollo de Software',
-		topic: 'Proyecto final y entregables',
-		scheduledAt: '2025-12-25T14:00:00.000Z',
-		day: 'monday',
-		startTime: '14:00',
-		endTime: '16:00',
-		mode: 'VIRTUAL',
-		comentarios: 'Necesito ayuda con el proyecto final de la materia',
-		status: 'pendiente',
-	},
-	{
-		id: '103',
-		tutorId: '550e8400-e29b-41d4-a716-446655440003',
-		studentId: '660e8400-e29b-41d4-a716-446655440001',
-		tutorName: 'Lic. Ana Valdez',
-		avatarInitials: 'AV',
-		avatarColor: '#008000',
-		codigoMateria: 'REDAC',
-		subject: 'Redaccion Academica',
-		topic: 'Estructura de articulos de investigacion',
-		scheduledAt: '2026-05-09T19:15:00.000Z',
-		day: 'saturday',
-		startTime: '19:15',
-		endTime: '19:50',
-		mode: 'VIRTUAL',
-		comentarios: 'Practicar introduccion y conclusiones',
-		status: 'cancelada',
-	},
-	{
-		id: '102',
-		tutorId: '550e8400-e29b-41d4-a716-446655440002',
-		studentId: '660e8400-e29b-41d4-a716-446655440001',
-		tutorName: 'Mtro. Daniel Perez',
-		avatarInitials: 'DP',
-		avatarColor: '#ff9900',
-		codigoMateria: 'FIS2',
-		subject: 'Fisica II',
-		topic: 'Circuitos RLC y resonancia',
-		scheduledAt: '2026-09-07T16:15:00.000Z',
-		day: 'monday',
-		startTime: '16:15',
-		endTime: '17:05',
-		mode: 'PRESENCIAL',
-		location: 'Aula 204 - Ciencias',
-		comentarios: 'Revisar ejercicios del laboratorio previo',
-		status: 'confirmada',
-	},
+	(() => {
+		const { scheduledAt, day } = buildScheduledAtFromNow(2, '14:00');
+		return {
+			id: '201',
+			tutorId: '550e8400-e29b-41d4-a716-446655440000',
+			studentId: '660e8400-e29b-41d4-a716-446655440001',
+			tutorName: 'Dra. Paula Reyes',
+			avatarInitials: 'PR',
+			avatarColor: '#8a2be2',
+			codigoMateria: 'DOSW',
+			subject: 'Desarrollo de Software',
+			topic: 'Proyecto final y entregables',
+			scheduledAt,
+			day,
+			startTime: '14:00',
+			endTime: '16:00',
+			mode: 'VIRTUAL',
+			comentarios: 'Necesito ayuda con el proyecto final de la materia',
+			status: 'pendiente',
+		};
+	})(),
+	(() => {
+		const { scheduledAt, day } = buildScheduledAtFromNow(4, '10:00');
+		return {
+			id: '202',
+			tutorId: '550e8400-e29b-41d4-a716-446655440010',
+			studentId: '660e8400-e29b-41d4-a716-446655440001',
+			tutorName: 'Ing. Carlos Rodriguez',
+			avatarInitials: 'CR',
+			avatarColor: '#008000',
+			codigoMateria: 'ALG1',
+			subject: 'Algebra Lineal',
+			topic: 'Repaso para examen parcial',
+			scheduledAt,
+			day,
+			startTime: '10:00',
+			endTime: '11:00',
+			mode: 'VIRTUAL',
+			comentarios: 'Resolver dudas del temario y ejercicios clave',
+			status: 'confirmada',
+		};
+	})(),
+	(() => {
+		const { scheduledAt, day } = buildScheduledAtFromNow(6, '16:15');
+		return {
+			id: '203',
+			tutorId: '550e8400-e29b-41d4-a716-446655440002',
+			studentId: '660e8400-e29b-41d4-a716-446655440001',
+			tutorName: 'Mtro. Daniel Perez',
+			avatarInitials: 'DP',
+			avatarColor: '#ff9900',
+			codigoMateria: 'FIS2',
+			subject: 'Fisica II',
+			topic: 'Circuitos RLC y resonancia',
+			scheduledAt,
+			day,
+			startTime: '16:15',
+			endTime: '17:05',
+			mode: 'PRESENCIAL',
+			location: 'Aula 204 - Ciencias',
+			comentarios: 'Revisar ejercicios del laboratorio previo',
+			status: 'confirmada',
+		};
+	})(),
+	(() => {
+		const { scheduledAt, day } = buildScheduledAtFromNow(8, '19:15');
+		return {
+			id: '204',
+			tutorId: '550e8400-e29b-41d4-a716-446655440003',
+			studentId: '660e8400-e29b-41d4-a716-446655440001',
+			tutorName: 'Lic. Ana Valdez',
+			avatarInitials: 'AV',
+			avatarColor: '#008000',
+			codigoMateria: 'REDAC',
+			subject: 'Redaccion Academica',
+			topic: 'Estructura de articulos de investigacion',
+			scheduledAt,
+			day,
+			startTime: '19:15',
+			endTime: '19:50',
+			mode: 'VIRTUAL',
+			comentarios: 'Practicar introduccion y conclusiones',
+			status: 'cancelada',
+		};
+	})(),
 ];
 
 const StudentTutoringPage: React.FC = () => {
