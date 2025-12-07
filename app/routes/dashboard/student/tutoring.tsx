@@ -11,7 +11,7 @@ import {
 	ModalHeader,
 	useDisclosure,
 } from '@heroui/react';
-import { Calendar, Clock, MapPin, Search, Video, BookOpen } from 'lucide-react';
+import { BookOpen, Calendar, Clock, MapPin, Search, Video } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router';
@@ -177,7 +177,7 @@ const SessionHeader: React.FC<{
 	const sizeClass = avatarSize === 'lg' ? 'w-12 h-12' : 'w-10 h-10';
 
 	return (
-		<div className="flex items-start justify-between">
+		<div className="flex items-start justify-between ">
 			<div className="space-y-2">
 				<div className="flex items-center gap-3">
 					<div
@@ -626,6 +626,10 @@ const StudentTutoringPage: React.FC = () => {
 	const [sessionToCancel, setSessionToCancel] = useState<StudentSession | null>(
 		null,
 	);
+	const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
+	const [scheduledTutorings, setScheduledTutorings] = useState<
+		ScheduledTutoring[]
+	>(mockScheduledTutorings);
 
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -703,11 +707,13 @@ const StudentTutoringPage: React.FC = () => {
 
 	const handleCancelTutoring = (id: string) => {
 		console.log('Cancelando tutoría:', id);
-		setScheduledTutorings(scheduledTutorings.filter((t) => t.id !== id));
+		setScheduledTutorings(
+			scheduledTutorings.filter((t: ScheduledTutoring) => t.id !== id),
+		);
 	};
 
 	return (
-		<div className="space-y-6 p-4 md:p-6">
+		<div className="">
 			<PageHeader title="Tutorias" description="Panel de Estudiante" />
 
 			<div className="flex gap-2">
