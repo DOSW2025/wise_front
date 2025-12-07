@@ -1,5 +1,7 @@
 import { Button, Card, CardBody, Chip } from '@heroui/react';
 import { Link } from 'react-router';
+import { RoleStatisticsCard } from '~/components/admin/role-statistics-card';
+import { UserStatisticsCard } from '~/components/admin/user-statistics-card';
 import { StatsCard } from '~/components/stats-card';
 
 export default function AdminDashboardIndex() {
@@ -17,27 +19,7 @@ export default function AdminDashboardIndex() {
 
 			{/* Stats Grid */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-				<StatsCard
-					title="Usuarios Activos"
-					value={1248}
-					description="+12% este mes"
-					color="success"
-					icon={
-						<svg
-							className="w-6 h-6"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-							/>
-						</svg>
-					}
-				/>
+				<UserStatisticsCard />
 				<StatsCard
 					title="Tutorías Activas"
 					value={342}
@@ -191,45 +173,7 @@ export default function AdminDashboardIndex() {
 
 			{/* System Overview */}
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-				<Card>
-					<CardBody className="gap-4">
-						<h3 className="text-lg font-semibold">Usuarios por Rol</h3>
-						<div className="space-y-3">
-							<div className="flex items-center justify-between">
-								<span className="text-sm text-default-600">Estudiantes</span>
-								<span className="font-semibold">1,024</span>
-							</div>
-							<div className="w-full bg-default-200 rounded-full h-2">
-								<div
-									className="bg-primary h-2 rounded-full"
-									style={{ width: '82%' }}
-								/>
-							</div>
-							<div className="flex items-center justify-between">
-								<span className="text-sm text-default-600">Tutores</span>
-								<span className="font-semibold">196</span>
-							</div>
-							<div className="w-full bg-default-200 rounded-full h-2">
-								<div
-									className="bg-success h-2 rounded-full"
-									style={{ width: '16%' }}
-								/>
-							</div>
-							<div className="flex items-center justify-between">
-								<span className="text-sm text-default-600">
-									Administradores
-								</span>
-								<span className="font-semibold">28</span>
-							</div>
-							<div className="w-full bg-default-200 rounded-full h-2">
-								<div
-									className="bg-warning h-2 rounded-full"
-									style={{ width: '2%' }}
-								/>
-							</div>
-						</div>
-					</CardBody>
-				</Card>
+				<RoleStatisticsCard />
 
 				<Card>
 					<CardBody className="gap-4">

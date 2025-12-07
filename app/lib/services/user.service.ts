@@ -10,8 +10,9 @@ import type {
 	ApiResponse,
 	PaginatedResponse,
 	PaginationParams,
+	RoleStatisticsResponse,
 	UpdateRoleRequest,
-	UpdateUserStatusRequest,
+	UserStatisticsResponse,
 } from '../types/api.types';
 
 /**
@@ -55,35 +56,57 @@ export async function getUsers(
 		>(`${API_ENDPOINTS.USERS.LIST}?${queryString}`);
 
 		// Manejar tanto respuestas envueltas como directas
-		const body = response.data as any;
+		const body = response.data as unknown;
 
 		// Si la respuesta ya es la paginada (tiene propiedad pagination)
-		if (body.pagination) {
+		if (body && typeof body === 'object' && 'pagination' in body) {
 			return body as PaginatedResponse<AdminUserDto>;
 		}
 
 		// Si está envuelta en ApiResponse (body.data tiene pagination)
-		if (body.data && body.data.pagination) {
+		if (
+			body &&
+			typeof body === 'object' &&
+			'data' in body &&
+			body.data &&
+			typeof body.data === 'object' &&
+			'pagination' in body.data
+		) {
 			return body.data as PaginatedResponse<AdminUserDto>;
 		}
 
 		// Si el backend devuelve { data: [...], meta: { ... } } (NestJS standard pagination often uses meta)
-		if (body.data && body.meta) {
+		if (
+			body &&
+			typeof body === 'object' &&
+			'data' in body &&
+			'meta' in body &&
+			body.meta &&
+			typeof body.meta === 'object'
+		) {
+			const meta = body.meta as {
+				page: number;
+				totalPages: number;
+				total: number;
+				limit: number;
+			};
 			return {
-				data: body.data,
+				data: body.data as AdminUserDto[],
 				pagination: {
-					currentPage: body.meta.page,
-					totalPages: body.meta.totalPages,
-					totalItems: body.meta.total,
-					itemsPerPage: body.meta.limit,
-					hasNextPage: body.meta.page < body.meta.totalPages,
-					hasPreviousPage: body.meta.page > 1,
+					page: meta.page,
+					totalPages: meta.totalPages,
+					totalItems: meta.total,
+					limit: meta.limit,
 				},
 			};
 		}
 
 		// Fallback para otros formatos o devolver data directamente
-		return body.data || (body as unknown as PaginatedResponse<AdminUserDto>);
+		if (body && typeof body === 'object' && 'data' in body) {
+			return body.data as PaginatedResponse<AdminUserDto>;
+		}
+
+		return body as PaginatedResponse<AdminUserDto>;
 	} catch (error) {
 		console.error('Error fetching users:', error);
 		throw error;
@@ -121,10 +144,13 @@ export async function updateUserRole(
 		);
 
 		return response.data.data || (response.data as unknown as AdminUserDto);
-	} catch (error: any) {
+	} catch (error) {
 		console.error('Error updating user role:', error);
-		if (error.response?.data) {
-			console.error('Backend error details:', error.response.data);
+		if (error && typeof error === 'object' && 'response' in error) {
+			const errorResponse = error.response as { data?: unknown };
+			if (errorResponse.data) {
+				console.error('Backend error details:', errorResponse.data);
+			}
 		}
 		throw error;
 	}
@@ -144,10 +170,13 @@ export async function suspendUser(userId: string): Promise<AdminUserDto> {
 		);
 
 		return response.data.data || (response.data as unknown as AdminUserDto);
-	} catch (error: any) {
+	} catch (error) {
 		console.error('Error suspending user:', error);
-		if (error.response?.data) {
-			console.error('Backend error details:', error.response.data);
+		if (error && typeof error === 'object' && 'response' in error) {
+			const errorResponse = error.response as { data?: unknown };
+			if (errorResponse.data) {
+				console.error('Backend error details:', errorResponse.data);
+			}
 		}
 		throw error;
 	}
@@ -167,11 +196,64 @@ export async function activateUser(userId: string): Promise<AdminUserDto> {
 		);
 
 		return response.data.data || (response.data as unknown as AdminUserDto);
-	} catch (error: any) {
+	} catch (error) {
 		console.error('Error activating user:', error);
-		if (error.response?.data) {
-			console.error('Backend error details:', error.response.data);
+		if (error && typeof error === 'object' && 'response' in error) {
+			const errorResponse = error.response as { data?: unknown };
+			if (errorResponse.data) {
+				console.error('Backend error details:', errorResponse.data);
+			}
 		}
+		throw error;
+	}
+}
+
+/**
+ * Obtener estadísticas de usuarios
+ */
+export async function getUserStatistics(): Promise<UserStatisticsResponse> {
+	try {
+		const response = await apiClient.get<ApiResponse<UserStatisticsResponse>>(
+			API_ENDPOINTS.USERS.STATISTICS,
+		);
+
+		// Manejar tanto respuestas envueltas como directas
+		const body = response.data as unknown;
+
+		// Si la respuesta está envuelta en ApiResponse
+		if (body && typeof body === 'object' && 'data' in body) {
+			return body.data as UserStatisticsResponse;
+		}
+
+		// Si la respuesta es directa
+		return body as UserStatisticsResponse;
+	} catch (error) {
+		console.error('Error fetching user statistics:', error);
+		throw error;
+	}
+}
+
+/**
+ * Obtener estadísticas de usuarios por rol
+ */
+export async function getRoleStatistics(): Promise<RoleStatisticsResponse> {
+	try {
+		const response = await apiClient.get<ApiResponse<RoleStatisticsResponse>>(
+			API_ENDPOINTS.USERS.ROLE_STATISTICS,
+		);
+
+		// Manejar tanto respuestas envueltas como directas
+		const body = response.data as unknown;
+
+		// Si la respuesta está envuelta en ApiResponse
+		if (body && typeof body === 'object' && 'data' in body) {
+			return body.data as RoleStatisticsResponse;
+		}
+
+		// Si la respuesta es directa
+		return body as RoleStatisticsResponse;
+	} catch (error) {
+		console.error('Error fetching role statistics:', error);
 		throw error;
 	}
 }
