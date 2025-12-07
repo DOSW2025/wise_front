@@ -1,8 +1,33 @@
-import { Button, Card, CardBody, Chip } from '@heroui/react';
+import { Button, Card, CardBody, Chip, Spinner } from '@heroui/react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
+import { getUsers } from '~/lib/services/user.service';
+import type { AdminUserDto, PaginationParams } from '~/lib/types/api.types';
 
 export default function AdminDashboardIndex() {
+	const [recentUsers, setRecentUsers] = useState<AdminUserDto[]>([]);
+	const [loadingRecent, setLoadingRecent] = useState(true);
+	const [recentError, setRecentError] = useState<string | null>(null);
+
+	const fetchRecentUsers = useCallback(async () => {
+		setLoadingRecent(true);
+		try {
+			const params: PaginationParams = { page: 1, limit: 3 };
+			const response = await getUsers(params);
+			setRecentUsers(response.data || []);
+		} catch (err: any) {
+			console.error('Error loading recent users:', err);
+			setRecentError('Error al cargar usuarios recientes');
+		} finally {
+			setLoadingRecent(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		fetchRecentUsers();
+	}, [fetchRecentUsers]);
+
 	return (
 		<div className="space-y-6">
 			{/* Header */}
@@ -303,6 +328,114 @@ export default function AdminDashboardIndex() {
 
 			{/* Recent Users */}
 			<Card>
+				<CardBody className="gap-4">
+					<div className="flex items-center justify-between">
+						<h2 className="text-xl font-semibold">Usuarios Recientes</h2>
+						<Button
+							as={Link}
+							to="/dashboard/users"
+							size="sm"
+							variant="light"
+							color="primary"
+						>
+							Ver todos
+						</Button>
+					</div>
+					<div className="overflow-x-auto">
+						<table className="w-full">
+							<thead>
+								<tr className="border-b border-default-200">
+									<th className="text-left py-3 px-4 text-sm font-semibold">
+										Usuario
+									</th>
+									<th className="text-left py-3 px-4 text-sm font-semibold">
+										Rol
+									</th>
+									<th className="text-left py-3 px-4 text-sm font-semibold">
+										Estado
+									</th>
+									<th className="text-left py-3 px-4 text-sm font-semibold">
+										Registro
+									</th>
+									<th className="text-left py-3 px-4 text-sm font-semibold">
+										Acciones
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								{loadingRecent ? (
+									<tr>
+										<td colSpan={5} className="py-6">
+											<div className="flex items-center justify-center">
+												<Spinner label="Cargando usuarios..." />
+											</div>
+										</td>
+									</tr>
+								) : recentUsers.length === 0 ? (
+									<tr>
+										<td
+											colSpan={5}
+											className="py-6 text-center text-default-500"
+										>
+											No se encontraron usuarios recientes
+										</td>
+									</tr>
+								) : (
+									recentUsers.map((u) => {
+										const fullName = `${u.nombre} ${u.apellido}`.trim();
+										const roleName = u.rol?.nombre
+											? String(u.rol.nombre).charAt(0).toUpperCase() +
+												String(u.rol.nombre).slice(1)
+											: '—';
+										const statusName = u.estado?.nombre
+											? String(u.estado.nombre).charAt(0).toUpperCase() +
+												String(u.estado.nombre).slice(1)
+											: '—';
+										const created = u.createdAt
+											? new Date(u.createdAt).toLocaleDateString('es-CO')
+											: '-';
+										return (
+											<tr key={u.id} className="border-b border-default-100">
+												<td className="py-3 px-4">
+													<div className="flex flex-col">
+														<p className="text-sm font-semibold">{fullName}</p>
+														<p className="text-tiny text-default-400">
+															{u.email}
+														</p>
+													</div>
+												</td>
+												<td className="py-3 px-4">
+													<Chip size="sm" variant="flat">
+														{roleName}
+													</Chip>
+												</td>
+												<td className="py-3 px-4">
+													<Chip
+														size="sm"
+														color={
+															statusName === 'Activo' ? 'success' : 'warning'
+														}
+														variant="flat"
+													>
+														{statusName}
+													</Chip>
+												</td>
+												<td className="py-3 px-4 text-sm">{created}</td>
+												<td className="py-3 px-4">
+													<Button size="sm" variant="light" color="primary">
+														Ver detalles
+													</Button>
+												</td>
+											</tr>
+										);
+									})
+								)}
+							</tbody>
+						</table>
+					</div>
+				</CardBody>
+			</Card>
+			<Card className="hidden">
 				<CardBody className="gap-4">
 					<div className="flex items-center justify-between">
 						<h2 className="text-xl font-semibold">Usuarios Recientes</h2>
