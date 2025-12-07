@@ -178,3 +178,24 @@ export interface RoleStatisticsResponse {
 	totalUsuarios: number;
 	roles: RoleStats[];
 }
+
+// User Growth Statistics Types
+export interface UserGrowthParams {
+	weeks?: number;
+}
+
+export interface GrowthDataPoint {
+	semana: string;
+	conteo: number;
+	fecha: string;
+}
+
+export interface UserGrowthResponse {
+	period: {
+		inicio: string;
+		fin: string;
+		semanas: number;
+	};
+	totalUsuariosNuevos: number;
+	data: GrowthDataPoint[];
+}
