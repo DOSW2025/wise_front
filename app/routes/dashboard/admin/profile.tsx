@@ -1,4 +1,5 @@
 import { Card, CardBody, Input } from '@heroui/react';
+import { useProfileSave } from 'app/routes/dashboard/student/hooks/useProfileSave';
 import { useEffect, useState } from 'react';
 import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
 import {
@@ -9,7 +10,6 @@ import {
 } from '~/components/profile';
 import { useAuth } from '~/contexts/auth-context';
 import { useProfileForm } from './hooks/useProfileForm';
-import { useProfileSave } from './hooks/useProfileSave';
 
 export default function AdminProfile() {
 	const { user } = useAuth();
