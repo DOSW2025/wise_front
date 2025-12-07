@@ -26,6 +26,7 @@ import {
 	ShieldCheck,
 	XCircle,
 } from 'lucide-react';
+import type React from 'react';
 import { useMemo, useState } from 'react';
 import { PageHeader } from '~/components/page-header';
 import { StatsCard } from '~/components/stats-card';
@@ -140,7 +141,7 @@ const statusConfig: Record<
 	{
 		label: string;
 		color: 'primary' | 'warning' | 'success' | 'danger' | 'default';
-		icon: JSX.Element;
+		icon: React.JSX.Element;
 	}
 > = {
 	pending: {
@@ -173,7 +174,7 @@ export default function AdminValidation() {
 	const [confirmAction, setConfirmAction] = useState<
 		'approved' | 'rejected' | null
 	>(null);
-	// TODO: Obtener el material seleccionado desde el backend 
+	// TODO: Obtener el material seleccionado desde el backend
 	const selectedMaterial =
 		queue.find((item) => item.id === selectedId) || queue[0] || null;
 
@@ -215,7 +216,9 @@ export default function AdminValidation() {
 			uploadedAt: 'Hace un momento',
 		};
 
-		const updatedQueue = queue.filter((item) => item.id !== selectedMaterial.id);
+		const updatedQueue = queue.filter(
+			(item) => item.id !== selectedMaterial.id,
+		);
 
 		setHistory((prev) => [updated, ...prev]);
 		setQueue(updatedQueue);
@@ -250,11 +253,11 @@ export default function AdminValidation() {
 
 			<div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 				<Card className="xl:col-span-2">
-					<CardHeader className="flex flex-col gap-3">
-						<div className="flex items-start justify-between gap-3">
+					<CardHeader className="ml-5 gap-3 mt-3">
+						<div className="gap-3">
 							<div>
 								<h2 className="text-xl font-semibold">Cola de validación</h2>
-								<p className="text-sm text-default-500">
+								<p className="text-sm text-default-500 mb-3 mr-10">
 									Selecciona un material para revisar su contenido y aprobarlo o
 									rechazarlo.
 								</p>
@@ -650,9 +653,7 @@ export default function AdminValidation() {
 								<Button
 									className="bg-[#8B1A1A] text-white"
 									color="default"
-									onPress={() =>
-										confirmAction && handleDecision(confirmAction)
-									}
+									onPress={() => confirmAction && handleDecision(confirmAction)}
 								>
 									Confirmar
 								</Button>
