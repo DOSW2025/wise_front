@@ -7,7 +7,7 @@ import {
 	Spinner,
 } from '@heroui/react';
 import { TrendingUp, Users } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	Bar,
 	BarChart,
@@ -31,27 +31,22 @@ import {
 } from '~/components/charts/chart-tooltip';
 import { StatsCard } from '~/components/stats-card';
 import { useDateFilter } from '~/lib/hooks/useDateFilter';
+import {
+	getRoleStatistics,
+	getUserStatistics,
+} from '~/lib/services/user.service';
+import type {
+	RoleStatisticsResponse,
+	UserStatisticsResponse,
+} from '~/lib/types/api.types';
 
 // Mock admin metrics (replace with API when available)
-const summaryStats = {
-	totalUsers: 1234,
-	sessionsThisMonth: 342,
-	materialsPublished: 856,
-	totalHours: 1527,
-};
-
 const subjectsBarData = [
 	{ subject: 'Matemáticas', sessions: 1200 },
 	{ subject: 'Programación', sessions: 980 },
 	{ subject: 'Física', sessions: 720 },
 	{ subject: 'Química', sessions: 540 },
 	{ subject: 'Inglés', sessions: 410 },
-];
-
-const roleDistributionData = [
-	{ name: 'Estudiantes', value: 82 },
-	{ name: 'Tutores', value: 16 },
-	{ name: 'Administradores', value: 2 },
 ];
 
 const growthData = [
@@ -88,6 +83,54 @@ export default function AdminReports() {
 		handleCustomFilter,
 	} = useDateFilter();
 	const [mainTab, setMainTab] = useState<'stats' | 'history'>('stats');
+
+	// Estados para datos del API
+	const [userStats, setUserStats] = useState<UserStatisticsResponse | null>(
+		null,
+	);
+	const [roleStats, setRoleStats] = useState<RoleStatisticsResponse | null>(
+		null,
+	);
+	const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+	// Cargar estadísticas del API
+	useEffect(() => {
+		const fetchStats = async () => {
+			try {
+				setIsLoadingStats(true);
+				const [userStatsData, roleStatsData] = await Promise.all([
+					getUserStatistics(),
+					getRoleStatistics(),
+				]);
+				setUserStats(userStatsData);
+				setRoleStats(roleStatsData);
+			} catch (error) {
+				console.error('Error fetching statistics:', error);
+			} finally {
+				setIsLoadingStats(false);
+			}
+		};
+
+		fetchStats();
+	}, []);
+
+	// Preparar datos para el gráfico de pie
+	const roleDistributionData =
+		roleStats?.roles.map((role) => {
+			const displayName =
+				role.rol === 'estudiante'
+					? 'Estudiantes'
+					: role.rol === 'tutor'
+						? 'Tutores'
+						: role.rol === 'admin'
+							? 'Administradores'
+							: role.rol;
+			return {
+				name: displayName,
+				value: role.porcentaje,
+				count: role.conteo,
+			};
+		}) || [];
 
 	return (
 		<div className="space-y-6">
@@ -128,7 +171,7 @@ export default function AdminReports() {
 				</div>
 			</div>
 
-			{isLoading ? (
+			{isLoading || isLoadingStats ? (
 				<div className="flex justify-center items-center h-64">
 					<Spinner size="lg" label="Cargando métricas..." />
 				</div>
@@ -138,31 +181,31 @@ export default function AdminReports() {
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						<StatsCard
 							title="Total de Usuarios"
-							value={summaryStats.totalUsers}
+							value={userStats?.resumen.total || 0}
 							icon={<Users className="w-5 h-5" />}
 							color="success"
-							description="+12%"
+							description={`${userStats?.resumen.activos.porcentaje || 0}% activos`}
 						/>
 						<StatsCard
-							title="Sesiones este Mes"
-							value={summaryStats.sessionsThisMonth}
-							icon={<TrendingUp className="w-5 h-5" />}
+							title="Usuarios Activos"
+							value={userStats?.resumen.activos.conteo || 0}
+							icon={<Users className="w-5 h-5" />}
 							color="primary"
-							description="+8%"
+							description={`${userStats?.resumen.activos.porcentaje || 0}%`}
 						/>
 						<StatsCard
-							title="Materiales Publicados"
-							value={summaryStats.materialsPublished}
+							title="Usuarios Suspendidos"
+							value={userStats?.resumen.suspendidos.conteo || 0}
 							icon={<TrendingUp className="w-5 h-5" />}
 							color="warning"
-							description="+15%"
+							description={`${userStats?.resumen.suspendidos.porcentaje || 0}%`}
 						/>
 						<StatsCard
-							title="Horas Totales"
-							value={summaryStats.totalHours}
+							title="Usuarios Inactivos"
+							value={userStats?.resumen.inactivos.conteo || 0}
 							icon={<ClockIcon />}
-							color="success"
-							description="+10%"
+							color="default"
+							description={`${userStats?.resumen.inactivos.porcentaje || 0}%`}
 						/>
 					</div>
 
@@ -222,8 +265,9 @@ export default function AdminReports() {
 												outerRadius={110}
 												fill="hsl(var(--heroui-primary))"
 												dataKey="value"
+												label={({ name, value }) => `${name}: ${value}%`}
 											>
-												{roleDistributionData.map((entry) => (
+												{roleDistributionData.map((_entry, index) => (
 													<Cell
 														key={entry.name}
 														fill={
@@ -235,32 +279,30 @@ export default function AdminReports() {
 													/>
 												))}
 											</Pie>
-											<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+											<Tooltip
+												contentStyle={CHART_TOOLTIP_STYLE}
+												formatter={(value: number, name: string, props) => [
+													`${value}% (${props.payload.count} usuarios)`,
+													name,
+												]}
+											/>
 										</PieChart>
 									</ResponsiveContainer>
 								</div>
 								<div className="flex flex-col gap-3 md:justify-center">
-									<Chip
-										color="primary"
-										variant="flat"
-										className="justify-start"
-									>
-										Estudiantes 82%
-									</Chip>
-									<Chip
-										color="success"
-										variant="flat"
-										className="justify-start"
-									>
-										Tutores 16%
-									</Chip>
-									<Chip
-										color="warning"
-										variant="flat"
-										className="justify-start"
-									>
-										Administradores 2%
-									</Chip>
+									{roleDistributionData.map((role, index) => {
+										const colorMap = ['primary', 'success', 'warning'] as const;
+										return (
+											<Chip
+												key={role.name}
+												color={colorMap[index % colorMap.length]}
+												variant="flat"
+												className="justify-start"
+											>
+												{role.name} {role.value}% ({role.count})
+											</Chip>
+										);
+									})}
 								</div>
 							</div>
 						</CardBody>
