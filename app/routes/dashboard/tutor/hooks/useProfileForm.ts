@@ -19,7 +19,7 @@ interface ProfileData {
 	subjects: string[];
 	hourlyRate: string;
 }
-
+// maneja disponiblilidad y otros campos específicos de tutores
 export function useProfileForm(initialProfile: ProfileData) {
 	const baseHook = useProfileFormBase(initialProfile);
 

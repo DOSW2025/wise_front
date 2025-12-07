@@ -1,18 +1,263 @@
-import { PageHeader } from '~/components/page-header';
+import { Card, CardBody, Input } from '@heroui/react';
+import { useProfileSave } from 'app/routes/dashboard/student/hooks/useProfileSave';
+import { useEffect, useState } from 'react';
+import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
+import {
+	ProfileConfigurationSection,
+	ProfileEditButtons,
+	ProfileFormFields,
+	ProfileHeader,
+} from '~/components/profile';
+import { useAuth } from '~/contexts/auth-context';
+import { useProfileForm } from './hooks/useProfileForm';
 
 export default function AdminProfile() {
+	const { user } = useAuth();
+	const [emailNotifications, setEmailNotifications] = useState(true);
+
+	// Custom hooks for managing complex state
+	const {
+		profile,
+		setProfile,
+		formErrors,
+		setFormErrors,
+		isEditing,
+		setIsEditing,
+		avatarPreview,
+		setAvatarPreview,
+		validateForm,
+		handleImageUpload,
+		resetForm,
+	} = useProfileForm({
+		name: user?.name || '',
+		email: user?.email || '',
+		phone: '',
+		location: '',
+		description: '',
+		avatar: user?.avatarUrl,
+		department: '',
+		role: '',
+	});
+
+	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
+
+	useEffect(() => {
+		if (user) {
+			setProfile((prev) => ({
+				...prev,
+				name: user.name,
+				email: user.email,
+				avatar: user.avatarUrl,
+			}));
+		}
+	}, [user, setProfile]);
+
+	const handleSave = async () => {
+		if (!validateForm()) {
+			setError('Por favor corrige los errores en el formulario');
+			return;
+		}
+
+		const saved = await saveProfile({
+			name: profile.name,
+			email: profile.email,
+			phone: profile.phone,
+			location: profile.location,
+			description: profile.description,
+		});
+
+		if (saved) {
+			setIsEditing(false);
+			setAvatarPreview(null);
+		}
+	};
+
+	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const result = handleImageUpload(event);
+		if (result?.error) {
+			setError(result.error);
+		}
+	};
+
+	const handleCancel = () => {
+		if (user) {
+			resetForm(user);
+		}
+	};
+
 	return (
 		<div className="space-y-6">
-			<PageHeader
-				title="Perfil"
-				description="Administra tu información personal y preferencias"
+			<ProfileHeader
+				title="Mi Perfil"
+				description="Gestiona tu información personal y configuración de administrador"
 			/>
 
-			<div className="flex items-center justify-center min-h-[400px]">
-				<p className="text-default-500 text-lg">
-					Página de perfil - Contenido por implementar
-				</p>
-			</div>
+			{/* Mensajes de error y éxito */}
+			{error && <AlertMessage message={error} type="error" />}
+			{success && <AlertMessage message={success} type="success" />}
+
+			{/* Información Personal */}
+			<Card>
+				<CardBody className="gap-6">
+					<div className="flex justify-between items-center">
+						<h2 className="text-xl font-semibold">Información Personal</h2>
+						<ProfileEditButtons
+							isEditing={isEditing}
+							isSaving={isSaving}
+							onEdit={() => setIsEditing(true)}
+							onSave={handleSave}
+							onCancel={handleCancel}
+						/>
+					</div>
+
+					<div className="flex flex-col md:flex-row gap-6">
+						<ProfileAvatar
+							src={profile.avatar}
+							name={profile.name}
+							isEditing={isEditing}
+							onImageChange={handleImageChange}
+							preview={avatarPreview}
+						/>
+						<ProfileFormFields
+							profile={profile}
+							isEditing={isEditing}
+							formErrors={formErrors}
+							onProfileChange={setProfile}
+							onErrorClear={(field) =>
+								setFormErrors({ ...formErrors, [field]: undefined })
+							}
+							nameReadOnly={true}
+							emailReadOnly={true}
+							descriptionLabel="Sobre Mí"
+							descriptionPlaceholder="Información adicional sobre tu rol..."
+						>
+							<>
+								<Input
+									label="Departamento"
+									placeholder="Tecnología"
+									value={profile.department}
+									isReadOnly={true}
+									variant="flat"
+									description="No se puede modificar"
+								/>
+								<Input
+									label="Rol"
+									placeholder="Administrador del Sistema"
+									value={profile.role}
+									isReadOnly={true}
+									variant="flat"
+									description="No se puede modificar"
+								/>
+							</>
+						</ProfileFormFields>
+					</div>
+				</CardBody>
+			</Card>
+
+			{/* Estadísticas */}
+			<Card>
+				<CardBody className="gap-4">
+					<h2 className="text-xl font-semibold">Estadísticas del Sistema</h2>
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+						<StatsCard
+							title="Total Usuarios"
+							value={-1}
+							description="Activos"
+							color="primary"
+							icon={
+								<svg
+									className="w-6 h-6"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+									/>
+								</svg>
+							}
+						/>
+						<StatsCard
+							title="Sesiones Totales"
+							value={-1}
+							description="Este mes"
+							color="success"
+							icon={
+								<svg
+									className="w-6 h-6"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+									/>
+								</svg>
+							}
+						/>
+						<StatsCard
+							title="Materias Disponibles"
+							value={-1}
+							description="Total"
+							color="warning"
+							icon={
+								<svg
+									className="w-6 h-6"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+									/>
+								</svg>
+							}
+						/>
+						<StatsCard
+							title="Materiales Válidos"
+							value="-1%"
+							description="Promedio"
+							color="default"
+							icon={
+								<svg
+									className="w-6 h-6"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+									/>
+								</svg>
+							}
+						/>
+					</div>
+				</CardBody>
+			</Card>
+
+			{/* Configuración */}
+			<Card>
+				<CardBody className="gap-4">
+					<h2 className="text-xl font-semibold">Configuración de Cuenta</h2>
+					<ProfileConfigurationSection
+						emailNotifications={emailNotifications}
+						onEmailNotificationsChange={setEmailNotifications}
+						emailNotificationsDescription="Recibe notificaciones de actividades importantes del sistema"
+					/>
+				</CardBody>
+			</Card>
 		</div>
 	);
 }
