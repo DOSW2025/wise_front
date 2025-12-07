@@ -15,6 +15,7 @@ import {
 	Grid3x3,
 	List,
 	Search,
+	Stars,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import CommentsModal from '~/components/materials/CommentsModal';
@@ -38,16 +39,16 @@ export default function StudentMaterials() {
 		null,
 	);
 	const [userRating, setUserRating] = useState(0);
-const [isAssistOpen, setIsAssistOpen] = useState(false);
-const [assistDescription, setAssistDescription] = useState('');
-const isGridView = viewMode === 'grid';
-const layoutClass = isGridView
-	? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-	: 'space-y-4';
-const gridButtonVariant = isGridView ? 'solid' : 'flat';
-const gridButtonClass = isGridView ? 'bg-[#8B1A1A] text-white' : '';
-const listButtonVariant = isGridView ? 'flat' : 'solid';
-const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
+	const [isAssistOpen, setIsAssistOpen] = useState(false);
+	const [assistDescription, setAssistDescription] = useState('');
+	const isGridView = viewMode === 'grid';
+	const layoutClass = isGridView
+		? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+		: 'space-y-4';
+	const gridButtonVariant = isGridView ? 'solid' : 'flat';
+	const gridButtonClass = isGridView ? 'bg-[#8B1A1A] text-white' : '';
+	const listButtonVariant = isGridView ? 'flat' : 'solid';
+	const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
 
 	// ESTADOS para paginación
 	const [currentPage, setCurrentPage] = useState(1);
@@ -141,7 +142,8 @@ const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
 		if (rating > 0) {
 			console.log(`Valorando material ${material.id} con ${rating} estrellas`);
 			alert(
-				`¡Gracias por valorar "${material.title}" con ${rating} estrellas!`);
+				`¡Gracias por valorar "${material.title}" con ${rating} estrellas!`,
+			);
 			setUserRating(0);
 		}
 	};
@@ -238,27 +240,13 @@ const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
 						<Button
 							isIconOnly
 							variant="light"
-							className="min-w-10 h-10 rounded-full bg-[#2D9CDB] text-white shadow-sm"
+							className="min-w-10 h-10 rounded-full bg-[#8B1A1A] text-white shadow-sm flex items-center justify-center px-2 mr-2"
 							title="Busqueda inteligente"
 							aria-label="Busqueda inteligente"
 							onClick={() => setIsAssistOpen((prev) => !prev)}
 							type="button"
 						>
-							<svg
-								viewBox="0 0 24 24"
-								className="w-6 h-6"
-								fill="none"
-								aria-hidden="true"
-							>
-								<path
-									d="M10 3.5 11.2 7l3.3 1.1-3.3 1.1L10 12.6 8.8 9.2 5.5 8.1 8.8 7 10 3.5Z"
-									fill="white"
-								/>
-								<path
-									d="m16.5 6 .6 1.7 1.6.5-1.6.5-.6 1.7-.6-1.7-1.6-.5 1.6-.5.6-1.7Z"
-									fill="white"
-								/>
-							</svg>
+							<Stars size={18} className="w-5 h-5" />
 						</Button>
 					}
 				/>
@@ -276,7 +264,9 @@ const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
 				<div className="border rounded-lg p-4 shadow-sm bg-white/60 backdrop-blur-sm space-y-4">
 					<div className="flex items-center justify-between gap-3">
 						<div>
-							<p className="font-semibold text-foreground">Busqueda inteligente</p>
+							<p className="font-semibold text-foreground">
+								Busqueda inteligente
+							</p>
 							<p className="text-sm text-default-500">
 								Describe el material que necesitas.
 							</p>
