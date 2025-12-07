@@ -102,18 +102,25 @@ export function UserStatisticsCard() {
 	const { resumen } = statistics;
 
 	return (
-		<div className="relative">
+		<div className="relative h-full">
 			<Card
-				className={`cursor-pointer hover:shadow-lg transition-all duration-300 ${
-					isExpanded ? 'shadow-2xl z-50' : ''
+				className={`cursor-pointer hover:shadow-lg transition-all duration-300 h-full ${
+					isExpanded ? 'shadow-2xl z-10' : ''
 				}`}
 				isPressable
 				onPress={handleCardClick}
 			>
 				<CardBody className="gap-4">
 					{/* Header - Always Visible */}
-					<div className="flex items-center justify-between">
-						<div className="flex items-center gap-3">
+					<div className="flex items-start justify-between">
+						<div className="flex flex-col gap-1">
+							<p className="text-small text-default-500">Usuarios Activos</p>
+							<p className="text-2xl font-bold">{resumen.activos.conteo}</p>
+							<p className="text-tiny text-default-400">
+								{resumen.activos.porcentaje}% de {resumen.total} usuarios
+							</p>
+						</div>
+						<div className="flex items-center gap-2">
 							<div className="p-3 rounded-lg bg-success-100">
 								<svg
 									className="w-6 h-6 text-success"
@@ -129,24 +136,8 @@ export function UserStatisticsCard() {
 									/>
 								</svg>
 							</div>
-							<div>
-								<p className="text-sm text-default-500">Usuarios Activos</p>
-								<div className="flex items-baseline gap-2">
-									<p className="text-2xl font-bold">{resumen.activos.conteo}</p>
-									<p className="text-sm text-default-400">
-										de {resumen.total} usuarios
-									</p>
-								</div>
-							</div>
-						</div>
-						<div className="flex items-center gap-2">
-							<div className="text-right">
-								<p className="text-sm font-semibold text-success">
-									{resumen.activos.porcentaje}%
-								</p>
-							</div>
 							<svg
-								className={`w-5 h-5 text-default-400 transition-transform duration-300 ${
+								className={`w-5 h-5 text-default-400 transition-transform duration-300 flex-shrink-0 ${
 									isExpanded ? 'rotate-180' : ''
 								}`}
 								fill="none"
@@ -167,7 +158,7 @@ export function UserStatisticsCard() {
 
 			{/* Expanded Content - Overlay */}
 			{isExpanded && (
-				<Card className="absolute top-full left-0 right-0 mt-2 z-50 shadow-2xl border-2 border-success-200 animate-in slide-in-from-top duration-300">
+				<Card className="absolute top-full left-0 w-full min-w-[300px] mt-2 z-[100] shadow-2xl border-2 border-success-200 animate-in slide-in-from-top duration-300">
 					<CardBody className="gap-4">
 						<h3 className="text-sm font-semibold text-default-700">
 							Resumen de Usuarios
