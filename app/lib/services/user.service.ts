@@ -94,9 +94,9 @@ export async function getUsers(
 				data: body.data as AdminUserDto[],
 				pagination: {
 					page: meta.page,
+					limit: meta.limit,
 					totalPages: meta.totalPages,
 					totalItems: meta.total,
-					limit: meta.limit,
 				},
 			};
 		}
@@ -134,7 +134,25 @@ export async function updateUserRole(
 ): Promise<AdminUserDto> {
 	try {
 		const endpoint = API_ENDPOINTS.USERS.UPDATE_ROLE.replace(':id', userId);
-		const rolId = ROLE_IDS[role];
+		// Accept either Spanish role keys or common English alternatives
+		const roleKey = (role || '').toString().toLowerCase();
+		const roleMap: Record<string, keyof typeof ROLE_IDS> = {
+			estudiante: 'estudiante',
+			student: 'estudiante',
+			estudiante_id: 'estudiante',
+			tutor: 'tutor',
+			teacher: 'tutor',
+			profesor: 'tutor',
+			admin: 'admin',
+			administrador: 'admin',
+		};
+
+		const mappedKey = roleMap[roleKey] || (roleKey as keyof typeof ROLE_IDS);
+		const rolId = ROLE_IDS[mappedKey as keyof typeof ROLE_IDS];
+
+		if (!rolId) {
+			throw new Error(`Unknown role value: ${role}`);
+		}
 
 		const response = await apiClient.patch<ApiResponse<AdminUserDto>>(
 			endpoint,

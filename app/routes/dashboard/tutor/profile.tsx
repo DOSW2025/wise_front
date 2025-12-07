@@ -14,6 +14,7 @@ import {
 	useDisclosure,
 } from '@heroui/react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
 import {
 	ProfileConfigurationSection,
@@ -27,6 +28,7 @@ import { useProfileSave } from './hooks/useProfileSave';
 
 export default function TutorProfile() {
 	const { user } = useAuth();
+	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
 
 	// Custom hooks for managing complex state
@@ -164,8 +166,8 @@ export default function TutorProfile() {
 							onErrorClear={(field) =>
 								setFormErrors({ ...formErrors, [field]: undefined })
 							}
-							nameReadOnly={false}
-							emailReadOnly={false}
+							nameReadOnly={true}
+							emailReadOnly={true}
 							descriptionLabel="Descripción Profesional"
 							descriptionPlaceholder="Cuéntanos sobre tu experiencia y especialidades..."
 						>
@@ -360,7 +362,9 @@ export default function TutorProfile() {
 								<Button
 									color="primary"
 									variant="bordered"
-									onPress={onAvailabilityModalOpen}
+									onPress={() =>
+										navigate('/dashboard/tutor/scheduled?tab=availability')
+									}
 								>
 									Configurar
 								</Button>
