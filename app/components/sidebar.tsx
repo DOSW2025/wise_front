@@ -13,6 +13,7 @@ import {
 	Menu,
 	MessageSquare,
 	Settings,
+	Sparkles,
 	TrendingUp,
 	UserCheck,
 	Users,
@@ -176,6 +177,12 @@ export function Sidebar({
 					path: '/dashboard/admin/validation',
 				},
 				{
+					key: 'gamification',
+					label: 'Gamificación',
+					icon: <Sparkles className="w-5 h-5" />,
+					path: '/dashboard/admin/gamification',
+				},
+				{
 					key: 'reports',
 					label: 'Reportes y Métricas',
 					icon: <TrendingUp className="w-5 h-5" />,
@@ -290,7 +297,7 @@ export function Sidebar({
 							src={
 								userAvatar
 									? userAvatar.includes('googleusercontent.com')
-										? userAvatar.split('=')[0] + '=s200-c'
+										? `${userAvatar.split('=')[0]}=s200-c`
 										: userAvatar
 									: undefined
 							}

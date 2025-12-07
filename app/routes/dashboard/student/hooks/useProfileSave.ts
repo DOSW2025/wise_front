@@ -14,7 +14,7 @@ export function useProfileSave() {
 	const [success, setSuccess] = useState<string | null>(null);
 
 	const saveProfile = async (
-		profileData: ProfileSaveData,
+		_profileData: ProfileSaveData,
 	): Promise<boolean> => {
 		setError(null);
 		setSuccess(null);

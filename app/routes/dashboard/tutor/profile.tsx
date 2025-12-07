@@ -14,6 +14,7 @@ import {
 	useDisclosure,
 } from '@heroui/react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
 import {
 	ProfileConfigurationSection,
@@ -27,6 +28,7 @@ import { useProfileSave } from './hooks/useProfileSave';
 
 export default function TutorProfile() {
 	const { user } = useAuth();
+	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
 
 	// Custom hooks for managing complex state
@@ -64,11 +66,8 @@ export default function TutorProfile() {
 
 	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
 
-	const {
-		isOpen: isAvailabilityModalOpen,
-		onOpen: onAvailabilityModalOpen,
-		onClose: onAvailabilityModalClose,
-	} = useDisclosure();
+	const { isOpen: isAvailabilityModalOpen, onClose: onAvailabilityModalClose } =
+		useDisclosure();
 
 	useEffect(() => {
 		if (user) {
@@ -164,8 +163,8 @@ export default function TutorProfile() {
 							onErrorClear={(field) =>
 								setFormErrors({ ...formErrors, [field]: undefined })
 							}
-							nameReadOnly={false}
-							emailReadOnly={false}
+							nameReadOnly={true}
+							emailReadOnly={true}
 							descriptionLabel="Descripción Profesional"
 							descriptionPlaceholder="Cuéntanos sobre tu experiencia y especialidades..."
 						>
@@ -332,40 +331,40 @@ export default function TutorProfile() {
 						onEmailNotificationsChange={setEmailNotifications}
 						emailNotificationsDescription="Recibe notificaciones de nuevas solicitudes"
 					>
-						<>
-							<Divider />
+						<Divider />
 
-							<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-								<div className="flex-1">
-									<p className="font-medium">Disponibilidad Semanal</p>
-									<p className="text-sm text-default-500">
-										Configura los días en que estás disponible
-									</p>
-									<div className="flex flex-wrap gap-2 mt-2">
-										{daysOfWeek.map(
-											({ key, label }) =>
-												profile.availability[key] && (
-													<Chip
-														key={key}
-														size="sm"
-														color="success"
-														variant="flat"
-													>
-														{label}
-													</Chip>
-												),
-										)}
-									</div>
+						<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+							<div className="flex-1">
+								<p className="font-medium">Disponibilidad Semanal</p>
+								<p className="text-sm text-default-500">
+									Configura los días en que estás disponible
+								</p>
+								<div className="flex flex-wrap gap-2 mt-2">
+									{daysOfWeek.map(
+										({ key, label }) =>
+											profile.availability[key] && (
+												<Chip
+													key={key}
+													size="sm"
+													color="success"
+													variant="flat"
+												>
+													{label}
+												</Chip>
+											),
+									)}
 								</div>
-								<Button
-									color="primary"
-									variant="bordered"
-									onPress={onAvailabilityModalOpen}
-								>
-									Configurar
-								</Button>
 							</div>
-						</>
+							<Button
+								color="primary"
+								variant="bordered"
+								onPress={() =>
+									navigate('/dashboard/tutor/scheduled?tab=availability')
+								}
+							>
+								Configurar
+							</Button>
+						</div>
 					</ProfileConfigurationSection>
 				</CardBody>
 			</Card>

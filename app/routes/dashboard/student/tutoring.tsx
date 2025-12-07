@@ -11,13 +11,17 @@ import {
 	ModalHeader,
 	useDisclosure,
 } from '@heroui/react';
-import { Calendar, Clock, MapPin, Search, Video } from 'lucide-react';
+import { Calendar, Clock, MapPin, Search, Video, BookOpen } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { PageHeader } from '~/components/page-header';
+import ScheduledTutoringsModal, {
+	type ScheduledTutoring,
+} from '~/components/scheduled-tutorings-modal';
 import TutorCard from '~/components/tutor-card';
 import TutorFilter from '~/components/tutor-filter';
+import TutorScheduleModal from '~/components/tutor-schedule-modal';
 
 interface Tutor {
 	id: number;
@@ -31,6 +35,7 @@ interface Tutor {
 	tags: string[];
 	availability: string;
 	isAvailableToday: boolean;
+	timeSlots?: string[];
 }
 
 interface TutorFilters {
@@ -442,6 +447,7 @@ const mockTutors: Tutor[] = [
 		tags: ['Calculo', 'Algebra', 'Geometria'],
 		availability: 'Lun-Vie 9:00-17:00',
 		isAvailableToday: true,
+		timeSlots: ['Lun 09:00', 'Lun 10:00', 'Mar 11:00', 'Mie 14:00'],
 	},
 	{
 		id: 2,
@@ -455,6 +461,33 @@ const mockTutors: Tutor[] = [
 		tags: ['React', 'TypeScript', 'Node.js'],
 		availability: 'Mar-Sab 14:00-20:00',
 		isAvailableToday: false,
+		timeSlots: ['Mar 14:00', 'Jue 16:00', 'Sab 10:00'],
+	},
+];
+
+// Mock de tutorías agendadas (simulación de datos desde API)
+const mockScheduledTutorings: ScheduledTutoring[] = [
+	{
+		id: 'sched-1',
+		tutorId: 1,
+		tutorName: 'Dr. María García',
+		subject: 'Cálculo Diferencial',
+		date: 'Viernes 10 de Diciembre',
+		time: '15:00 - 16:00',
+		modality: 'virtual',
+		meetLink: 'https://meet.google.com/abc-defg-hij',
+		studentNotes: 'Repasar límites y continuidad',
+	},
+	{
+		id: 'sched-2',
+		tutorId: 2,
+		tutorName: 'Ing. Carlos Rodríguez',
+		subject: 'React Avanzado',
+		date: 'Sábado 11 de Diciembre',
+		time: '10:00 - 11:30',
+		modality: 'presencial',
+		location: 'Biblioteca Central, Sala 3',
+		studentNotes: 'Dudas sobre hooks personalizados y context',
 	},
 ];
 
@@ -644,6 +677,33 @@ const StudentTutoringPage: React.FC = () => {
 	const closeSessionDetails = () => {
 		setSelectedSession(null);
 		onClose();
+	};
+
+	const handleScheduleTutoring = (data: {
+		tutorId: number;
+		name: string;
+		email: string;
+		slot: string;
+		notes?: string;
+	}) => {
+		console.log('Nueva tutoría agendada:', data);
+		// En producción: guardar en API y actualizar lista
+		const newTutoring: ScheduledTutoring = {
+			id: `sched-${Date.now()}`,
+			tutorId: data.tutorId,
+			tutorName: selectedTutor?.name || 'Tutor',
+			subject: selectedTutor?.tags[0] || 'Sin tema',
+			date: data.slot,
+			time: data.slot.split(' ').slice(1).join(' ') || '00:00',
+			modality: 'virtual',
+			studentNotes: data.notes,
+		};
+		setScheduledTutorings([...scheduledTutorings, newTutoring]);
+	};
+
+	const handleCancelTutoring = (id: string) => {
+		console.log('Cancelando tutoría:', id);
+		setScheduledTutorings(scheduledTutorings.filter((t) => t.id !== id));
 	};
 
 	return (

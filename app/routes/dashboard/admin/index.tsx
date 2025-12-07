@@ -1,8 +1,35 @@
-import { Button, Card, CardBody, Chip } from '@heroui/react';
+import { Button, Card, CardBody, Chip, Spinner } from '@heroui/react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
+import { RoleStatisticsCard } from '~/components/admin/role-statistics-card';
+import { UserStatisticsCard } from '~/components/admin/user-statistics-card';
 import { StatsCard } from '~/components/stats-card';
+import { getUsers } from '~/lib/services/user.service';
+import type { AdminUserDto, PaginationParams } from '~/lib/types/api.types';
 
 export default function AdminDashboardIndex() {
+	const [recentUsers, setRecentUsers] = useState<AdminUserDto[]>([]);
+	const [loadingRecent, setLoadingRecent] = useState(true);
+	const [, setRecentError] = useState<string | null>(null);
+
+	const fetchRecentUsers = useCallback(async () => {
+		setLoadingRecent(true);
+		try {
+			const params: PaginationParams = { page: 1, limit: 3 };
+			const response = await getUsers(params);
+			setRecentUsers(response.data || []);
+		} catch (err: any) {
+			console.error('Error loading recent users:', err);
+			setRecentError('Error al cargar usuarios recientes');
+		} finally {
+			setLoadingRecent(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		fetchRecentUsers();
+	}, [fetchRecentUsers]);
+
 	return (
 		<div className="space-y-6">
 			{/* Header */}
@@ -17,27 +44,7 @@ export default function AdminDashboardIndex() {
 
 			{/* Stats Grid */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-				<StatsCard
-					title="Usuarios Activos"
-					value={1248}
-					description="+12% este mes"
-					color="success"
-					icon={
-						<svg
-							className="w-6 h-6"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-							/>
-						</svg>
-					}
-				/>
+				<UserStatisticsCard />
 				<StatsCard
 					title="Tutorías Activas"
 					value={342}
@@ -109,7 +116,12 @@ export default function AdminDashboardIndex() {
 					<CardBody className="gap-4">
 						<h2 className="text-xl font-semibold">Acciones Rápidas</h2>
 						<div className="flex flex-col gap-2">
-							<Button as={Link} to="/dashboard/users" color="primary" fullWidth>
+							<Button
+								as={Link}
+								to="/dashboard/admin/users"
+								color="primary"
+								fullWidth
+							>
 								Gestionar Usuarios
 							</Button>
 							<Button
@@ -191,45 +203,7 @@ export default function AdminDashboardIndex() {
 
 			{/* System Overview */}
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-				<Card>
-					<CardBody className="gap-4">
-						<h3 className="text-lg font-semibold">Usuarios por Rol</h3>
-						<div className="space-y-3">
-							<div className="flex items-center justify-between">
-								<span className="text-sm text-default-600">Estudiantes</span>
-								<span className="font-semibold">1,024</span>
-							</div>
-							<div className="w-full bg-default-200 rounded-full h-2">
-								<div
-									className="bg-primary h-2 rounded-full"
-									style={{ width: '82%' }}
-								/>
-							</div>
-							<div className="flex items-center justify-between">
-								<span className="text-sm text-default-600">Tutores</span>
-								<span className="font-semibold">196</span>
-							</div>
-							<div className="w-full bg-default-200 rounded-full h-2">
-								<div
-									className="bg-success h-2 rounded-full"
-									style={{ width: '16%' }}
-								/>
-							</div>
-							<div className="flex items-center justify-between">
-								<span className="text-sm text-default-600">
-									Administradores
-								</span>
-								<span className="font-semibold">28</span>
-							</div>
-							<div className="w-full bg-default-200 rounded-full h-2">
-								<div
-									className="bg-warning h-2 rounded-full"
-									style={{ width: '2%' }}
-								/>
-							</div>
-						</div>
-					</CardBody>
-				</Card>
+				<RoleStatisticsCard />
 
 				<Card>
 					<CardBody className="gap-4">
@@ -240,8 +214,11 @@ export default function AdminDashboardIndex() {
 								{ name: 'Programación', count: 76 },
 								{ name: 'Física I', count: 64 },
 								{ name: 'Álgebra Lineal', count: 58 },
-							].map((subject, index) => (
-								<div key={index} className="flex items-center justify-between">
+							].map((subject) => (
+								<div
+									key={subject.name}
+									className="flex items-center justify-between"
+								>
 									<span className="text-sm">{subject.name}</span>
 									<Chip size="sm" color="primary" variant="flat">
 										{subject.count}
@@ -277,17 +254,22 @@ export default function AdminDashboardIndex() {
 									time: 'Hace 1 hora',
 									type: 'success',
 								},
-							].map((activity, index) => (
-								<div key={index} className="flex items-start gap-3">
-									<div
-										className={`w-2 h-2 rounded-full mt-2 ${
+							].map((activity) => (
+								<div key={activity.action} className="flex items-start gap-3">
+									{(() => {
+										const typeClass =
 											activity.type === 'success'
 												? 'bg-success'
 												: activity.type === 'danger'
 													? 'bg-danger'
-													: 'bg-primary'
-										}`}
-									/>
+													: 'bg-primary';
+
+										return (
+											<div
+												className={`w-2 h-2 rounded-full mt-2 ${typeClass}`}
+											/>
+										);
+									})()}
 									<div className="flex-1">
 										<p className="text-sm">{activity.action}</p>
 										<p className="text-tiny text-default-400">
@@ -303,6 +285,120 @@ export default function AdminDashboardIndex() {
 
 			{/* Recent Users */}
 			<Card>
+				<CardBody className="gap-4">
+					<div className="flex items-center justify-between">
+						<h2 className="text-xl font-semibold">Usuarios Recientes</h2>
+						<Button
+							as={Link}
+							to="/dashboard/admin/users"
+							size="sm"
+							variant="light"
+							color="primary"
+						>
+							Ver todos
+						</Button>
+					</div>
+					<div className="overflow-x-auto">
+						<table className="w-full">
+							<thead>
+								<tr className="border-b border-default-200">
+									<th className="text-left py-3 px-4 text-sm font-semibold">
+										Usuario
+									</th>
+									<th className="text-left py-3 px-4 text-sm font-semibold">
+										Rol
+									</th>
+									<th className="text-left py-3 px-4 text-sm font-semibold">
+										Estado
+									</th>
+									<th className="text-left py-3 px-4 text-sm font-semibold">
+										Registro
+									</th>
+									<th className="text-left py-3 px-4 text-sm font-semibold">
+										Acciones
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								{loadingRecent ? (
+									<tr>
+										<td colSpan={5} className="py-6">
+											<div className="flex items-center justify-center">
+												<Spinner label="Cargando usuarios..." />
+											</div>
+										</td>
+									</tr>
+								) : recentUsers.length === 0 ? (
+									<tr>
+										<td
+											colSpan={5}
+											className="py-6 text-center text-default-500"
+										>
+											No se encontraron usuarios recientes
+										</td>
+									</tr>
+								) : (
+									recentUsers.map((u) => {
+										const fullName = `${u.nombre} ${u.apellido}`.trim();
+										const roleName = u.rol?.nombre
+											? String(u.rol.nombre).charAt(0).toUpperCase() +
+												String(u.rol.nombre).slice(1)
+											: '—';
+										const statusName = u.estado?.nombre
+											? String(u.estado.nombre).charAt(0).toUpperCase() +
+												String(u.estado.nombre).slice(1)
+											: '—';
+										const created = u.createdAt
+											? new Date(u.createdAt).toLocaleDateString('es-CO')
+											: '-';
+										return (
+											<tr key={u.id} className="border-b border-default-100">
+												<td className="py-3 px-4">
+													<div className="flex flex-col">
+														<p className="text-sm font-semibold">{fullName}</p>
+														<p className="text-tiny text-default-400">
+															{u.email}
+														</p>
+													</div>
+												</td>
+												<td className="py-3 px-4">
+													<Chip size="sm" variant="flat">
+														{roleName}
+													</Chip>
+												</td>
+												<td className="py-3 px-4">
+													<Chip
+														size="sm"
+														color={
+															statusName === 'Activo' ? 'success' : 'warning'
+														}
+														variant="flat"
+													>
+														{statusName}
+													</Chip>
+												</td>
+												<td className="py-3 px-4 text-sm">{created}</td>
+												<td className="py-3 px-4">
+													<Button
+														size="sm"
+														variant="light"
+														color="primary"
+														as={Link}
+														to={`/dashboard/admin/users/${u.id}`}
+													>
+														Ver detalles
+													</Button>
+												</td>
+											</tr>
+										);
+									})
+								)}
+							</tbody>
+						</table>
+					</div>
+				</CardBody>
+			</Card>
+			<Card className="hidden">
 				<CardBody className="gap-4">
 					<div className="flex items-center justify-between">
 						<h2 className="text-xl font-semibold">Usuarios Recientes</h2>
@@ -360,8 +456,8 @@ export default function AdminDashboardIndex() {
 										status: 'Activo',
 										date: '08/11/2025',
 									},
-								].map((user, index) => (
-									<tr key={index} className="border-b border-default-100">
+								].map((user) => (
+									<tr key={user.email} className="border-b border-default-100">
 										<td className="py-3 px-4">
 											<div className="flex flex-col">
 												<p className="text-sm font-semibold">{user.name}</p>

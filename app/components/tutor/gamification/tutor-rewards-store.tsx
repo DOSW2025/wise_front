@@ -9,10 +9,10 @@ import {
 	Sparkles,
 	Star,
 } from 'lucide-react';
-import type { TutorReward } from '~/lib/types/tutor-gamification.types';
+import type { UserReward } from '~/lib/types/gamification.types';
 
 interface TutorRewardsStoreProps {
-	rewards: TutorReward[];
+	rewards: UserReward[];
 	currentPoints: number;
 	onRedeem?: (rewardId: string) => void;
 }
