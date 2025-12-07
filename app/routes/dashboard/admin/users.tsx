@@ -27,6 +27,7 @@ import {
 } from '@heroui/react';
 import {
 	Edit,
+	Eye,
 	MoreVertical,
 	Search,
 	ShieldAlert,
@@ -34,6 +35,7 @@ import {
 	UserCheck,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { PageHeader } from '~/components/page-header';
 import {
 	activateUser,
@@ -70,6 +72,9 @@ const roleLabels: Record<string, string> = {
 };
 
 export default function AdminUsers() {
+	// Navigation
+	const navigate = useNavigate();
+
 	// State for users data
 	const [users, setUsers] = useState<AdminUserDto[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -337,6 +342,15 @@ export default function AdminUsers() {
 									</Button>
 								</DropdownTrigger>
 								<DropdownMenu aria-label="Acciones de usuario">
+									<DropdownItem
+										key="view-details"
+										startContent={<Eye className="w-4 h-4" />}
+										onPress={() =>
+											navigate(`/dashboard/admin/users/${user.id}`)
+										}
+									>
+										Ver detalles
+									</DropdownItem>
 									{user.rol.nombre !== 'estudiante' ? (
 										<DropdownItem
 											key="change-role-estudiante"
@@ -393,7 +407,7 @@ export default function AdminUsers() {
 					return null;
 			}
 		},
-		[openRoleChangeModal, openSuspendModal, openActivateModal],
+		[openRoleChangeModal, openSuspendModal, openActivateModal, navigate],
 	);
 
 	// Bottom content with pagination

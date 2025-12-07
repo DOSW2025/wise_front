@@ -8,7 +8,7 @@ import type { AdminUserDto, PaginationParams } from '~/lib/types/api.types';
 export default function AdminDashboardIndex() {
 	const [recentUsers, setRecentUsers] = useState<AdminUserDto[]>([]);
 	const [loadingRecent, setLoadingRecent] = useState(true);
-	const [recentError, setRecentError] = useState<string | null>(null);
+	const [_recentError, setRecentError] = useState<string | null>(null);
 
 	const fetchRecentUsers = useCallback(async () => {
 		setLoadingRecent(true);
@@ -134,7 +134,12 @@ export default function AdminDashboardIndex() {
 					<CardBody className="gap-4">
 						<h2 className="text-xl font-semibold">Acciones Rápidas</h2>
 						<div className="flex flex-col gap-2">
-							<Button as={Link} to="/dashboard/users" color="primary" fullWidth>
+							<Button
+								as={Link}
+								to="/dashboard/admin/users"
+								color="primary"
+								fullWidth
+							>
 								Gestionar Usuarios
 							</Button>
 							<Button
@@ -333,7 +338,7 @@ export default function AdminDashboardIndex() {
 						<h2 className="text-xl font-semibold">Usuarios Recientes</h2>
 						<Button
 							as={Link}
-							to="/dashboard/users"
+							to="/dashboard/admin/users"
 							size="sm"
 							variant="light"
 							color="primary"
@@ -422,7 +427,13 @@ export default function AdminDashboardIndex() {
 												</td>
 												<td className="py-3 px-4 text-sm">{created}</td>
 												<td className="py-3 px-4">
-													<Button size="sm" variant="light" color="primary">
+													<Button
+														size="sm"
+														variant="light"
+														color="primary"
+														as={Link}
+														to={`/dashboard/admin/users/${u.id}`}
+													>
 														Ver detalles
 													</Button>
 												</td>

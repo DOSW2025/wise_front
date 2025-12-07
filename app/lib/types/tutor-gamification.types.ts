@@ -15,6 +15,8 @@ export type TutorBadge = import('./gamification.types').UserBadge;
 export type TutorAchievement = import('./gamification.types').UserAchievement;
 export type TutorReward = import('./gamification.types').UserReward;
 
+import type { UserBadge } from './gamification.types';
+
 export interface TutorGamification {
 	tutorId: string;
 	totalPoints: number;

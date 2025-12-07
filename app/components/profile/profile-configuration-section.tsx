@@ -1,4 +1,4 @@
-import { Button, Divider, Switch } from '@heroui/react';
+import { Switch } from '@heroui/react';
 
 interface ConfigurationSectionProps {
 	emailNotifications: boolean;

@@ -13,7 +13,7 @@ import {
 	CheckCircle,
 	FileText,
 } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 
 interface Notification {
 	id: string;
@@ -87,7 +87,7 @@ export function NotificationsDropdown() {
 		setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
 	};
 
-	const removeNotification = (id: string) => {
+	const _removeNotification = (id: string) => {
 		setNotifications((prev) => prev.filter((n) => n.id !== id));
 	};
 
@@ -148,8 +148,9 @@ export function NotificationsDropdown() {
 							No hay notificaciones
 						</p>
 					</DropdownItem>
-				) : (
-					notifications.map((notification) => (
+				) : null}
+				<Fragment>
+					{notifications.map((notification) => (
 						<DropdownItem
 							key={notification.id}
 							className="h-auto py-3 data-[hover=true]:bg-default-100"
@@ -193,8 +194,8 @@ export function NotificationsDropdown() {
 								</div>
 							</div>
 						</DropdownItem>
-					))
-				)}
+					))}
+				</Fragment>
 			</DropdownMenu>
 		</Dropdown>
 	);

@@ -11,7 +11,7 @@ import {
 	ModalHeader,
 	Textarea,
 } from '@heroui/react';
-import { Search, X } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useState } from 'react';
 
 interface User {

@@ -1,8 +1,8 @@
 import { Card, CardBody, Chip } from '@heroui/react';
-import type { Badge, BadgeTier } from '~/lib/types/gamification.types';
+import type { BadgeTier, UserBadge } from '~/lib/types/gamification.types';
 
 interface BadgeCardProps {
-	badge: Badge;
+	badge: UserBadge;
 }
 
 function getBadgeTierColor(tier: BadgeTier) {
@@ -41,7 +41,7 @@ export function BadgeCard({ badge }: BadgeCardProps) {
 }
 
 interface BadgesGridProps {
-	badges: Badge[];
+	badges: UserBadge[];
 }
 
 export function BadgesGrid({ badges }: BadgesGridProps) {

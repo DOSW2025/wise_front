@@ -334,42 +334,40 @@ export default function TutorProfile() {
 						onEmailNotificationsChange={setEmailNotifications}
 						emailNotificationsDescription="Recibe notificaciones de nuevas solicitudes"
 					>
-						<>
-							<Divider />
+						<Divider />
 
-							<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
-								<div className="flex-1">
-									<p className="font-medium">Disponibilidad Semanal</p>
-									<p className="text-sm text-default-500">
-										Configura los días en que estás disponible
-									</p>
-									<div className="flex flex-wrap gap-2 mt-2">
-										{daysOfWeek.map(
-											({ key, label }) =>
-												profile.availability[key] && (
-													<Chip
-														key={key}
-														size="sm"
-														color="success"
-														variant="flat"
-													>
-														{label}
-													</Chip>
-												),
-										)}
-									</div>
+						<div className="flex justify-between items-center p-4 bg-default-50 rounded-lg hover:bg-default-100 transition-colors">
+							<div className="flex-1">
+								<p className="font-medium">Disponibilidad Semanal</p>
+								<p className="text-sm text-default-500">
+									Configura los días en que estás disponible
+								</p>
+								<div className="flex flex-wrap gap-2 mt-2">
+									{daysOfWeek.map(
+										({ key, label }) =>
+											profile.availability[key] && (
+												<Chip
+													key={key}
+													size="sm"
+													color="success"
+													variant="flat"
+												>
+													{label}
+												</Chip>
+											),
+									)}
 								</div>
-								<Button
-									color="primary"
-									variant="bordered"
-									onPress={() =>
-										navigate('/dashboard/tutor/scheduled?tab=availability')
-									}
-								>
-									Configurar
-								</Button>
 							</div>
-						</>
+							<Button
+								color="primary"
+								variant="bordered"
+								onPress={() =>
+									navigate('/dashboard/tutor/scheduled?tab=availability')
+								}
+							>
+								Configurar
+							</Button>
+						</div>
 					</ProfileConfigurationSection>
 				</CardBody>
 			</Card>

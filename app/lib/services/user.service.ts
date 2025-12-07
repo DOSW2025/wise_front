@@ -62,7 +62,7 @@ export async function getUsers(
 		}
 
 		// Si está envuelta en ApiResponse (body.data tiene pagination)
-		if (body.data && body.data.pagination) {
+		if (body.data?.pagination) {
 			return body.data as PaginatedResponse<AdminUserDto>;
 		}
 

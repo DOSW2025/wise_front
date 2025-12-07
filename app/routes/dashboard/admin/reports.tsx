@@ -29,7 +29,6 @@ import {
 	CHART_GRID_STYLE,
 	CHART_TOOLTIP_STYLE,
 } from '~/components/charts/chart-tooltip';
-import { PageHeader } from '~/components/page-header';
 import { StatsCard } from '~/components/stats-card';
 import { useDateFilter } from '~/lib/hooks/useDateFilter';
 
@@ -224,7 +223,7 @@ export default function AdminReports() {
 												fill="hsl(var(--heroui-primary))"
 												dataKey="value"
 											>
-												{roleDistributionData.map((entry, index) => (
+												{roleDistributionData.map((_entry, index) => (
 													<Cell
 														key={`cell-${index}`}
 														fill={COLORS[index % COLORS.length]}

@@ -42,7 +42,7 @@ export function ChallengesManagement({
 	>();
 	const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
 	const [materials, setMaterials] = useState<Material[]>([]);
-	const [loadingMaterials, setLoadingMaterials] = useState(false);
+	const [_loadingMaterials, setLoadingMaterials] = useState(false);
 
 	// Cargar materiales disponibles
 	useEffect(() => {

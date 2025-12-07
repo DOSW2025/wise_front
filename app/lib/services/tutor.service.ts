@@ -58,7 +58,15 @@ function extractErrorMessage(error: unknown, defaultMessage: string): string {
 			const apiError = response.data as Record<string, unknown>;
 
 			// Detectar mensaje "Cannot PUT"
-			if (typeof apiError === 'string' && apiError.includes('Cannot PUT')) {
+			if (
+				typeof apiError === 'object' &&
+				apiError !== null &&
+				'message' in apiError &&
+				typeof (apiError as Record<string, unknown>).message === 'string' &&
+				((apiError as Record<string, unknown>).message as string).includes(
+					'Cannot PUT',
+				)
+			) {
 				return 'El endpoint no está disponible en el backend';
 			}
 

@@ -9,7 +9,7 @@ import {
 	Tooltip,
 } from '@heroui/react';
 import { MessageSquare, Plus, Search } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { CreateGroupModal } from './create-group-modal';
 
 interface Chat {
@@ -85,7 +85,7 @@ export function ChatDropdown({ onOpenChat }: ChatDropdownProps) {
 	const handleChatClick = (chat: Chat) => {
 		if (onOpenChat) {
 			onOpenChat({
-				id: parseInt(chat.id),
+				id: parseInt(chat.id, 10),
 				name: chat.name,
 				title: chat.name.includes('Dr.')
 					? 'Profesor'
@@ -179,8 +179,9 @@ export function ChatDropdown({ onOpenChat }: ChatDropdownProps) {
 								{searchValue ? 'No se encontraron chats' : 'No hay chats'}
 							</p>
 						</DropdownItem>
-					) : (
-						filteredChats.map((chat) => (
+					) : null}
+					<Fragment>
+						{filteredChats.map((chat) => (
 							<DropdownItem
 								key={chat.id}
 								className={`h-auto py-3 cursor-pointer ${chat.unread ? 'bg-blue-50 data-[hover=true]:bg-blue-100' : 'data-[hover=true]:bg-default-100'}`}
@@ -213,8 +214,8 @@ export function ChatDropdown({ onOpenChat }: ChatDropdownProps) {
 									</div>
 								</div>
 							</DropdownItem>
-						))
-					)}
+						))}
+					</Fragment>
 				</DropdownMenu>
 			</Dropdown>
 
