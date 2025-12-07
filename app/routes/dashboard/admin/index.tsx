@@ -8,7 +8,7 @@ import type { AdminUserDto, PaginationParams } from '~/lib/types/api.types';
 export default function AdminDashboardIndex() {
 	const [recentUsers, setRecentUsers] = useState<AdminUserDto[]>([]);
 	const [loadingRecent, setLoadingRecent] = useState(true);
-	const [_recentError, setRecentError] = useState<string | null>(null);
+	const [, setRecentError] = useState<string | null>(null);
 
 	const fetchRecentUsers = useCallback(async () => {
 		setLoadingRecent(true);
@@ -270,8 +270,11 @@ export default function AdminDashboardIndex() {
 								{ name: 'Programación', count: 76 },
 								{ name: 'Física I', count: 64 },
 								{ name: 'Álgebra Lineal', count: 58 },
-							].map((subject, index) => (
-								<div key={index} className="flex items-center justify-between">
+							].map((subject) => (
+								<div
+									key={subject.name}
+									className="flex items-center justify-between"
+								>
 									<span className="text-sm">{subject.name}</span>
 									<Chip size="sm" color="primary" variant="flat">
 										{subject.count}
@@ -307,17 +310,22 @@ export default function AdminDashboardIndex() {
 									time: 'Hace 1 hora',
 									type: 'success',
 								},
-							].map((activity, index) => (
-								<div key={index} className="flex items-start gap-3">
-									<div
-										className={`w-2 h-2 rounded-full mt-2 ${
+							].map((activity) => (
+								<div key={activity.action} className="flex items-start gap-3">
+									{(() => {
+										const typeClass =
 											activity.type === 'success'
 												? 'bg-success'
 												: activity.type === 'danger'
 													? 'bg-danger'
-													: 'bg-primary'
-										}`}
-									/>
+													: 'bg-primary';
+
+										return (
+											<div
+												className={`w-2 h-2 rounded-full mt-2 ${typeClass}`}
+											/>
+										);
+									})()}
 									<div className="flex-1">
 										<p className="text-sm">{activity.action}</p>
 										<p className="text-tiny text-default-400">
@@ -504,8 +512,8 @@ export default function AdminDashboardIndex() {
 										status: 'Activo',
 										date: '08/11/2025',
 									},
-								].map((user, index) => (
-									<tr key={index} className="border-b border-default-100">
+								].map((user) => (
+									<tr key={user.email} className="border-b border-default-100">
 										<td className="py-3 px-4">
 											<div className="flex flex-col">
 												<p className="text-sm font-semibold">{user.name}</p>

@@ -109,7 +109,7 @@ export async function updateUserRole(
 	try {
 		const endpoint = API_ENDPOINTS.USERS.UPDATE_ROLE.replace(':id', userId);
 		// Accept either Spanish role keys or common English alternatives
-		const roleKey = (role || '').toString().toLowerCase();
+		const roleKey = String(role || '').toLowerCase();
 		const roleMap: Record<string, keyof typeof ROLE_IDS> = {
 			estudiante: 'estudiante',
 			student: 'estudiante',
@@ -121,8 +121,8 @@ export async function updateUserRole(
 			administrador: 'admin',
 		};
 
-		const mappedKey = roleMap[roleKey] || (roleKey as keyof typeof ROLE_IDS);
-		const rolId = ROLE_IDS[mappedKey as keyof typeof ROLE_IDS];
+		const mappedKey = (roleMap[roleKey] ?? roleKey) as keyof typeof ROLE_IDS;
+		const rolId = ROLE_IDS[mappedKey];
 
 		if (!rolId) {
 			throw new Error(`Unknown role value: ${role}`);

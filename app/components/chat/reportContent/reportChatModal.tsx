@@ -26,7 +26,7 @@ export default function ReportChatModal({
 	tutorName,
 	onSubmitReport,
 	isMessageReport = false,
-}: ReportChatModalProps) {
+}: Readonly<ReportChatModalProps>) {
 	const [selectedReason, setSelectedReason] = useState('');
 	const [details, setDetails] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);

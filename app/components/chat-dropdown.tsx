@@ -58,7 +58,7 @@ interface ChatDropdownProps {
 	}) => void;
 }
 
-export function ChatDropdown({ onOpenChat }: ChatDropdownProps) {
+export function ChatDropdown({ onOpenChat }: Readonly<ChatDropdownProps>) {
 	const [chats, setChats] = useState<Chat[]>(mockChats);
 	const [searchValue, setSearchValue] = useState('');
 	const [isOpen, setIsOpen] = useState(false);
@@ -84,14 +84,15 @@ export function ChatDropdown({ onOpenChat }: ChatDropdownProps) {
 
 	const handleChatClick = (chat: Chat) => {
 		if (onOpenChat) {
+			const id = Number.parseInt(chat.id, 10);
+			let title = 'Grupo';
+			if (chat.name.includes('Dr.')) title = 'Profesor';
+			else if (chat.name.includes('Ing.')) title = 'Tutor';
+
 			onOpenChat({
-				id: parseInt(chat.id, 10),
+				id,
 				name: chat.name,
-				title: chat.name.includes('Dr.')
-					? 'Profesor'
-					: chat.name.includes('Ing.')
-						? 'Tutor'
-						: 'Grupo',
+				title,
 				avatarInitials: chat.avatar,
 			});
 			setIsOpen(false);

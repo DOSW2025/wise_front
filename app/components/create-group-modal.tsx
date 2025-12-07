@@ -43,7 +43,7 @@ export function CreateGroupModal({
 	isOpen,
 	onClose,
 	onCreateGroup,
-}: CreateGroupModalProps) {
+}: Readonly<CreateGroupModalProps>) {
 	const [groupName, setGroupName] = useState('');
 	const [groupDescription, setGroupDescription] = useState('');
 	const [searchValue, setSearchValue] = useState('');

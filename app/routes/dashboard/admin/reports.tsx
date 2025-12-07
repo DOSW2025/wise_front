@@ -223,10 +223,15 @@ export default function AdminReports() {
 												fill="hsl(var(--heroui-primary))"
 												dataKey="value"
 											>
-												{roleDistributionData.map((_entry, index) => (
+												{roleDistributionData.map((entry) => (
 													<Cell
-														key={`cell-${index}`}
-														fill={COLORS[index % COLORS.length]}
+														key={entry.name}
+														fill={
+															COLORS[
+																roleDistributionData.indexOf(entry) %
+																	COLORS.length
+															]
+														}
 													/>
 												))}
 											</Pie>

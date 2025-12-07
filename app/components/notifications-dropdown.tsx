@@ -163,11 +163,11 @@ export function NotificationsDropdown() {
 								<div className="flex-1 min-w-0">
 									<div className="flex justify-between items-start gap-2">
 										<p
-											className={`text-sm truncate ${!notification.read ? 'font-semibold' : 'font-medium'}`}
+											className={`text-sm truncate ${notification.read === false ? 'font-semibold' : 'font-medium'}`}
 										>
 											{notification.title}
 										</p>
-										{!notification.read && (
+										{notification.read === false && (
 											<span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5"></span>
 										)}
 									</div>
@@ -178,7 +178,7 @@ export function NotificationsDropdown() {
 										<p className="text-tiny text-default-400">
 											{formatTime(notification.timestamp)}
 										</p>
-										{!notification.read && (
+										{notification.read === false && (
 											<button
 												type="button"
 												onClick={(e) => {

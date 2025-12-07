@@ -13,7 +13,7 @@ export default function AdminUserDetail() {
 	const [error, setError] = useState<string | null>(null);
 
 	const fetchUser = useCallback(async () => {
-		if (!userId) {
+		if (userId == null) {
 			setError('ID de usuario no válido');
 			setLoading(false);
 			return;
@@ -78,7 +78,7 @@ export default function AdminUserDetail() {
 		);
 	}
 
-	if (error || !user) {
+	if (error || user == null) {
 		return (
 			<div className="space-y-6">
 				<PageHeader

@@ -35,14 +35,14 @@ export function ChallengesManagement({
 	onUpdate,
 	onDelete,
 	isLoading = false,
-}: ChallengesManagementProps) {
+}: Readonly<ChallengesManagementProps>) {
+	type MaybeChallenge = Challenge | undefined;
+
 	const [isCreating, setIsCreating] = useState(false);
-	const [editingChallenge, setEditingChallenge] = useState<
-		Challenge | undefined
-	>();
+	const [editingChallenge, setEditingChallenge] = useState<MaybeChallenge>();
 	const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
 	const [materials, setMaterials] = useState<Material[]>([]);
-	const [_loadingMaterials, setLoadingMaterials] = useState(false);
+	const [, setLoadingMaterials] = useState(false);
 
 	// Cargar materiales disponibles
 	useEffect(() => {
@@ -177,13 +177,19 @@ export function ChallengesManagement({
 										</div>
 									</TableCell>
 									<TableCell>
-										<Chip size="sm" color="primary" variant="flat">
-											{challenge.targetRole === 'student'
-												? 'Estudiantes'
-												: challenge.targetRole === 'tutor'
-													? 'Tutores'
-													: 'Ambos'}
-										</Chip>
+										{(() => {
+											let roleLabel = 'Ambos';
+											if (challenge.targetRole === 'student')
+												roleLabel = 'Estudiantes';
+											else if (challenge.targetRole === 'tutor')
+												roleLabel = 'Tutores';
+
+											return (
+												<Chip size="sm" color="primary" variant="flat">
+													{roleLabel}
+												</Chip>
+											);
+										})()}
 									</TableCell>
 									<TableCell>
 										<div className="flex gap-2">
