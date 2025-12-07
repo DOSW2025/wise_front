@@ -1,4 +1,4 @@
-import { Button, Card, CardBody, Input } from '@heroui/react';
+import { Button, Card, CardBody, Input, Spinner } from '@heroui/react';
 import { BookOpen, Search } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
@@ -10,6 +10,8 @@ import ScheduledTutoringsModal, {
 import TutorCard from '~/components/tutor-card';
 import TutorFilter from '~/components/tutor-filter';
 import TutorScheduleModal from '~/components/tutor-schedule-modal';
+import { useTutores } from '~/lib/hooks/useTutores';
+import type { TutorProfile } from '~/lib/types/tutoria.types';
 
 interface Tutor {
 	id: number;
@@ -32,37 +34,86 @@ interface TutorFilters {
 	disponibilidad: string;
 }
 
-// TODO: Conectar con API - Ejemplo con valores negativos para referencia
-const mockTutors: Tutor[] = [
-	{
-		id: 1,
-		name: 'Dr. María García',
-		title: 'Profesora de Matemáticas',
-		department: 'Ciencias Exactas',
-		avatarInitials: 'MG',
-		avatarColor: '#b81d24',
-		rating: 4.9,
-		reviews: 127,
-		tags: ['Cálculo', 'Álgebra', 'Geometría'],
-		availability: 'Lun-Vie 9:00-17:00',
-		isAvailableToday: true,
-		timeSlots: ['Lun 09:00', 'Lun 10:00', 'Mar 11:00', 'Mie 14:00'],
-	},
-	{
-		id: 2,
-		name: 'Ing. Carlos Rodríguez',
-		title: 'Tutor de Programación',
-		department: 'Ingeniería',
-		avatarInitials: 'CR',
-		avatarColor: '#008000',
-		rating: 4.8,
-		reviews: 89,
-		tags: ['React', 'TypeScript', 'Node.js'],
-		availability: 'Mar-Sáb 14:00-20:00',
-		isAvailableToday: false,
-		timeSlots: ['Mar 14:00', 'Jue 16:00', 'Sab 10:00'],
-	},
-];
+/**
+ * Transforma un TutorProfile del backend al formato Tutor del componente
+ */
+const transformTutorProfileToTutor = (profile: TutorProfile): Tutor => {
+	// Validar que disponibilidad exista
+	const disponibilidad = profile.disponibilidad || {
+		monday: [],
+		tuesday: [],
+		wednesday: [],
+		thursday: [],
+		friday: [],
+		saturday: [],
+		sunday: [],
+	};
+
+	// Obtener los slots de disponibilidad de todos los días con tipado explícito
+	const allSlots = Object.entries(disponibilidad).flatMap(([day, slots]) =>
+		slots.map(
+			(slot: {
+				start: string;
+				end: string;
+				modalidad: string;
+				lugar: string;
+			}) => ({
+				day,
+				...slot,
+			}),
+		),
+	);
+
+	// Calcular disponibilidad en formato legible
+	const daysWithAvailability = Object.entries(disponibilidad)
+		.filter(([_, slots]) => slots.length > 0)
+		.map(([day]) => day);
+
+	const availability =
+		daysWithAvailability.length > 0
+			? `Disponible: ${daysWithAvailability.join(', ')}`
+			: 'Sin disponibilidad';
+
+	// Verificar si está disponible hoy
+	const today = new Date()
+		.toLocaleDateString('en-US', { weekday: 'long' })
+		.toLowerCase();
+	const isAvailableToday =
+		(disponibilidad[today as keyof typeof disponibilidad] || []).length > 0;
+
+	// Generar timeSlots en formato legible
+	const timeSlots = allSlots.map(
+		(slot) => `${slot.day} ${slot.start} - ${slot.end}`,
+	);
+
+	// Generar iniciales
+	const avatarInitials =
+		`${profile.nombre.charAt(0)}${profile.apellido.charAt(0)}`.toUpperCase();
+
+	// Colores aleatorios para avatar (basado en el ID)
+	const colors = ['#b81d24', '#008000', '#0073e6', '#f59e0b', '#8b5cf6'];
+	const avatarColor =
+		colors[Number.parseInt(profile.id.slice(-1), 16) % colors.length];
+
+	return {
+		id:
+			Number.parseInt(profile.id.replace(/\D/g, '').slice(0, 8)) ||
+			Math.floor(Math.random() * 100000),
+		name: `${profile.nombre} ${profile.apellido}`,
+		title: `Tutor - Semestre ${profile.semestre}`,
+		department: profile.rol.nombre,
+		avatarInitials,
+		avatarColor,
+		rating: 4.5, // TODO: Implementar sistema de calificaciones
+		reviews: 0, // TODO: Implementar sistema de reseñas
+		tags: allSlots
+			.map((slot) => slot.modalidad)
+			.filter((v, i, a) => a.indexOf(v) === i),
+		availability,
+		isAvailableToday,
+		timeSlots,
+	};
+};
 
 // Mock de tutorías agendadas (simulación de datos desde API)
 const mockScheduledTutorings: ScheduledTutoring[] = [
@@ -91,7 +142,14 @@ const mockScheduledTutorings: ScheduledTutoring[] = [
 ];
 
 const StudentTutoringPage: React.FC = () => {
-	const [tutors] = useState<Tutor[]>(mockTutors);
+	// Obtener tutores desde el backend
+	const { data: tutoresData, isLoading, error } = useTutores();
+
+	// Transformar los datos del backend al formato del componente
+	const tutors = tutoresData
+		? tutoresData.map(transformTutorProfileToTutor)
+		: [];
+
 	const [searchValue, setSearchValue] = useState('');
 	const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
 	const [isScheduleOpen, setIsScheduleOpen] = useState(false);
@@ -135,6 +193,33 @@ const StudentTutoringPage: React.FC = () => {
 		console.log('Cancelando tutoría:', id);
 		setScheduledTutorings(scheduledTutorings.filter((t) => t.id !== id));
 	};
+
+	// Mostrar spinner mientras carga
+	if (isLoading) {
+		return (
+			<div className="space-y-6 p-4 md:p-6">
+				<PageHeader title="Tutorías" description="Panel de Estudiante" />
+				<div className="flex justify-center items-center min-h-[400px]">
+					<Spinner size="lg" label="Cargando tutores..." />
+				</div>
+			</div>
+		);
+	}
+
+	// Mostrar error si falla la petición
+	if (error) {
+		return (
+			<div className="space-y-6 p-4 md:p-6">
+				<PageHeader title="Tutorías" description="Panel de Estudiante" />
+				<Card>
+					<CardBody className="p-6 text-center">
+						<p className="text-danger text-lg">Error al cargar tutores</p>
+						<p className="text-default-500 mt-2">{error.message}</p>
+					</CardBody>
+				</Card>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-6 p-4 md:p-6">

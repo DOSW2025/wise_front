@@ -51,4 +51,7 @@ export const API_ENDPOINTS = {
 		SUSPEND: '/wise/gestion-usuarios/:id/estado',
 		ACTIVATE: '/wise/gestion-usuarios/:id/estado',
 	},
+	TUTORIAS: {
+		TUTORES: '/wise/tutorias/tutores',
+	},
 } as const;

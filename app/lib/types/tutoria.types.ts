@@ -1,0 +1,63 @@
+/**
+ * Tutoria Types
+ * Tipos TypeScript para el microservicio de tutorías
+ */
+
+/**
+ * Disponibilidad por día de la semana
+ */
+export interface DisponibilidadSlot {
+	start: string; // Formato: "HH:mm"
+	end: string; // Formato: "HH:mm"
+	modalidad: 'VIRTUAL' | 'PRESENCIAL' | 'HIBRIDA';
+	lugar: string; // URL para virtual o ubicación física
+}
+
+/**
+ * Disponibilidad semanal del tutor
+ */
+export interface DisponibilidadSemanal {
+	monday: DisponibilidadSlot[];
+	tuesday: DisponibilidadSlot[];
+	wednesday: DisponibilidadSlot[];
+	thursday: DisponibilidadSlot[];
+	friday: DisponibilidadSlot[];
+	saturday: DisponibilidadSlot[];
+	sunday: DisponibilidadSlot[];
+}
+
+/**
+ * Rol del usuario
+ */
+export interface Rol {
+	id: number;
+	nombre: string;
+	activo: boolean;
+}
+
+/**
+ * Estado del usuario
+ */
+export interface Estado {
+	id: number;
+	nombre: string;
+	activo: boolean;
+}
+
+/**
+ * Perfil completo del tutor
+ */
+export interface TutorProfile {
+	id: string;
+	email: string;
+	nombre: string;
+	apellido: string;
+	semestre: number;
+	rolId: number;
+	estadoId: number;
+	disponibilidad: DisponibilidadSemanal;
+	created_at: string;
+	updated_at: string;
+	rol: Rol;
+	estado: Estado;
+}
