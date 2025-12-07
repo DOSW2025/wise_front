@@ -8,7 +8,6 @@ import {
 	Card,
 	CardBody,
 	Chip,
-	Divider,
 	Select,
 	SelectItem,
 	Tab,

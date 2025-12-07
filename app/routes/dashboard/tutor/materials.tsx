@@ -259,7 +259,10 @@ export default function TutorMaterials() {
 											size="sm"
 										>
 											{subjects.map((subject) => (
-												<SelectItem key={subject.nombre} value={subject.nombre}>
+												<SelectItem
+													key={subject.nombre}
+													textValue={subject.nombre}
+												>
 													{subject.nombre}
 												</SelectItem>
 											))}
@@ -282,7 +285,10 @@ export default function TutorMaterials() {
 											size="sm"
 										>
 											{[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((semester) => (
-												<SelectItem key={semester} value={semester}>
+												<SelectItem
+													key={semester}
+													textValue={`Semestre ${semester}`}
+												>
 													Semestre {semester}
 												</SelectItem>
 											))}

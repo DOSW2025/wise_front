@@ -7,7 +7,6 @@ import {
 	Card,
 	CardBody,
 	CardHeader,
-	Chip,
 	Divider,
 	Progress,
 	Spinner,
@@ -20,7 +19,6 @@ import {
 	FileText,
 	Star,
 	TrendingUp,
-	Users,
 } from 'lucide-react';
 import { usePopularMaterials } from '~/lib/hooks/useMaterials';
 import type { Material } from '~/lib/types/api.types';
@@ -223,7 +221,7 @@ export function PopularMaterials({ onMaterialClick }: PopularMaterialsProps) {
 						</CardHeader>
 						<CardBody className="pt-0">
 							<div className="space-y-4">
-								{generalStats.materiasMasPopulares.map((materia, index) => (
+								{generalStats.materiasMasPopulares.map((materia, _index) => (
 									<div key={materia.nombre} className="space-y-2">
 										<div className="flex justify-between items-center">
 											<span className="text-sm font-medium text-gray-700">

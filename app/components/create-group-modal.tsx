@@ -11,7 +11,7 @@ import {
 	ModalHeader,
 	Textarea,
 } from '@heroui/react';
-import { Search, X } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useState } from 'react';
 
 interface User {
@@ -43,7 +43,7 @@ export function CreateGroupModal({
 	isOpen,
 	onClose,
 	onCreateGroup,
-}: CreateGroupModalProps) {
+}: Readonly<CreateGroupModalProps>) {
 	const [groupName, setGroupName] = useState('');
 	const [groupDescription, setGroupDescription] = useState('');
 	const [searchValue, setSearchValue] = useState('');

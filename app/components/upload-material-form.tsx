@@ -227,7 +227,7 @@ export function UploadMaterialForm({
 						isRequired
 					>
 						{subjects.map((subject) => (
-							<SelectItem key={subject.nombre} value={subject.nombre}>
+							<SelectItem key={subject.nombre} textValue={subject.nombre}>
 								{subject.nombre}
 							</SelectItem>
 						))}

@@ -132,24 +132,22 @@ export default function StudentProfile() {
 							descriptionLabel="Sobre Mí"
 							descriptionPlaceholder="Cuéntanos sobre tus intereses y objetivos..."
 						>
-							<>
-								<Input
-									label="Carrera"
-									placeholder="Ingeniería de Sistemas"
-									value={profile.career}
-									isReadOnly={true}
-									variant="flat"
-									description="No se puede modificar"
-								/>
-								<Input
-									label="Semestre"
-									placeholder="7"
-									value={profile.semester}
-									isReadOnly={true}
-									variant="flat"
-									description="No se puede modificar"
-								/>
-							</>
+							<Input
+								label="Carrera"
+								placeholder="Ingeniería de Sistemas"
+								value={profile.career}
+								isReadOnly={true}
+								variant="flat"
+								description="No se puede modificar"
+							/>
+							<Input
+								label="Semestre"
+								placeholder="7"
+								value={profile.semester}
+								isReadOnly={true}
+								variant="flat"
+								description="No se puede modificar"
+							/>
 						</ProfileFormFields>
 					</div>
 

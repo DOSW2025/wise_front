@@ -57,8 +57,8 @@ export function TutorBadgeCard({ badge }: TutorBadgeCardProps) {
 				<Chip size="sm" color={tierColor} variant="flat" className="capitalize">
 					{badge.tier}
 				</Chip>
-				<p className="font-semibold text-sm">{badge.title}</p>
-				<p className="text-xs text-default-500">{badge.description}</p>
+				<p className="font-semibold text-sm">{badge.nombre}</p>
+				<p className="text-xs text-default-500">{badge.descripcion}</p>
 				<p className="text-xs text-default-400">
 					{new Date(badge.earnedAt).toLocaleDateString('es-ES', {
 						day: 'numeric',

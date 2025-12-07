@@ -269,8 +269,13 @@ export default function AdminReports() {
 											>
 												{roleDistributionData.map((_entry, index) => (
 													<Cell
-														key={`cell-${index}`}
-														fill={COLORS[index % COLORS.length]}
+														key={entry.name}
+														fill={
+															COLORS[
+																roleDistributionData.indexOf(entry) %
+																	COLORS.length
+															]
+														}
 													/>
 												))}
 											</Pie>
