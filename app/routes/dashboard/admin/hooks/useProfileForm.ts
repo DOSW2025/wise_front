@@ -52,11 +52,11 @@ export function useProfileForm(
 
 		if (!profile.email.trim()) {
 			errors.email = 'El email es requerido';
-		} else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)) {
+		} else if (!profile.email.includes('@') || !profile.email.includes('.')) {
 			errors.email = 'Email inválido';
 		}
 
-		if (profile.phone && !/^\+?[\d\s-()]+$/.test(profile.phone)) {
+		if (profile.phone && !/^[+\d\s()-]{1,20}$/.test(profile.phone)) {
 			errors.phone = 'Teléfono inválido';
 		}
 
