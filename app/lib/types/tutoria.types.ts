@@ -108,3 +108,10 @@ export interface StudentSession {
 	comentarios: string | null;
 	createdAt: string;
 }
+
+/**
+ * Respuesta del endpoint de nombre del tutor
+ */
+export interface TutorNameResponse {
+	nombreCompleto: string;
+}

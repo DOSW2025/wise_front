@@ -5,7 +5,11 @@
 
 import apiClient from '../api/client';
 import { API_ENDPOINTS } from '../config/api.config';
-import type { StudentSession, TutorProfile } from '../types/tutoria.types';
+import type {
+	StudentSession,
+	TutorNameResponse,
+	TutorProfile,
+} from '../types/tutoria.types';
 
 /**
  * Obtiene la lista de tutores disponibles en el sistema
@@ -33,15 +37,31 @@ export async function getStudentSessions(
 			':studentId',
 			studentId,
 		);
-		console.log('📡 Fetching student sessions:', { studentId, url });
+		console.log('Fetching student sessions:', { studentId, url });
 		const response = await apiClient.get<StudentSession[]>(url);
-		console.log('✅ Student sessions received:', response.data);
+		console.log('Student sessions received:', response.data);
 		return response.data;
 	} catch (error) {
-		console.error('❌ Error al obtener sesiones del estudiante:', error);
+		console.error('Error al obtener sesiones del estudiante:', error);
 		if (error instanceof Error) {
 			throw error;
 		}
 		throw new Error('No se pudo obtener las sesiones del estudiante');
+	}
+}
+
+/**
+ * Obtiene el nombre de un tutor específico
+ */
+export async function getTutorName(tutorId: string): Promise<string> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.TUTOR_NAME.replace('{id}', tutorId);
+		console.log('Fetching tutor name:', { tutorId, url });
+		const response = await apiClient.get<TutorNameResponse>(url);
+		console.log('Tutor name received:', response.data);
+		return response.data.nombreCompleto;
+	} catch (error) {
+		console.error('Error al obtener nombre del tutor:', error);
+		return 'Tutor no disponible';
 	}
 }

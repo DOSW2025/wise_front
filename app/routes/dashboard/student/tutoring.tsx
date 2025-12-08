@@ -11,9 +11,8 @@ import {
 	ModalHeader,
 	useDisclosure,
 } from '@heroui/react';
-import { BookOpen, Calendar, Clock, MapPin, Search, Video } from 'lucide-react';
-import type React from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { Calendar, Clock, MapPin, Search, Video } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { PageHeader } from '~/components/page-header';
 import ScheduledTutoringsModal, {
@@ -86,8 +85,9 @@ const getAvatarBg = (avatarColor?: string): string => {
 	return colorMap[avatarColor ?? ''] || 'bg-red-500';
 };
 
-const getInitials = (name: string, fallback?: string): string => {
+const getInitials = (name: string | undefined, fallback?: string): string => {
 	if (fallback) return fallback;
+	if (!name) return 'T';
 	const parts = name.split(' ').filter(Boolean);
 	const first = parts[0]?.[0] ?? '';
 	const last = parts.slice(-1)[0]?.[0] ?? '';
@@ -249,13 +249,32 @@ const SessionCardItem: React.FC<{
 	onViewDetails: (session: StudentSession) => void;
 	onCancel: (session: StudentSession) => void;
 }> = ({ session, onViewDetails, onCancel }) => {
+	const [tutorName, setTutorName] = React.useState<string>('Cargando...');
 	const view = buildSessionViewModel(session);
+
+	React.useEffect(() => {
+		const fetchTutorName = async () => {
+			try {
+				const { getTutorName } = await import('~/lib/services/tutoria.service');
+				const name = await getTutorName(session.tutorId);
+				setTutorName(name);
+			} catch (error) {
+				console.error('Error fetching tutor name:', error);
+				setTutorName('Tutor no disponible');
+			}
+		};
+
+		fetchTutorName();
+	}, [session.tutorId]);
+
+	// Actualizar el tutorName en la vista
+	const viewWithTutorName = { ...view, tutorName };
 
 	return (
 		<Card>
 			<CardBody>
 				<SessionHeader
-					session={view}
+					session={viewWithTutorName}
 					actionArea={
 						<div className="flex gap-2">
 							<Button
@@ -290,7 +309,29 @@ const SessionDetailsModal: React.FC<{
 	onClose: () => void;
 	onRequestCancel: (session: StudentSession) => void;
 }> = ({ session, isOpen, onClose, onRequestCancel }) => {
-	const view = session ? buildSessionViewModel(session) : null;
+	const [tutorName, setTutorName] = React.useState<string>('Cargando...');
+
+	React.useEffect(() => {
+		if (!session) return;
+
+		const fetchTutorName = async () => {
+			try {
+				const { getTutorName } = await import('~/lib/services/tutoria.service');
+				const name = await getTutorName(session.tutorId);
+				setTutorName(name);
+			} catch (error) {
+				console.error('Error fetching tutor name:', error);
+				setTutorName('Tutor no disponible');
+			}
+		};
+
+		fetchTutorName();
+	}, [session]);
+
+	const sessionWithTutorName = session ? { ...session, tutorName } : null;
+	const view = sessionWithTutorName
+		? buildSessionViewModel(sessionWithTutorName)
+		: null;
 
 	return (
 		<Modal
@@ -536,7 +577,7 @@ const transformTutorProfileToTutor = (profile: TutorProfile): Tutor => {
 
 	return {
 		id:
-			Number.parseInt(profile.id.replace(/\D/g, '').slice(0, 8)) ||
+			Number.parseInt(profile.id.replace(/\D/g, '').slice(0, 8), 10) ||
 			Math.floor(Math.random() * 100000),
 		name: `${profile.nombre} ${profile.apellido}`,
 		title: `Tutor - Semestre ${profile.semestre}`,
@@ -612,7 +653,7 @@ const buildScheduledAtFromNow = (daysFromNow: number, startTime: string) => {
 };
 
 // Reemplazar estas sesiones mock con datos reales de backend cuando haya conexion.
-const mockSessions: StudentSession[] = [
+const _mockSessions: StudentSession[] = [
 	(() => {
 		const { scheduledAt, day } = buildScheduledAtFromNow(2, '14:00');
 		return {
@@ -943,43 +984,41 @@ const StudentTutoringPage: React.FC = () => {
 					)}
 
 					{/* Content */}
-					{!isLoadingSessions && !sessionsError && (
-						<>
-							{futureSessions.length === 0 ? (
-								<Card>
-									<CardBody className="text-center py-12">
-										<Calendar className="w-12 h-12 text-default-300 mx-auto mb-4" />
-										<h3 className="text-lg font-semibold mb-2">
-											No tienes tutorias programadas
-										</h3>
-										<p className="text-default-500 mb-4">
-											Cuando confirmes una tutoria aparecera aqui.
-										</p>
-										<Button
-											color="primary"
-											onPress={() => setActiveTab('search')}
-										>
-											Agendar tutoria
-										</Button>
-									</CardBody>
-								</Card>
-							) : (
-								<div className="grid gap-4">
-									{futureSessions.map((session) => (
-										<SessionCardItem
-											key={session.id}
-											session={session}
-											onViewDetails={openSessionDetails}
-											onCancel={(currentSession) => {
-												setSessionToCancel(currentSession);
-												onOpenConfirm();
-											}}
-										/>
-									))}
-								</div>
-							)}
-						</>
-					)}
+					{!isLoadingSessions &&
+						!sessionsError &&
+						(futureSessions.length === 0 ? (
+							<Card>
+								<CardBody className="text-center py-12">
+									<Calendar className="w-12 h-12 text-default-300 mx-auto mb-4" />
+									<h3 className="text-lg font-semibold mb-2">
+										No tienes tutorias programadas
+									</h3>
+									<p className="text-default-500 mb-4">
+										Cuando confirmes una tutoria aparecera aqui.
+									</p>
+									<Button
+										color="primary"
+										onPress={() => setActiveTab('search')}
+									>
+										Agendar tutoria
+									</Button>
+								</CardBody>
+							</Card>
+						) : (
+							<div className="grid gap-4">
+								{futureSessions.map((session) => (
+									<SessionCardItem
+										key={session.id}
+										session={session}
+										onViewDetails={openSessionDetails}
+										onCancel={(currentSession) => {
+											setSessionToCancel(currentSession);
+											onOpenConfirm();
+										}}
+									/>
+								))}
+							</div>
+						))}
 				</div>
 			)}
 			<SessionDetailsModal
