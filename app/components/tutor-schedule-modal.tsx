@@ -196,13 +196,55 @@ export default function TutorScheduleModal({
 				</ModalHeader>
 				<ModalBody>
 					<div className="space-y-4">
-						{/* Tags de materias */}
-						<div className="flex gap-2 flex-wrap">
-							{tutor.tags.map((t) => (
-								<Chip key={t} variant="flat" color="primary">
-									{t}
-								</Chip>
-							))}
+						{/* Tags de modalidad y materias */}
+						<div>
+							<h4 className="font-medium mb-2 text-sm text-default-600">
+								Modalidades disponibles
+							</h4>
+							<div className="flex gap-2 flex-wrap mb-3">
+								{tutor.tags.map((t) => (
+									<Chip key={t} variant="flat" color="primary" size="sm">
+										{t}
+									</Chip>
+								))}
+							</div>
+
+							<h4 className="font-medium mb-2 text-sm text-default-600">
+								Materias que puede dictar
+							</h4>
+							<div className="flex gap-2 flex-wrap">
+								{(() => {
+									if (isLoadingMaterias) {
+										return (
+											<span className="text-sm text-default-400">
+												Cargando materias...
+											</span>
+										);
+									}
+
+									if (
+										materiasData?.materias &&
+										materiasData.materias.length > 0
+									) {
+										return materiasData.materias.map((materia) => (
+											<Chip
+												key={materia.codigo}
+												variant="flat"
+												color="secondary"
+												size="sm"
+											>
+												{materia.codigo}
+											</Chip>
+										));
+									}
+
+									return (
+										<span className="text-sm text-default-400">
+											No hay materias disponibles
+										</span>
+									);
+								})()}
+							</div>
 						</div>
 						{/* Horarios disponibles */}
 						<div>
