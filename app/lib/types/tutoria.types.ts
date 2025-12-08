@@ -125,3 +125,23 @@ export interface MateriaResponse {
 	nombre: string;
 	temas: string[];
 }
+
+/**
+ * Request para crear una sesión de tutoría
+ */
+export interface CreateSessionRequest {
+	tutorId: string;
+	studentId: string;
+	codigoMateria: string;
+	scheduledAt: string;
+	day: WeekDay;
+	startTime: string;
+	endTime: string;
+	mode: SessionMode;
+	comentarios?: string;
+}
+
+/**
+ * Respuesta al crear una sesión de tutoría
+ */
+export interface CreateSessionResponse extends StudentSession {}

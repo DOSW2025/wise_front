@@ -31,6 +31,7 @@ import type {
 
 interface Tutor {
 	id: number;
+	tutorId: string;
 	name: string;
 	title: string;
 	department: string;
@@ -42,6 +43,7 @@ interface Tutor {
 	availability: string;
 	isAvailableToday: boolean;
 	timeSlots?: string[];
+	disponibilidad?: TutorProfile['disponibilidad'];
 }
 
 interface TutorFilters {
@@ -90,7 +92,7 @@ const getInitials = (name: string | undefined, fallback?: string): string => {
 	if (!name) return 'T';
 	const parts = name.split(' ').filter(Boolean);
 	const first = parts[0]?.[0] ?? '';
-	const last = parts.slice(-1)[0]?.[0] ?? '';
+	const last = parts.at(-1)?.[0] ?? '';
 	const initials = `${first}${last || parts[0]?.[1] || ''}`.toUpperCase();
 	return initials || 'T';
 };
@@ -599,8 +601,9 @@ const transformTutorProfileToTutor = (profile: TutorProfile): Tutor => {
 
 	return {
 		id:
-			Number.parseInt(profile.id.replace(/\D/g, '').slice(0, 8), 10) ||
+			Number.parseInt(profile.id.replaceAll(/\D/g, '').slice(0, 8), 10) ||
 			Math.floor(Math.random() * 100000),
+		tutorId: profile.id, // Agregar el ID del tutor del backend
 		name: `${profile.nombre} ${profile.apellido}`,
 		title: `Tutor - Semestre ${profile.semestre}`,
 		department: profile.rol.nombre,
@@ -614,6 +617,7 @@ const transformTutorProfileToTutor = (profile: TutorProfile): Tutor => {
 		availability,
 		isAvailableToday,
 		timeSlots,
+		disponibilidad, // Agregar disponibilidad completa para el modal
 	};
 };
 
@@ -858,26 +862,10 @@ const StudentTutoringPage: React.FC = () => {
 		onClose();
 	};
 
-	const handleScheduleTutoring = (data: {
-		tutorId: number;
-		name: string;
-		email: string;
-		slot: string;
-		notes?: string;
-	}) => {
-		console.log('Nueva tutoría agendada:', data);
-		// En producción: guardar en API y actualizar lista
-		const newTutoring: ScheduledTutoring = {
-			id: `sched-${Date.now()}`,
-			tutorId: data.tutorId,
-			tutorName: selectedTutor?.name || 'Tutor',
-			subject: selectedTutor?.tags[0] || 'Sin tema',
-			date: data.slot,
-			time: data.slot.split(' ').slice(1).join(' ') || '00:00',
-			modality: 'virtual',
-			studentNotes: data.notes,
-		};
-		setScheduledTutorings([...scheduledTutorings, newTutoring]);
+	const handleScheduleSuccess = () => {
+		setIsScheduleOpen(false);
+		setSelectedTutor(null);
+		setActiveTab('my-sessions');
 	};
 
 	const handleCancelTutoring = (id: string) => {
@@ -927,7 +915,7 @@ const StudentTutoringPage: React.FC = () => {
 						</CardBody>
 					</Card>
 
-					{isLoadingTutors ? (
+					{isLoadingTutors && (
 						<Card>
 							<CardBody className="p-6 text-center">
 								<p className="text-default-500">
@@ -935,14 +923,18 @@ const StudentTutoringPage: React.FC = () => {
 								</p>
 							</CardBody>
 						</Card>
-					) : tutorsError ? (
+					)}
+
+					{tutorsError && (
 						<Card>
 							<CardBody className="p-6 text-center">
 								<p className="text-danger text-lg">Error al cargar tutores</p>
 								<p className="text-default-500 mt-2">{tutorsError.message}</p>
 							</CardBody>
 						</Card>
-					) : (
+					)}
+
+					{!isLoadingTutors && !tutorsError && (
 						<>
 							<div className="flex justify-between items-center pt-2 border-t border-default-200">
 								<p className="text-default-600">
@@ -979,18 +971,16 @@ const StudentTutoringPage: React.FC = () => {
 					<div className="flex items-center justify-between">
 						<h2 className="text-xl font-semibold">Sesiones programadas</h2>
 					</div>
-
 					{/* Loading state */}
 					{isLoadingSessions && (
 						<div className="grid gap-4">
-							{[...Array(3)].map((_, i) => (
-								<Card key={i}>
+							{[...new Array(3)].map((_, i) => (
+								<Card key={`skeleton-${i}`}>
 									<CardBody className="h-32 bg-default-100 animate-pulse" />
 								</Card>
 							))}
 						</div>
-					)}
-
+					)}{' '}
 					{/* Error state */}
 					{sessionsError && (
 						<Card>
@@ -1004,7 +994,6 @@ const StudentTutoringPage: React.FC = () => {
 							</CardBody>
 						</Card>
 					)}
-
 					{/* Content */}
 					{!isLoadingSessions &&
 						!sessionsError &&
@@ -1068,7 +1057,8 @@ const StudentTutoringPage: React.FC = () => {
 				tutor={selectedTutor}
 				isOpen={isScheduleOpen}
 				onClose={() => setIsScheduleOpen(false)}
-				onSchedule={handleScheduleTutoring}
+				studentId={user?.id || ''}
+				onSuccess={handleScheduleSuccess}
 			/>
 			{/* Modal de mis tutorías agendadas */}
 			<ScheduledTutoringsModal

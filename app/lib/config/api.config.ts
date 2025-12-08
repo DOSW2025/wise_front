@@ -59,5 +59,6 @@ export const API_ENDPOINTS = {
 		STUDENT_SESSIONS: '/wise/tutorias/sessions/student/:studentId',
 		TUTOR_NAME: '/wise/tutorias/nombre/{id}',
 		MATERIA: '/wise/tutorias/materia/{codigo}',
+		CREATE_SESSION: '/wise/tutorias/sessions',
 	},
 } as const;

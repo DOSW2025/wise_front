@@ -3,9 +3,12 @@
  * Servicio para manejar operaciones relacionadas con el microservicio de tutorías
  */
 
+import axios from 'axios';
 import apiClient from '../api/client';
 import { API_ENDPOINTS } from '../config/api.config';
 import type {
+	CreateSessionRequest,
+	CreateSessionResponse,
 	MateriaResponse,
 	StudentSession,
 	TutorNameResponse,
@@ -83,5 +86,51 @@ export async function getMateria(
 	} catch (error) {
 		console.error('Error al obtener materia:', error);
 		return null;
+	}
+}
+
+/**
+ * Crea una nueva sesión de tutoría
+ */
+export async function createSession(
+	data: CreateSessionRequest,
+): Promise<CreateSessionResponse> {
+	try {
+		console.log(
+			'📤 Enviando petición POST a:',
+			API_ENDPOINTS.TUTORIAS.CREATE_SESSION,
+		);
+		console.log('📦 Datos enviados:', data);
+
+		const response = await apiClient.post<CreateSessionResponse>(
+			API_ENDPOINTS.TUTORIAS.CREATE_SESSION,
+			data,
+		);
+
+		console.log('✅ Respuesta exitosa:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('❌ Error al crear sesión de tutoría:', error);
+
+		if (axios.isAxiosError(error)) {
+			const status = error.response?.status;
+			const message = error.response?.data?.message || error.message;
+
+			if (status === 404) {
+				throw new Error(
+					'El endpoint de creación de tutorías no está disponible. Verifica que el backend esté corriendo y que la ruta POST /wise/tutorias/sessions esté implementada.',
+				);
+			}
+			if (status === 400) {
+				throw new Error(`Datos inválidos: ${message}`);
+			}
+			if (status === 401 || status === 403) {
+				throw new Error('No tienes permisos para agendar tutorías');
+			}
+
+			throw new Error(`Error del servidor (${status}): ${message}`);
+		}
+
+		throw new Error('No se pudo agendar la tutoría. Verifica tu conexión.');
 	}
 }

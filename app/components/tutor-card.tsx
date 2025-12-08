@@ -1,9 +1,11 @@
 import { Calendar, MessageCircle, Star } from 'lucide-react';
 import type React from 'react';
 import { Link } from 'react-router';
+import type { TutorProfile } from '~/lib/types/tutoria.types';
 
 interface Tutor {
 	id: number;
+	tutorId: string;
 	name: string;
 	title: string;
 	department: string;
@@ -14,6 +16,8 @@ interface Tutor {
 	tags: string[];
 	availability: string;
 	isAvailableToday: boolean;
+	timeSlots?: string[];
+	disponibilidad?: TutorProfile['disponibilidad'];
 }
 
 interface TutorCardProps {
