@@ -435,37 +435,86 @@ const CancelSessionModal: React.FC<{
 	);
 };
 
-// Conectar con API - Ejemplo con valores negativos para referencia
-const mockTutors: Tutor[] = [
-	{
-		id: 1,
-		name: 'Dr. Maria Garcia',
-		title: 'Profesora de Matematicas',
-		department: 'Ciencias Exactas',
-		avatarInitials: 'MG',
-		avatarColor: '#b81d24',
-		rating: 4.9,
-		reviews: 127,
-		tags: ['Calculo', 'Algebra', 'Geometria'],
-		availability: 'Lun-Vie 9:00-17:00',
-		isAvailableToday: true,
-		timeSlots: ['Lun 09:00', 'Lun 10:00', 'Mar 11:00', 'Mie 14:00'],
-	},
-	{
-		id: 2,
-		name: 'Ing. Carlos Rodriguez',
-		title: 'Tutor de Programacion',
-		department: 'Ingenieria',
-		avatarInitials: 'CR',
-		avatarColor: '#008000',
-		rating: 4.8,
-		reviews: 89,
-		tags: ['React', 'TypeScript', 'Node.js'],
-		availability: 'Mar-Sab 14:00-20:00',
-		isAvailableToday: false,
-		timeSlots: ['Mar 14:00', 'Jue 16:00', 'Sab 10:00'],
-	},
-];
+/**
+ * Transforma un TutorProfile del backend al formato Tutor del componente
+ */
+const transformTutorProfileToTutor = (profile: TutorProfile): Tutor => {
+	// Validar que disponibilidad exista
+	const disponibilidad = profile.disponibilidad || {
+		monday: [],
+		tuesday: [],
+		wednesday: [],
+		thursday: [],
+		friday: [],
+		saturday: [],
+		sunday: [],
+	};
+
+	// Obtener los slots de disponibilidad de todos los días con tipado explícito
+	const allSlots = Object.entries(disponibilidad).flatMap(([day, slots]) =>
+		slots.map(
+			(slot: {
+				start: string;
+				end: string;
+				modalidad: string;
+				lugar: string;
+			}) => ({
+				day,
+				...slot,
+			}),
+		),
+	);
+
+	// Calcular disponibilidad en formato legible
+	const daysWithAvailability = Object.entries(disponibilidad)
+		.filter(([_, slots]) => slots.length > 0)
+		.map(([day]) => day);
+
+	const availability =
+		daysWithAvailability.length > 0
+			? `Disponible: ${daysWithAvailability.join(', ')}`
+			: 'Sin disponibilidad';
+
+	// Verificar si está disponible hoy
+	const today = new Date()
+		.toLocaleDateString('en-US', { weekday: 'long' })
+		.toLowerCase();
+	const isAvailableToday =
+		(disponibilidad[today as keyof typeof disponibilidad] || []).length > 0;
+
+	// Generar timeSlots en formato legible
+	const timeSlots = allSlots.map(
+		(slot) => `${slot.day} ${slot.start} - ${slot.end}`,
+	);
+
+	// Generar iniciales
+	const avatarInitials =
+		`${profile.nombre.charAt(0)}${profile.apellido.charAt(0)}`.toUpperCase();
+
+	// Colores aleatorios para avatar (basado en el ID)
+	const colors = ['#b81d24', '#008000', '#0073e6', '#f59e0b', '#8b5cf6'];
+	const avatarColor =
+		colors[Number.parseInt(profile.id.slice(-1), 16) % colors.length];
+
+	return {
+		id:
+			Number.parseInt(profile.id.replace(/\D/g, '').slice(0, 8)) ||
+			Math.floor(Math.random() * 100000),
+		name: `${profile.nombre} ${profile.apellido}`,
+		title: `Tutor - Semestre ${profile.semestre}`,
+		department: profile.rol.nombre,
+		avatarInitials,
+		avatarColor,
+		rating: 4.5, // TODO: Implementar sistema de calificaciones
+		reviews: 0, // TODO: Implementar sistema de reseñas
+		tags: allSlots
+			.map((slot) => slot.modalidad)
+			.filter((v, i, a) => a.indexOf(v) === i),
+		availability,
+		isAvailableToday,
+		timeSlots,
+	};
+};
 
 // Mock de tutorías agendadas (simulación de datos desde API)
 const mockScheduledTutorings: ScheduledTutoring[] = [
@@ -614,8 +663,18 @@ const mockSessions: StudentSession[] = [
 ];
 
 const StudentTutoringPage: React.FC = () => {
-	const [tutors] = useState<Tutor[]>(mockTutors);
-	// Inicializar tutors con datos del backend
+	// Obtener tutores desde el backend
+	const {
+		data: tutoresData,
+		isLoading: isLoadingTutors,
+		error: tutorsError,
+	} = useTutores();
+
+	// Transformar los datos del backend al formato del componente
+	const tutors = tutoresData
+		? tutoresData.map(transformTutorProfileToTutor)
+		: [];
+
 	const [searchValue, setSearchValue] = useState('');
 	const [activeTab, setActiveTab] = useState<'search' | 'my-sessions'>(
 		'search',
@@ -632,6 +691,7 @@ const StudentTutoringPage: React.FC = () => {
 	const [scheduledTutorings, setScheduledTutorings] = useState<
 		ScheduledTutoring[]
 	>(mockScheduledTutorings);
+	const [isScheduleOpen, setIsScheduleOpen] = useState(false);
 
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -717,7 +777,6 @@ const StudentTutoringPage: React.FC = () => {
 	return (
 		<div className="">
 			<PageHeader title="Tutorias" description="Panel de Estudiante" />
-
 			<div className="flex gap-2">
 				<Button
 					variant={activeTab === 'search' ? 'solid' : 'light'}
@@ -734,7 +793,6 @@ const StudentTutoringPage: React.FC = () => {
 					Mis tutorias
 				</Button>
 			</div>
-
 			{activeTab === 'search' && (
 				<>
 					<Card>
@@ -756,27 +814,53 @@ const StudentTutoringPage: React.FC = () => {
 						</CardBody>
 					</Card>
 
-					<div className="flex justify-between items-center pt-2 border-t border-default-200">
-						<p className="text-default-600">
-							{tutors.length} tutores encontrados
-						</p>
-						<Button
-							variant="light"
-							color="danger"
-							startContent={<Calendar className="w-5 h-5" />}
-						>
-							Ver calendario
-						</Button>
-					</div>
+					{isLoadingTutors ? (
+						<Card>
+							<CardBody className="p-6 text-center">
+								<p className="text-default-500">
+									Cargando tutores disponibles...
+								</p>
+							</CardBody>
+						</Card>
+					) : tutorsError ? (
+						<Card>
+							<CardBody className="p-6 text-center">
+								<p className="text-danger text-lg">Error al cargar tutores</p>
+								<p className="text-default-500 mt-2">{tutorsError.message}</p>
+							</CardBody>
+						</Card>
+					) : (
+						<>
+							<div className="flex justify-between items-center pt-2 border-t border-default-200">
+								<p className="text-default-600">
+									{tutors.length} tutores encontrados
+								</p>
+								<Button
+									variant="light"
+									color="danger"
+									startContent={<Calendar className="w-5 h-5" />}
+								>
+									Ver calendario
+								</Button>
+							</div>
 
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-						{tutors.map((tutor) => (
-							<TutorCard key={tutor.id} tutor={tutor} onOpenChat={onOpenChat} />
-						))}
-					</div>
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+								{tutors.map((tutor) => (
+									<TutorCard
+										key={tutor.id}
+										tutor={tutor}
+										onOpenChat={onOpenChat}
+										onOpen={(t) => {
+											setSelectedTutor(t);
+											setIsScheduleOpen(true);
+										}}
+									/>
+								))}
+							</div>
+						</>
+					)}
 				</>
-			)}
-
+			)}{' '}
 			{activeTab === 'my-sessions' && (
 				<div className="space-y-4">
 					<div className="flex items-center justify-between">
@@ -815,7 +899,6 @@ const StudentTutoringPage: React.FC = () => {
 					)}
 				</div>
 			)}
-
 			<SessionDetailsModal
 				session={selectedSession}
 				isOpen={isOpen}
@@ -825,7 +908,6 @@ const StudentTutoringPage: React.FC = () => {
 					onOpenConfirm();
 				}}
 			/>
-
 			<CancelSessionModal
 				session={sessionToCancel}
 				isOpen={isConfirmOpen}
@@ -836,6 +918,20 @@ const StudentTutoringPage: React.FC = () => {
 				onConfirm={(session) => {
 					handleCancelSession(session.id);
 				}}
+			/>
+			{/* Modal de agendar tutoría */}
+			<TutorScheduleModal
+				tutor={selectedTutor}
+				isOpen={isScheduleOpen}
+				onClose={() => setIsScheduleOpen(false)}
+				onSchedule={handleScheduleTutoring}
+			/>
+			{/* Modal de mis tutorías agendadas */}
+			<ScheduledTutoringsModal
+				tutorings={scheduledTutorings}
+				isOpen={false}
+				onClose={() => {}}
+				onCancel={handleCancelTutoring}
 			/>
 		</div>
 	);
