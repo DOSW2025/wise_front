@@ -12,6 +12,8 @@ import type {
 	PaginationParams,
 	RoleStatisticsResponse,
 	UpdateRoleRequest,
+	UserGrowthParams,
+	UserGrowthResponse,
 	UserStatisticsResponse,
 } from '../types/api.types';
 
@@ -272,6 +274,57 @@ export async function getRoleStatistics(): Promise<RoleStatisticsResponse> {
 		return body as RoleStatisticsResponse;
 	} catch (error) {
 		console.error('Error fetching role statistics:', error);
+		throw error;
+	}
+}
+
+/**
+ * Obtener estadísticas de crecimiento de usuarios
+ */
+export async function getUserGrowth(
+	params: UserGrowthParams = {},
+): Promise<UserGrowthResponse> {
+	try {
+		const queryParams = new URLSearchParams();
+		if (params.weeks !== undefined) {
+			queryParams.append('weeks', params.weeks.toString());
+		}
+
+		const url = `${API_ENDPOINTS.USERS.GROWTH_STATISTICS}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+		const response = await apiClient.get<ApiResponse<UserGrowthResponse>>(url);
+
+		// Manejar tanto respuestas envueltas como directas
+		const body = response.data as unknown;
+
+		// Si la respuesta está envuelta en ApiResponse con estructura { data: { period, totalUsuariosNuevos, data } }
+		if (
+			body &&
+			typeof body === 'object' &&
+			'data' in body &&
+			body.data &&
+			typeof body.data === 'object' &&
+			'period' in body.data &&
+			'totalUsuariosNuevos' in body.data &&
+			'data' in body.data
+		) {
+			return body.data as UserGrowthResponse;
+		}
+
+		// Si la respuesta es directa con estructura { period, totalUsuariosNuevos, data }
+		if (
+			body &&
+			typeof body === 'object' &&
+			'period' in body &&
+			'totalUsuariosNuevos' in body &&
+			'data' in body
+		) {
+			return body as UserGrowthResponse;
+		}
+
+		// Fallback
+		return body as UserGrowthResponse;
+	} catch (error) {
+		console.error('Error fetching user growth statistics:', error);
 		throw error;
 	}
 }

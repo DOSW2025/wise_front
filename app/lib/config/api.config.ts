@@ -52,5 +52,6 @@ export const API_ENDPOINTS = {
 		ACTIVATE: '/wise/gestion-usuarios/:id/estado',
 		STATISTICS: '/wise/gestion-usuarios/estadisticas/usuarios',
 		ROLE_STATISTICS: '/wise/gestion-usuarios/estadisticas/roles',
+		GROWTH_STATISTICS: '/wise/gestion-usuarios/estadisticas/crecimiento',
 	},
 } as const;

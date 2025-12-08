@@ -33,10 +33,12 @@ import { StatsCard } from '~/components/stats-card';
 import { useDateFilter } from '~/lib/hooks/useDateFilter';
 import {
 	getRoleStatistics,
+	getUserGrowth,
 	getUserStatistics,
 } from '~/lib/services/user.service';
 import type {
 	RoleStatisticsResponse,
+	UserGrowthResponse,
 	UserStatisticsResponse,
 } from '~/lib/types/api.types';
 
@@ -47,14 +49,6 @@ const subjectsBarData = [
 	{ subject: 'Física', sessions: 720 },
 	{ subject: 'Química', sessions: 540 },
 	{ subject: 'Inglés', sessions: 410 },
-];
-
-const growthData = [
-	{ month: 'Jun', users: 1248 },
-	{ month: 'Jul', users: 1207 },
-	{ month: 'Ago', users: 1166 },
-	{ month: 'Sep', users: 1104 },
-	{ month: 'Oct', users: 920 },
 ];
 
 const topSubjectsTable = [
@@ -71,6 +65,14 @@ const COLORS = [
 	'hsl(var(--heroui-warning))',
 ];
 
+const WEEK_OPTIONS = [
+	{ label: '1 semana', value: 1 },
+	{ label: '4 semanas', value: 4 },
+	{ label: '12 semanas', value: 12 },
+	{ label: '26 semanas', value: 26 },
+	{ label: '52 semanas (1 año)', value: 52 },
+];
+
 export default function AdminReports() {
 	const {
 		period,
@@ -83,12 +85,16 @@ export default function AdminReports() {
 		handleCustomFilter,
 	} = useDateFilter();
 	const [mainTab, setMainTab] = useState<'stats' | 'history'>('stats');
+	const [selectedWeeks, setSelectedWeeks] = useState(12);
 
 	// Estados para datos del API
 	const [userStats, setUserStats] = useState<UserStatisticsResponse | null>(
 		null,
 	);
 	const [roleStats, setRoleStats] = useState<RoleStatisticsResponse | null>(
+		null,
+	);
+	const [growthStats, setGrowthStats] = useState<UserGrowthResponse | null>(
 		null,
 	);
 	const [isLoadingStats, setIsLoadingStats] = useState(true);
@@ -98,12 +104,15 @@ export default function AdminReports() {
 		const fetchStats = async () => {
 			try {
 				setIsLoadingStats(true);
-				const [userStatsData, roleStatsData] = await Promise.all([
-					getUserStatistics(),
-					getRoleStatistics(),
-				]);
+				const [userStatsData, roleStatsData, growthStatsData] =
+					await Promise.all([
+						getUserStatistics(),
+						getRoleStatistics(),
+						getUserGrowth({ weeks: selectedWeeks }),
+					]);
 				setUserStats(userStatsData);
 				setRoleStats(roleStatsData);
+				setGrowthStats(growthStatsData);
 			} catch (error) {
 				console.error('Error fetching statistics:', error);
 			} finally {
@@ -112,7 +121,7 @@ export default function AdminReports() {
 		};
 
 		fetchStats();
-	}, []);
+	}, [selectedWeeks]);
 
 	// Preparar datos para el gráfico de pie
 	const roleDistributionData =
@@ -310,37 +319,77 @@ export default function AdminReports() {
 
 					{/* Growth Line */}
 					<Card>
-						<CardHeader className="flex flex-col items-start gap-2 pb-0">
-							<h2 className="text-xl font-semibold">Crecimiento de Usuarios</h2>
-							<div className="flex gap-2">
-								<Chip color="primary" variant="flat">
-									Usuarios
-								</Chip>
+						<CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 pb-0">
+							<div>
+								<h2 className="text-xl font-semibold">
+									Crecimiento de Usuarios
+								</h2>
+								<p className="text-sm text-default-500">
+									{growthStats?.period
+										? `${growthStats.totalUsuariosNuevos} nuevos usuarios en las últimas ${growthStats.period.semanas} semana${growthStats.period.semanas > 1 ? 's' : ''}`
+										: `Últimas ${selectedWeeks} semana${selectedWeeks > 1 ? 's' : ''}`}
+								</p>
+							</div>
+							<div className="flex gap-2 flex-wrap">
+								{WEEK_OPTIONS.map((option) => (
+									<Button
+										key={option.value}
+										size="sm"
+										variant={selectedWeeks === option.value ? 'solid' : 'light'}
+										color="primary"
+										onPress={() => setSelectedWeeks(option.value)}
+									>
+										{option.label}
+									</Button>
+								))}
 							</div>
 						</CardHeader>
 						<CardBody className="pt-4">
-							<div className="w-full h-[300px] sm:h-[350px]">
-								<ResponsiveContainer width="100%" height="100%">
-									<LineChart
-										data={growthData}
-										margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-									>
-										<CartesianGrid {...CHART_GRID_STYLE} />
-										<XAxis dataKey="month" {...CHART_AXIS_STYLE} />
-										<YAxis {...CHART_AXIS_STYLE} />
-										<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-										<Legend />
-										<Line
-											type="monotone"
-											dataKey="users"
-											name="Usuarios"
-											stroke="hsl(var(--heroui-primary))"
-											strokeWidth={2}
-											dot={{ r: 4 }}
-										/>
-									</LineChart>
-								</ResponsiveContainer>
-							</div>
+							{growthStats &&
+							Array.isArray(growthStats.data) &&
+							growthStats.data.length > 0 ? (
+								<div className="w-full h-[300px] sm:h-[350px]">
+									<ResponsiveContainer width="100%" height="100%">
+										<LineChart
+											data={growthStats?.data || []}
+											margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+										>
+											<CartesianGrid {...CHART_GRID_STYLE} />
+											<XAxis
+												dataKey="fecha"
+												{...CHART_AXIS_STYLE}
+												angle={-45}
+												textAnchor="end"
+												height={80}
+											/>
+											<YAxis {...CHART_AXIS_STYLE} allowDecimals={false} />
+											<Tooltip
+												contentStyle={CHART_TOOLTIP_STYLE}
+												labelFormatter={(label) => `Fecha: ${label}`}
+												formatter={(value: number, _name: string, props) => [
+													`${value} usuarios nuevos`,
+													`Semana ${props.payload.semana}`,
+												]}
+											/>
+											<Legend />
+											<Line
+												type="monotone"
+												dataKey="conteo"
+												name="Usuarios Nuevos"
+												stroke="hsl(var(--heroui-primary))"
+												strokeWidth={2}
+												dot={{ r: 4 }}
+											/>
+										</LineChart>
+									</ResponsiveContainer>
+								</div>
+							) : (
+								<div className="flex justify-center items-center h-[300px]">
+									<p className="text-default-400">
+										No hay datos de crecimiento disponibles para este período
+									</p>
+								</div>
+							)}
 						</CardBody>
 					</Card>
 
