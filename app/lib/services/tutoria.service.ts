@@ -6,6 +6,7 @@
 import apiClient from '../api/client';
 import { API_ENDPOINTS } from '../config/api.config';
 import type {
+	MateriaResponse,
 	StudentSession,
 	TutorNameResponse,
 	TutorProfile,
@@ -63,5 +64,24 @@ export async function getTutorName(tutorId: string): Promise<string> {
 	} catch (error) {
 		console.error('Error al obtener nombre del tutor:', error);
 		return 'Tutor no disponible';
+	}
+}
+
+/**
+ * Obtiene información de una materia por su código
+ */
+export async function getMateria(
+	codigoMateria: string,
+): Promise<MateriaResponse | null> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.MATERIA.replace(
+			'{codigo}',
+			codigoMateria,
+		);
+		const response = await apiClient.get<MateriaResponse>(url);
+		return response.data;
+	} catch (error) {
+		console.error('Error al obtener materia:', error);
+		return null;
 	}
 }

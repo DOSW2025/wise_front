@@ -203,7 +203,7 @@ const SessionHeader: React.FC<{
 							</Chip>
 						</div>
 						{subtitle && (
-							<p className="text-sm text-default-500 mt-1">{subtitle}</p>
+							<p className="text-sm text-default-700 mt-1">{subtitle}</p>
 						)}
 					</div>
 				</div>
@@ -220,7 +220,7 @@ const SessionMeta: React.FC<{
 	className?: string;
 }> = ({ session, includeDay = false, className }) => (
 	<div
-		className={`flex flex-wrap gap-4 text-sm text-default-500 ${className ?? ''}`}
+		className={`flex flex-wrap gap-4 text-sm text-default-700 ${className ?? ''}`}
 	>
 		<div className="flex items-center gap-1">
 			<Calendar className="w-4 h-4" />
@@ -310,27 +310,41 @@ const SessionDetailsModal: React.FC<{
 	onRequestCancel: (session: StudentSession) => void;
 }> = ({ session, isOpen, onClose, onRequestCancel }) => {
 	const [tutorName, setTutorName] = React.useState<string>('Cargando...');
+	const [materiaName, setMateriaName] = React.useState<string>('');
 
 	React.useEffect(() => {
 		if (!session) return;
 
-		const fetchTutorName = async () => {
+		const fetchData = async () => {
+			const { getTutorName, getMateria } = await import(
+				'~/lib/services/tutoria.service'
+			);
+
 			try {
-				const { getTutorName } = await import('~/lib/services/tutoria.service');
 				const name = await getTutorName(session.tutorId);
 				setTutorName(name);
 			} catch (error) {
 				console.error('Error fetching tutor name:', error);
 				setTutorName('Tutor no disponible');
 			}
+
+			try {
+				const materia = await getMateria(session.codigoMateria);
+				setMateriaName(materia ? materia.nombre : session.codigoMateria);
+			} catch (error) {
+				console.error('Error fetching materia:', error);
+				setMateriaName(session.codigoMateria);
+			}
 		};
 
-		fetchTutorName();
+		fetchData();
 	}, [session]);
 
-	const sessionWithTutorName = session ? { ...session, tutorName } : null;
-	const view = sessionWithTutorName
-		? buildSessionViewModel(sessionWithTutorName)
+	const sessionWithUpdatedData = session
+		? { ...session, tutorName, subject: materiaName || session.subject }
+		: null;
+	const view = sessionWithUpdatedData
+		? buildSessionViewModel(sessionWithUpdatedData)
 		: null;
 
 	return (
@@ -369,15 +383,6 @@ const SessionDetailsModal: React.FC<{
 										/>
 
 										<SessionMeta session={view} includeDay className="ml-11" />
-
-										<div className="flex items-center gap-2 text-sm text-default-600">
-											<span className="font-semibold text-default-700">
-												Tutor ID:
-											</span>
-											<span className="font-mono text-xs text-default-500">
-												{view.tutorId}
-											</span>
-										</div>
 
 										<div className="rounded-medium border border-default-200 bg-default-50 p-3 text-sm text-default-600">
 											<p className="font-semibold text-default-700 mb-1">

@@ -115,3 +115,13 @@ export interface StudentSession {
 export interface TutorNameResponse {
 	nombreCompleto: string;
 }
+
+/**
+ * Respuesta del endpoint de materia
+ */
+export interface MateriaResponse {
+	id: string;
+	codigo: string;
+	nombre: string;
+	temas: string[];
+}
