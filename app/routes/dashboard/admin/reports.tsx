@@ -276,15 +276,10 @@ export default function AdminReports() {
 												dataKey="value"
 												label={({ name, value }) => `${name}: ${value}%`}
 											>
-												{roleDistributionData.map((_entry, index) => (
+												{roleDistributionData.map((entry, index) => (
 													<Cell
 														key={entry.name}
-														fill={
-															COLORS[
-																roleDistributionData.indexOf(entry) %
-																	COLORS.length
-															]
-														}
+														fill={COLORS[index % COLORS.length]}
 													/>
 												))}
 											</Pie>
