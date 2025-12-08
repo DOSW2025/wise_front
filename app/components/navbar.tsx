@@ -159,7 +159,7 @@ export function Navbar({
 								src={
 									userAvatar
 										? userAvatar.includes('googleusercontent.com')
-											? userAvatar.split('=')[0] + '=s200-c'
+											? `${userAvatar.split('=')[0]}=s200-c`
 											: userAvatar
 										: undefined
 								}

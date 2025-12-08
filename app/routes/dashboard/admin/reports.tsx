@@ -7,7 +7,7 @@ import {
 	Spinner,
 } from '@heroui/react';
 import { TrendingUp, Users } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	Bar,
 	BarChart,
@@ -29,38 +29,26 @@ import {
 	CHART_GRID_STYLE,
 	CHART_TOOLTIP_STYLE,
 } from '~/components/charts/chart-tooltip';
-import { PageHeader } from '~/components/page-header';
 import { StatsCard } from '~/components/stats-card';
 import { useDateFilter } from '~/lib/hooks/useDateFilter';
+import {
+	getRoleStatistics,
+	getUserGrowth,
+	getUserStatistics,
+} from '~/lib/services/user.service';
+import type {
+	RoleStatisticsResponse,
+	UserGrowthResponse,
+	UserStatisticsResponse,
+} from '~/lib/types/api.types';
 
 // Mock admin metrics (replace with API when available)
-const summaryStats = {
-	totalUsers: 1234,
-	sessionsThisMonth: 342,
-	materialsPublished: 856,
-	totalHours: 1527,
-};
-
 const subjectsBarData = [
 	{ subject: 'Matemáticas', sessions: 1200 },
 	{ subject: 'Programación', sessions: 980 },
 	{ subject: 'Física', sessions: 720 },
 	{ subject: 'Química', sessions: 540 },
 	{ subject: 'Inglés', sessions: 410 },
-];
-
-const roleDistributionData = [
-	{ name: 'Estudiantes', value: 82 },
-	{ name: 'Tutores', value: 16 },
-	{ name: 'Administradores', value: 2 },
-];
-
-const growthData = [
-	{ month: 'Jun', users: 1248 },
-	{ month: 'Jul', users: 1207 },
-	{ month: 'Ago', users: 1166 },
-	{ month: 'Sep', users: 1104 },
-	{ month: 'Oct', users: 920 },
 ];
 
 const topSubjectsTable = [
@@ -77,6 +65,14 @@ const COLORS = [
 	'hsl(var(--heroui-warning))',
 ];
 
+const WEEK_OPTIONS = [
+	{ label: '1 semana', value: 1 },
+	{ label: '4 semanas', value: 4 },
+	{ label: '12 semanas', value: 12 },
+	{ label: '26 semanas', value: 26 },
+	{ label: '52 semanas (1 año)', value: 52 },
+];
+
 export default function AdminReports() {
 	const {
 		period,
@@ -89,6 +85,61 @@ export default function AdminReports() {
 		handleCustomFilter,
 	} = useDateFilter();
 	const [mainTab, setMainTab] = useState<'stats' | 'history'>('stats');
+	const [selectedWeeks, setSelectedWeeks] = useState(12);
+
+	// Estados para datos del API
+	const [userStats, setUserStats] = useState<UserStatisticsResponse | null>(
+		null,
+	);
+	const [roleStats, setRoleStats] = useState<RoleStatisticsResponse | null>(
+		null,
+	);
+	const [growthStats, setGrowthStats] = useState<UserGrowthResponse | null>(
+		null,
+	);
+	const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+	// Cargar estadísticas del API
+	useEffect(() => {
+		const fetchStats = async () => {
+			try {
+				setIsLoadingStats(true);
+				const [userStatsData, roleStatsData, growthStatsData] =
+					await Promise.all([
+						getUserStatistics(),
+						getRoleStatistics(),
+						getUserGrowth({ weeks: selectedWeeks }),
+					]);
+				setUserStats(userStatsData);
+				setRoleStats(roleStatsData);
+				setGrowthStats(growthStatsData);
+			} catch (error) {
+				console.error('Error fetching statistics:', error);
+			} finally {
+				setIsLoadingStats(false);
+			}
+		};
+
+		fetchStats();
+	}, [selectedWeeks]);
+
+	// Preparar datos para el gráfico de pie
+	const roleDistributionData =
+		roleStats?.roles.map((role) => {
+			const displayName =
+				role.rol === 'estudiante'
+					? 'Estudiantes'
+					: role.rol === 'tutor'
+						? 'Tutores'
+						: role.rol === 'admin'
+							? 'Administradores'
+							: role.rol;
+			return {
+				name: displayName,
+				value: role.porcentaje,
+				count: role.conteo,
+			};
+		}) || [];
 
 	return (
 		<div className="space-y-6">
@@ -129,7 +180,7 @@ export default function AdminReports() {
 				</div>
 			</div>
 
-			{isLoading ? (
+			{isLoading || isLoadingStats ? (
 				<div className="flex justify-center items-center h-64">
 					<Spinner size="lg" label="Cargando métricas..." />
 				</div>
@@ -139,31 +190,31 @@ export default function AdminReports() {
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						<StatsCard
 							title="Total de Usuarios"
-							value={summaryStats.totalUsers}
+							value={userStats?.resumen.total || 0}
 							icon={<Users className="w-5 h-5" />}
 							color="success"
-							description="+12%"
+							description={`${userStats?.resumen.activos.porcentaje || 0}% activos`}
 						/>
 						<StatsCard
-							title="Sesiones este Mes"
-							value={summaryStats.sessionsThisMonth}
-							icon={<TrendingUp className="w-5 h-5" />}
+							title="Usuarios Activos"
+							value={userStats?.resumen.activos.conteo || 0}
+							icon={<Users className="w-5 h-5" />}
 							color="primary"
-							description="+8%"
+							description={`${userStats?.resumen.activos.porcentaje || 0}%`}
 						/>
 						<StatsCard
-							title="Materiales Publicados"
-							value={summaryStats.materialsPublished}
+							title="Usuarios Suspendidos"
+							value={userStats?.resumen.suspendidos.conteo || 0}
 							icon={<TrendingUp className="w-5 h-5" />}
 							color="warning"
-							description="+15%"
+							description={`${userStats?.resumen.suspendidos.porcentaje || 0}%`}
 						/>
 						<StatsCard
-							title="Horas Totales"
-							value={summaryStats.totalHours}
+							title="Usuarios Inactivos"
+							value={userStats?.resumen.inactivos.conteo || 0}
 							icon={<ClockIcon />}
-							color="success"
-							description="+10%"
+							color="default"
+							description={`${userStats?.resumen.inactivos.porcentaje || 0}%`}
 						/>
 					</div>
 
@@ -223,40 +274,44 @@ export default function AdminReports() {
 												outerRadius={110}
 												fill="hsl(var(--heroui-primary))"
 												dataKey="value"
+												label={({ name, value }) => `${name}: ${value}%`}
 											>
-												{roleDistributionData.map((entry, index) => (
+												{roleDistributionData.map((_entry, index) => (
 													<Cell
-														key={`cell-${index}`}
-														fill={COLORS[index % COLORS.length]}
+														key={entry.name}
+														fill={
+															COLORS[
+																roleDistributionData.indexOf(entry) %
+																	COLORS.length
+															]
+														}
 													/>
 												))}
 											</Pie>
-											<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+											<Tooltip
+												contentStyle={CHART_TOOLTIP_STYLE}
+												formatter={(value: number, name: string, props) => [
+													`${value}% (${props.payload.count} usuarios)`,
+													name,
+												]}
+											/>
 										</PieChart>
 									</ResponsiveContainer>
 								</div>
 								<div className="flex flex-col gap-3 md:justify-center">
-									<Chip
-										color="primary"
-										variant="flat"
-										className="justify-start"
-									>
-										Estudiantes 82%
-									</Chip>
-									<Chip
-										color="success"
-										variant="flat"
-										className="justify-start"
-									>
-										Tutores 16%
-									</Chip>
-									<Chip
-										color="warning"
-										variant="flat"
-										className="justify-start"
-									>
-										Administradores 2%
-									</Chip>
+									{roleDistributionData.map((role, index) => {
+										const colorMap = ['primary', 'success', 'warning'] as const;
+										return (
+											<Chip
+												key={role.name}
+												color={colorMap[index % colorMap.length]}
+												variant="flat"
+												className="justify-start"
+											>
+												{role.name} {role.value}% ({role.count})
+											</Chip>
+										);
+									})}
 								</div>
 							</div>
 						</CardBody>
@@ -264,37 +319,77 @@ export default function AdminReports() {
 
 					{/* Growth Line */}
 					<Card>
-						<CardHeader className="flex flex-col items-start gap-2 pb-0">
-							<h2 className="text-xl font-semibold">Crecimiento de Usuarios</h2>
-							<div className="flex gap-2">
-								<Chip color="primary" variant="flat">
-									Usuarios
-								</Chip>
+						<CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 pb-0">
+							<div>
+								<h2 className="text-xl font-semibold">
+									Crecimiento de Usuarios
+								</h2>
+								<p className="text-sm text-default-500">
+									{growthStats?.period
+										? `${growthStats.totalUsuariosNuevos} nuevos usuarios en las últimas ${growthStats.period.semanas} semana${growthStats.period.semanas > 1 ? 's' : ''}`
+										: `Últimas ${selectedWeeks} semana${selectedWeeks > 1 ? 's' : ''}`}
+								</p>
+							</div>
+							<div className="flex gap-2 flex-wrap">
+								{WEEK_OPTIONS.map((option) => (
+									<Button
+										key={option.value}
+										size="sm"
+										variant={selectedWeeks === option.value ? 'solid' : 'light'}
+										color="primary"
+										onPress={() => setSelectedWeeks(option.value)}
+									>
+										{option.label}
+									</Button>
+								))}
 							</div>
 						</CardHeader>
 						<CardBody className="pt-4">
-							<div className="w-full h-[300px] sm:h-[350px]">
-								<ResponsiveContainer width="100%" height="100%">
-									<LineChart
-										data={growthData}
-										margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-									>
-										<CartesianGrid {...CHART_GRID_STYLE} />
-										<XAxis dataKey="month" {...CHART_AXIS_STYLE} />
-										<YAxis {...CHART_AXIS_STYLE} />
-										<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-										<Legend />
-										<Line
-											type="monotone"
-											dataKey="users"
-											name="Usuarios"
-											stroke="hsl(var(--heroui-primary))"
-											strokeWidth={2}
-											dot={{ r: 4 }}
-										/>
-									</LineChart>
-								</ResponsiveContainer>
-							</div>
+							{growthStats &&
+							Array.isArray(growthStats.data) &&
+							growthStats.data.length > 0 ? (
+								<div className="w-full h-[300px] sm:h-[350px]">
+									<ResponsiveContainer width="100%" height="100%">
+										<LineChart
+											data={growthStats?.data || []}
+											margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+										>
+											<CartesianGrid {...CHART_GRID_STYLE} />
+											<XAxis
+												dataKey="fecha"
+												{...CHART_AXIS_STYLE}
+												angle={-45}
+												textAnchor="end"
+												height={80}
+											/>
+											<YAxis {...CHART_AXIS_STYLE} allowDecimals={false} />
+											<Tooltip
+												contentStyle={CHART_TOOLTIP_STYLE}
+												labelFormatter={(label) => `Fecha: ${label}`}
+												formatter={(value: number, _name: string, props) => [
+													`${value} usuarios nuevos`,
+													`Semana ${props.payload.semana}`,
+												]}
+											/>
+											<Legend />
+											<Line
+												type="monotone"
+												dataKey="conteo"
+												name="Usuarios Nuevos"
+												stroke="hsl(var(--heroui-primary))"
+												strokeWidth={2}
+												dot={{ r: 4 }}
+											/>
+										</LineChart>
+									</ResponsiveContainer>
+								</div>
+							) : (
+								<div className="flex justify-center items-center h-[300px]">
+									<p className="text-default-400">
+										No hay datos de crecimiento disponibles para este período
+									</p>
+								</div>
+							)}
 						</CardBody>
 					</Card>
 

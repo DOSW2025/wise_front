@@ -11,14 +11,10 @@ import {
 	Target,
 	Trophy,
 } from 'lucide-react';
-import {
-	type BadgeTier,
-	TUTOR_BADGE_DEFINITIONS,
-	type TutorBadge,
-} from '~/lib/types/tutor-gamification.types';
+import type { BadgeTier, UserBadge } from '~/lib/types/gamification.types';
 
 interface TutorBadgeCardProps {
-	badge: TutorBadge;
+	badge: UserBadge;
 }
 
 const iconMap: Record<string, React.ElementType> = {
@@ -46,9 +42,8 @@ function getBadgeTierColor(tier: BadgeTier) {
 }
 
 export function TutorBadgeCard({ badge }: TutorBadgeCardProps) {
-	const definition = TUTOR_BADGE_DEFINITIONS[badge.code];
 	const tierColor = getBadgeTierColor(badge.tier);
-	const IconComponent = iconMap[definition.icon] || Trophy;
+	const IconComponent = iconMap[badge.icon] || Trophy;
 
 	return (
 		<Card className="hover:scale-105 transition-transform">
@@ -62,9 +57,8 @@ export function TutorBadgeCard({ badge }: TutorBadgeCardProps) {
 				<Chip size="sm" color={tierColor} variant="flat" className="capitalize">
 					{badge.tier}
 				</Chip>
-				<p className="text-xs text-default-500">
-					{definition.descripcion[badge.tier]}
-				</p>
+				<p className="font-semibold text-sm">{badge.nombre}</p>
+				<p className="text-xs text-default-500">{badge.descripcion}</p>
 				<p className="text-xs text-default-400">
 					{new Date(badge.earnedAt).toLocaleDateString('es-ES', {
 						day: 'numeric',
@@ -78,7 +72,7 @@ export function TutorBadgeCard({ badge }: TutorBadgeCardProps) {
 }
 
 interface TutorBadgesGridProps {
-	badges: TutorBadge[];
+	badges: UserBadge[];
 }
 
 export function TutorBadgesGrid({ badges }: TutorBadgesGridProps) {

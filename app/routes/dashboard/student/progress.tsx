@@ -1,5 +1,4 @@
 import { Tab, Tabs } from '@heroui/react';
-import { Lightbulb } from 'lucide-react';
 import { useState } from 'react';
 import {
 	ActivityTimeline,

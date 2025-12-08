@@ -21,8 +21,8 @@ export function ChatbotWidget() {
 	]);
 	const [inputValue, setInputValue] = useState('');
 
-	const handleSendMessage = (message?: string) => {
-		const textToSend = message || inputValue;
+	const handleSendMessage = () => {
+		const textToSend = inputValue;
 		if (!textToSend.trim()) return;
 
 		const userMessage: Message = {

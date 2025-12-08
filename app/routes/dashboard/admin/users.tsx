@@ -27,6 +27,7 @@ import {
 } from '@heroui/react';
 import {
 	Edit,
+	Eye,
 	MoreVertical,
 	Search,
 	ShieldAlert,
@@ -34,6 +35,7 @@ import {
 	UserCheck,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { PageHeader } from '~/components/page-header';
 import {
 	activateUser,
@@ -70,6 +72,9 @@ const roleLabels: Record<string, string> = {
 };
 
 export default function AdminUsers() {
+	// Navigation
+	const navigate = useNavigate();
+
 	// State for users data
 	const [users, setUsers] = useState<AdminUserDto[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -115,7 +120,48 @@ export default function AdminUsers() {
 			};
 
 			const response = await getUsers(params);
-			setUsers(response.data);
+
+			// Normalize API user objects to expected AdminUserDto shape
+			const normalize = (u: any) => {
+				return {
+					id: u.id ?? u._id ?? String(u.userId ?? ''),
+					nombre:
+						u.nombre ??
+						u.firstName ??
+						u.name ??
+						(u.nombreCompleto ? String(u.nombreCompleto).split(' ')[0] : ''),
+					apellido:
+						u.apellido ??
+						u.lastName ??
+						u.surname ??
+						(u.nombreCompleto
+							? String(u.nombreCompleto).split(' ').slice(1).join(' ')
+							: ''),
+					email: u.email ?? u.correo ?? u.emailAddress ?? '',
+					rol: {
+						id: u.rol?.id ?? u.role?.id ?? u.roleId ?? null,
+						nombre: u.rol?.nombre ?? u.role?.name ?? u.role ?? u.rol ?? '',
+					},
+					estado: {
+						id: u.estado?.id ?? u.status?.id ?? u.estadoId ?? null,
+						nombre:
+							u.estado?.nombre ?? u.status?.name ?? u.status ?? u.estado ?? '',
+					},
+					avatar_url: u.avatar_url ?? u.avatarUrl ?? u.avatar ?? null,
+					createdAt:
+						u.createdAt ??
+						u.created_at ??
+						u.created ??
+						new Date().toISOString(),
+					updatedAt:
+						u.updatedAt ??
+						u.updated_at ??
+						u.updated ??
+						new Date().toISOString(),
+				} as AdminUserDto;
+			};
+
+			setUsers((response.data || []).map(normalize));
 			setTotalPages(response.pagination.totalPages);
 			setTotalItems(response.pagination.totalItems);
 		} catch (error: any) {
@@ -296,6 +342,15 @@ export default function AdminUsers() {
 									</Button>
 								</DropdownTrigger>
 								<DropdownMenu aria-label="Acciones de usuario">
+									<DropdownItem
+										key="view-details"
+										startContent={<Eye className="w-4 h-4" />}
+										onPress={() =>
+											navigate(`/dashboard/admin/users/${user.id}`)
+										}
+									>
+										Ver detalles
+									</DropdownItem>
 									{user.rol.nombre !== 'estudiante' ? (
 										<DropdownItem
 											key="change-role-estudiante"
@@ -352,7 +407,7 @@ export default function AdminUsers() {
 					return null;
 			}
 		},
-		[openRoleChangeModal, openSuspendModal, openActivateModal],
+		[openRoleChangeModal, openSuspendModal, openActivateModal, navigate],
 	);
 
 	// Bottom content with pagination

@@ -148,3 +148,54 @@ export interface MaterialStats {
 	mostViewed: Material[];
 	mostDownloaded: Material[];
 }
+
+// User Statistics Types
+export interface UserStatusStats {
+	conteo: number;
+	porcentaje: number;
+}
+
+export interface UserStatisticsResumen {
+	total: number;
+	activos: UserStatusStats;
+	suspendidos: UserStatusStats;
+	inactivos: UserStatusStats;
+}
+
+export interface UserStatisticsResponse {
+	resumen: UserStatisticsResumen;
+}
+
+// Role Statistics Types
+export interface RoleStats {
+	rolId: number;
+	rol: string;
+	conteo: number;
+	porcentaje: number;
+}
+
+export interface RoleStatisticsResponse {
+	totalUsuarios: number;
+	roles: RoleStats[];
+}
+
+// User Growth Statistics Types
+export interface UserGrowthParams {
+	weeks?: number;
+}
+
+export interface GrowthDataPoint {
+	semana: string;
+	conteo: number;
+	fecha: string;
+}
+
+export interface UserGrowthResponse {
+	period: {
+		inicio: string;
+		fin: string;
+		semanas: number;
+	};
+	totalUsuariosNuevos: number;
+	data: GrowthDataPoint[];
+}

@@ -10,7 +10,6 @@ import { useDownloadMaterial, useMaterial } from '~/lib/hooks/useMaterials';
 import { useToast } from '~/lib/hooks/useToast';
 import { useViewTracker } from '~/lib/hooks/useViewTracker';
 import type { Material } from '~/lib/types/api.types';
-import { MaterialRating } from './material-rating';
 
 interface MaterialDetailModalProps {
 	materialId: string;
