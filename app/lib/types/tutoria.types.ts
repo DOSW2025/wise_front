@@ -127,6 +127,22 @@ export interface MateriaResponse {
 }
 
 /**
+ * Materia que puede dictar un tutor
+ */
+export interface TutorMateria {
+	codigo: string;
+	nombre: string;
+}
+
+/**
+ * Respuesta del endpoint de materias de un tutor
+ */
+export interface TutorMateriasResponse {
+	nombreTutor: string;
+	materias: TutorMateria[];
+}
+
+/**
  * Request para crear una sesión de tutoría
  */
 export interface CreateSessionRequest {

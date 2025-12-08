@@ -3,17 +3,19 @@ import {
 	Badge,
 	Button,
 	Chip,
-	Input,
 	Modal,
 	ModalBody,
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
+	Select,
+	SelectItem,
 	Textarea,
 } from '@heroui/react';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useCreateSession } from '~/lib/hooks/useCreateSession';
+import { useTutorMaterias } from '~/lib/hooks/useTutorMaterias';
 import type {
 	CreateSessionRequest,
 	DisponibilidadSlot,
@@ -82,6 +84,10 @@ export default function TutorScheduleModal({
 	const [codigoMateria, setCodigoMateria] = useState('');
 
 	const { mutate: createSession, isPending } = useCreateSession();
+	const { data: materiasData, isLoading: isLoadingMaterias } = useTutorMaterias(
+		tutor?.tutorId,
+		isOpen,
+	);
 
 	useEffect(() => {
 		if (isOpen && tutor) {
@@ -98,7 +104,7 @@ export default function TutorScheduleModal({
 		}
 
 		if (!codigoMateria.trim()) {
-			alert('Por favor ingresa el código de la materia.');
+			alert('Por favor selecciona la materia de la tutoría.');
 			return;
 		}
 
@@ -198,7 +204,6 @@ export default function TutorScheduleModal({
 								</Chip>
 							))}
 						</div>
-
 						{/* Horarios disponibles */}
 						<div>
 							<h4 className="font-medium mb-3">Horarios disponibles</h4>
@@ -247,20 +252,38 @@ export default function TutorScheduleModal({
 								</div>
 							)}
 						</div>
-
-						{/* Código de Materia */}
+						{/* Selección de Materia */}
 						<div>
-							<h4 className="font-medium mb-2">Código de Materia *</h4>
-							<Input
-								placeholder="Ej: DOSW, ALG1, FIS2..."
-								value={codigoMateria}
-								onValueChange={setCodigoMateria}
+							<h4 className="font-medium mb-2">
+								Selecciona la materia de la tutoría *
+							</h4>
+							<Select
+								placeholder="Selecciona una materia"
+								selectedKeys={codigoMateria ? [codigoMateria] : []}
+								onSelectionChange={(keys) => {
+									const selected = Array.from(keys)[0] as string;
+									setCodigoMateria(selected || '');
+								}}
 								variant="bordered"
 								isRequired
-								description="Ingresa el código de la materia para la cual necesitas tutoría"
-							/>
-						</div>
-
+								isLoading={isLoadingMaterias}
+								isDisabled={
+									isLoadingMaterias || !materiasData?.materias?.length
+								}
+								description={(() => {
+									if (isLoadingMaterias) return 'Cargando materias...';
+									if (!materiasData?.materias?.length)
+										return 'No hay materias disponibles para este tutor';
+									return 'Selecciona la materia para la cual necesitas tutoría';
+								})()}
+							>
+								{(materiasData?.materias || []).map((materia) => (
+									<SelectItem key={materia.codigo}>
+										{materia.nombre} ({materia.codigo})
+									</SelectItem>
+								))}
+							</Select>
+						</div>{' '}
 						{/* Comentarios */}
 						<div>
 							<h4 className="font-medium mb-2">Comentarios (opcional)</h4>

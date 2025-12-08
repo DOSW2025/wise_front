@@ -11,6 +11,7 @@ import type {
 	CreateSessionResponse,
 	MateriaResponse,
 	StudentSession,
+	TutorMateriasResponse,
 	TutorNameResponse,
 	TutorProfile,
 } from '../types/tutoria.types';
@@ -86,6 +87,24 @@ export async function getMateria(
 	} catch (error) {
 		console.error('Error al obtener materia:', error);
 		return null;
+	}
+}
+
+/**
+ * Obtiene las materias que un tutor puede dictar
+ */
+export async function getTutorMaterias(
+	tutorId: string,
+): Promise<TutorMateriasResponse> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.TUTOR_MATERIAS.replace('{id}', tutorId);
+		console.log('Fetching tutor materias:', { tutorId, url });
+		const response = await apiClient.get<TutorMateriasResponse>(url);
+		console.log('Tutor materias received:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al obtener materias del tutor:', error);
+		throw new Error('No se pudo obtener las materias del tutor');
 	}
 }
 
