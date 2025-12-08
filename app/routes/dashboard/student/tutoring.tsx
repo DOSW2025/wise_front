@@ -239,7 +239,24 @@ const SessionMeta: React.FC<{
 				<MapPin className="w-4 h-4" />
 			)}
 			<span className="capitalize">{session.modalityLabel}</span>
-			{session.location && <span> - {session.location}</span>}
+			{session.location && (
+				<>
+					<span> - </span>
+					{session.modalityLabel === 'virtual' &&
+					session.location.startsWith('http') ? (
+						<a
+							href={session.location}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-primary hover:underline"
+						>
+							{session.location}
+						</a>
+					) : (
+						<span>{session.location}</span>
+					)}
+				</>
+			)}
 		</div>
 	</div>
 );
