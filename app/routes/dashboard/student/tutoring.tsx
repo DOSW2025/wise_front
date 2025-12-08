@@ -22,8 +22,13 @@ import ScheduledTutoringsModal, {
 import TutorCard from '~/components/tutor-card';
 import TutorFilter from '~/components/tutor-filter';
 import TutorScheduleModal from '~/components/tutor-schedule-modal';
+import { useAuth } from '~/contexts/auth-context';
+import { useStudentSessions } from '~/lib/hooks/useStudentSessions';
 import { useTutores } from '~/lib/hooks/useTutores';
-import type { TutorProfile } from '~/lib/types/tutoria.types';
+import type {
+	StudentSession as BackendStudentSession,
+	TutorProfile,
+} from '~/lib/types/tutoria.types';
 
 interface Tutor {
 	id: number;
@@ -436,6 +441,39 @@ const CancelSessionModal: React.FC<{
 };
 
 /**
+ * Transforma una sesión del backend al formato StudentSession del componente
+ */
+const transformBackendSessionToComponentSession = (
+	backendSession: BackendStudentSession,
+): StudentSession => {
+	// Mapear el status del backend al formato del componente
+	const statusMap: Record<string, StudentSession['status']> = {
+		PENDIENTE: 'pendiente',
+		CONFIRMADA: 'confirmada',
+		CANCELADA: 'cancelada',
+		COMPLETADA: 'confirmada',
+	};
+
+	return {
+		id: backendSession.id,
+		tutorId: backendSession.tutorId,
+		studentId: backendSession.studentId,
+		tutorName: '', // Se llenará con datos del tutor si es necesario
+		codigoMateria: backendSession.codigoMateria,
+		subject: backendSession.codigoMateria, // Usar código como subject por defecto
+		topic: backendSession.comentarios || 'Sin tema especificado',
+		scheduledAt: backendSession.scheduledAt,
+		day: backendSession.day,
+		startTime: backendSession.startTime,
+		endTime: backendSession.endTime,
+		mode: backendSession.mode,
+		status: statusMap[backendSession.status] || 'pendiente',
+		location: backendSession.lugar || backendSession.linkConexion || undefined,
+		comentarios: backendSession.comentarios || undefined,
+	};
+};
+
+/**
  * Transforma un TutorProfile del backend al formato Tutor del componente
  */
 const transformTutorProfileToTutor = (profile: TutorProfile): Tutor => {
@@ -663,6 +701,9 @@ const mockSessions: StudentSession[] = [
 ];
 
 const StudentTutoringPage: React.FC = () => {
+	// Obtener usuario autenticado
+	const { user } = useAuth();
+
 	// Obtener tutores desde el backend
 	const {
 		data: tutoresData,
@@ -670,17 +711,27 @@ const StudentTutoringPage: React.FC = () => {
 		error: tutorsError,
 	} = useTutores();
 
+	// Obtener sesiones del estudiante desde el backend
+	const {
+		data: sessionsData,
+		isLoading: isLoadingSessions,
+		error: sessionsError,
+	} = useStudentSessions(user?.id || '', !!user?.id);
+
 	// Transformar los datos del backend al formato del componente
 	const tutors = tutoresData
 		? tutoresData.map(transformTutorProfileToTutor)
+		: [];
+
+	// Transformar las sesiones del backend
+	const sessions = sessionsData
+		? sessionsData.map(transformBackendSessionToComponentSession)
 		: [];
 
 	const [searchValue, setSearchValue] = useState('');
 	const [activeTab, setActiveTab] = useState<'search' | 'my-sessions'>(
 		'search',
 	);
-	const [sessions, setSessions] = useState<StudentSession[]>(mockSessions);
-	// Inicializar sessions con datos del backend
 	const [selectedSession, setSelectedSession] = useState<StudentSession | null>(
 		null,
 	);
@@ -728,11 +779,10 @@ const StudentTutoringPage: React.FC = () => {
 
 	const handleSearch = (_filters: TutorFilters) => {};
 
-	// Llamar al backend para cancelar la tutoria
+	// TODO: Llamar al backend para cancelar la tutoria
 	const handleCancelSession = (id: string) => {
-		setSessions((prev) =>
-			prev.map((s) => (s.id === id ? { ...s, status: 'cancelada' } : s)),
-		);
+		console.log('Cancelar sesión:', id);
+		// TODO: Implementar cancelación en el backend y refetch de datos
 	};
 
 	const openSessionDetails = (session: StudentSession) => {
@@ -867,35 +917,68 @@ const StudentTutoringPage: React.FC = () => {
 						<h2 className="text-xl font-semibold">Sesiones programadas</h2>
 					</div>
 
-					{futureSessions.length === 0 ? (
-						<Card>
-							<CardBody className="text-center py-12">
-								<Calendar className="w-12 h-12 text-default-300 mx-auto mb-4" />
-								<h3 className="text-lg font-semibold mb-2">
-									No tienes tutorias programadas
-								</h3>
-								<p className="text-default-500 mb-4">
-									Cuando confirmes una tutoria aparecera aqui.
-								</p>
-								<Button color="primary" onPress={() => setActiveTab('search')}>
-									Agendar tutoria
-								</Button>
-							</CardBody>
-						</Card>
-					) : (
+					{/* Loading state */}
+					{isLoadingSessions && (
 						<div className="grid gap-4">
-							{futureSessions.map((session) => (
-								<SessionCardItem
-									key={session.id}
-									session={session}
-									onViewDetails={openSessionDetails}
-									onCancel={(currentSession) => {
-										setSessionToCancel(currentSession);
-										onOpenConfirm();
-									}}
-								/>
+							{[...Array(3)].map((_, i) => (
+								<Card key={i}>
+									<CardBody className="h-32 bg-default-100 animate-pulse" />
+								</Card>
 							))}
 						</div>
+					)}
+
+					{/* Error state */}
+					{sessionsError && (
+						<Card>
+							<CardBody className="text-center py-12">
+								<p className="text-danger">
+									Error al cargar las tutorías:{' '}
+									{sessionsError instanceof Error
+										? sessionsError.message
+										: 'Error desconocido'}
+								</p>
+							</CardBody>
+						</Card>
+					)}
+
+					{/* Content */}
+					{!isLoadingSessions && !sessionsError && (
+						<>
+							{futureSessions.length === 0 ? (
+								<Card>
+									<CardBody className="text-center py-12">
+										<Calendar className="w-12 h-12 text-default-300 mx-auto mb-4" />
+										<h3 className="text-lg font-semibold mb-2">
+											No tienes tutorias programadas
+										</h3>
+										<p className="text-default-500 mb-4">
+											Cuando confirmes una tutoria aparecera aqui.
+										</p>
+										<Button
+											color="primary"
+											onPress={() => setActiveTab('search')}
+										>
+											Agendar tutoria
+										</Button>
+									</CardBody>
+								</Card>
+							) : (
+								<div className="grid gap-4">
+									{futureSessions.map((session) => (
+										<SessionCardItem
+											key={session.id}
+											session={session}
+											onViewDetails={openSessionDetails}
+											onCancel={(currentSession) => {
+												setSessionToCancel(currentSession);
+												onOpenConfirm();
+											}}
+										/>
+									))}
+								</div>
+							)}
+						</>
 					)}
 				</div>
 			)}

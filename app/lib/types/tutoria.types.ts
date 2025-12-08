@@ -61,3 +61,50 @@ export interface TutorProfile {
 	rol: Rol;
 	estado: Estado;
 }
+
+/**
+ * Estado de una sesión de tutoría
+ */
+export type SessionStatus =
+	| 'PENDIENTE'
+	| 'CONFIRMADA'
+	| 'CANCELADA'
+	| 'COMPLETADA';
+
+/**
+ * Modo de una sesión de tutoría
+ */
+export type SessionMode = 'VIRTUAL' | 'PRESENCIAL';
+
+/**
+ * Día de la semana en inglés
+ */
+export type WeekDay =
+	| 'monday'
+	| 'tuesday'
+	| 'wednesday'
+	| 'thursday'
+	| 'friday'
+	| 'saturday'
+	| 'sunday';
+
+/**
+ * Sesión de tutoría del estudiante (respuesta del backend)
+ */
+export interface StudentSession {
+	id: string;
+	tutorId: string;
+	studentId: string;
+	materiaId: string;
+	codigoMateria: string;
+	scheduledAt: string;
+	day: WeekDay;
+	startTime: string;
+	endTime: string;
+	mode: SessionMode;
+	status: SessionStatus;
+	linkConexion: string | null;
+	lugar: string | null;
+	comentarios: string | null;
+	createdAt: string;
+}
