@@ -9,6 +9,7 @@ import {
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
+	Textarea,
 	useDisclosure,
 } from '@heroui/react';
 import { Calendar, Clock, MapPin, Search, Video, X } from 'lucide-react';
@@ -74,7 +75,7 @@ interface StudentSession {
 	date?: string;
 	time?: string;
 	duration?: number;
-	status: 'confirmada' | 'pendiente' | 'cancelada';
+	status: 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA' | 'RECHAZADA';
 }
 
 const getAvatarBg = (avatarColor?: string): string => {
@@ -125,15 +126,40 @@ const getDurationMinutes = (start: string, end: string): number => {
 	return Math.max(toMinutes(end) - toMinutes(start), 0);
 };
 
-const getStatusChipColor = (status: StudentSession['status']) => {
-	if (status === 'confirmada') return 'success';
-	if (status === 'pendiente') return 'warning';
-	return 'danger';
+const getStatusChipColor = (
+	status: StudentSession['status'],
+): 'success' | 'warning' | 'danger' | 'default' => {
+	const colorMap: Record<
+		StudentSession['status'],
+		'success' | 'warning' | 'danger' | 'default'
+	> = {
+		CONFIRMADA: 'success',
+		PENDIENTE: 'warning',
+		CANCELADA: 'danger',
+		COMPLETADA: 'success',
+		RECHAZADA: 'danger',
+	};
+	return colorMap[status] || 'default';
+};
+
+const getStatusLabel = (status: StudentSession['status']): string => {
+	const labelMap: Record<StudentSession['status'], string> = {
+		PENDIENTE: 'Pendiente',
+		CONFIRMADA: 'Confirmada',
+		CANCELADA: 'Cancelada',
+		COMPLETADA: 'Completada',
+		RECHAZADA: 'Rechazada',
+	};
+	return labelMap[status] || status;
+};
+
+const canCancelSession = (status: StudentSession['status']): boolean => {
+	return status === 'PENDIENTE' || status === 'CONFIRMADA';
 };
 
 type SessionModalityLabel = 'presencial' | 'virtual';
 
-type SessionStatusColor = 'success' | 'warning' | 'danger';
+type SessionStatusColor = 'success' | 'warning' | 'danger' | 'default';
 
 interface SessionViewModel extends StudentSession {
 	modalityLabel: SessionModalityLabel;
@@ -202,7 +228,7 @@ const SessionHeader: React.FC<{
 								{session.subject}
 							</Chip>
 							<Chip size="sm" color={session.statusColor} variant="flat">
-								{session.status}
+								{getStatusLabel(session.status)}
 							</Chip>
 						</div>
 						{subtitle && (
@@ -305,20 +331,17 @@ const SessionCardItem: React.FC<{
 							>
 								Ver detalles
 							</Button>
-							<Button
-								size="sm"
-								variant="flat"
-								color="danger"
-								isDisabled={view.status === 'cancelada'}
-								onPress={() => onCancel(session)}
-								startContent={
-									view.status === 'cancelada' ? undefined : (
-										<X className="w-4 h-4" />
-									)
-								}
-							>
-								{view.status === 'cancelada' ? 'Cancelada' : 'Cancelar'}
-							</Button>
+							{canCancelSession(view.status) && (
+								<Button
+									size="sm"
+									variant="flat"
+									color="danger"
+									onPress={() => onCancel(session)}
+									startContent={<X className="w-4 h-4" />}
+								>
+									Cancelar
+								</Button>
+							)}
 						</div>
 					}
 				/>
@@ -424,21 +447,14 @@ const SessionDetailsModal: React.FC<{
 								<Button variant="light" onPress={handleClose}>
 									Cerrar
 								</Button>
-								{session && (
+								{session && canCancelSession(session.status) && (
 									<Button
 										color="danger"
 										variant="flat"
-										isDisabled={session.status === 'cancelada'}
 										onPress={() => onRequestCancel(session)}
-										startContent={
-											session.status !== 'cancelada' ? (
-												<X className="w-4 h-4" />
-											) : undefined
-										}
+										startContent={<X className="w-4 h-4" />}
 									>
-										{session.status === 'cancelada'
-											? 'Cancelada'
-											: 'Cancelar tutoría'}
+										Cancelar tutoría
 									</Button>
 								)}
 							</ModalFooter>
@@ -489,28 +505,18 @@ const CancelSessionModal: React.FC<{
 						</ModalHeader>
 						<ModalBody className="gap-4">
 							<p className="text-default-600">
-								¿Estás seguro de que deseas cancelar esta tutoría
-								{view && (
-									<>
-										{' con '}
-										<span className="font-semibold">{view.tutorName}</span>
-										{' el '}
-										{view.dateLabel}
-									</>
-								)}
-								?
+								¿Estás seguro de que deseas cancelar esta tutoría?
 							</p>
 
-							<Input
+							<Textarea
 								label="Razón de cancelación"
 								placeholder="Explica el motivo de la cancelación..."
 								value={razon}
 								onValueChange={setRazon}
 								isRequired
 								variant="bordered"
-								classNames={{
-									input: 'min-h-[80px]',
-								}}
+								minRows={3}
+								maxRows={6}
 								description="Este campo es obligatorio"
 								isDisabled={isPending}
 							/>
@@ -551,10 +557,11 @@ const transformBackendSessionToComponentSession = (
 ): StudentSession => {
 	// Mapear el status del backend al formato del componente
 	const statusMap: Record<string, StudentSession['status']> = {
-		PENDIENTE: 'pendiente',
-		CONFIRMADA: 'confirmada',
-		CANCELADA: 'cancelada',
-		COMPLETADA: 'confirmada',
+		PENDIENTE: 'PENDIENTE',
+		CONFIRMADA: 'CONFIRMADA',
+		CANCELADA: 'CANCELADA',
+		COMPLETADA: 'COMPLETADA',
+		RECHAZADA: 'RECHAZADA',
 	};
 
 	return {
@@ -570,7 +577,7 @@ const transformBackendSessionToComponentSession = (
 		startTime: backendSession.startTime,
 		endTime: backendSession.endTime,
 		mode: backendSession.mode,
-		status: statusMap[backendSession.status] || 'pendiente',
+		status: statusMap[backendSession.status] || 'PENDIENTE',
 		location: backendSession.lugar || backendSession.linkConexion || undefined,
 		comentarios: backendSession.comentarios || undefined,
 	};
@@ -736,7 +743,7 @@ const _mockSessions: StudentSession[] = [
 			endTime: '16:00',
 			mode: 'VIRTUAL',
 			comentarios: 'Necesito ayuda con el proyecto final de la materia',
-			status: 'pendiente',
+			status: 'PENDIENTE',
 		};
 	})(),
 	(() => {
@@ -757,7 +764,7 @@ const _mockSessions: StudentSession[] = [
 			endTime: '11:00',
 			mode: 'VIRTUAL',
 			comentarios: 'Resolver dudas del temario y ejercicios clave',
-			status: 'confirmada',
+			status: 'CONFIRMADA',
 		};
 	})(),
 	(() => {
@@ -779,7 +786,7 @@ const _mockSessions: StudentSession[] = [
 			mode: 'PRESENCIAL',
 			location: 'Aula 204 - Ciencias',
 			comentarios: 'Revisar ejercicios del laboratorio previo',
-			status: 'confirmada',
+			status: 'CONFIRMADA',
 		};
 	})(),
 	(() => {
@@ -800,7 +807,7 @@ const _mockSessions: StudentSession[] = [
 			endTime: '19:50',
 			mode: 'VIRTUAL',
 			comentarios: 'Practicar introduccion y conclusiones',
-			status: 'cancelada',
+			status: 'CANCELADA',
 		};
 	})(),
 ];
