@@ -41,7 +41,7 @@ import {
 	type Response,
 	type Thread,
 } from '~/lib/services/forums.service';
-import { getStorageItem } from '~/lib/utils/storage';
+import { getStorageJSON, STORAGE_KEYS } from '~/lib/utils/storage';
 
 type LocalTopic = {
 	id: string;
@@ -57,14 +57,6 @@ type LocalTopic = {
 	forumId: string;
 };
 
-type Reply = {
-	id: string;
-	author: string;
-	timeAgo: string;
-	content: string;
-	mine?: boolean;
-};
-
 const SUBJECTS = [
 	'Todos',
 	'Matemáticas',
@@ -73,6 +65,11 @@ const SUBJECTS = [
 	'Química',
 	'Lenguaje',
 ];
+
+function getErrorMessage(error: unknown): string {
+	if (error instanceof Error) return error.message;
+	return String(error);
+}
 
 function TopicCard({
 	topic,
@@ -261,10 +258,6 @@ function GroupChatCard() {
 	const [chats, setChats] = useState<ChatGroup[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 
-	useEffect(() => {
-		loadChats();
-	}, [loadChats]);
-
 	const loadChats = async () => {
 		setIsLoading(true);
 		try {
@@ -276,6 +269,11 @@ function GroupChatCard() {
 			setIsLoading(false);
 		}
 	};
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: loadChats should only run once on mount
+	useEffect(() => {
+		loadChats();
+	}, []);
 
 	return (
 		<Card className="border-1 border-default-200" shadow="sm">
@@ -380,21 +378,7 @@ export function CommunityForums() {
 	const responseLen = responseContent.trim().length;
 	const isResponseValid = responseLen >= 5 && responseLen <= 5000;
 
-	// Cargar foros al montar el componente
-	// Cargar foros y materias al montar el componente
-	useEffect(() => {
-		loadForums();
-		loadMaterias();
-	}, [loadForums, loadMaterias]);
-
-	// Debug: ver cuando cambia la materia seleccionada
-	useEffect(() => {
-		console.log(
-			'selectedMateriaForCreate changed to:',
-			selectedMateriaForCreate,
-		);
-	}, [selectedMateriaForCreate]);
-
+	// Define functions before useEffect
 	const loadMaterias = async () => {
 		setIsLoadingMaterias(true);
 		try {
@@ -406,7 +390,7 @@ export function CommunityForums() {
 				console.log('Setting initial materia:', data[0].codigo);
 				setSelectedMateriaForCreate(data[0].codigo);
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error loading materias:', error);
 		} finally {
 			setIsLoadingMaterias(false);
@@ -419,13 +403,28 @@ export function CommunityForums() {
 		try {
 			const data = await forumsService.getAllForums();
 			setForums(data);
-		} catch (error: any) {
-			setForumError(error.message || 'Error al cargar los foros');
+		} catch (error: unknown) {
+			setForumError(getErrorMessage(error) || 'Error al cargar los foros');
 			console.error('Error loading forums:', error);
 		} finally {
 			setIsLoadingForums(false);
 		}
 	};
+
+	// Cargar foros y materias al montar el componente
+	// biome-ignore lint/correctness/useExhaustiveDependencies: Functions should only run once on mount
+	useEffect(() => {
+		loadForums();
+		loadMaterias();
+	}, []);
+
+	// Debug: ver cuando cambia la materia seleccionada
+	useEffect(() => {
+		console.log(
+			'selectedMateriaForCreate changed to:',
+			selectedMateriaForCreate,
+		);
+	}, [selectedMateriaForCreate]);
 
 	// Convertir foros a topics para compatibilidad
 	const topics = useMemo(() => {
@@ -489,8 +488,28 @@ export function CommunityForums() {
 			await loadForums();
 			setIsTopicEditOpen(false);
 			setEditingTopicIdModal(null);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error editing forum:', error);
+		}
+	};
+
+	const toggleForumResolved = async (forumId: string) => {
+		try {
+			const user = getStorageJSON<{ id: string }>(STORAGE_KEYS.USER);
+			const userId = user?.id;
+			if (!userId) {
+				console.error('User ID not found');
+				alert('No se pudo obtener tu ID de usuario');
+				return;
+			}
+
+			await forumsService.closeForum(forumId, userId);
+			await loadForums();
+		} catch (error: unknown) {
+			console.error('Error toggling forum resolved:', error);
+			alert(
+				`Error al cambiar el estado del foro: ${getErrorMessage(error) || 'Error desconocido'}`,
+			);
 		}
 	};
 
@@ -498,7 +517,8 @@ export function CommunityForums() {
 		if (!isValidTitle) return;
 
 		try {
-			const userId = getStorageItem('USER')?.id;
+			const user = getStorageJSON<{ id: string }>(STORAGE_KEYS.USER);
+			const userId = user?.id;
 
 			// Usar la materia seleccionada en el modal o la primera disponible
 			const materiaCode = selectedMateriaForCreate || materias[0]?.codigo;
@@ -529,9 +549,11 @@ export function CommunityForums() {
 			setDescription('');
 			setSelectedMateriaForCreate('');
 			onClose();
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error creating forum:', error);
-			alert(`Error al crear el foro: ${error.message || 'Error desconocido'}`);
+			alert(
+				`Error al crear el foro: ${getErrorMessage(error) || 'Error desconocido'}`,
+			);
 		}
 	};
 
@@ -545,7 +567,7 @@ export function CommunityForums() {
 					[forumId]: forum.threads || [],
 				}));
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error loading threads:', error);
 		} finally {
 			setIsLoadingThreads(false);
@@ -556,7 +578,8 @@ export function CommunityForums() {
 		if (!isThreadTitleValid || !isThreadContentValid) return;
 
 		try {
-			const userId = getStorageItem('USER')?.id || 'anonymous';
+			const user = getStorageJSON<{ id: string }>(STORAGE_KEYS.USER);
+			const userId = user?.id || 'anonymous';
 			const newThread = await forumsService.createThread(
 				forumId,
 				threadTitle,
@@ -573,7 +596,7 @@ export function CommunityForums() {
 			setThreadContent('');
 			setCreatingThreadForumId(null);
 			setShowThreadsFor(forumId);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error creating thread:', error);
 		}
 	};
@@ -588,7 +611,7 @@ export function CommunityForums() {
 					[threadId]: thread.responses || [],
 				}));
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error loading responses:', error);
 		} finally {
 			setIsLoadingResponses(false);
@@ -599,7 +622,8 @@ export function CommunityForums() {
 		if (!isResponseValid) return;
 
 		try {
-			const userId = getStorageItem('USER')?.id || 'anonymous';
+			const user = getStorageJSON<{ id: string }>(STORAGE_KEYS.USER);
+			const userId = user?.id || 'anonymous';
 			const newResponse = await forumsService.createResponse(
 				threadId,
 				responseContent,
@@ -613,7 +637,7 @@ export function CommunityForums() {
 
 			setResponseContent('');
 			setRespondingToThreadId(null);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error creating response:', error);
 		}
 	};
@@ -709,7 +733,7 @@ export function CommunityForums() {
 												loadThreadsForForum(id);
 											}
 										}}
-										onToggleResolved={() => {}}
+										onToggleResolved={toggleForumResolved}
 										onEditTopic={openEditTopic}
 										onTogglePinned={togglePinned}
 										repliesCount={
