@@ -8,7 +8,7 @@ interface ProfileData {
 	description: string;
 	avatar?: string;
 	interests: string[];
-	career: string;
+	//career: string;
 	semester: string;
 }
 

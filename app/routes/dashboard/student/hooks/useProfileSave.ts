@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { updateProfile } from '~/lib/services/student.service';
 
 interface ProfileSaveData {
 	name: string;
@@ -14,21 +15,36 @@ export function useProfileSave() {
 	const [success, setSuccess] = useState<string | null>(null);
 
 	const saveProfile = async (
-		_profileData: ProfileSaveData,
+		profileData: ProfileSaveData,
 	): Promise<boolean> => {
 		setError(null);
 		setSuccess(null);
 		setIsSaving(true);
 
 		try {
-			// Simular llamada a API para guardar perfil
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			await updateProfile(profileData);
 			setSuccess('Perfil actualizado exitosamente');
 			setTimeout(() => setSuccess(null), 3000);
 			return true;
 		} catch (err) {
-			const errorMessage =
-				err instanceof Error ? err.message : 'Error al guardar el perfil';
+			let errorMessage = 'Error al guardar el perfil';
+
+			if (err instanceof Error) {
+				errorMessage = err.message;
+
+				// Detectar error de endpoint no disponible
+				if (
+					errorMessage.includes('Cannot PATCH') ||
+					errorMessage.includes('Cannot PUT') ||
+					errorMessage.includes('404') ||
+					errorMessage.includes('Not Found') ||
+					errorMessage.includes('no está disponible')
+				) {
+					errorMessage =
+						'El endpoint de actualización de perfil no está disponible en el backend. Por favor, contacta al equipo de desarrollo.';
+				}
+			}
+
 			setError(errorMessage);
 			return false;
 		} finally {
@@ -38,7 +54,7 @@ export function useProfileSave() {
 
 	const changePassword = async (): Promise<boolean> => {
 		try {
-			// Simular llamada a API
+			// TODO: Implementar cambio de contraseña cuando esté disponible en el backend
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 			setSuccess('Contraseña actualizada exitosamente');
 			setTimeout(() => setSuccess(null), 3000);
