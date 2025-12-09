@@ -11,17 +11,14 @@ import {
 	ModalHeader,
 	useDisclosure,
 } from '@heroui/react';
-import { BookOpen, Calendar, Clock, MapPin, Search, Video } from 'lucide-react';
+import { Calendar, Clock, MapPin, Search, Video } from 'lucide-react';
 import type React from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { PageHeader } from '~/components/page-header';
-import ScheduledTutoringsModal, {
-	type ScheduledTutoring,
-} from '~/components/scheduled-tutorings-modal';
+import type { ScheduledTutoring } from '~/components/scheduled-tutorings-modal';
 import TutorCard from '~/components/tutor-card';
 import TutorFilter from '~/components/tutor-filter';
-import TutorScheduleModal from '~/components/tutor-schedule-modal';
 
 interface Tutor {
 	id: number;
@@ -626,7 +623,7 @@ const StudentTutoringPage: React.FC = () => {
 	const [sessionToCancel, setSessionToCancel] = useState<StudentSession | null>(
 		null,
 	);
-	const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
+	const [selectedTutor, _setSelectedTutor] = useState<Tutor | null>(null);
 	const [scheduledTutorings, setScheduledTutorings] = useState<
 		ScheduledTutoring[]
 	>(mockScheduledTutorings);
@@ -683,7 +680,7 @@ const StudentTutoringPage: React.FC = () => {
 		onClose();
 	};
 
-	const handleScheduleTutoring = (data: {
+	const _handleScheduleTutoring = (data: {
 		tutorId: number;
 		name: string;
 		email: string;
@@ -705,7 +702,7 @@ const StudentTutoringPage: React.FC = () => {
 		setScheduledTutorings([...scheduledTutorings, newTutoring]);
 	};
 
-	const handleCancelTutoring = (id: string) => {
+	const _handleCancelTutoring = (id: string) => {
 		console.log('Cancelando tutoría:', id);
 		setScheduledTutorings(
 			scheduledTutorings.filter((t: ScheduledTutoring) => t.id !== id),
