@@ -4,6 +4,7 @@ export { CommunityForums } from './community/community-forums';
 export { DashboardLayout } from './dashboard-layout';
 export { DateRangeFilter } from './date-range-filter';
 export { EmptyState } from './empty-state';
+export { default as FeedbackModal } from './feedback-modal';
 export { MaterialCard } from './material-card';
 export { Navbar } from './navbar';
 export { PageHeader } from './page-header';

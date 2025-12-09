@@ -15,6 +15,7 @@ import {
 import { Calendar, Clock, MapPin, Search, Video, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router';
+import { FeedbackModal } from '~/components';
 import { PageHeader } from '~/components/page-header';
 import ScheduledTutoringsModal, {
 	type ScheduledTutoring,
@@ -859,6 +860,15 @@ const StudentTutoringPage: React.FC = () => {
 		ScheduledTutoring[]
 	>(mockScheduledTutorings);
 	const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+	const [feedback, setFeedback] = useState<{
+		isOpen: boolean;
+		type: 'success' | 'error';
+		message: string;
+	}>({
+		isOpen: false,
+		type: 'success',
+		message: '',
+	});
 
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -935,10 +945,23 @@ const StudentTutoringPage: React.FC = () => {
 		onClose();
 	};
 
-	const handleScheduleSuccess = () => {
+	const handleScheduleSuccess = (message: string) => {
 		setIsScheduleOpen(false);
 		setSelectedTutor(null);
+		setFeedback({
+			isOpen: true,
+			type: 'success',
+			message,
+		});
 		setActiveTab('my-sessions');
+	};
+
+	const handleScheduleError = (message: string) => {
+		setFeedback({
+			isOpen: true,
+			type: 'error',
+			message,
+		});
 	};
 
 	const handleCancelTutoring = (id: string) => {
@@ -1133,6 +1156,7 @@ const StudentTutoringPage: React.FC = () => {
 				onClose={() => setIsScheduleOpen(false)}
 				studentId={user?.id || ''}
 				onSuccess={handleScheduleSuccess}
+				onError={handleScheduleError}
 			/>
 			{/* Modal de mis tutorías agendadas */}
 			<ScheduledTutoringsModal
@@ -1140,6 +1164,13 @@ const StudentTutoringPage: React.FC = () => {
 				isOpen={false}
 				onClose={() => {}}
 				onCancel={handleCancelTutoring}
+			/>
+			{/* Modal de Feedback */}
+			<FeedbackModal
+				isOpen={feedback.isOpen}
+				onClose={() => setFeedback({ ...feedback, isOpen: false })}
+				type={feedback.type}
+				message={feedback.message}
 			/>
 		</div>
 	);

@@ -21,6 +21,7 @@ import type {
 	DisponibilidadSlot,
 	WeekDay,
 } from '~/lib/types/tutoria.types';
+import { getErrorMessage } from '~/lib/utils/error-messages';
 
 interface Tutor {
 	id: number;
@@ -53,7 +54,8 @@ interface Props {
 	isOpen: boolean;
 	onClose: () => void;
 	studentId: string;
-	onSuccess?: () => void;
+	onSuccess?: (message: string) => void;
+	onError?: (message: string) => void;
 }
 
 const DAY_LABELS: Record<WeekDay, string> = {
@@ -78,7 +80,8 @@ export default function TutorScheduleModal({
 	onClose,
 	studentId,
 	onSuccess,
-}: Props) {
+	onError,
+}: Readonly<Props>) {
 	const [selectedSlot, setSelectedSlot] = useState<ScheduleSlot | null>(null);
 	const [comentarios, setComentarios] = useState('');
 	const [codigoMateria, setCodigoMateria] = useState('');
@@ -99,12 +102,12 @@ export default function TutorScheduleModal({
 
 	const handleConfirm = () => {
 		if (!tutor?.tutorId || !selectedSlot) {
-			alert('Por favor selecciona un horario disponible.');
+			onError?.('Por favor selecciona un horario disponible.');
 			return;
 		}
 
 		if (!codigoMateria.trim()) {
-			alert('Por favor selecciona la materia de la tutoría.');
+			onError?.('Por favor selecciona la materia de la tutoría.');
 			return;
 		}
 
@@ -143,12 +146,12 @@ export default function TutorScheduleModal({
 
 		createSession(request, {
 			onSuccess: () => {
-				alert(`¡Tutoría agendada exitosamente con ${tutor.name}!`);
-				onSuccess?.();
+				const successMessage = `Tutoría agendada exitosamente con ${tutor.name}`;
 				onClose();
+				onSuccess?.(successMessage);
 			},
 			onError: (error) => {
-				alert(`Error al agendar: ${error.message}`);
+				onError?.(getErrorMessage(error));
 			},
 		});
 	};
@@ -158,8 +161,8 @@ export default function TutorScheduleModal({
 	// Convertir disponibilidad a slots organizados
 	const scheduleSlots: ScheduleSlot[] = [];
 	if (tutor.disponibilidad) {
-		Object.entries(tutor.disponibilidad).forEach(([day, slots]) => {
-			slots.forEach((slot) => {
+		for (const [day, slots] of Object.entries(tutor.disponibilidad)) {
+			for (const slot of slots) {
 				scheduleSlots.push({
 					day: day as WeekDay,
 					dayLabel: DAY_LABELS[day as WeekDay],
@@ -168,8 +171,8 @@ export default function TutorScheduleModal({
 					mode: slot.modalidad,
 					lugar: slot.lugar,
 				});
-			});
-		});
+			}
+		}
 	}
 
 	return (
