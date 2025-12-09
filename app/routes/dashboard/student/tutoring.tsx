@@ -11,7 +11,7 @@ import {
 	ModalHeader,
 	useDisclosure,
 } from '@heroui/react';
-import { Calendar, Clock, MapPin, Search, Video } from 'lucide-react';
+import { Calendar, Clock, MapPin, Search, Video, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { PageHeader } from '~/components/page-header';
@@ -22,6 +22,7 @@ import TutorCard from '~/components/tutor-card';
 import TutorFilter from '~/components/tutor-filter';
 import TutorScheduleModal from '~/components/tutor-schedule-modal';
 import { useAuth } from '~/contexts/auth-context';
+import { useCancelSession } from '~/lib/hooks/useCancelSession';
 import { useStudentSessions } from '~/lib/hooks/useStudentSessions';
 import { useTutores } from '~/lib/hooks/useTutores';
 import type {
@@ -306,10 +307,15 @@ const SessionCardItem: React.FC<{
 							</Button>
 							<Button
 								size="sm"
-								variant="light"
+								variant="flat"
 								color="danger"
 								isDisabled={view.status === 'cancelada'}
 								onPress={() => onCancel(session)}
+								startContent={
+									view.status === 'cancelada' ? undefined : (
+										<X className="w-4 h-4" />
+									)
+								}
 							>
 								{view.status === 'cancelada' ? 'Cancelada' : 'Cancelar'}
 							</Button>
@@ -424,10 +430,15 @@ const SessionDetailsModal: React.FC<{
 										variant="flat"
 										isDisabled={session.status === 'cancelada'}
 										onPress={() => onRequestCancel(session)}
+										startContent={
+											session.status !== 'cancelada' ? (
+												<X className="w-4 h-4" />
+											) : undefined
+										}
 									>
 										{session.status === 'cancelada'
 											? 'Cancelada'
-											: 'Cancelar tutoria'}
+											: 'Cancelar tutoría'}
 									</Button>
 								)}
 							</ModalFooter>
@@ -443,63 +454,90 @@ const CancelSessionModal: React.FC<{
 	session: StudentSession | null;
 	isOpen: boolean;
 	onClose: () => void;
-	onConfirm: (session: StudentSession) => void;
-}> = ({ session, isOpen, onClose, onConfirm }) => {
+	onConfirm: (session: StudentSession, razon: string) => void;
+	isPending?: boolean;
+}> = ({ session, isOpen, onClose, onConfirm, isPending = false }) => {
+	const [razon, setRazon] = React.useState('');
 	const view = session ? buildSessionViewModel(session) : null;
+
+	const handleClose = () => {
+		setRazon('');
+		onClose();
+	};
+
+	const handleConfirm = () => {
+		if (session && razon.trim()) {
+			onConfirm(session, razon);
+			setRazon('');
+		}
+	};
 
 	return (
 		<Modal
 			isOpen={isOpen}
 			onOpenChange={(open) => {
-				if (!open) onClose();
+				if (!open && !isPending) handleClose();
 			}}
 			size="md"
+			isDismissable={!isPending}
 		>
 			<ModalContent>
-				{(onCloseConfirmModal) => {
-					const handleClose = () => {
-						onClose();
-						onCloseConfirmModal();
-					};
+				{(onCloseModal) => (
+					<>
+						<ModalHeader className="flex flex-col gap-1">
+							Cancelar Tutoría
+						</ModalHeader>
+						<ModalBody className="gap-4">
+							<p className="text-default-600">
+								¿Estás seguro de que deseas cancelar esta tutoría
+								{view && (
+									<>
+										{' con '}
+										<span className="font-semibold">{view.tutorName}</span>
+										{' el '}
+										{view.dateLabel}
+									</>
+								)}
+								?
+							</p>
 
-					return (
-						<>
-							<ModalHeader className="flex flex-col gap-1">
-								Confirmar cancelacion
-							</ModalHeader>
-							<ModalBody>
-								<p className="text-default-600">
-									?Estas seguro de que deseas cancelar esta tutoria
-									{view && (
-										<>
-											{' con '}
-											<span className="font-semibold">{view.tutorName}</span>
-											{' el '}
-											{view.dateLabel}?
-										</>
-									)}
-								</p>
-							</ModalBody>
-							<ModalFooter>
-								<Button variant="light" onPress={handleClose}>
-									Mantener tutoria
-								</Button>
-								<Button
-									color="danger"
-									variant="solid"
-									onPress={() => {
-										if (session) {
-											onConfirm(session);
-										}
-										handleClose();
-									}}
-								>
-									Cancelar tutoria
-								</Button>
-							</ModalFooter>
-						</>
-					);
-				}}
+							<Input
+								label="Razón de cancelación"
+								placeholder="Explica el motivo de la cancelación..."
+								value={razon}
+								onValueChange={setRazon}
+								isRequired
+								variant="bordered"
+								classNames={{
+									input: 'min-h-[80px]',
+								}}
+								description="Este campo es obligatorio"
+								isDisabled={isPending}
+							/>
+						</ModalBody>
+						<ModalFooter>
+							<Button
+								variant="light"
+								onPress={() => {
+									handleClose();
+									onCloseModal();
+								}}
+								isDisabled={isPending}
+							>
+								Volver
+							</Button>
+							<Button
+								color="danger"
+								variant="solid"
+								onPress={handleConfirm}
+								isDisabled={!razon.trim() || isPending}
+								isLoading={isPending}
+							>
+								{isPending ? 'Cancelando...' : 'Confirmar Cancelación'}
+							</Button>
+						</ModalFooter>
+					</>
+				)}
 			</ModalContent>
 		</Modal>
 	);
@@ -785,6 +823,10 @@ const StudentTutoringPage: React.FC = () => {
 		error: sessionsError,
 	} = useStudentSessions(user?.id || '', !!user?.id);
 
+	// Hook para cancelar sesiones
+	const { mutate: cancelSessionMutation, isPending: isCanceling } =
+		useCancelSession();
+
 	// Transformar los datos del backend al formato del componente
 	const tutors = tutoresData
 		? tutoresData.map(transformTutorProfileToTutor)
@@ -846,10 +888,34 @@ const StudentTutoringPage: React.FC = () => {
 
 	const handleSearch = (_filters: TutorFilters) => {};
 
-	// TODO: Llamar al backend para cancelar la tutoria
-	const handleCancelSession = (id: string) => {
-		console.log('Cancelar sesión:', id);
-		// TODO: Implementar cancelación en el backend y refetch de datos
+	const handleCancelSession = (session: StudentSession, razon: string) => {
+		if (!user?.id) {
+			console.error('Usuario no autenticado');
+			return;
+		}
+
+		cancelSessionMutation(
+			{
+				sessionId: session.id,
+				data: {
+					userId: user.id,
+					razon,
+				},
+			},
+			{
+				onSuccess: () => {
+					console.log('✅ Sesión cancelada exitosamente');
+					setSessionToCancel(null);
+					onCloseConfirm();
+					if (selectedSession?.id === session.id) {
+						onClose();
+					}
+				},
+				onError: (error) => {
+					console.error('❌ Error al cancelar sesión:', error);
+				},
+			},
+		);
 	};
 
 	const openSessionDetails = (session: StudentSession) => {
@@ -1045,12 +1111,13 @@ const StudentTutoringPage: React.FC = () => {
 				session={sessionToCancel}
 				isOpen={isConfirmOpen}
 				onClose={() => {
-					setSessionToCancel(null);
-					onCloseConfirm();
+					if (!isCanceling) {
+						setSessionToCancel(null);
+						onCloseConfirm();
+					}
 				}}
-				onConfirm={(session) => {
-					handleCancelSession(session.id);
-				}}
+				onConfirm={handleCancelSession}
+				isPending={isCanceling}
 			/>
 			{/* Modal de agendar tutoría */}
 			<TutorScheduleModal

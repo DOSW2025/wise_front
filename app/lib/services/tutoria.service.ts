@@ -7,6 +7,8 @@ import axios from 'axios';
 import apiClient from '../api/client';
 import { API_ENDPOINTS } from '../config/api.config';
 import type {
+	CancelSessionRequest,
+	CancelSessionResponse,
 	CreateSessionRequest,
 	CreateSessionResponse,
 	MateriaResponse,
@@ -199,5 +201,47 @@ export async function getTutoriaStats(userId: string): Promise<TutoriaStats> {
 			throw error;
 		}
 		throw new Error('No se pudo obtener las estadísticas de tutorías');
+	}
+}
+
+/**
+ * Cancela una sesión de tutoría
+ */
+export async function cancelSession(
+	sessionId: string,
+	data: CancelSessionRequest,
+): Promise<CancelSessionResponse> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.CANCEL_SESSION.replace(
+			'{id}',
+			sessionId,
+		);
+		console.log('Cancelando sesión:', { sessionId, url, data });
+
+		const response = await apiClient.patch<CancelSessionResponse>(url, data);
+
+		console.log('Sesión cancelada exitosamente:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al cancelar sesión:', error);
+
+		if (axios.isAxiosError(error)) {
+			const status = error.response?.status;
+			const message = error.response?.data?.message || error.message;
+
+			if (status === 404) {
+				throw new Error('La sesión no existe o ya fue cancelada');
+			}
+			if (status === 400) {
+				throw new Error(`Datos inválidos: ${message}`);
+			}
+			if (status === 401 || status === 403) {
+				throw new Error('No tienes permisos para cancelar esta tutoría');
+			}
+
+			throw new Error(`Error del servidor (${status}): ${message}`);
+		}
+
+		throw new Error('No se pudo cancelar la tutoría. Verifica tu conexión.');
 	}
 }

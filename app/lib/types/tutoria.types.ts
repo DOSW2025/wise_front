@@ -192,3 +192,19 @@ export interface TutoriaStats {
 	totalCalificaciones: number;
 	horasDeTutoria: number;
 }
+
+/**
+ * Request para cancelar una sesión de tutoría
+ */
+export interface CancelSessionRequest {
+	userId: string;
+	razon: string;
+}
+
+/**
+ * Respuesta al cancelar una sesión de tutoría
+ */
+export interface CancelSessionResponse {
+	message: string;
+	session: StudentSession;
+}
