@@ -8,12 +8,19 @@ import {
 	ProfileHeader,
 } from '~/components/profile';
 import { useAuth } from '~/contexts/auth-context';
+import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
 
 export default function StudentProfile() {
 	const { user } = useAuth();
 	const [emailNotifications, setEmailNotifications] = useState(true);
+
+	// Fetch tutorías statistics
+	const { data: stats, isLoading: isLoadingStats } = useTutoriaStats(
+		user?.id ?? '',
+		!!user?.id,
+	);
 
 	// Custom hooks for managing complex state
 	const {
@@ -203,7 +210,7 @@ export default function StudentProfile() {
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						<StatsCard
 							title="Tutorías Tomadas"
-							value={-1}
+							value={isLoadingStats ? '...' : (stats?.sesionesCompletadas ?? 0)}
 							description="Total"
 							color="primary"
 							icon={
@@ -224,8 +231,14 @@ export default function StudentProfile() {
 						/>
 						<StatsCard
 							title="Horas de Estudio"
-							value={-1}
-							description="Este mes"
+							value={
+								isLoadingStats
+									? '...'
+									: stats?.horasDeTutoria
+										? `${stats.horasDeTutoria.toFixed(1)}h`
+										: '0h'
+							}
+							description="Total"
 							color="success"
 							icon={
 								<svg
