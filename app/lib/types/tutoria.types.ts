@@ -161,3 +161,20 @@ export interface CreateSessionRequest {
  * Respuesta al crear una sesión de tutoría
  */
 export interface CreateSessionResponse extends StudentSession {}
+
+/**
+ * Sesión de tutoría próxima (upcoming)
+ */
+export interface UpcomingSession {
+	tutorName: string;
+	studentName: string;
+	subjectName: string;
+	date: string; // ISO 8601 format
+	day: WeekDay;
+	startTime: string; // Formato: "HH:mm"
+}
+
+/**
+ * Respuesta del endpoint de upcoming sessions
+ */
+export type UpcomingSessionsResponse = UpcomingSession[];

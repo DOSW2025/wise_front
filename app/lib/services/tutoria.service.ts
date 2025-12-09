@@ -14,6 +14,7 @@ import type {
 	TutorMateriasResponse,
 	TutorNameResponse,
 	TutorProfile,
+	UpcomingSessionsResponse,
 } from '../types/tutoria.types';
 
 /**
@@ -151,5 +152,29 @@ export async function createSession(
 		}
 
 		throw new Error('No se pudo agendar la tutoría. Verifica tu conexión.');
+	}
+}
+
+/**
+ * Obtiene las próximas sesiones de tutoría de un estudiante
+ */
+export async function getUpcomingSessions(
+	userId: string,
+): Promise<UpcomingSessionsResponse> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.UPCOMING_SESSIONS.replace(
+			'{userId}',
+			userId,
+		);
+		console.log('Fetching upcoming sessions:', { userId, url });
+		const response = await apiClient.get<UpcomingSessionsResponse>(url);
+		console.log('Upcoming sessions received:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al obtener próximas sesiones:', error);
+		if (error instanceof Error) {
+			throw error;
+		}
+		throw new Error('No se pudo obtener las próximas sesiones');
 	}
 }

@@ -1,8 +1,12 @@
 import { Button, Card, CardBody } from '@heroui/react';
 import { Link } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
+import { UpcomingTutoringsCard } from '~/components/upcoming-tutorings-card';
+import { useAuth } from '~/contexts/auth-context';
 
 export default function StudentDashboard() {
+	const { user } = useAuth();
+
 	return (
 		<div className="space-y-6">
 			{/* Header */}
@@ -147,41 +151,8 @@ export default function StudentDashboard() {
 					</CardBody>
 				</Card>
 
-				<Card>
-					<CardBody className="gap-4">
-						<h2 className="text-xl font-semibold">Próximas Tutorías</h2>
-						<div className="space-y-3">
-							<div className="flex items-start justify-between p-3 bg-default-100 rounded-lg">
-								<div className="flex flex-col gap-1">
-									<p className="font-semibold">Cálculo Diferencial</p>
-									<p className="text-small text-default-500">
-										con Prof. Juan Pérez
-									</p>
-									<p className="text-tiny text-default-400">Hoy a las 15:00</p>
-								</div>
-								<Button size="sm" color="primary" variant="flat">
-									Ver detalles
-								</Button>
-							</div>
-							<div className="flex items-start justify-between p-3 bg-default-100 rounded-lg">
-								<div className="flex flex-col gap-1">
-									<p className="font-semibold">
-										Programación Orientada a Objetos
-									</p>
-									<p className="text-small text-default-500">
-										con María González
-									</p>
-									<p className="text-tiny text-default-400">
-										Mañana a las 10:00
-									</p>
-								</div>
-								<Button size="sm" color="primary" variant="flat">
-									Ver detalles
-								</Button>
-							</div>
-						</div>
-					</CardBody>
-				</Card>
+				{/* Próximas Tutorías - Conectado con API */}
+				{user?.id && <UpcomingTutoringsCard userId={user.id} />}
 			</div>
 
 			{/* Recent Materials */}

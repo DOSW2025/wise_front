@@ -18,3 +18,4 @@ export { RoleDashboard } from './role-dashboard';
 export { Sidebar } from './sidebar';
 export { StatsCard } from './stats-card';
 export { TutoringCard } from './tutoring-card';
+export { UpcomingTutoringsCard } from './upcoming-tutorings-card';
