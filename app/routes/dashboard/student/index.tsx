@@ -3,9 +3,16 @@ import { Link } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
 import { UpcomingTutoringsCard } from '~/components/upcoming-tutorings-card';
 import { useAuth } from '~/contexts/auth-context';
+import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 
 export default function StudentDashboard() {
 	const { user } = useAuth();
+
+	// Obtener estadísticas de tutorías
+	const { data: stats, isLoading: isLoadingStats } = useTutoriaStats(
+		user?.id || '',
+		!!user?.id,
+	);
 
 	return (
 		<div className="space-y-6">
@@ -23,7 +30,7 @@ export default function StudentDashboard() {
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatsCard
 					title="Tutorías Completadas"
-					value={-1}
+					value={isLoadingStats ? '...' : (stats?.sesionesCompletadas ?? 0)}
 					description="Este semestre"
 					color="success"
 					icon={
@@ -46,8 +53,8 @@ export default function StudentDashboard() {
 				/>
 				<StatsCard
 					title="Próximas Tutorías"
-					value={-1}
-					description="Esta semana"
+					value={isLoadingStats ? '...' : (stats?.sesionesConfirmadas ?? 0)}
+					description="Confirmadas"
 					color="primary"
 					icon={
 						<svg

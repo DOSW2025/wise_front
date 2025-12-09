@@ -11,6 +11,7 @@ import type {
 	CreateSessionResponse,
 	MateriaResponse,
 	StudentSession,
+	TutoriaStats,
 	TutorMateriasResponse,
 	TutorNameResponse,
 	TutorProfile,
@@ -176,5 +177,27 @@ export async function getUpcomingSessions(
 			throw error;
 		}
 		throw new Error('No se pudo obtener las próximas sesiones');
+	}
+}
+
+/**
+ * Obtiene las estadísticas de tutorías de un estudiante
+ */
+export async function getTutoriaStats(userId: string): Promise<TutoriaStats> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.TUTORIA_STATS.replace(
+			'{userId}',
+			userId,
+		);
+		console.log('Fetching tutoria stats:', { userId, url });
+		const response = await apiClient.get<TutoriaStats>(url);
+		console.log('Tutoria stats received:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al obtener estadísticas de tutorías:', error);
+		if (error instanceof Error) {
+			throw error;
+		}
+		throw new Error('No se pudo obtener las estadísticas de tutorías');
 	}
 }

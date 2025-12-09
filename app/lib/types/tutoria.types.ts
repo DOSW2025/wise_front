@@ -178,3 +178,17 @@ export interface UpcomingSession {
  * Respuesta del endpoint de upcoming sessions
  */
 export type UpcomingSessionsResponse = UpcomingSession[];
+
+/**
+ * Estadísticas de tutorías de un estudiante
+ */
+export interface TutoriaStats {
+	totalSesiones: number;
+	sesionesPendientes: number;
+	sesionesConfirmadas: number;
+	sesionesCompletadas: number;
+	sesionesCanceladas: number;
+	sesionesRechazadas: number;
+	totalCalificaciones: number;
+	horasDeTutoria: number;
+}
