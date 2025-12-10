@@ -42,7 +42,6 @@ apiClient.interceptors.response.use(
 	async (error: AxiosError) => {
 		// Si el error es 401, limpiar sesión y redirigir a login
 		if (error.response?.status === 401) {
-			// Clear session using secure storage utility
 			removeStorageItem(STORAGE_KEYS.TOKEN);
 			removeStorageItem(STORAGE_KEYS.USER);
 

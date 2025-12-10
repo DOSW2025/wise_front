@@ -8,12 +8,14 @@ import {
 	ProfileHeader,
 } from '~/components/profile';
 import { useAuth } from '~/contexts/auth-context';
+import { getProfile } from '~/lib/services/student.service';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
 
 export default function StudentProfile() {
 	const { user } = useAuth();
 	const [emailNotifications, setEmailNotifications] = useState(true);
+	const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
 	// Custom hooks for managing complex state
 	const {
@@ -32,16 +34,46 @@ export default function StudentProfile() {
 		name: user?.name || '',
 		email: user?.email || '',
 		phone: '',
-		location: '',
+		role: user?.role || '',
 		description: '',
 		avatar: user?.avatarUrl,
 		interests: [],
-		career: '',
 		semester: '',
 	});
 
 	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
 
+	// Cargar el perfil completo cuando el componente se monta
+	useEffect(() => {
+		const loadProfile = async () => {
+			if (!user) return;
+
+			try {
+				setIsLoadingProfile(true);
+				const profileData = await getProfile();
+
+				// Actualizar el estado del perfil con los datos cargados
+				setProfile({
+					...profileData,
+					avatar: user.avatarUrl, // Mantener el avatar del contexto
+					name: user.name, // Mantener nombre del contexto
+					email: user.email,
+					interests: profileData.interests || [],
+					semester: profileData.semester || '',
+					role: profileData.role || user.role || '',
+				});
+			} catch (err) {
+				console.error('Error cargando perfil:', err);
+				setError('Error al cargar tu perfil');
+			} finally {
+				setIsLoadingProfile(false);
+			}
+		};
+
+		loadProfile();
+	}, [user, setProfile, setError]); // ✅ corregido: dependemos de user completo
+
+	// Actualizar datos básicos del usuario desde el contexto
 	useEffect(() => {
 		if (user) {
 			setProfile((prev) => ({
@@ -63,7 +95,7 @@ export default function StudentProfile() {
 			name: profile.name,
 			email: profile.email,
 			phone: profile.phone,
-			location: profile.location,
+			role: profile.role,
 			description: profile.description,
 		});
 
@@ -85,6 +117,18 @@ export default function StudentProfile() {
 			resetForm(user);
 		}
 	};
+
+	// Mostrar loading mientras carga el perfil
+	if (isLoadingProfile) {
+		return (
+			<div className="flex items-center justify-center min-h-screen">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+					<p className="text-lg">Cargando perfil...</p>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-6">
@@ -118,7 +162,7 @@ export default function StudentProfile() {
 							isEditing={isEditing}
 							onImageChange={handleImageChange}
 							preview={avatarPreview}
-						/>{' '}
+						/>
 						<ProfileFormFields
 							profile={profile}
 							isEditing={isEditing}
@@ -133,17 +177,18 @@ export default function StudentProfile() {
 							descriptionPlaceholder="Cuéntanos sobre tus intereses y objetivos..."
 						>
 							<Input
-								label="Carrera"
-								placeholder="Ingeniería de Sistemas"
-								value={profile.career}
+								label="Semestre"
+								placeholder="7"
+								value={profile.semester}
 								isReadOnly={true}
 								variant="flat"
 								description="No se puede modificar"
 							/>
+
 							<Input
-								label="Semestre"
-								placeholder="7"
-								value={profile.semester}
+								label="Rol"
+								placeholder="Estudiante"
+								value={profile.role}
 								isReadOnly={true}
 								variant="flat"
 								description="No se puede modificar"
@@ -154,26 +199,33 @@ export default function StudentProfile() {
 					<div className="space-y-2">
 						<span className="text-sm font-medium block">Áreas de Interés</span>
 						<div className="flex flex-wrap gap-2">
-							{profile.interests.map((interest) => (
-								<Chip
-									key={interest}
-									onClose={
-										isEditing
-											? () =>
-													setProfile({
-														...profile,
-														interests: profile.interests.filter(
-															(i) => i !== interest,
-														),
-													})
-											: undefined
-									}
-									variant="flat"
-									color="primary"
-								>
-									{interest}
-								</Chip>
-							))}
+							{profile.interests && profile.interests.length > 0 ? (
+								profile.interests.map((interest) => (
+									<Chip
+										key={interest}
+										onClose={
+											isEditing
+												? () =>
+														setProfile({
+															...profile,
+															interests:
+																profile.interests?.filter(
+																	(i) => i !== interest,
+																) || [],
+														})
+												: undefined
+										}
+										variant="flat"
+										color="primary"
+									>
+										{interest}
+									</Chip>
+								))
+							) : (
+								<p className="text-sm text-default-500">
+									No has agregado áreas de interés
+								</p>
+							)}
 							{isEditing && (
 								<Chip
 									variant="bordered"
@@ -183,7 +235,7 @@ export default function StudentProfile() {
 										if (newInterest) {
 											setProfile({
 												...profile,
-												interests: [...profile.interests, newInterest],
+												interests: [...(profile.interests || []), newInterest],
 											});
 										}
 									}}
@@ -203,87 +255,27 @@ export default function StudentProfile() {
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						<StatsCard
 							title="Tutorías Tomadas"
-							value={-1}
+							value={0}
 							description="Total"
 							color="primary"
-							icon={
-								<svg
-									className="w-6 h-6"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-									/>
-								</svg>
-							}
 						/>
 						<StatsCard
 							title="Horas de Estudio"
-							value={-1}
+							value={0}
 							description="Este mes"
 							color="success"
-							icon={
-								<svg
-									className="w-6 h-6"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-									/>
-								</svg>
-							}
 						/>
 						<StatsCard
 							title="Materias Cursando"
-							value={-1}
+							value={0}
 							description="Activas"
 							color="warning"
-							icon={
-								<svg
-									className="w-6 h-6"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-									/>
-								</svg>
-							}
 						/>
 						<StatsCard
 							title="Progreso General"
-							value="-1%"
+							value="0%"
 							description="Avance"
 							color="default"
-							icon={
-								<svg
-									className="w-6 h-6"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-									/>
-								</svg>
-							}
 						/>
 					</div>
 				</CardBody>

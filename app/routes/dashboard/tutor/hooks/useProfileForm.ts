@@ -17,7 +17,6 @@ interface ProfileData {
 		sunday: boolean;
 	};
 	subjects: string[];
-	hourlyRate: string;
 }
 
 export function useProfileForm(initialProfile: ProfileData) {

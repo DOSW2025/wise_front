@@ -4,7 +4,6 @@ import {
 	CardBody,
 	Chip,
 	Divider,
-	Input,
 	Modal,
 	ModalBody,
 	ModalContent,
@@ -61,7 +60,6 @@ export default function TutorProfile() {
 			sunday: false,
 		},
 		subjects: [],
-		hourlyRate: '',
 	});
 
 	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
@@ -167,24 +165,7 @@ export default function TutorProfile() {
 							emailReadOnly={true}
 							descriptionLabel="Descripción Profesional"
 							descriptionPlaceholder="Cuéntanos sobre tu experiencia y especialidades..."
-						>
-							<Input
-								label="Tarifa por Hora"
-								placeholder="25000"
-								value={profile.hourlyRate}
-								onValueChange={(value) =>
-									setProfile({ ...profile, hourlyRate: value })
-								}
-								isReadOnly={!isEditing}
-								variant={isEditing ? 'bordered' : 'flat'}
-								startContent={
-									<span className="text-default-400 text-sm">$</span>
-								}
-								endContent={
-									<span className="text-default-400 text-sm">COP</span>
-								}
-							/>
-						</ProfileFormFields>
+						/>
 					</div>
 
 					{isEditing && (
