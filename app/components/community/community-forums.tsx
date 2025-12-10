@@ -38,6 +38,7 @@ import { type ChatGroup, chatsService } from '~/lib/services/chats.service';
 import {
 	type Forum,
 	forumsService,
+	type Materia,
 	type Response,
 	type Thread,
 } from '~/lib/services/forums.service';
@@ -376,6 +377,7 @@ export function CommunityForums() {
 		threadContentLen >= MIN_LEN && threadContentLen <= 5000;
 
 	const responseLen = responseContent.trim().length;
+	const responseContentLen = responseContent.trim().length;
 	const isResponseValid = responseLen >= 5 && responseLen <= 5000;
 
 	// Define functions before useEffect
@@ -428,6 +430,9 @@ export function CommunityForums() {
 
 	// Convertir foros a topics para compatibilidad
 	const topics = useMemo(() => {
+		const user = getStorageJSON<{ id: string }>(STORAGE_KEYS.USER);
+		const userId = user?.id;
+
 		const topics: LocalTopic[] = forums.map((forum) => ({
 			id: forum.id,
 			title: forum.title,
@@ -437,7 +442,7 @@ export function CommunityForums() {
 			subject: forum.materia?.nombre || 'General',
 			pinned: pinnedById[forum.id] || false,
 			resolved: forum.closed,
-			myTopic: false,
+			myTopic: userId ? forum.creator_id === userId : false,
 			counts: {
 				replies: forum.threads?.length || 0,
 				likes: forum.likes_count || 0,
@@ -503,7 +508,20 @@ export function CommunityForums() {
 				return;
 			}
 
-			await forumsService.closeForum(forumId, userId);
+			// Verificar el estado actual del foro
+			const currentForum = forums.find((f) => f.id === forumId);
+			if (!currentForum) {
+				alert('Foro no encontrado');
+				return;
+			}
+
+			// Si está cerrado, reabrir; si está abierto, cerrar
+			if (currentForum.closed) {
+				await forumsService.reopenForum(forumId, userId);
+			} else {
+				await forumsService.closeForum(forumId, userId);
+			}
+
 			await loadForums();
 		} catch (error: unknown) {
 			console.error('Error toggling forum resolved:', error);

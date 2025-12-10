@@ -201,6 +201,21 @@ export class ForumsService {
 	}
 
 	/**
+	 * Reabrir un foro
+	 */
+	async reopenForum(forumId: string, editorId: string): Promise<Forum> {
+		try {
+			const response = await apiClient.post<{ status: string; forum: Forum }>(
+				`${this.forumsUrl}/${forumId}/reopen`,
+				{ editorId },
+			);
+			return response.data.forum;
+		} catch (error) {
+			throw this.handleError(error, 'Error al reabrir el foro');
+		}
+	}
+
+	/**
 	 * Dar like a un foro
 	 */
 	async likeForum(forumId: string): Promise<{ status: string; likes: number }> {
