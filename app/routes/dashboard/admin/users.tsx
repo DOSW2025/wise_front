@@ -104,79 +104,50 @@ export default function AdminUsers() {
 	// Fetch users
 	const fetchUsers = useCallback(async () => {
 		setLoading(true);
+		setError(null);
+
 		try {
 			const params: PaginationParams = {
 				page,
 				limit: ITEMS_PER_PAGE,
-				search: searchTerm || undefined,
-				role:
-					roleFilter && roleFilter !== ''
-						? (roleFilter as 'estudiante' | 'tutor' | 'admin')
-						: undefined,
-				status:
-					statusFilter && statusFilter !== ''
-						? (statusFilter as 'active' | 'suspended')
-						: undefined,
 			};
+
+			// Solo agregar parámetros si tienen valor
+			if (searchTerm && searchTerm.trim() !== '') {
+				params.search = searchTerm.trim();
+			}
+
+			if (roleFilter && roleFilter !== '') {
+				params.role = roleFilter as 'estudiante' | 'tutor' | 'admin';
+			}
+
+			if (statusFilter && statusFilter !== '') {
+				params.status = statusFilter as 'active' | 'suspended';
+			}
+
+			console.log('📤 Requesting users with params:', params);
 
 			const response = await getUsers(params);
 
-			// Normalize API user objects to expected AdminUserDto shape
-			const normalize = (u: any) => {
-				return {
-					id: u.id ?? u._id ?? String(u.userId ?? ''),
-					nombre:
-						u.nombre ??
-						u.firstName ??
-						u.name ??
-						(u.nombreCompleto ? String(u.nombreCompleto).split(' ')[0] : ''),
-					apellido:
-						u.apellido ??
-						u.lastName ??
-						u.surname ??
-						(u.nombreCompleto
-							? String(u.nombreCompleto).split(' ').slice(1).join(' ')
-							: ''),
-					email: u.email ?? u.correo ?? u.emailAddress ?? '',
-					rol: {
-						id: u.rol?.id ?? u.role?.id ?? u.roleId ?? null,
-						nombre: u.rol?.nombre ?? u.role?.name ?? u.role ?? u.rol ?? '',
-					},
-					estado: {
-						id: u.estado?.id ?? u.status?.id ?? u.estadoId ?? null,
-						nombre:
-							u.estado?.nombre ?? u.status?.name ?? u.status ?? u.estado ?? '',
-					},
-					avatar_url: u.avatar_url ?? u.avatarUrl ?? u.avatar ?? null,
-					createdAt:
-						u.createdAt ??
-						u.created_at ??
-						u.created ??
-						new Date().toISOString(),
-					updatedAt:
-						u.updatedAt ??
-						u.updated_at ??
-						u.updated ??
-						new Date().toISOString(),
-				} as AdminUserDto;
-			};
+			console.log('📥 Received response:', response);
 
-			setUsers((response.data || []).map(normalize));
+			setUsers(response.data || []);
 			setTotalPages(response.pagination.totalPages);
 			setTotalItems(response.pagination.totalItems);
 		} catch (error: any) {
-			console.error('Error loading users:', error);
-			if (error.config) {
-				console.error('Failed request URL:', error.config.url);
-				console.error('Failed request baseURL:', error.config.baseURL);
-			}
+			console.error('❌ Error loading users:', error);
+
 			let message =
 				'Error al cargar la lista de usuarios. Por favor intente nuevamente.';
+
 			if (error.response?.data?.message) {
 				message = Array.isArray(error.response.data.message)
 					? error.response.data.message.join(', ')
 					: error.response.data.message;
+			} else if (error.message) {
+				message = error.message;
 			}
+
 			setError(message);
 		} finally {
 			setLoading(false);
@@ -437,12 +408,14 @@ export default function AdminUsers() {
 				description="Administra los usuarios registrados en la plataforma"
 			/>
 
-			{/* Filters */}
-			{error && !actionLoading && (
+			{/* Error Display */}
+			{error && (
 				<div className="bg-danger-50 text-danger-600 p-4 rounded-lg text-sm">
 					{error}
 				</div>
 			)}
+
+			{/* Filters */}
 			<Card>
 				<CardBody>
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -455,7 +428,8 @@ export default function AdminUsers() {
 							onClear={() => handleSearch('')}
 						/>
 						<Select
-							placeholder="Filtrar por rol"
+							label="Filtrar por rol"
+							placeholder="Todos los roles"
 							selectedKeys={roleFilter ? [roleFilter] : []}
 							onChange={(e) => {
 								setRoleFilter(e.target.value);
@@ -468,7 +442,8 @@ export default function AdminUsers() {
 							<SelectItem key="admin">Administrador</SelectItem>
 						</Select>
 						<Select
-							placeholder="Filtrar por estado"
+							label="Filtrar por estado"
+							placeholder="Todos los estados"
 							selectedKeys={statusFilter ? [statusFilter] : []}
 							onChange={(e) => {
 								setStatusFilter(e.target.value);
@@ -507,7 +482,11 @@ export default function AdminUsers() {
 					loadingContent={<Spinner label="Cargando usuarios..." />}
 					emptyContent={
 						<div className="text-center py-10">
-							<p className="text-default-500">No se encontraron usuarios</p>
+							<p className="text-default-500">
+								{error
+									? 'Error al cargar usuarios'
+									: 'No se encontraron usuarios'}
+							</p>
 						</div>
 					}
 				>
