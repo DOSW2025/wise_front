@@ -54,4 +54,10 @@ export const API_ENDPOINTS = {
 		ROLE_STATISTICS: '/wise/gestion-usuarios/estadisticas/roles',
 		GROWTH_STATISTICS: '/wise/gestion-usuarios/estadisticas/crecimiento',
 	},
+	COMUNIDAD: {
+		CHATS: '/chats',
+		FORUMS: '/forums',
+		THREADS: '/threads',
+		RESPONSES: '/responses',
+	},
 } as const;
