@@ -34,7 +34,7 @@ export default function StudentProfile() {
 		name: user?.name || '',
 		email: user?.email || '',
 		phone: '',
-		location: '',
+		role: user?.role || '',
 		description: '',
 		avatar: user?.avatarUrl,
 		interests: [],
@@ -60,6 +60,7 @@ export default function StudentProfile() {
 					email: user.email,
 					interests: profileData.interests || [],
 					semester: profileData.semester || '',
+					role: profileData.role || user.role || '',
 				});
 			} catch (err) {
 				console.error('Error cargando perfil:', err);
@@ -94,7 +95,7 @@ export default function StudentProfile() {
 			name: profile.name,
 			email: profile.email,
 			phone: profile.phone,
-			location: profile.location,
+			role: profile.role,
 			description: profile.description,
 		});
 
@@ -179,6 +180,15 @@ export default function StudentProfile() {
 								label="Semestre"
 								placeholder="7"
 								value={profile.semester}
+								isReadOnly={true}
+								variant="flat"
+								description="No se puede modificar"
+							/>
+
+							<Input
+								label="Rol"
+								placeholder="Estudiante"
+								value={profile.role}
 								isReadOnly={true}
 								variant="flat"
 								description="No se puede modificar"

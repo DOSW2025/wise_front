@@ -11,7 +11,7 @@ export interface StudentProfile {
 	name: string;
 	email: string;
 	phone: string;
-	location: string;
+	role?: string;
 	description: string;
 	semester?: string;
 	interests?: string[];
@@ -144,7 +144,7 @@ export async function updateProfile(
 			name: (backendData.nombre as string) || profile.name,
 			email: (backendData.email as string) || profile.email,
 			phone: (backendData.telefono as string) || '',
-			location: profile.location, // Este campo no se actualiza en backend
+			role: (backendData.role as string) || profile.role,
 			description: (backendData.biografia as string) || '',
 			semester: profile.semester,
 			interests: profile.interests,
@@ -174,7 +174,7 @@ export async function getProfile(): Promise<StudentProfile> {
 			name: `${(backendData.nombre as string) || ''} ${(backendData.apellido as string) || ''}`.trim(),
 			email: (backendData.email as string) || '',
 			phone: (backendData.telefono as string) || '',
-			location: '', // Este campo no existe en el backend aún
+			role: (backendData.role as string) || 'estudiante', // Este campo no existe en el backend aún
 			description: (backendData.biografia as string) || '',
 			semester: (backendData.semestre as string) || '',
 			interests: (backendData.intereses as string[]) || [],

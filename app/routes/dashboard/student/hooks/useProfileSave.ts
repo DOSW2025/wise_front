@@ -5,7 +5,7 @@ interface ProfileSaveData {
 	name: string;
 	email: string;
 	phone: string;
-	location: string;
+	role?: string;
 	description: string;
 }
 
