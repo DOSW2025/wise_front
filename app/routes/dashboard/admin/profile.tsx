@@ -1,5 +1,4 @@
 import { Card, CardBody, Input } from '@heroui/react';
-import { useProfileSave } from 'app/routes/dashboard/student/hooks/useProfileSave';
 import { useEffect, useState } from 'react';
 import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
 import {
@@ -9,13 +8,25 @@ import {
 	ProfileHeader,
 } from '~/components/profile';
 import { useAuth } from '~/contexts/auth-context';
-import { useProfileForm } from './hooks/useProfileForm';
+import { useProfileFormBase } from '~/lib/hooks/useProfileFormBase';
+import { useProfileSave } from './hooks/useProfileSave';
+
+interface AdminProfileData {
+	name: string;
+	email: string;
+	phone: string;
+
+	description: string;
+	avatarUrl?: string;
+	department: string;
+	role: string;
+}
 
 export default function AdminProfile() {
 	const { user } = useAuth();
 	const [emailNotifications, setEmailNotifications] = useState(true);
 
-	// Custom hooks for managing complex state
+	// Usar directamente useProfileFormBase en lugar del wrapper local
 	const {
 		profile,
 		setProfile,
@@ -28,26 +39,26 @@ export default function AdminProfile() {
 		validateForm,
 		handleImageUpload,
 		resetForm,
-	} = useProfileForm({
+	} = useProfileFormBase<AdminProfileData>({
 		name: user?.name || '',
 		email: user?.email || '',
 		phone: '',
-		location: '',
 		description: '',
-		avatar: user?.avatarUrl,
+		avatarUrl: user?.avatarUrl,
 		department: '',
 		role: '',
 	});
 
 	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
 
+	// Sincronizar con datos del usuario
 	useEffect(() => {
 		if (user) {
 			setProfile((prev) => ({
 				...prev,
 				name: user.name,
 				email: user.email,
-				avatar: user.avatarUrl,
+				avatarUrl: user.avatarUrl,
 			}));
 		}
 	}, [user, setProfile]);
@@ -62,7 +73,6 @@ export default function AdminProfile() {
 			name: profile.name,
 			email: profile.email,
 			phone: profile.phone,
-			location: profile.location,
 			description: profile.description,
 		});
 
@@ -112,7 +122,7 @@ export default function AdminProfile() {
 
 					<div className="flex flex-col md:flex-row gap-6">
 						<ProfileAvatar
-							src={profile.avatar}
+							src={profile.avatarUrl}
 							name={profile.name}
 							isEditing={isEditing}
 							onImageChange={handleImageChange}

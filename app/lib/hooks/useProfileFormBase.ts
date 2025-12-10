@@ -13,7 +13,7 @@ export interface BaseProfileData {
 	name: string;
 	email: string;
 	phone: string;
-	location: string;
+	role: string;
 	description: string;
 	avatarUrl?: string;
 }
