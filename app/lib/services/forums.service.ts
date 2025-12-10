@@ -323,9 +323,9 @@ export class ForumsService {
 				status: string;
 				response: Response;
 			}>(this.responsesUrl, {
-				thread_id: threadId,
+				threadId,
 				content,
-				author_id: authorId,
+				authorId,
 			});
 			return response.data.response;
 		} catch (error) {
