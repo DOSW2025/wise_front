@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
 	Badge,
@@ -80,6 +80,7 @@ function TopicCard({
 	onToggleResolved,
 	onEditTopic,
 	onTogglePinned,
+	onLike,
 	edited,
 	isLoading,
 }: {
@@ -90,6 +91,7 @@ function TopicCard({
 	onToggleResolved: (id: string) => void;
 	onEditTopic: (id: string) => void;
 	onTogglePinned: (id: string) => void;
+	onLike: (id: string) => void;
 	edited?: boolean;
 	isLoading?: boolean;
 }) {
@@ -228,10 +230,18 @@ function TopicCard({
 						<MessageCircle size={16} />
 						<span>{repliesCount} respuestas</span>
 					</button>
-					<div className="flex items-center gap-1 text-default-600 text-sm">
+					<button
+						type="button"
+						className="flex items-center gap-1 text-default-600 text-sm hover:text-primary transition-colors cursor-pointer"
+						onClick={(e) => {
+							e.stopPropagation();
+							onLike(topic.id);
+						}}
+						aria-label="Dar like"
+					>
 						<ThumbsUp size={16} />
 						<span>{topic.counts.likes}</span>
-					</div>
+					</button>
 					<div className="flex items-center gap-1 text-default-600 text-sm">
 						<Eye size={16} />
 						<span>{topic.counts.views}</span>
@@ -405,6 +415,15 @@ export function CommunityForums() {
 		try {
 			const data = await forumsService.getAllForums();
 			setForums(data);
+
+			// Cargar threads locales desde el servidor
+			const threadsByForum: Record<string, Thread[]> = {};
+			for (const forum of data) {
+				if (forum.threads && forum.threads.length > 0) {
+					threadsByForum[forum.id] = forum.threads;
+				}
+			}
+			setThreadsByForumId(threadsByForum);
 		} catch (error: unknown) {
 			setForumError(getErrorMessage(error) || 'Error al cargar los foros');
 			console.error('Error loading forums:', error);
@@ -433,23 +452,29 @@ export function CommunityForums() {
 		const user = getStorageJSON<{ id: string }>(STORAGE_KEYS.USER);
 		const userId = user?.id;
 
-		const topics: LocalTopic[] = forums.map((forum) => ({
-			id: forum.id,
-			title: forum.title,
-			excerpt: forum.description || '',
-			author: forum.creator?.nombre || 'Anónimo',
-			timeAgo: formatTimeAgo(forum.created_at),
-			subject: forum.materia?.nombre || 'General',
-			pinned: pinnedById[forum.id] || false,
-			resolved: forum.closed,
-			myTopic: userId ? forum.creator_id === userId : false,
-			counts: {
-				replies: forum.threads?.length || 0,
-				likes: forum.likes_count || 0,
-				views: forum.views_count || 0,
-			},
-			forumId: forum.id,
-		}));
+		const topics: LocalTopic[] = forums.map((forum) => {
+			// Usar threads locales si existen, si no, usar los del servidor
+			const localThreads = threadsByForumId[forum.id] || forum.threads || [];
+			const repliesCount = localThreads.length;
+
+			return {
+				id: forum.id,
+				title: forum.title,
+				excerpt: forum.description || '',
+				author: forum.creator?.nombre || 'Anónimo',
+				timeAgo: formatTimeAgo(forum.created_at),
+				subject: forum.materia?.nombre || 'General',
+				pinned: pinnedById[forum.id] || false,
+				resolved: forum.closed,
+				myTopic: userId ? forum.creator_id === userId : false,
+				counts: {
+					replies: repliesCount,
+					likes: forum.likes_count || 0,
+					views: forum.views_count || 0,
+				},
+				forumId: forum.id,
+			};
+		});
 
 		// Filtrar por búsqueda
 		let filtered = search
@@ -467,7 +492,7 @@ export function CommunityForums() {
 
 		// Ordenar pinneds primero
 		return filtered.sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned));
-	}, [forums, search, subject, pinnedById]);
+	}, [forums, search, subject, pinnedById, threadsByForumId]);
 
 	const togglePinned = async (id: string) => {
 		setPinnedById((prev) => ({ ...prev, [id]: !(prev[id] ?? false) }));
@@ -528,6 +553,39 @@ export function CommunityForums() {
 			alert(
 				`Error al cambiar el estado del foro: ${getErrorMessage(error) || 'Error desconocido'}`,
 			);
+		}
+	};
+
+	const likeForum = async (forumId: string) => {
+		try {
+			await forumsService.likeForum(forumId);
+			// Actualizar el contador localmente sin recargar
+			setForums((prevForums) =>
+				prevForums.map((forum) =>
+					forum.id === forumId
+						? { ...forum, likes_count: (forum.likes_count || 0) + 1 }
+						: forum,
+				),
+			);
+		} catch (error: unknown) {
+			console.error('Error liking forum:', error);
+		}
+	};
+
+	const likeThread = async (threadId: string, forumId: string) => {
+		try {
+			await forumsService.likeThread(threadId);
+			// Actualizar el contador localmente
+			setThreadsByForumId((prev) => ({
+				...prev,
+				[forumId]: (prev[forumId] || []).map((thread) =>
+					thread.id === threadId
+						? { ...thread, likes_count: (thread.likes_count || 0) + 1 }
+						: thread,
+				),
+			}));
+		} catch (error: unknown) {
+			console.error('Error liking thread:', error);
 		}
 	};
 
@@ -613,6 +671,7 @@ export function CommunityForums() {
 			setThreadTitle('');
 			setThreadContent('');
 			setCreatingThreadForumId(null);
+			setReplyingTo(null);
 			setShowThreadsFor(forumId);
 		} catch (error: unknown) {
 			console.error('Error creating thread:', error);
@@ -754,6 +813,7 @@ export function CommunityForums() {
 										onToggleResolved={toggleForumResolved}
 										onEditTopic={openEditTopic}
 										onTogglePinned={togglePinned}
+										onLike={likeForum}
 										repliesCount={
 											threadsByForumId[t.id]?.length || t.counts.replies
 										}
@@ -885,6 +945,30 @@ export function CommunityForums() {
 															<p className="text-default-600 text-sm">
 																{thread.content}
 															</p>
+															<div className="flex items-center gap-4 mt-2">
+																<button
+																	type="button"
+																	className="flex items-center gap-1 text-default-500 text-xs hover:text-primary transition-colors cursor-pointer"
+																	onClick={() => likeThread(thread.id, t.id)}
+																>
+																	<ThumbsUp size={14} />
+																	<span>{thread.likes_count || 0}</span>
+																</button>
+																<button
+																	type="button"
+																	className="flex items-center gap-1 text-default-500 text-xs hover:text-primary transition-colors cursor-pointer"
+																	onClick={() =>
+																		setRespondingToThreadId(thread.id)
+																	}
+																>
+																	<MessageCircle size={14} />
+																	<span>
+																		{(responsesByThreadId[thread.id] ?? [])
+																			.length || 0}{' '}
+																		respuestas
+																	</span>
+																</button>
+															</div>
 															{showThreadsFor === thread.id && (
 																<div className="mt-3 pt-3 border-t border-default-200 space-y-3">
 																	<div className="space-y-2">
