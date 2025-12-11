@@ -1,14 +1,55 @@
-import { Button, Card, CardBody } from '@heroui/react';
+import { Avatar, Button, Card, CardBody, Chip, Spinner } from '@heroui/react';
+import {
+	AlertCircle,
+	BookOpen,
+	Clock,
+	MessageSquare,
+	TrendingUp,
+	Users,
+} from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
+import { useTutorDashboard } from '~/lib/hooks/useTutorDashboard';
 
 export default function TutorDashboard() {
 	const location = useLocation();
 	const isMainDashboard = location.pathname === '/dashboard/tutor';
+	const { data: dashboardData, isLoading, error } = useTutorDashboard();
 
 	if (!isMainDashboard) {
 		return <Outlet />;
 	}
+
+	if (isLoading) {
+		return (
+			<div className="flex justify-center items-center min-h-[400px]">
+				<div className="text-center">
+					<Spinner size="lg" color="primary" />
+					<p className="mt-4 text-default-600">Cargando dashboard...</p>
+				</div>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="text-center py-12">
+				<AlertCircle className="w-12 h-12 text-danger mx-auto mb-4" />
+				<h3 className="text-lg font-semibold mb-2">
+					Error al cargar el dashboard
+				</h3>
+				<p className="text-default-500">Intenta recargar la página</p>
+			</div>
+		);
+	}
+
+	const {
+		stats,
+		upcomingSessions,
+		recentRequests,
+		popularMaterials,
+		recentReviews,
+	} = dashboardData || {};
 
 	return (
 		<div className="space-y-6">
@@ -16,7 +57,7 @@ export default function TutorDashboard() {
 			<div className="flex flex-col gap-2">
 				<h1 className="text-3xl font-bold text-foreground">Panel de Tutor</h1>
 				<p className="text-default-500">
-					Gestiona tus tutorías y ve el impacto de tu trabajo.
+					Resumen de tu actividad y elementos importantes de tus secciones.
 				</p>
 			</div>
 
@@ -24,7 +65,7 @@ export default function TutorDashboard() {
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatsCard
 					title="Tutorías Realizadas"
-					value={-1}
+					value={stats?.tutoriasRealizadas || 0}
 					description="Este semestre"
 					color="success"
 					icon={
@@ -47,7 +88,7 @@ export default function TutorDashboard() {
 				/>
 				<StatsCard
 					title="Calificación Promedio"
-					value="-1"
+					value={stats?.calificacionPromedio?.toFixed(1) || '0.0'}
 					description="De 5.0 estrellas"
 					color="warning"
 					icon={
@@ -70,7 +111,7 @@ export default function TutorDashboard() {
 				/>
 				<StatsCard
 					title="Estudiantes Atendidos"
-					value={-1}
+					value={stats?.estudiantesAtendidos || 0}
 					description="Únicos este mes"
 					color="primary"
 					icon={
@@ -90,177 +131,313 @@ export default function TutorDashboard() {
 					}
 				/>
 				<StatsCard
-					title="Horas de Tutoría"
-					value={-1}
-					description="Este semestre"
-					color="default"
-					icon={
-						<svg
-							className="w-6 h-6"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-							/>
-						</svg>
-					}
+					title="Solicitudes Pendientes"
+					value={stats?.solicitudesPendientes || 0}
+					description="Requieren atención"
+					color="danger"
+					icon={<AlertCircle className="w-6 h-6" />}
 				/>
 			</div>
 
-			{/* Quick Actions */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+			{/* Main Content Grid */}
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				{/* Próximas Sesiones */}
 				<Card>
 					<CardBody className="gap-4">
-						<h2 className="text-xl font-semibold">Acciones Rápidas</h2>
-						<div className="flex flex-col gap-2">
+						<div className="flex items-center justify-between">
+							<h2 className="text-xl font-semibold flex items-center gap-2">
+								<Clock className="w-5 h-5 text-primary" />
+								Próximas Sesiones
+							</h2>
 							<Button
 								as={Link}
 								to="/dashboard/tutor/scheduled"
+								size="sm"
+								variant="light"
 								color="primary"
-								fullWidth
 							>
-								Ver Sesiones Programadas
+								Ver todas
 							</Button>
-							<Button
-								as={Link}
-								to="/dashboard/tutor/materials"
-								color="default"
-								variant="bordered"
-								fullWidth
-							>
-								Gestionar Materiales
-							</Button>
-							<Button
-								as={Link}
-								to="/dashboard/tutor/reports"
-								color="default"
-								variant="bordered"
-								fullWidth
-							>
-								Ver Reportes
-							</Button>
+						</div>
+						<div className="space-y-3">
+							{upcomingSessions?.length ? (
+								upcomingSessions.slice(0, 2).map((session) => {
+									const initials = session.studentName
+										.split(' ')
+										.map((n) => n[0])
+										.join('')
+										.toUpperCase();
+									const isToday =
+										new Date(session.date).toDateString() ===
+										new Date().toDateString();
+									return (
+										<div
+											key={session.id}
+											className="flex items-start justify-between p-3 bg-default-100 rounded-lg"
+										>
+											<div className="flex items-center gap-3">
+												<Avatar
+													src={session.studentAvatar}
+													name={initials}
+													size="sm"
+													className="bg-primary text-white"
+												/>
+												<div className="flex flex-col gap-1">
+													<p className="font-semibold text-sm">
+														{session.subject}
+													</p>
+													<p className="text-small text-default-500">
+														{session.studentName}
+													</p>
+													<p className="text-tiny text-default-400">
+														{isToday ? 'Hoy' : 'Mañana'} {session.time} -{' '}
+														{session.modality === 'virtual'
+															? 'Virtual'
+															: 'Presencial'}
+													</p>
+												</div>
+											</div>
+											<Chip
+												size="sm"
+												color={
+													session.status === 'confirmed' ? 'success' : 'warning'
+												}
+												variant="flat"
+											>
+												{session.status === 'confirmed'
+													? 'Confirmada'
+													: 'Pendiente'}
+											</Chip>
+										</div>
+									);
+								})
+							) : (
+								<p className="text-center text-default-500 py-4">
+									No hay sesiones próximas
+								</p>
+							)}
 						</div>
 					</CardBody>
 				</Card>
 
+				{/* Solicitudes Recientes */}
 				<Card>
 					<CardBody className="gap-4">
-						<h2 className="text-xl font-semibold">Próximas Sesiones</h2>
+						<div className="flex items-center justify-between">
+							<h2 className="text-xl font-semibold flex items-center gap-2">
+								<Users className="w-5 h-5 text-primary" />
+								Solicitudes Recientes
+							</h2>
+							<Button
+								as={Link}
+								to="/dashboard/tutor/requests"
+								size="sm"
+								variant="light"
+								color="primary"
+							>
+								Ver todas
+							</Button>
+						</div>
 						<div className="space-y-3">
-							<div className="flex items-start justify-between p-3 bg-default-100 rounded-lg">
-								<div className="flex flex-col gap-1">
-									<p className="font-semibold">Álgebra Lineal</p>
-									<p className="text-small text-default-500">
-										con Carlos Rodríguez
-									</p>
-									<p className="text-tiny text-default-400">Hoy a las 14:00</p>
-								</div>
-								<Button size="sm" color="primary" variant="flat">
-									Iniciar
-								</Button>
-							</div>
-							<div className="flex items-start justify-between p-3 bg-default-100 rounded-lg">
-								<div className="flex flex-col gap-1">
-									<p className="font-semibold">Estructuras de Datos</p>
-									<p className="text-small text-default-500">
-										con Ana Martínez
-									</p>
-									<p className="text-tiny text-default-400">
-										Mañana a las 16:00
-									</p>
-								</div>
-								<Button size="sm" color="primary" variant="flat">
-									Ver detalles
-								</Button>
-							</div>
+							{recentRequests?.length ? (
+								recentRequests.slice(0, 2).map((request) => {
+									const initials = request.studentName
+										.split(' ')
+										.map((n) => n[0])
+										.join('')
+										.toUpperCase();
+									const timeAgo = new Date(
+										Date.now() - new Date(request.createdAt).getTime(),
+									).getHours();
+									const bgColor =
+										request.status === 'pending'
+											? 'bg-orange-50 border border-orange-200'
+											: 'bg-green-50 border border-green-200';
+									const avatarColor =
+										request.status === 'pending'
+											? 'bg-orange-500'
+											: 'bg-green-500';
+									return (
+										<div
+											key={request.id}
+											className={`flex items-center justify-between p-3 rounded-lg ${bgColor}`}
+										>
+											<div className="flex items-center gap-3">
+												<Avatar
+													src={request.studentAvatar}
+													name={initials}
+													size="sm"
+													className={`${avatarColor} text-white`}
+												/>
+												<div>
+													<p className="font-semibold text-sm">
+														{request.studentName}
+													</p>
+													<p className="text-small text-default-600">
+														{request.subject}
+													</p>
+													<p className="text-tiny text-default-400">
+														{timeAgo > 0
+															? `Hace ${timeAgo} horas`
+															: 'Hace poco'}
+													</p>
+												</div>
+											</div>
+											<Chip
+												size="sm"
+												color={
+													request.status === 'pending' ? 'warning' : 'success'
+												}
+												variant="flat"
+											>
+												{request.status === 'pending'
+													? 'Pendiente'
+													: 'Confirmada'}
+											</Chip>
+										</div>
+									);
+								})
+							) : (
+								<p className="text-center text-default-500 py-4">
+									No hay solicitudes recientes
+								</p>
+							)}
 						</div>
 					</CardBody>
 				</Card>
 			</div>
 
-			{/* Performance Overview */}
-			<Card>
-				<CardBody className="gap-4">
-					<h2 className="text-xl font-semibold">Resumen de Desempeño</h2>
-					{/* TODO: Conectar con API - datos hardcodeados eliminados */}
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-						<div className="p-4 bg-default-50 rounded-lg">
-							<div className="flex items-center gap-2 mb-2">
-								<p className="text-sm font-semibold text-default-600">
-									Tendencia
-								</p>
-							</div>
-							<p className="text-2xl font-bold text-default-600">-1%</p>
-							<p className="text-tiny text-default-500">Sin datos de API</p>
+			{/* Secondary Content Grid */}
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				{/* Mis Materiales Populares */}
+				<Card>
+					<CardBody className="gap-4">
+						<div className="flex items-center justify-between">
+							<h2 className="text-xl font-semibold flex items-center gap-2">
+								<BookOpen className="w-5 h-5 text-primary" />
+								Mis Materiales Populares
+							</h2>
+							<Button
+								as={Link}
+								to="/dashboard/tutor/materials"
+								size="sm"
+								variant="light"
+								color="primary"
+							>
+								Ver todos
+							</Button>
 						</div>
-						<div className="p-4 bg-default-50 rounded-lg">
-							<div className="flex items-center gap-2 mb-2">
-								<p className="text-sm font-semibold text-default-600">
-									Comentarios
-								</p>
-							</div>
-							<p className="text-2xl font-bold text-default-600">-1</p>
-							<p className="text-tiny text-default-500">Sin datos de API</p>
-						</div>
-						<div className="p-4 bg-default-50 rounded-lg">
-							<div className="flex items-center gap-2 mb-2">
-								<p className="text-sm font-semibold text-default-600">
-									Insignias
-								</p>
-							</div>
-							<p className="text-2xl font-bold text-default-600">-1</p>
-							<p className="text-tiny text-default-500">Sin datos de API</p>
-						</div>
-					</div>
-				</CardBody>
-			</Card>
-
-			{/* Recent Reviews */}
-			<Card>
-				<CardBody className="gap-4">
-					<div className="flex items-center justify-between">
-						<h2 className="text-xl font-semibold">Reseñas Recientes</h2>
-						<Button
-							as={Link}
-							to="/dashboard/tutor/reports"
-							size="sm"
-							variant="light"
-							color="primary"
-						>
-							Ver todas
-						</Button>
-					</div>
-					{/* TODO: Conectar con API - Ejemplo con valores negativos para referencia */}
-					<div className="space-y-3">
-						<div className="p-4 border border-default-200 rounded-lg opacity-60">
-							<div className="flex items-start justify-between mb-2">
-								<p className="font-semibold">
-									Estudiante Ejemplo (Sin conexión)
-								</p>
-								<div className="flex items-center gap-1">
-									<svg
-										className="w-4 h-4 text-default-300 fill-current"
-										viewBox="0 0 24 24"
+						<div className="space-y-3">
+							{popularMaterials?.length ? (
+								popularMaterials.slice(0, 2).map((material) => (
+									<div
+										key={material.id}
+										className="flex items-center justify-between p-3 bg-default-100 rounded-lg"
 									>
-										<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-									</svg>
-									<span className="text-sm">-1</span>
-								</div>
-							</div>
-							<p className="text-sm text-default-600 mb-1">
-								Este es un comentario de ejemplo. Conectar con API para ver
-								datos reales.
-							</p>
-							<p className="text-tiny text-default-400">Sin fecha</p>
+										<div>
+											<p className="font-semibold text-sm">{material.nombre}</p>
+											<p className="text-small text-default-500">
+												{material.materia}
+											</p>
+											<div className="flex items-center gap-4 mt-1">
+												<span className="text-tiny text-default-400">
+													{material.descargas} descargas
+												</span>
+												<span className="text-tiny text-default-400">
+													⭐ {material.calificacion.toFixed(1)}
+												</span>
+											</div>
+										</div>
+										<div className="flex items-center gap-1">
+											<TrendingUp className="w-4 h-4 text-success" />
+											<span className="text-tiny text-success">
+												+{material.weeklyGrowth} esta semana
+											</span>
+										</div>
+									</div>
+								))
+							) : (
+								<p className="text-center text-default-500 py-4">
+									No hay materiales disponibles
+								</p>
+							)}
 						</div>
-					</div>
-				</CardBody>
-			</Card>
+					</CardBody>
+				</Card>
+
+				{/* Comentarios Recientes */}
+				<Card>
+					<CardBody className="gap-4">
+						<div className="flex items-center justify-between">
+							<h2 className="text-xl font-semibold flex items-center gap-2">
+								<MessageSquare className="w-5 h-5 text-primary" />
+								Comentarios Recientes
+							</h2>
+							<Button
+								as={Link}
+								to="/dashboard/tutor/reports"
+								size="sm"
+								variant="light"
+								color="primary"
+							>
+								Ver todos
+							</Button>
+						</div>
+						<div className="space-y-3">
+							{recentReviews?.length ? (
+								recentReviews.slice(0, 2).map((review) => {
+									const initials = review.studentName
+										.split(' ')
+										.map((n) => n[0])
+										.join('')
+										.toUpperCase();
+									const timeAgo = new Date(
+										Date.now() - new Date(review.createdAt).getTime(),
+									).getHours();
+									const stars = '⭐'.repeat(review.rating);
+									return (
+										<div
+											key={review.id}
+											className="p-3 bg-default-100 rounded-lg"
+										>
+											<div className="flex items-center justify-between mb-2">
+												<div className="flex items-center gap-2">
+													<Avatar
+														src={review.studentAvatar}
+														name={initials}
+														size="sm"
+														className="bg-blue-500 text-white"
+													/>
+													<span className="font-semibold text-sm">
+														{review.studentName}
+													</span>
+												</div>
+												<div className="flex items-center gap-1">
+													<span className="text-yellow-500">{stars}</span>
+												</div>
+											</div>
+											<p className="text-sm text-default-600 mb-1">
+												"{review.comment}"
+											</p>
+											<p className="text-tiny text-default-400">
+												{timeAgo > 24
+													? 'Ayer'
+													: timeAgo > 0
+														? `Hace ${timeAgo} horas`
+														: 'Hace poco'}
+											</p>
+										</div>
+									);
+								})
+							) : (
+								<p className="text-center text-default-500 py-4">
+									No hay comentarios recientes
+								</p>
+							)}
+						</div>
+					</CardBody>
+				</Card>
+			</div>
 		</div>
 	);
 }
