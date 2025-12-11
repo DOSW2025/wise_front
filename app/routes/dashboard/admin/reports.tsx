@@ -73,6 +73,19 @@ const WEEK_OPTIONS = [
 	{ label: '52 semanas (1 año)', value: 52 },
 ];
 
+function getGrowthStatsDescription(
+	growthStats: UserGrowthResponse | null,
+	selectedWeeks: number,
+): string {
+	if (growthStats?.period) {
+		const weeksPlural = growthStats.period.semanas > 1 ? 's' : '';
+		return `${growthStats.totalUsuariosNuevos} nuevos usuarios en las últimas ${growthStats.period.semanas} semana${weeksPlural}`;
+	}
+
+	const selectedWeeksPlural = selectedWeeks > 1 ? 's' : '';
+	return `Últimas ${selectedWeeks} semana${selectedWeeksPlural}`;
+}
+
 export default function AdminReports() {
 	const {
 		period,
@@ -276,15 +289,10 @@ export default function AdminReports() {
 												dataKey="value"
 												label={({ name, value }) => `${name}: ${value}%`}
 											>
-												{roleDistributionData.map((_entry, index) => (
+												{roleDistributionData.map((entry, index) => (
 													<Cell
 														key={entry.name}
-														fill={
-															COLORS[
-																roleDistributionData.indexOf(entry) %
-																	COLORS.length
-															]
-														}
+														fill={COLORS[index % COLORS.length]}
 													/>
 												))}
 											</Pie>
@@ -325,9 +333,7 @@ export default function AdminReports() {
 									Crecimiento de Usuarios
 								</h2>
 								<p className="text-sm text-default-500">
-									{growthStats?.period
-										? `${growthStats.totalUsuariosNuevos} nuevos usuarios en las últimas ${growthStats.period.semanas} semana${growthStats.period.semanas > 1 ? 's' : ''}`
-										: `Últimas ${selectedWeeks} semana${selectedWeeks > 1 ? 's' : ''}`}
+									{getGrowthStatsDescription(growthStats, selectedWeeks)}
 								</p>
 							</div>
 							<div className="flex gap-2 flex-wrap">

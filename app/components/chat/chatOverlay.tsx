@@ -10,7 +10,8 @@ import {
 	ModalContent,
 } from '@heroui/react';
 import { Flag, MoreVertical, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { type ChatMessage, chatsService } from '~/lib/services/chats.service';
 import MessageInput from './messageInput';
 import MessageList from './messageList';
 import ReportChatModal from './reportContent/reportChatModal';
@@ -25,6 +26,7 @@ interface Message {
 }
 
 interface ChatOverlayProps {
+	groupId?: string;
 	tutor: {
 		id: number;
 		name: string;
@@ -34,13 +36,40 @@ interface ChatOverlayProps {
 	onClose: () => void;
 }
 
-export default function ChatOverlay({ tutor, onClose }: ChatOverlayProps) {
+export default function ChatOverlay({
+	groupId,
+	tutor,
+	onClose,
+}: ChatOverlayProps) {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+	const [_isLoading, setIsLoading] = useState(false);
+
+	const loadMessages = useCallback(async () => {
+		if (!groupId) return;
+		setIsLoading(true);
+		try {
+			const data = await chatsService.getGroupMessages(groupId);
+			const convertedMessages = data.map((msg: ChatMessage) => ({
+				id: msg.id,
+				type: 'text' as const,
+				content: msg.contenido,
+				sender: 'student' as const,
+				timestamp: new Date(msg.fechaCreacion),
+			}));
+			setMessages(convertedMessages);
+		} catch (error) {
+			console.error('Error loading messages:', error);
+		} finally {
+			setIsLoading(false);
+		}
+	}, [groupId]);
 
 	useEffect(() => {
-		if (tutor) {
-			// Mensaje de bienvenida automático del tutor
+		if (groupId) {
+			loadMessages();
+		} else if (tutor) {
+			// Mensaje de bienvenida automático del tutor si no hay groupId
 			setMessages([
 				{
 					id: 'welcome',
@@ -51,33 +80,51 @@ export default function ChatOverlay({ tutor, onClose }: ChatOverlayProps) {
 				},
 			]);
 		}
-	}, [tutor]);
+	}, [tutor, groupId, loadMessages]);
 
-	function sendText(text: string) {
-		const newMessage: Message = {
-			id: Date.now().toString(),
-			type: 'text',
-			content: text,
-			sender: 'student',
-			timestamp: new Date(),
-		};
-		setMessages((prev) => [...prev, newMessage]);
-
-		// TODO: Aquí integrarías tu lógica de API para enviar el mensaje al backend
-		// Ejemplo de respuesta simulada del tutor (reemplazar con tu lógica real)
-		setTimeout(() => {
-			const reply: Message = {
-				id: (Date.now() + 1).toString(),
+	async function sendText(text: string) {
+		if (!groupId) {
+			// Comportamiento local si no hay groupId
+			const newMessage: Message = {
+				id: Date.now().toString(),
 				type: 'text',
-				content: 'Gracias por tu mensaje. Te responderé pronto.',
-				sender: 'tutor',
+				content: text,
+				sender: 'student',
 				timestamp: new Date(),
 			};
-			setMessages((prev) => [...prev, reply]);
-		}, 1500);
+			setMessages((prev) => [...prev, newMessage]);
+
+			setTimeout(() => {
+				const reply: Message = {
+					id: (Date.now() + 1).toString(),
+					type: 'text',
+					content: 'Gracias por tu mensaje. Te responderé pronto.',
+					sender: 'tutor',
+					timestamp: new Date(),
+				};
+				setMessages((prev) => [...prev, reply]);
+			}, 1500);
+			return;
+		}
+
+		// Enviar al backend
+		try {
+			const newMsg = await chatsService.sendMessage(groupId, text);
+			const message: Message = {
+				id: newMsg.id,
+				type: 'text',
+				content: newMsg.contenido,
+				sender: 'student',
+				timestamp: new Date(newMsg.fechaCreacion),
+			};
+			setMessages((prev) => [...prev, message]);
+		} catch (error) {
+			console.error('Error sending message:', error);
+		}
 	}
 
 	function sendFile(file: File) {
+		// Crear URL local para el archivo
 		const url = URL.createObjectURL(file);
 		const newMessage: Message = {
 			id: Date.now().toString(),
@@ -89,7 +136,7 @@ export default function ChatOverlay({ tutor, onClose }: ChatOverlayProps) {
 		};
 		setMessages((prev) => [...prev, newMessage]);
 
-		// TODO: Aquí subirías el archivo a tu servidor
+		// TODO: Implementar envío de archivos al backend si es necesario
 	}
 
 	function handleReport(reason: string, details: string) {
@@ -100,15 +147,6 @@ export default function ChatOverlay({ tutor, onClose }: ChatOverlayProps) {
 			details,
 			timestamp: new Date(),
 		});
-
-		// TODO: Aquí enviarías el reporte a tu API
-		// Ejemplo:
-		// await axios.post('/api/reports', {
-		//   tutorId: tutor?.id,
-		//   reason,
-		//   details,
-		//   conversationId: chatId
-		// });
 
 		// Mostrar notificación de éxito
 		alert('Reporte enviado exitosamente. Nuestro equipo lo revisará pronto.');

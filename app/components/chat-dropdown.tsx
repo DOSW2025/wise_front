@@ -9,7 +9,7 @@ import {
 	Tooltip,
 } from '@heroui/react';
 import { MessageSquare, Plus, Search } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import { CreateGroupModal } from './create-group-modal';
 
 interface Chat {
@@ -107,7 +107,7 @@ export function ChatDropdown({ onOpenChat }: Readonly<ChatDropdownProps>) {
 	const handleGroupCreated = (groupData: {
 		name: string;
 		description: string;
-		members: any[];
+		members: string[];
 	}) => {
 		const newGroup: Chat = {
 			id: (chats.length + 1).toString(),
@@ -181,42 +181,40 @@ export function ChatDropdown({ onOpenChat }: Readonly<ChatDropdownProps>) {
 							</p>
 						</DropdownItem>
 					) : null}
-					<Fragment>
-						{filteredChats.map((chat) => (
-							<DropdownItem
-								key={chat.id}
-								className={`h-auto py-3 cursor-pointer ${chat.unread ? 'bg-blue-50 data-[hover=true]:bg-blue-100' : 'data-[hover=true]:bg-default-100'}`}
-								textValue={chat.name}
-								onPress={() => handleChatClick(chat)}
-							>
-								<div className="flex gap-3 w-full">
-									<Avatar name={chat.avatar} size="md" color="primary" />
-									<div className="flex-1 min-w-0">
-										<div className="flex justify-between items-start">
-											<p
-												className={`text-sm truncate ${chat.unread ? 'font-semibold' : 'font-medium'}`}
-											>
-												{chat.name}
-											</p>
-											<p className="text-tiny text-default-400 ml-2">
-												{formatTime(chat.timestamp)}
-											</p>
-										</div>
+					{filteredChats.map((chat) => (
+						<DropdownItem
+							key={chat.id}
+							className={`h-auto py-3 cursor-pointer ${chat.unread ? 'bg-blue-50 data-[hover=true]:bg-blue-100' : 'data-[hover=true]:bg-default-100'}`}
+							textValue={chat.name}
+							onPress={() => handleChatClick(chat)}
+						>
+							<div className="flex gap-3 w-full">
+								<Avatar name={chat.avatar} size="md" color="primary" />
+								<div className="flex-1 min-w-0">
+									<div className="flex justify-between items-start">
 										<p
-											className={`text-tiny mt-1 truncate ${chat.unread ? 'text-default-700 font-medium' : 'text-default-500'}`}
+											className={`text-sm truncate ${chat.unread ? 'font-semibold' : 'font-medium'}`}
 										>
-											{chat.lastMessage}
+											{chat.name}
 										</p>
-										{chat.unread && (
-											<div className="flex justify-end mt-1">
-												<span className="w-2 h-2 bg-primary rounded-full"></span>
-											</div>
-										)}
+										<p className="text-tiny text-default-400 ml-2">
+											{formatTime(chat.timestamp)}
+										</p>
 									</div>
+									<p
+										className={`text-tiny mt-1 truncate ${chat.unread ? 'text-default-700 font-medium' : 'text-default-500'}`}
+									>
+										{chat.lastMessage}
+									</p>
+									{chat.unread && (
+										<div className="flex justify-end mt-1">
+											<span className="w-2 h-2 bg-primary rounded-full"></span>
+										</div>
+									)}
 								</div>
-							</DropdownItem>
-						))}
-					</Fragment>
+							</div>
+						</DropdownItem>
+					))}
 				</DropdownMenu>
 			</Dropdown>
 

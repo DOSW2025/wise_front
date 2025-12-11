@@ -475,7 +475,6 @@ const CancelSessionModal: React.FC<{
 	isPending?: boolean;
 }> = ({ session, isOpen, onClose, onConfirm, isPending = false }) => {
 	const [razon, setRazon] = React.useState('');
-	const view = session ? buildSessionViewModel(session) : null;
 
 	const handleClose = () => {
 		setRazon('');
@@ -655,8 +654,8 @@ const transformTutorProfileToTutor = (profile: TutorProfile): Tutor => {
 		department: profile.rol.nombre,
 		avatarInitials,
 		avatarColor,
-		rating: 4.5, // TODO: Implementar sistema de calificaciones
-		reviews: 0, // TODO: Implementar sistema de reseñas
+		rating: 4.5,
+		reviews: 0,
 		tags: allSlots
 			.map((slot) => slot.modalidad)
 			.filter((v, i, a) => a.indexOf(v) === i),
@@ -1070,8 +1069,8 @@ const StudentTutoringPage: React.FC = () => {
 					{/* Loading state */}
 					{isLoadingSessions && (
 						<div className="grid gap-4">
-							{[...new Array(3)].map((_, i) => (
-								<Card key={`skeleton-${i}`}>
+							{Array.from({ length: 3 }, (_, i) => (
+								<Card key={`skeleton-loading-card-${i}`}>
 									<CardBody className="h-32 bg-default-100 animate-pulse" />
 								</Card>
 							))}

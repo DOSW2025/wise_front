@@ -13,7 +13,7 @@ import {
 	CheckCircle,
 	FileText,
 } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 
 interface Notification {
 	id: string;
@@ -149,53 +149,51 @@ export function NotificationsDropdown() {
 						</p>
 					</DropdownItem>
 				) : null}
-				<Fragment>
-					{notifications.map((notification) => (
-						<DropdownItem
-							key={notification.id}
-							className="h-auto py-3 data-[hover=true]:bg-default-100"
-							textValue={notification.title}
-						>
-							<div className="flex gap-3 w-full relative">
-								<div className="flex-shrink-0 mt-0.5">
-									{getNotificationIcon(notification.type)}
-								</div>
-								<div className="flex-1 min-w-0">
-									<div className="flex justify-between items-start gap-2">
-										<p
-											className={`text-sm truncate ${notification.read === false ? 'font-semibold' : 'font-medium'}`}
-										>
-											{notification.title}
-										</p>
-										{notification.read === false && (
-											<span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5"></span>
-										)}
-									</div>
-									<p className="text-tiny text-default-600 mt-1">
-										{notification.message}
+				{notifications.map((notification) => (
+					<DropdownItem
+						key={notification.id}
+						className="h-auto py-3 data-[hover=true]:bg-default-100"
+						textValue={notification.title}
+					>
+						<div className="flex gap-3 w-full relative">
+							<div className="flex-shrink-0 mt-0.5">
+								{getNotificationIcon(notification.type)}
+							</div>
+							<div className="flex-1 min-w-0">
+								<div className="flex justify-between items-start gap-2">
+									<p
+										className={`text-sm truncate ${notification.read === false ? 'font-semibold' : 'font-medium'}`}
+									>
+										{notification.title}
 									</p>
-									<div className="flex justify-between items-center mt-2">
-										<p className="text-tiny text-default-400">
-											{formatTime(notification.timestamp)}
-										</p>
-										{notification.read === false && (
-											<button
-												type="button"
-												onClick={(e) => {
-													e.stopPropagation();
-													markAsRead(notification.id);
-												}}
-												className="text-xs text-primary hover:underline"
-											>
-												Marcar como leída
-											</button>
-										)}
-									</div>
+									{notification.read === false && (
+										<span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5"></span>
+									)}
+								</div>
+								<p className="text-tiny text-default-600 mt-1">
+									{notification.message}
+								</p>
+								<div className="flex justify-between items-center mt-2">
+									<p className="text-tiny text-default-400">
+										{formatTime(notification.timestamp)}
+									</p>
+									{notification.read === false && (
+										<button
+											type="button"
+											onClick={(e) => {
+												e.stopPropagation();
+												markAsRead(notification.id);
+											}}
+											className="text-xs text-primary hover:underline"
+										>
+											Marcar como leída
+										</button>
+									)}
 								</div>
 							</div>
-						</DropdownItem>
-					))}
-				</Fragment>
+						</div>
+					</DropdownItem>
+				))}
 			</DropdownMenu>
 		</Dropdown>
 	);

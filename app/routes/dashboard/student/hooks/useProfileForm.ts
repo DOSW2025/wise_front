@@ -4,11 +4,10 @@ interface ProfileData {
 	name: string;
 	email: string;
 	phone: string;
-	location: string;
+	role: string;
 	description: string;
-	avatar?: string;
+	avatarUrl?: string;
 	interests: string[];
-	career: string;
 	semester: string;
 }
 

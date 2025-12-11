@@ -1,12 +1,12 @@
 import { Input, Textarea } from '@heroui/react';
-import { Mail, MapPin, Phone } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import type { FormErrors } from '~/lib/hooks/useProfileFormBase';
 
 interface BaseProfileData {
 	name: string;
 	email: string;
 	phone: string;
-	location: string;
+	role: string;
 	description: string;
 }
 
@@ -89,18 +89,20 @@ export function ProfileFormFields<T extends BaseProfileData>({
 					errorMessage={formErrors.phone}
 					startContent={<Phone className="w-4 h-4 text-default-400" />}
 				/>
+				{/*
 				<Input
-					label="Ubicación"
-					placeholder="Ciudad, País"
-					value={profile.location}
+					label="Role"
+					placeholder="Tu rol en la plataforma"
+					value={profile.role}
 					onValueChange={(value) => {
-						onProfileChange({ ...profile, location: value });
-						onErrorClear('location');
+						onProfileChange({ ...profile, role: value });
+						onErrorClear('role');
 					}}
 					isReadOnly={!isEditing}
 					variant={isEditing ? 'bordered' : 'flat'}
 					startContent={<MapPin className="w-4 h-4 text-default-400" />}
 				/>
+	*/}
 				{children}
 			</div>
 

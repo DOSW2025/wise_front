@@ -102,15 +102,15 @@ export function UserStatisticsCard() {
 	const { resumen } = statistics;
 
 	return (
-		<div className="relative h-full">
+		<div className="relative h-full w-full">
 			<Card
-				className={`cursor-pointer hover:shadow-lg transition-all duration-300 h-full ${
+				className={`cursor-pointer hover:shadow-lg transition-all duration-300 w-full h-full ${
 					isExpanded ? 'shadow-2xl z-10' : ''
 				}`}
 				isPressable
 				onPress={handleCardClick}
 			>
-				<CardBody className="gap-4">
+				<CardBody className="gap-4 w-full">
 					{/* Header - Always Visible */}
 					<div className="flex items-start justify-between">
 						<div className="flex flex-col gap-1">
@@ -165,7 +165,7 @@ export function UserStatisticsCard() {
 						</h3>
 
 						{/* Usuarios Activos */}
-						<div className="space-y-2">
+						<div className="space-y-2 ">
 							<div className="flex items-center justify-between">
 								<div className="flex items-center gap-2">
 									<div className="w-3 h-3 rounded-full bg-success" />

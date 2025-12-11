@@ -43,8 +43,30 @@ export const API_ENDPOINTS = {
 		ME: '/wise/auth/me',
 	},
 	TUTOR: {
+		BASE: '/wise/tutor',
 		PROFILE: '/wise/tutor/profile',
+		STATS: '/wise/tutor/stats',
+		SESSIONS: {
+			UPCOMING: '/wise/tutor/sessions/upcoming',
+			SCHEDULED: '/wise/tutor/sessions/scheduled',
+		},
+		REQUESTS: {
+			RECENT: '/wise/tutor/requests/recent',
+			PENDING: '/wise/tutor/requests/pending',
+		},
+		MATERIALS: {
+			POPULAR: '/wise/tutor/materials/popular',
+			MY_MATERIALS: '/wise/tutor/materials/mine',
+		},
+		REVIEWS: {
+			RECENT: '/wise/tutor/reviews/recent',
+		},
 	},
+	STUDENT: {
+		PROFILE: '/wise/gestion-usuarios/me/info-personal',
+		GET_PROFILE: '/wise/gestion-usuarios/me', // 👈 AGREGAR ESTO
+	},
+
 	USERS: {
 		LIST: '/wise/gestion-usuarios',
 		UPDATE_ROLE: '/wise/gestion-usuarios/:id/rol',
@@ -67,5 +89,11 @@ export const API_ENDPOINTS = {
 		CONFIRM_SESSION: '/wise/tutorias/sessions/{id}/confirmar',
 		REJECT_SESSION: '/wise/tutorias/sessions/{id}/rechazar',
 		PENDING_SESSIONS: '/wise/tutorias/{id}/pending-sessions',
+	},
+	COMUNIDAD: {
+		CHATS: '/chats',
+		FORUMS: '/forums',
+		THREADS: '/threads',
+		RESPONSES: '/responses',
 	},
 } as const;

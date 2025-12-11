@@ -1,3 +1,5 @@
+﻿'use client';
+
 import {
 	Badge,
 	Button,
@@ -15,13 +17,14 @@ import {
 	Progress,
 	Select,
 	SelectItem,
-	Tab,
-	Tabs,
+	Spinner,
 	Textarea,
 	Tooltip,
 } from '@heroui/react';
 import {
+	AlertCircle,
 	CheckCircle2,
+	ChevronDown,
 	Eye,
 	MessageCircle,
 	Pencil,
@@ -30,9 +33,18 @@ import {
 	RotateCcw,
 	ThumbsUp,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { type ChatGroup, chatsService } from '~/lib/services/chats.service';
+import {
+	type Forum,
+	forumsService,
+	type Materia,
+	type Response,
+	type Thread,
+} from '~/lib/services/forums.service';
+import { getStorageJSON, STORAGE_KEYS } from '~/lib/utils/storage';
 
-type Topic = {
+type LocalTopic = {
 	id: string;
 	title: string;
 	excerpt: string;
@@ -43,14 +55,7 @@ type Topic = {
 	resolved?: boolean;
 	myTopic?: boolean;
 	counts: { replies: number; likes: number; views: number };
-};
-
-type Reply = {
-	id: string;
-	author: string; // Nombre visible
-	timeAgo: string;
-	content: string;
-	mine?: boolean; // Si pertenece al usuario actual
+	forumId: string;
 };
 
 const SUBJECTS = [
@@ -62,42 +67,10 @@ const SUBJECTS = [
 	'Lenguaje',
 ];
 
-const SAMPLE_TOPICS: Topic[] = [
-	{
-		id: 't1',
-		title: '¿Cómo resolver integrales por sustitución trigonométrica?',
-		excerpt:
-			'Tengo dudas sobre cuándo aplicar sustitución trigonométrica en integrales. ¿Alguien puede explicar los casos más comunes?',
-		author: 'María García',
-		timeAgo: 'Hace 5 min',
-		subject: 'Matemáticas',
-		pinned: true,
-		resolved: false,
-		counts: { replies: 2, likes: 23, views: 234 },
-	},
-	{
-		id: 't2',
-		title: 'Mejores prácticas para estructuras de datos en Python',
-		excerpt:
-			'¿Qué estructura de datos recomiendan usar para implementar un sistema de caché? Estoy entre diccionarios y OrderedDict…',
-		author: 'Carlos Pérez',
-		timeAgo: 'Hace 1 h',
-		subject: 'Programación',
-		resolved: true,
-		myTopic: true,
-		counts: { replies: 5, likes: 18, views: 517 },
-	},
-	{
-		id: 't3',
-		title: 'Duda rápida sobre vectores en Física',
-		excerpt:
-			'Si tengo dos vectores perpendiculares, ¿la magnitud de la suma siempre es la hipotenusa? ¿Hay contraejemplos?',
-		author: 'Ana Torres',
-		timeAgo: 'Ayer',
-		subject: 'Física',
-		counts: { replies: 3, likes: 9, views: 120 },
-	},
-];
+function getErrorMessage(error: unknown): string {
+	if (error instanceof Error) return error.message;
+	return String(error);
+}
 
 function TopicCard({
 	topic,
@@ -107,24 +80,25 @@ function TopicCard({
 	onToggleResolved,
 	onEditTopic,
 	onTogglePinned,
-	// onOpenDetails removed
+	onLike,
 	edited,
+	isLoading,
 }: {
-	topic: Topic;
+	topic: LocalTopic;
 	onReply: (id: string) => void;
 	onToggleReplies: (id: string) => void;
 	repliesCount: number;
 	onToggleResolved: (id: string) => void;
 	onEditTopic: (id: string) => void;
 	onTogglePinned: (id: string) => void;
-	// onOpenDetails: (topic: Topic) => void;
+	onLike: (id: string) => void;
 	edited?: boolean;
+	isLoading?: boolean;
 }) {
 	return (
 		<Card
 			shadow="sm"
 			className="border-1 border-default-200 cursor-pointer hover:border-primary-300 transition-colors"
-			// onClick={() => onOpenDetails(topic)}
 		>
 			<CardBody className="gap-3">
 				<div className="flex items-center gap-2 text-sm">
@@ -161,6 +135,7 @@ function TopicCard({
 								color={topic.pinned ? 'primary' : 'default'}
 								onPress={() => onTogglePinned(topic.id)}
 								onClick={(e) => e.stopPropagation()}
+								isDisabled={isLoading}
 							>
 								<Pin
 									size={16}
@@ -179,6 +154,7 @@ function TopicCard({
 									className="rounded-medium"
 									onPress={() => onEditTopic(topic.id)}
 									onClick={(e) => e.stopPropagation()}
+									isDisabled={isLoading}
 								>
 									<Pencil size={16} />
 								</Button>
@@ -198,6 +174,7 @@ function TopicCard({
 										className="rounded-medium"
 										onPress={() => onToggleResolved(topic.id)}
 										onClick={(e) => e.stopPropagation()}
+										isDisabled={isLoading}
 									>
 										<RotateCcw size={16} />
 									</Button>
@@ -217,6 +194,7 @@ function TopicCard({
 										className="rounded-medium"
 										onPress={() => onToggleResolved(topic.id)}
 										onClick={(e) => e.stopPropagation()}
+										isDisabled={isLoading}
 									>
 										<CheckCircle2 size={16} />
 									</Button>
@@ -252,10 +230,18 @@ function TopicCard({
 						<MessageCircle size={16} />
 						<span>{repliesCount} respuestas</span>
 					</button>
-					<div className="flex items-center gap-1 text-default-600 text-sm">
+					<button
+						type="button"
+						className="flex items-center gap-1 text-default-600 text-sm hover:text-primary transition-colors cursor-pointer"
+						onClick={(e) => {
+							e.stopPropagation();
+							onLike(topic.id);
+						}}
+						aria-label="Dar like"
+					>
 						<ThumbsUp size={16} />
 						<span>{topic.counts.likes}</span>
-					</div>
+					</button>
 					<div className="flex items-center gap-1 text-default-600 text-sm">
 						<Eye size={16} />
 						<span>{topic.counts.views}</span>
@@ -268,6 +254,7 @@ function TopicCard({
 							variant="flat"
 							startContent={<Plus size={16} />}
 							onPress={() => onReply(topic.id)}
+							isDisabled={isLoading}
 						>
 							Crear hilo
 						</Button>
@@ -279,20 +266,50 @@ function TopicCard({
 }
 
 function GroupChatCard() {
+	const [chats, setChats] = useState<ChatGroup[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
+
+	const loadChats = async () => {
+		setIsLoading(true);
+		try {
+			const data = await chatsService.getAllGroups();
+			setChats(data);
+		} catch (error) {
+			console.error('Error loading chats:', error);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: loadChats should only run once on mount
+	useEffect(() => {
+		loadChats();
+	}, []);
+
 	return (
 		<Card className="border-1 border-default-200" shadow="sm">
 			<CardBody className="gap-3">
 				<div className="flex items-center justify-between">
 					<h3 className="text-medium font-semibold">Chat Grupal</h3>
-					<Badge color="primary" content="9" shape="circle" size="sm">
+					<Badge
+						color="primary"
+						content={chats.length}
+						shape="circle"
+						size="sm"
+					>
 						<div />
 					</Badge>
 				</div>
 				<p className="text-sm text-default-500">
 					Conecta en tiempo real con otros estudiantes y tutores.
 				</p>
-				<Button color="primary" variant="flat">
-					Abrir chat
+				<Button
+					color="primary"
+					variant="flat"
+					isLoading={isLoading}
+					onPress={loadChats}
+				>
+					{isLoading ? 'Cargando...' : 'Abrir chat'}
 				</Button>
 			</CardBody>
 		</Card>
@@ -304,140 +321,411 @@ export function CommunityForums() {
 	const [subject, setSubject] = useState('Todos');
 	const [isOpen, setIsOpen] = useState(false);
 	const [title, setTitle] = useState('');
+	const [description, setDescription] = useState('');
+	const [selectedMateriaForCreate, setSelectedMateriaForCreate] =
+		useState<string>('');
 	const MIN_LEN = 15;
 	const MAX_LEN = 50;
-	const [resolvedById, setResolvedById] = useState<Record<string, boolean>>(
-		() => Object.fromEntries(SAMPLE_TOPICS.map((t) => [t.id, !!t.resolved])),
-	);
-	const [pinnedById, setPinnedById] = useState<Record<string, boolean>>(() =>
-		Object.fromEntries(SAMPLE_TOPICS.map((t) => [t.id, !!t.pinned])),
-	);
-	const [titleById, setTitleById] = useState<Record<string, string>>(() =>
-		Object.fromEntries(SAMPLE_TOPICS.map((t) => [t.id, t.title])),
-	);
-	const [subjectById, setSubjectById] = useState<Record<string, string>>(() =>
-		Object.fromEntries(SAMPLE_TOPICS.map((t) => [t.id, t.subject])),
-	);
-	const [editedById, setEditedById] = useState<Record<string, boolean>>(
-		() => ({}),
-	);
 
+	// State para materias
+	const [materias, setMaterias] = useState<Materia[]>([]);
+	const [isLoadingMaterias, setIsLoadingMaterias] = useState(true);
+
+	// State para carga de foros
+	const [forums, setForums] = useState<Forum[]>([]);
+	const [isLoadingForums, setIsLoadingForums] = useState(true);
+	const [forumError, setForumError] = useState<string | null>(null);
+
+	// State para edición y operaciones
+	const [pinnedById, setPinnedById] = useState<Record<string, boolean>>({});
+	const [editedById, setEditedById] = useState<Record<string, boolean>>({});
 	const [isTopicEditOpen, setIsTopicEditOpen] = useState(false);
 	const [editingTopicIdModal, setEditingTopicIdModal] = useState<string | null>(
 		null,
 	);
 	const [editTopicTitle, setEditTopicTitle] = useState('');
-	const [editTopicSubject, setEditTopicSubject] = useState('Matemáticas');
-	const editTitleLen = editTopicTitle.trim().length;
-	const isEditTitleTooShort = editTitleLen > 0 && editTitleLen < MIN_LEN;
-	const isEditTitleValid = editTitleLen >= MIN_LEN && editTitleLen <= MAX_LEN;
+
+	// State para hilos y respuestas
+	const [threadsByForumId, setThreadsByForumId] = useState<
+		Record<string, Thread[]>
+	>({});
+	const [responsesByThreadId, setResponsesByThreadId] = useState<
+		Record<string, Response[]>
+	>({});
+	const [_creatingThreadForumId, setCreatingThreadForumId] = useState<
+		string | null
+	>(null);
+	const [showThreadsFor, setShowThreadsFor] = useState<string | null>(null);
+	const [threadTitle, setThreadTitle] = useState('');
+	const [threadContent, setThreadContent] = useState('');
+	const [isLoadingThreads, setIsLoadingThreads] = useState(false);
+
+	// State para respuestas a hilos
+	const [respondingToThreadId, setRespondingToThreadId] = useState<
+		string | null
+	>(null);
+	const [responseContent, setResponseContent] = useState('');
+	const [isLoadingResponses, setIsLoadingResponses] = useState(false);
+
+	// State para respuestas a tópicos (crear threads)
+	const [replyingTo, setReplyingTo] = useState<string | null>(null);
+	const [showRepliesFor, setShowRepliesFor] = useState<string | null>(null);
+
 	const titleLen = title.trim().length;
 	const isTooShort = titleLen > 0 && titleLen < MIN_LEN;
 	const isValidTitle = titleLen >= MIN_LEN && titleLen <= MAX_LEN;
-	const [replyingTo, setReplyingTo] = useState<string | null>(null);
-	const [showRepliesFor, setShowRepliesFor] = useState<string | null>(null);
-	const [replyType, setReplyType] = useState<'texto' | 'imagen' | 'link'>(
-		'texto',
-	);
-	const [replyText, setReplyText] = useState('');
-	const [replyImage, setReplyImage] = useState<File | null>(null);
-	const [replyLink, setReplyLink] = useState('');
-	// Vista de detalle eliminada en favor de crear hilos directamente
 
-	const initialReplies: Record<string, Reply[]> = useMemo(
-		() => ({
-			t1: [
-				{
-					id: 'r1',
-					author: 'Tú',
-					timeAgo: 'Hace 2 min',
-					content: 'Mensaje de ejemplo editable para demostrar el flujo.',
-					mine: true,
-				},
-				{
-					id: 'r2',
-					author: 'Ana Torres',
-					timeAgo: 'Hace 9 min',
-					content: 'Respuesta de otra persona para comparar permisos.',
-				},
-			],
-			t2: [],
-			t3: [],
-		}),
-		[],
-	);
-	const [replies, setReplies] =
-		useState<Record<string, Reply[]>>(initialReplies);
-	const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
-	const [editingText, setEditingText] = useState('');
-	const [isEditOpen, setIsEditOpen] = useState(false);
-	const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
-	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-	const [deleteTopicId, setDeleteTopicId] = useState<string | null>(null);
-	const [deleteReplyId, setDeleteReplyId] = useState<string | null>(null);
-	const EDIT_MIN = 5;
-	const editLen = editingText.trim().length;
-	const isEditValid = editLen >= EDIT_MIN;
+	const editTitleLen = editTopicTitle.trim().length;
+	const isEditTitleTooShort = editTitleLen > 0 && editTitleLen < MIN_LEN;
+	const isEditTitleValid = editTitleLen >= MIN_LEN && editTitleLen <= MAX_LEN;
 
+	const threadTitleLen = threadTitle.trim().length;
+	const isThreadTitleValid =
+		threadTitleLen >= MIN_LEN && threadTitleLen <= MAX_LEN;
+	const threadContentLen = threadContent.trim().length;
+	const isThreadContentValid =
+		threadContentLen >= MIN_LEN && threadContentLen <= 5000;
+
+	const responseLen = responseContent.trim().length;
+	const responseContentLen = responseContent.trim().length;
+	const isResponseValid = responseLen >= 5 && responseLen <= 5000;
+
+	// Define functions before useEffect
+	const loadMaterias = async () => {
+		setIsLoadingMaterias(true);
+		try {
+			const data = await forumsService.getMaterias();
+			console.log('Materias loaded:', data);
+			setMaterias(data);
+			// Inicializar con la primera materia si no hay ninguna seleccionada
+			if (data.length > 0 && !selectedMateriaForCreate) {
+				console.log('Setting initial materia:', data[0].codigo);
+				setSelectedMateriaForCreate(data[0].codigo);
+			}
+		} catch (error: unknown) {
+			console.error('Error loading materias:', error);
+		} finally {
+			setIsLoadingMaterias(false);
+		}
+	};
+
+	const loadForums = async () => {
+		setIsLoadingForums(true);
+		setForumError(null);
+		try {
+			const data = await forumsService.getAllForums();
+			setForums(data);
+
+			// Cargar threads locales desde el servidor
+			const threadsByForum: Record<string, Thread[]> = {};
+			for (const forum of data) {
+				if (forum.threads && forum.threads.length > 0) {
+					threadsByForum[forum.id] = forum.threads;
+				}
+			}
+			setThreadsByForumId(threadsByForum);
+		} catch (error: unknown) {
+			setForumError(getErrorMessage(error) || 'Error al cargar los foros');
+			console.error('Error loading forums:', error);
+		} finally {
+			setIsLoadingForums(false);
+		}
+	};
+
+	// Cargar foros y materias al montar el componente
+	// biome-ignore lint/correctness/useExhaustiveDependencies: Functions should only run once on mount
+	useEffect(() => {
+		loadForums();
+		loadMaterias();
+	}, []);
+
+	// Debug: ver cuando cambia la materia seleccionada
+	useEffect(() => {
+		console.log(
+			'selectedMateriaForCreate changed to:',
+			selectedMateriaForCreate,
+		);
+	}, [selectedMateriaForCreate]);
+
+	// Convertir foros a topics para compatibilidad
 	const topics = useMemo(() => {
-		const base = SAMPLE_TOPICS.map((t) => ({
-			...t,
-			title: titleById[t.id] ?? t.title,
-			subject: subjectById[t.id] ?? t.subject,
-			pinned: pinnedById[t.id] ?? t.pinned,
-			resolved: resolvedById[t.id] ?? t.resolved,
-		}));
-		const bySubject =
-			SUBJECTS.includes(subject) && subject !== 'Todos'
-				? base.filter((t) => t.subject === subject)
-				: base;
-		const bySearch = search
-			? bySubject.filter(
+		const user = getStorageJSON<{ id: string }>(STORAGE_KEYS.USER);
+		const userId = user?.id;
+
+		const topics: LocalTopic[] = forums.map((forum) => {
+			// Usar threads locales si existen, si no, usar los del servidor
+			const localThreads = threadsByForumId[forum.id] || forum.threads || [];
+			const repliesCount = localThreads.length;
+
+			return {
+				id: forum.id,
+				title: forum.title,
+				excerpt: forum.description || '',
+				author: forum.creator?.nombre || 'Anónimo',
+				timeAgo: formatTimeAgo(forum.created_at),
+				subject: forum.materia?.nombre || 'General',
+				pinned: pinnedById[forum.id] || false,
+				resolved: forum.closed,
+				myTopic: userId ? forum.creator_id === userId : false,
+				counts: {
+					replies: repliesCount,
+					likes: forum.likes_count || 0,
+					views: forum.views_count || 0,
+				},
+				forumId: forum.id,
+			};
+		});
+
+		// Filtrar por búsqueda
+		let filtered = search
+			? topics.filter(
 					(t) =>
 						t.title.toLowerCase().includes(search.toLowerCase()) ||
 						t.excerpt.toLowerCase().includes(search.toLowerCase()),
 				)
-			: bySubject;
-		// Pinned first
-		const sorted = [...bySearch].sort(
-			(a, b) => Number(!!b.pinned) - Number(!!a.pinned),
-		);
-		return sorted;
-	}, [search, subject, resolvedById, pinnedById, titleById, subjectById]);
+			: topics;
 
-	const toggleResolved = (id: string) => {
-		setResolvedById((prev) => ({ ...prev, [id]: !(prev[id] ?? false) }));
-	};
+		// Filtrar por materia
+		if (subject !== 'Todos') {
+			filtered = filtered.filter((t) => t.subject === subject);
+		}
 
-	const togglePinned = (id: string) => {
+		// Ordenar pinneds primero
+		return filtered.sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned));
+	}, [forums, search, subject, pinnedById, threadsByForumId]);
+
+	const togglePinned = async (id: string) => {
 		setPinnedById((prev) => ({ ...prev, [id]: !(prev[id] ?? false) }));
 	};
 
 	const openEditTopic = (id: string) => {
-		const currentTitle =
-			titleById[id] ?? SAMPLE_TOPICS.find((t) => t.id === id)?.title ?? '';
-		const currentSubject =
-			subjectById[id] ??
-			SAMPLE_TOPICS.find((t) => t.id === id)?.subject ??
-			'Matemáticas';
-		setEditingTopicIdModal(id);
-		setEditTopicTitle(currentTitle);
-		setEditTopicSubject(currentSubject);
-		setIsTopicEditOpen(true);
+		const forum = forums.find((f) => f.id === id);
+		if (forum) {
+			setEditingTopicIdModal(id);
+			setEditTopicTitle(forum.title);
+			setIsTopicEditOpen(true);
+		}
 	};
 
-	const saveEditTopic = () => {
-		if (!isEditTitleValid) return;
-		if (!editingTopicIdModal) return;
-		const id = editingTopicIdModal;
-		setTitleById((prev) => ({ ...prev, [id]: editTopicTitle }));
-		setSubjectById((prev) => ({ ...prev, [id]: editTopicSubject }));
-		setEditedById((prev) => ({ ...prev, [id]: true }));
-		setIsTopicEditOpen(false);
-		setEditingTopicIdModal(null);
+	const saveEditTopic = async () => {
+		if (!isEditTitleValid || !editingTopicIdModal) return;
+
+		try {
+			await forumsService.editForum(editingTopicIdModal, {
+				title: editTopicTitle,
+			});
+			setEditedById((prev) => ({ ...prev, [editingTopicIdModal]: true }));
+			await loadForums();
+			setIsTopicEditOpen(false);
+			setEditingTopicIdModal(null);
+		} catch (error: unknown) {
+			console.error('Error editing forum:', error);
+		}
 	};
 
-	// Detalle de foro desactivado
+	const toggleForumResolved = async (forumId: string) => {
+		try {
+			const user = getStorageJSON<{ id: string }>(STORAGE_KEYS.USER);
+			const userId = user?.id;
+			if (!userId) {
+				console.error('User ID not found');
+				alert('No se pudo obtener tu ID de usuario');
+				return;
+			}
+
+			// Verificar el estado actual del foro
+			const currentForum = forums.find((f) => f.id === forumId);
+			if (!currentForum) {
+				alert('Foro no encontrado');
+				return;
+			}
+
+			// Si está cerrado, reabrir; si está abierto, cerrar
+			if (currentForum.closed) {
+				await forumsService.reopenForum(forumId, userId);
+			} else {
+				await forumsService.closeForum(forumId, userId);
+			}
+
+			await loadForums();
+		} catch (error: unknown) {
+			console.error('Error toggling forum resolved:', error);
+			alert(
+				`Error al cambiar el estado del foro: ${getErrorMessage(error) || 'Error desconocido'}`,
+			);
+		}
+	};
+
+	const likeForum = async (forumId: string) => {
+		try {
+			await forumsService.likeForum(forumId);
+			// Actualizar el contador localmente sin recargar
+			setForums((prevForums) =>
+				prevForums.map((forum) =>
+					forum.id === forumId
+						? { ...forum, likes_count: (forum.likes_count || 0) + 1 }
+						: forum,
+				),
+			);
+		} catch (error: unknown) {
+			console.error('Error liking forum:', error);
+		}
+	};
+
+	const likeThread = async (threadId: string, forumId: string) => {
+		try {
+			await forumsService.likeThread(threadId);
+			// Actualizar el contador localmente
+			setThreadsByForumId((prev) => ({
+				...prev,
+				[forumId]: (prev[forumId] || []).map((thread) =>
+					thread.id === threadId
+						? { ...thread, likes_count: (thread.likes_count || 0) + 1 }
+						: thread,
+				),
+			}));
+		} catch (error: unknown) {
+			console.error('Error liking thread:', error);
+		}
+	};
+
+	const createForum = async (onClose: () => void) => {
+		if (!isValidTitle) return;
+
+		try {
+			const user = getStorageJSON<{ id: string }>(STORAGE_KEYS.USER);
+			const userId = user?.id;
+
+			// Usar la materia seleccionada en el modal o la primera disponible
+			const materiaCode = selectedMateriaForCreate || materias[0]?.codigo;
+
+			// Buscar la materia seleccionada por su código
+			const selectedMateria = materias.find((m) => m.codigo === materiaCode);
+			if (!selectedMateria) {
+				console.error('No se ha seleccionado una materia válida');
+				alert('Por favor selecciona una materia');
+				return;
+			}
+
+			console.log('Creating forum with:', {
+				title,
+				materiaId: selectedMateria.id,
+				userId,
+				description: description || undefined,
+			});
+
+			await forumsService.createForum(
+				title,
+				selectedMateria.id,
+				userId || '',
+				description || undefined,
+			);
+			await loadForums();
+			setTitle('');
+			setDescription('');
+			setSelectedMateriaForCreate('');
+			onClose();
+		} catch (error: unknown) {
+			console.error('Error creating forum:', error);
+			alert(
+				`Error al crear el foro: ${getErrorMessage(error) || 'Error desconocido'}`,
+			);
+		}
+	};
+
+	const loadThreadsForForum = async (forumId: string) => {
+		setIsLoadingThreads(true);
+		try {
+			const forum = await forumsService.getForumById(forumId);
+			if (forum.threads) {
+				setThreadsByForumId((prev) => ({
+					...prev,
+					[forumId]: forum.threads || [],
+				}));
+			}
+		} catch (error: unknown) {
+			console.error('Error loading threads:', error);
+		} finally {
+			setIsLoadingThreads(false);
+		}
+	};
+
+	const createThread = async (forumId: string) => {
+		if (!isThreadTitleValid || !isThreadContentValid) return;
+
+		try {
+			const user = getStorageJSON<{ id: string }>(STORAGE_KEYS.USER);
+			const userId = user?.id || 'anonymous';
+			const newThread = await forumsService.createThread(
+				forumId,
+				threadTitle,
+				threadContent,
+				userId,
+			);
+
+			setThreadsByForumId((prev) => ({
+				...prev,
+				[forumId]: [...(prev[forumId] || []), newThread],
+			}));
+
+			setThreadTitle('');
+			setThreadContent('');
+			setCreatingThreadForumId(null);
+			setReplyingTo(null);
+			setShowThreadsFor(forumId);
+		} catch (error: unknown) {
+			console.error('Error creating thread:', error);
+		}
+	};
+
+	const loadResponsesForThread = async (threadId: string) => {
+		setIsLoadingResponses(true);
+		try {
+			const thread = await forumsService.getThreadById(threadId);
+			if (thread.responses) {
+				setResponsesByThreadId((prev) => ({
+					...prev,
+					[threadId]: thread.responses || [],
+				}));
+			}
+		} catch (error: unknown) {
+			console.error('Error loading responses:', error);
+		} finally {
+			setIsLoadingResponses(false);
+		}
+	};
+
+	const createResponse = async (threadId: string) => {
+		if (!isResponseValid) return;
+
+		try {
+			const user = getStorageJSON<{ id: string }>(STORAGE_KEYS.USER);
+			const userId = user?.id || 'anonymous';
+			const newResponse = await forumsService.createResponse(
+				threadId,
+				responseContent,
+				userId,
+			);
+
+			setResponsesByThreadId((prev) => ({
+				...prev,
+				[threadId]: [...(prev[threadId] || []), newResponse],
+			}));
+
+			setResponseContent('');
+			setRespondingToThreadId(null);
+		} catch (error: unknown) {
+			console.error('Error creating response:', error);
+		}
+	};
+
+	if (isLoadingForums) {
+		return (
+			<div className="flex items-center justify-center h-96">
+				<Spinner label="Cargando foros..." />
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-6">
@@ -449,6 +737,24 @@ export function CommunityForums() {
 					Conecta, colabora y aprende con otros estudiantes y tutores
 				</p>
 			</div>
+
+			{forumError && (
+				<Card className="border-1 border-danger-200 bg-danger-50">
+					<CardBody className="flex-row gap-3 items-center">
+						<AlertCircle className="text-danger" />
+						<p className="text-danger text-sm">{forumError}</p>
+						<Button
+							size="sm"
+							variant="flat"
+							color="danger"
+							className="ml-auto"
+							onPress={loadForums}
+						>
+							Reintentar
+						</Button>
+					</CardBody>
+				</Card>
+			)}
 
 			<div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
 				<div className="xl:col-span-3 space-y-4">
@@ -472,7 +778,6 @@ export function CommunityForums() {
 								<SelectItem key={s}>{s}</SelectItem>
 							))}
 						</Select>
-						<div className="ml-auto" />
 						<Button
 							color="primary"
 							startContent={<Plus size={16} />}
@@ -482,193 +787,293 @@ export function CommunityForums() {
 						</Button>
 					</div>
 
-					<div className="space-y-3">
-						{topics.map((t) => (
-							<div key={t.id} className="space-y-3">
-								<TopicCard
-									topic={t}
-									onReply={(id) =>
-										setReplyingTo((curr) => (curr === id ? null : id))
-									}
-									onToggleReplies={(id) =>
-										setShowRepliesFor((curr) => (curr === id ? null : id))
-									}
-									onToggleResolved={toggleResolved}
-									onEditTopic={openEditTopic}
-									onTogglePinned={togglePinned}
-									repliesCount={
-										(replies[t.id] ?? []).length || t.counts.replies
-									}
-									edited={!!editedById[t.id]}
-								/>
-								{replyingTo === t.id && (
-									<Card
-										className="border-1 border-primary-200 bg-primary-50/30"
-										shadow="sm"
-									>
-										<CardHeader className="pb-0">
-											<p className="text-small text-default-600">
-												Responder al foro seleccionado
-											</p>
-										</CardHeader>
-										<CardBody className="gap-4">
-											<Tabs
-												selectedKey={replyType}
-												onSelectionChange={(k) =>
-													setReplyType(k as 'texto' | 'imagen' | 'link')
-												}
-												aria-label="Tipo de respuesta"
-												color="primary"
-												variant="underlined"
-											>
-												<Tab key="texto" title="Texto">
-													<Textarea
-														label="Mensaje"
-														placeholder="Escribe tu respuesta..."
-														value={replyText}
-														onValueChange={setReplyText}
-														minRows={4}
-													/>
-												</Tab>
-												<Tab key="imagen" title="Imagen">
-													<Input
-														type="file"
-														accept="image/*"
-														label="Imagen"
-														description="Formatos soportados: PNG, JPG, WEBP"
-														onChange={(e) =>
-															setReplyImage(e.target.files?.[0] ?? null)
-														}
-													/>
-												</Tab>
-												<Tab key="link" title="Link">
-													<Input
-														type="url"
-														label="Enlace"
-														placeholder="https://..."
-														value={replyLink}
-														onValueChange={setReplyLink}
-													/>
-												</Tab>
-											</Tabs>
-
-											<div className="flex justify-end gap-2">
-												<Button
-													variant="light"
-													onPress={() => setReplyingTo(null)}
-												>
-													Cancelar
-												</Button>
-												<Button
-													color="primary"
-													onPress={() => {
-														if (!replyingTo) return;
-														const content =
-															replyType === 'texto'
-																? replyText.trim()
-																: replyType === 'imagen'
-																	? `Imagen adjunta${replyImage?.name ? `: ${replyImage.name}` : ''}`
-																	: replyLink.trim();
-
-														if (!content) return;
-
-														const newReply: Reply = {
-															id: `r-${Date.now()}`,
-															author: 'Tú',
-															timeAgo: 'Ahora',
-															content,
-															mine: true,
-														};
-
-														setReplies((prev) => ({
-															...prev,
-															[replyingTo]: [
-																...(prev[replyingTo] ?? []),
-																newReply,
-															],
-														}));
-
-														// Abrir listado de respuestas del tema y limpiar el panel
-														setShowRepliesFor(replyingTo);
-														setReplyText('');
-														setReplyImage(null);
-														setReplyLink('');
-														setReplyingTo(null);
-													}}
-													isDisabled={
-														(replyType === 'texto' &&
-															replyText.trim().length < 1) ||
-														(replyType === 'imagen' && !replyImage) ||
-														(replyType === 'link' &&
-															replyLink.trim().length < 1)
+					{topics.length === 0 ? (
+						<Card className="border-1 border-default-200">
+							<CardBody className="flex items-center justify-center h-40">
+								<p className="text-default-500">No hay foros disponibles</p>
+							</CardBody>
+						</Card>
+					) : (
+						<div className="space-y-3">
+							{topics.map((t) => (
+								<div key={t.id} className="space-y-3">
+									<TopicCard
+										topic={t}
+										onReply={(id) =>
+											setReplyingTo((curr) => (curr === id ? null : id))
+										}
+										onToggleReplies={(id) => {
+											if (showRepliesFor === id) {
+												setShowRepliesFor(null);
+											} else {
+												setShowRepliesFor(id);
+												loadThreadsForForum(id);
+											}
+										}}
+										onToggleResolved={toggleForumResolved}
+										onEditTopic={openEditTopic}
+										onTogglePinned={togglePinned}
+										onLike={likeForum}
+										repliesCount={
+											threadsByForumId[t.id]?.length || t.counts.replies
+										}
+										edited={!!editedById[t.id]}
+									/>
+									{replyingTo === t.id && (
+										<Card
+											className="border-1 border-primary-200 bg-primary-50/30"
+											shadow="sm"
+										>
+											<CardHeader className="pb-0">
+												<p className="text-small text-default-600">
+													Crear nuevo hilo
+												</p>
+											</CardHeader>
+											<CardBody className="gap-4">
+												<Input
+													label="Título del hilo"
+													placeholder="Escribe el título del hilo..."
+													value={threadTitle}
+													onValueChange={setThreadTitle}
+													isInvalid={threadTitleLen > 0 && !isThreadTitleValid}
+													errorMessage={
+														threadTitleLen > 0 && !isThreadTitleValid
+															? `El título debe tener entre ${MIN_LEN} y ${MAX_LEN} caracteres`
+															: undefined
 													}
-												>
-													Enviar respuesta
-												</Button>
-											</div>
-										</CardBody>
-									</Card>
-								)}
+												/>
+												<Textarea
+													label="Contenido"
+													placeholder="Describe tu pregunta o idea..."
+													value={threadContent}
+													onValueChange={setThreadContent}
+													minRows={4}
+													isInvalid={
+														threadContentLen > 0 && !isThreadContentValid
+													}
+													errorMessage={
+														threadContentLen > 0 && !isThreadContentValid
+															? 'El contenido debe tener entre 15 y 5000 caracteres'
+															: undefined
+													}
+												/>
+												<div className="flex justify-end gap-2">
+													<Button
+														variant="light"
+														onPress={() => {
+															setReplyingTo(null);
+															setThreadTitle('');
+															setThreadContent('');
+														}}
+													>
+														Cancelar
+													</Button>
+													<Button
+														color="primary"
+														onPress={() => createThread(t.id)}
+														isDisabled={
+															!isThreadTitleValid || !isThreadContentValid
+														}
+														isLoading={isLoadingThreads}
+													>
+														Publicar hilo
+													</Button>
+												</div>
+											</CardBody>
+										</Card>
+									)}
 
-								{showRepliesFor === t.id && (
-									<Card className="border-1 border-default-200" shadow="sm">
-										<CardHeader className="pb-0">
-											<p className="text-small text-default-600">
-												Foro seleccionado
-											</p>
-										</CardHeader>
-										<CardBody className="gap-3">
-											{(replies[t.id] ?? []).map((r) => (
-												<div
-													key={r.id}
-													className="rounded-medium border-1 border-default-200 p-4"
-												>
-													<div className="flex items-center gap-2 text-xs text-default-500">
-														<span className="font-medium text-default-600">
-															{r.author}
-														</span>
-														<span>•</span>
-														<span>{r.timeAgo}</span>
-														{r.mine && (
-															<div className="ml-auto flex items-center gap-4">
+									{showRepliesFor === t.id && (
+										<Card className="border-1 border-default-200" shadow="sm">
+											<CardHeader className="pb-0">
+												<p className="text-small text-default-600">
+													Hilos del foro ({threadsByForumId[t.id]?.length || 0})
+												</p>
+											</CardHeader>
+											<CardBody className="gap-3">
+												{isLoadingThreads ? (
+													<div className="flex justify-center py-4">
+														<Spinner size="sm" />
+													</div>
+												) : (threadsByForumId[t.id] ?? []).length === 0 ? (
+													<p className="text-default-400 text-sm text-center">
+														No hay hilos aún
+													</p>
+												) : (
+													(threadsByForumId[t.id] ?? []).map((thread) => (
+														<div
+															key={thread.id}
+															className="rounded-medium border-1 border-default-200 p-4 space-y-3"
+														>
+															<div className="flex items-start justify-between">
+																<div className="flex-1">
+																	<p className="font-medium text-default-700">
+																		{thread.title}
+																	</p>
+																	<div className="flex items-center gap-2 text-xs text-default-500 mt-1">
+																		<span>
+																			{thread.author?.nombre || 'Anónimo'}
+																		</span>
+																		<span>•</span>
+																		<span>
+																			{thread.created_at
+																				? new Date(
+																						thread.created_at,
+																					).toLocaleDateString()
+																				: 'Recientemente'}
+																		</span>
+																	</div>
+																</div>
+																<Button
+																	isIconOnly
+																	variant="light"
+																	size="sm"
+																	onPress={() =>
+																		loadResponsesForThread(thread.id)
+																	}
+																>
+																	<ChevronDown
+																		size={16}
+																		className={`transition-transform ${
+																			showThreadsFor === thread.id
+																				? 'rotate-180'
+																				: ''
+																		}`}
+																	/>
+																</Button>
+															</div>
+															<p className="text-default-600 text-sm">
+																{thread.content}
+															</p>
+															<div className="flex items-center gap-4 mt-2">
 																<button
 																	type="button"
-																	className="text-primary text-sm hover:underline"
-																	onClick={() => {
-																		setEditingReplyId(r.id);
-																		setEditingText(r.content);
-																		setEditingTopicId(t.id);
-																		setIsEditOpen(true);
-																	}}
+																	className="flex items-center gap-1 text-default-500 text-xs hover:text-primary transition-colors cursor-pointer"
+																	onClick={() => likeThread(thread.id, t.id)}
 																>
-																	Editar
+																	<ThumbsUp size={14} />
+																	<span>{thread.likes_count || 0}</span>
 																</button>
 																<button
 																	type="button"
-																	className="text-danger text-sm hover:underline"
-																	onClick={() => {
-																		setDeleteTopicId(t.id);
-																		setDeleteReplyId(r.id);
-																		setIsDeleteOpen(true);
-																	}}
+																	className="flex items-center gap-1 text-default-500 text-xs hover:text-primary transition-colors cursor-pointer"
+																	onClick={() =>
+																		setRespondingToThreadId(thread.id)
+																	}
 																>
-																	Eliminar
+																	<MessageCircle size={14} />
+																	<span>
+																		{(responsesByThreadId[thread.id] ?? [])
+																			.length || 0}{' '}
+																		respuestas
+																	</span>
 																</button>
 															</div>
-														)}
-													</div>
-
-													<p className="mt-3 text-default-600 text-sm">
-														{r.content}
-													</p>
-												</div>
-											))}
-										</CardBody>
-									</Card>
-								)}
-							</div>
-						))}
-					</div>
+															{showThreadsFor === thread.id && (
+																<div className="mt-3 pt-3 border-t border-default-200 space-y-3">
+																	<div className="space-y-2">
+																		{(responsesByThreadId[thread.id] ?? []).map(
+																			(response) => (
+																				<div
+																					key={response.id}
+																					className="rounded-small bg-default-100 p-3 ml-4"
+																				>
+																					<div className="flex items-center gap-2 text-xs text-default-500 mb-1">
+																						<span className="font-medium">
+																							{response.author?.nombre ||
+																								'Anónimo'}
+																						</span>
+																						<span>•</span>
+																						<span>
+																							{response.created_at
+																								? new Date(
+																										response.created_at,
+																									).toLocaleDateString()
+																								: 'Recientemente'}
+																						</span>
+																					</div>
+																					<p className="text-default-600 text-xs">
+																						{response.content}
+																					</p>
+																				</div>
+																			),
+																		)}
+																	</div>
+																	{isLoadingResponses ? (
+																		<div className="flex justify-center py-2">
+																			<Spinner size="sm" />
+																		</div>
+																	) : null}
+																	<div className="mt-2 pt-2 border-t border-default-200">
+																		<Button
+																			size="sm"
+																			variant="light"
+																			onPress={() => {
+																				setRespondingToThreadId(
+																					respondingToThreadId === thread.id
+																						? null
+																						: thread.id,
+																				);
+																			}}
+																		>
+																			Responder
+																		</Button>
+																		{respondingToThreadId === thread.id && (
+																			<div className="mt-2 space-y-2">
+																				<Textarea
+																					placeholder="Escribe tu respuesta..."
+																					value={responseContent}
+																					onValueChange={setResponseContent}
+																					minRows={2}
+																					isInvalid={
+																						responseContentLen > 0 &&
+																						!isResponseValid
+																					}
+																					errorMessage={
+																						responseContentLen > 0 &&
+																						!isResponseValid
+																							? 'La respuesta debe tener entre 5 y 5000 caracteres'
+																							: undefined
+																					}
+																				/>
+																				<div className="flex justify-end gap-2">
+																					<Button
+																						size="sm"
+																						variant="light"
+																						onPress={() => {
+																							setRespondingToThreadId(null);
+																							setResponseContent('');
+																						}}
+																					>
+																						Cancelar
+																					</Button>
+																					<Button
+																						size="sm"
+																						color="primary"
+																						onPress={() =>
+																							createResponse(thread.id)
+																						}
+																						isDisabled={!isResponseValid}
+																						isLoading={isLoadingResponses}
+																					>
+																						Publicar
+																					</Button>
+																				</div>
+																			</div>
+																		)}
+																	</div>
+																</div>
+															)}
+														</div>
+													))
+												)}
+											</CardBody>
+										</Card>
+									)}
+								</div>
+							))}
+						</div>
+					)}
 				</div>
 
 				<div className="xl:col-span-1">
@@ -676,6 +1081,7 @@ export function CommunityForums() {
 				</div>
 			</div>
 
+			{/* Modal para crear nuevo foro */}
 			<Modal isOpen={isOpen} onOpenChange={setIsOpen} size="lg">
 				<ModalContent>
 					{(onClose) => (
@@ -721,15 +1127,38 @@ export function CommunityForums() {
 									color={isValidTitle ? 'success' : 'warning'}
 									className="mt-[-8px]"
 								/>
-								<Select label="Materia" selectedKeys={['Matemáticas']}>
-									{SUBJECTS.filter((s) => s !== 'Todos').map((s) => (
-										<SelectItem key={s}>{s}</SelectItem>
+								<Select
+									label="Materia"
+									selectedKeys={
+										selectedMateriaForCreate
+											? new Set([selectedMateriaForCreate])
+											: new Set()
+									}
+									onSelectionChange={(keys) => {
+										console.log('Selection changed, keys:', keys);
+										const selected = Array.from(keys)[0] as string;
+										console.log('Selected materia:', selected);
+										if (selected) setSelectedMateriaForCreate(selected);
+									}}
+									isLoading={isLoadingMaterias}
+									isRequired
+									isDisabled={materias.length === 0}
+								>
+									{materias.map((materia) => (
+										<SelectItem
+											key={materia.codigo}
+											textValue={`${materia.codigo} - ${materia.nombre}`}
+										>
+											{materia.codigo} - {materia.nombre}
+										</SelectItem>
 									))}
 								</Select>
 								<Input
 									label="Descripción"
 									placeholder="Describe tu duda o comparte tu idea"
 									variant="bordered"
+									value={description}
+									onValueChange={setDescription}
 								/>
 							</ModalBody>
 							<ModalFooter>
@@ -738,7 +1167,7 @@ export function CommunityForums() {
 								</Button>
 								<Button
 									color="primary"
-									onPress={onClose}
+									onPress={() => createForum(onClose)}
 									isDisabled={!isValidTitle}
 								>
 									Publicar
@@ -748,142 +1177,6 @@ export function CommunityForums() {
 					)}
 				</ModalContent>
 			</Modal>
-
-			{/* Modal de edición de respuesta */}
-			<Modal isOpen={isEditOpen} onOpenChange={setIsEditOpen} size="lg">
-				<ModalContent>
-					{(_onClose) => (
-						<>
-							<ModalHeader className="flex flex-col gap-1">
-								<span className="text-large font-semibold">
-									Editar respuesta
-								</span>
-							</ModalHeader>
-							<ModalBody className="gap-3">
-								<Textarea
-									placeholder="Actualiza tu mensaje manteniendo claridad y respeto"
-									value={editingText}
-									onValueChange={setEditingText}
-									minRows={6}
-									isInvalid={editingText.trim().length === 0}
-									errorMessage={
-										editingText.trim().length === 0
-											? 'El mensaje no puede estar vacío'
-											: undefined
-									}
-									classNames={
-										editingText.trim().length === 0
-											? { inputWrapper: 'bg-danger-50' }
-											: undefined
-									}
-								/>
-								<div className="flex items-center justify-between text-xs">
-									<span className="text-default-400">
-										No se guardará si el texto queda vacío.
-									</span>
-									<span
-										className={`flex items-center gap-1 ${isEditValid ? 'text-success' : 'text-danger'}`}
-									>
-										{isEditValid && <CheckCircle2 size={14} />}
-										<span>
-											{editLen} / {EDIT_MIN}
-										</span>
-									</span>
-								</div>
-							</ModalBody>
-							<ModalFooter>
-								<Button
-									variant="light"
-									onPress={() => {
-										setIsEditOpen(false);
-										setEditingReplyId(null);
-										setEditingTopicId(null);
-									}}
-								>
-									Cancelar
-								</Button>
-								<Button
-									color="primary"
-									onPress={() => {
-										if (!editingReplyId || !editingTopicId) return;
-										setReplies((prev) => {
-											const targetTopic = editingTopicId;
-											return {
-												...prev,
-												[targetTopic]: (prev[targetTopic] ?? []).map((x) =>
-													x.id === editingReplyId
-														? { ...x, content: editingText }
-														: x,
-												),
-											};
-										});
-										setIsEditOpen(false);
-										setEditingReplyId(null);
-										setEditingTopicId(null);
-									}}
-									isDisabled={!isEditValid}
-								>
-									Guardar cambios
-								</Button>
-							</ModalFooter>
-						</>
-					)}
-				</ModalContent>
-			</Modal>
-
-			{/* Modal de confirmación de eliminación */}
-			<Modal isOpen={isDeleteOpen} onOpenChange={setIsDeleteOpen} size="md">
-				<ModalContent>
-					{(onClose) => (
-						<>
-							<ModalHeader className="flex flex-col gap-1">
-								<span className="text-large font-semibold">
-									Confirmar eliminación
-								</span>
-							</ModalHeader>
-							<ModalBody>
-								<p className="text-default-600 text-sm">
-									¿Seguro que deseas eliminar esta respuesta? Esta acción no se
-									puede deshacer.
-								</p>
-							</ModalBody>
-							<ModalFooter>
-								<Button
-									variant="light"
-									onPress={() => {
-										setIsDeleteOpen(false);
-										setDeleteReplyId(null);
-										setDeleteTopicId(null);
-										onClose();
-									}}
-								>
-									Cancelar
-								</Button>
-								<Button
-									color="primary"
-									onPress={() => {
-										if (!deleteTopicId || !deleteReplyId) return;
-										setReplies((prev) => ({
-											...prev,
-											[deleteTopicId]: (prev[deleteTopicId] ?? []).filter(
-												(x) => x.id !== deleteReplyId,
-											),
-										}));
-										setIsDeleteOpen(false);
-										setDeleteReplyId(null);
-										setDeleteTopicId(null);
-										onClose();
-									}}
-								>
-									Eliminar
-								</Button>
-							</ModalFooter>
-						</>
-					)}
-				</ModalContent>
-			</Modal>
-
-			{/* Vista de detalle de foro eliminada por ser redundante */}
 
 			{/* Modal de edición de foro */}
 			<Modal
@@ -931,20 +1224,6 @@ export function CommunityForums() {
 									color={isEditTitleValid ? 'success' : 'warning'}
 									className="mt-[-8px]"
 								/>
-								<div>
-									<Select
-										label="Materia"
-										selectedKeys={[editTopicSubject]}
-										onSelectionChange={(keys) => {
-											const key = Array.from(keys)[0] as string | undefined;
-											if (key) setEditTopicSubject(key);
-										}}
-									>
-										{SUBJECTS.filter((s) => s !== 'Todos').map((s) => (
-											<SelectItem key={s}>{s}</SelectItem>
-										))}
-									</Select>
-								</div>
 							</ModalBody>
 							<ModalFooter>
 								<Button
@@ -974,6 +1253,21 @@ export function CommunityForums() {
 			</Modal>
 		</div>
 	);
+}
+
+/**
+ * Utilidad para formatear tiempo relativo
+ */
+function formatTimeAgo(dateString: string): string {
+	const date = new Date(dateString);
+	const now = new Date();
+	const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+	if (seconds < 60) return 'Ahora';
+	if (seconds < 3600) return `Hace ${Math.floor(seconds / 60)}m`;
+	if (seconds < 86400) return `Hace ${Math.floor(seconds / 3600)}h`;
+	if (seconds < 604800) return `Hace ${Math.floor(seconds / 86400)}d`;
+	return date.toLocaleDateString();
 }
 
 export default CommunityForums;
