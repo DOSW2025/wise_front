@@ -208,3 +208,25 @@ export interface CancelSessionResponse {
 	message: string;
 	session: StudentSession;
 }
+
+/**
+ * Sesión pendiente de confirmación (para tutor)
+ */
+export interface PendingSession {
+	sessionId: string;
+	studentName: string;
+	subjectCode: string;
+	subjectName: string;
+	scheduledAt: string; // ISO 8601 format
+	day: WeekDay;
+	startTime: string; // Formato: "HH:mm"
+	endTime: string; // Formato: "HH:mm"
+	mode: 'VIRTUAL' | 'PRESENCIAL';
+	comentarios: string | null;
+	createdAt: string; // ISO 8601 format
+}
+
+/**
+ * Respuesta del endpoint de pending sessions
+ */
+export type PendingSessionsResponse = PendingSession[];

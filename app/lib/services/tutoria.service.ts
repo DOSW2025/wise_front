@@ -245,3 +245,59 @@ export async function cancelSession(
 		throw new Error('No se pudo cancelar la tutoría. Verifica tu conexión.');
 	}
 }
+
+/**
+ * Obtiene las sesiones pendientes de confirmación de un tutor
+ */
+export async function getPendingSessions(
+	tutorId: string,
+): Promise<import('../types/tutoria.types').PendingSessionsResponse> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.PENDING_SESSIONS.replace(
+			'{id}',
+			tutorId,
+		);
+		console.log('Fetching pending sessions:', { tutorId, url });
+
+		const response =
+			await apiClient.get<
+				import('../types/tutoria.types').PendingSessionsResponse
+			>(url);
+
+		console.log('Pending sessions obtenidas:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al obtener sesiones pendientes:', error);
+
+		if (axios.isAxiosError(error)) {
+			const status = error.response?.status;
+			const message = error.response?.data?.message || error.message;
+
+			if (status === 404) {
+				throw new Error('No se encontraron sesiones pendientes');
+			}
+			if (status === 401 || status === 403) {
+				throw new Error('No tienes permisos para ver estas sesiones');
+			}
+
+			throw new Error(`Error del servidor (${status}): ${message}`);
+		}
+
+		throw new Error(
+			'No se pudieron obtener las sesiones pendientes. Verifica tu conexión.',
+		);
+	}
+}
+
+// Exportar todas las funciones como un objeto de servicio
+export const tutoriaService = {
+	getTutores,
+	getStudentSessions,
+	createSession,
+	getTutorName,
+	getUpcomingSessions,
+	getTutorMaterias,
+	getTutoriaStats,
+	cancelSession,
+	getPendingSessions,
+};
