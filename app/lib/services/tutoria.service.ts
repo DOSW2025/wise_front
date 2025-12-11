@@ -331,6 +331,48 @@ export async function confirmSession(
 	}
 }
 
+/**
+ * Rechaza una sesión de tutoría pendiente
+ */
+export async function rejectSession(
+	sessionId: string,
+	data: { tutorId: string; razon: string },
+): Promise<{ message: string }> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.REJECT_SESSION.replace(
+			'{id}',
+			sessionId,
+		);
+		console.log('Rechazando sesión:', { sessionId, url, data });
+
+		const response = await apiClient.patch<{ message: string }>(url, data);
+
+		console.log('Sesión rechazada exitosamente:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al rechazar sesión:', error);
+
+		if (axios.isAxiosError(error)) {
+			const status = error.response?.status;
+			const message = error.response?.data?.message || error.message;
+
+			if (status === 404) {
+				throw new Error('La sesión no existe o ya fue rechazada');
+			}
+			if (status === 400) {
+				throw new Error(`Datos inválidos: ${message}`);
+			}
+			if (status === 401 || status === 403) {
+				throw new Error('No tienes permisos para rechazar esta tutoría');
+			}
+
+			throw new Error(`Error del servidor (${status}): ${message}`);
+		}
+
+		throw new Error('No se pudo rechazar la tutoría. Verifica tu conexión.');
+	}
+}
+
 // Exportar todas las funciones como un objeto de servicio
 export const tutoriaService = {
 	getTutores,
@@ -343,4 +385,5 @@ export const tutoriaService = {
 	cancelSession,
 	getPendingSessions,
 	confirmSession,
+	rejectSession,
 };

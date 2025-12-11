@@ -26,11 +26,12 @@ import {
 import { useState } from 'react';
 import { EmptyState, FeedbackModal } from '~/components';
 import { useAuth } from '~/contexts/auth-context';
-import { useConfirmSession } from '~/lib/hooks/useConfirmSession';
 import { usePendingSessions } from '~/lib/hooks/usePendingSessions';
 import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 import type { PendingSession } from '~/lib/types/tutoria.types';
 import { getErrorMessage } from '~/lib/utils/error-messages';
+import { useConfirmSession } from '~/routes/dashboard/tutor/hooks/useConfirmSession';
+import { useRejectSession } from '~/routes/dashboard/tutor/hooks/useRejectSession';
 
 const DAY_LABELS: Record<string, string> = {
 	monday: 'Lunes',
@@ -71,6 +72,8 @@ export default function TutorRequests() {
 	const { mutate: confirmSession, isPending: isConfirming } =
 		useConfirmSession();
 
+	const { mutate: rejectSession, isPending: isRejecting } = useRejectSession();
+
 	const handleAction = (
 		request: PendingSession,
 		action: 'confirm' | 'cancel',
@@ -109,9 +112,41 @@ export default function TutorRequests() {
 				},
 			);
 		} else {
-			// NOTE: Implementar rechazo con API cuando esté disponible el endpoint
-			console.log('Rechazar sesión:', selectedRequest.sessionId);
-			onClose();
+			// Validar que se haya ingresado una razón
+			if (!responseMessage.trim()) {
+				setFeedback({
+					isOpen: true,
+					type: 'error',
+					message: 'Debes proporcionar una razón para rechazar la solicitud',
+				});
+				return;
+			}
+
+			rejectSession(
+				{
+					sessionId: selectedRequest.sessionId,
+					tutorId: user.id,
+					razon: responseMessage.trim(),
+				},
+				{
+					onSuccess: () => {
+						onClose();
+						setResponseMessage('');
+						setFeedback({
+							isOpen: true,
+							type: 'success',
+							message: `Solicitud de ${selectedRequest.studentName} rechazada`,
+						});
+					},
+					onError: (error) => {
+						setFeedback({
+							isOpen: true,
+							type: 'error',
+							message: getErrorMessage(error),
+						});
+					},
+				},
+			);
 		}
 	};
 
@@ -334,14 +369,18 @@ export default function TutorRequests() {
 						)}
 					</ModalBody>
 					<ModalFooter>
-						<Button variant="light" onPress={onClose} isDisabled={isConfirming}>
+						<Button
+							variant="light"
+							onPress={onClose}
+							isDisabled={isConfirming || isRejecting}
+						>
 							Cancelar
 						</Button>
 						<Button
 							color={actionType === 'confirm' ? 'success' : 'danger'}
 							onPress={confirmAction}
-							isLoading={isConfirming}
-							isDisabled={isConfirming}
+							isLoading={isConfirming || isRejecting}
+							isDisabled={isConfirming || isRejecting}
 						>
 							{actionType === 'confirm'
 								? 'Confirmar Tutoría'

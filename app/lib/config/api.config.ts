@@ -65,6 +65,7 @@ export const API_ENDPOINTS = {
 		CREATE_SESSION: '/wise/tutorias/sessions',
 		CANCEL_SESSION: '/wise/tutorias/sessions/{id}/cancelar',
 		CONFIRM_SESSION: '/wise/tutorias/sessions/{id}/confirmar',
+		REJECT_SESSION: '/wise/tutorias/sessions/{id}/rechazar',
 		PENDING_SESSIONS: '/wise/tutorias/{id}/pending-sessions',
 	},
 } as const;
