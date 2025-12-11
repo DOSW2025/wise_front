@@ -28,6 +28,7 @@ import { EmptyState, FeedbackModal } from '~/components';
 import { useAuth } from '~/contexts/auth-context';
 import { useConfirmSession } from '~/lib/hooks/useConfirmSession';
 import { usePendingSessions } from '~/lib/hooks/usePendingSessions';
+import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 import type { PendingSession } from '~/lib/types/tutoria.types';
 import { getErrorMessage } from '~/lib/utils/error-messages';
 
@@ -64,6 +65,8 @@ export default function TutorRequests() {
 		isLoading,
 		isError,
 	} = usePendingSessions(user?.id || '', !!user?.id);
+
+	const { data: stats } = useTutoriaStats(user?.id || '', !!user?.id);
 
 	const { mutate: confirmSession, isPending: isConfirming } =
 		useConfirmSession();
@@ -146,20 +149,24 @@ export default function TutorRequests() {
 				<Card>
 					<CardBody className="text-center">
 						<div className="text-2xl font-bold text-warning">
-							{pendingSessions.length}
+							{stats?.sesionesPendientes ?? 0}
 						</div>
 						<div className="text-sm text-default-500">Pendientes</div>
 					</CardBody>
 				</Card>
 				<Card>
 					<CardBody className="text-center">
-						<div className="text-2xl font-bold text-success">0</div>
+						<div className="text-2xl font-bold text-success">
+							{stats?.sesionesConfirmadas ?? 0}
+						</div>
 						<div className="text-sm text-default-500">Confirmadas</div>
 					</CardBody>
 				</Card>
 				<Card>
 					<CardBody className="text-center">
-						<div className="text-2xl font-bold text-danger">0</div>
+						<div className="text-2xl font-bold text-danger">
+							{stats?.sesionesRechazadas ?? 0}
+						</div>
 						<div className="text-sm text-default-500">Rechazadas</div>
 					</CardBody>
 				</Card>
