@@ -63,8 +63,25 @@ export const API_ENDPOINTS = {
 		},
 	},
 	STUDENT: {
+		BASE: '/wise/student',
+		STATS: '/wise/student/stats',
 		PROFILE: '/wise/gestion-usuarios/me/info-personal',
-		GET_PROFILE: '/wise/gestion-usuarios/me', // 👈 AGREGAR ESTO
+		GET_PROFILE: '/wise/gestion-usuarios/me',
+		TUTORING: {
+			UPCOMING: '/wise/student/tutoring/upcoming',
+			HISTORY: '/wise/student/tutoring/history',
+		},
+		TUTORS: {
+			RECOMMENDED: '/wise/student/tutors/recommended',
+			SEARCH: '/wise/student/tutors/search',
+		},
+		MATERIALS: {
+			RECENT: '/wise/student/materials/recent',
+			SAVED: '/wise/student/materials/saved',
+		},
+		ACTIVITY: {
+			RECENT: '/wise/student/activity/recent',
+		},
 	},
 
 	USERS: {
