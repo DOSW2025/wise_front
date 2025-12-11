@@ -416,6 +416,50 @@ export async function getConfirmedSessions(
 	}
 }
 
+/**
+ * Completa una sesión de tutoría
+ */
+export async function completeSession(
+	sessionId: string,
+	data: import('../types/tutoria.types').CompleteSessionRequest,
+): Promise<import('../types/tutoria.types').CompleteSessionResponse> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.COMPLETE_SESSION.replace(
+			'{id}',
+			sessionId,
+		);
+		console.log('Completando sesión:', { sessionId, url, data });
+
+		const response = await apiClient.patch<
+			import('../types/tutoria.types').CompleteSessionResponse
+		>(url, data);
+
+		console.log('Sesión completada exitosamente:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al completar sesión:', error);
+
+		if (axios.isAxiosError(error)) {
+			const status = error.response?.status;
+			const message = error.response?.data?.message || error.message;
+
+			if (status === 404) {
+				throw new Error('La sesión no existe');
+			}
+			if (status === 400) {
+				throw new Error(`${message}`);
+			}
+			if (status === 401 || status === 403) {
+				throw new Error('No tienes permisos para completar esta tutoría');
+			}
+
+			throw new Error(`Error del servidor (${status}): ${message}`);
+		}
+
+		throw new Error('No se pudo completar la tutoría. Verifica tu conexión.');
+	}
+}
+
 // Exportar todas las funciones como un objeto de servicio
 export const tutoriaService = {
 	getTutores,
@@ -430,4 +474,5 @@ export const tutoriaService = {
 	confirmSession,
 	rejectSession,
 	getConfirmedSessions,
+	completeSession,
 };

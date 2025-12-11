@@ -5,12 +5,27 @@ import {
 	CardBody,
 	CardHeader,
 	Chip,
+	Modal,
+	ModalBody,
+	ModalContent,
+	ModalFooter,
+	ModalHeader,
 	Spinner,
+	Textarea,
+	useDisclosure,
 } from '@heroui/react';
-import { AlertCircle, Calendar, Clock, MapPin, Video } from 'lucide-react';
+import {
+	AlertCircle,
+	Calendar,
+	CheckCircle,
+	Clock,
+	MapPin,
+	Video,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useAuth } from '~/contexts/auth-context';
+import { useCompleteSession } from './hooks/useCompleteSession';
 import { useConfirmedSessions } from './hooks/useConfirmedSessions';
 
 interface AvailabilitySlot {
@@ -64,6 +79,11 @@ export default function TutorScheduled() {
 		'scheduled',
 	);
 
+	// Modal para completar sesión
+	const { isOpen, onOpen, onClose } = useDisclosure();
+	const [selectedSession, setSelectedSession] = useState<string | null>(null);
+	const [comentarios, setComentarios] = useState('');
+
 	// Obtener sesiones confirmadas usando React Query
 	const {
 		data: confirmedSessions = [],
@@ -71,6 +91,36 @@ export default function TutorScheduled() {
 		isError,
 		error,
 	} = useConfirmedSessions(user?.id);
+
+	// Hook para completar sesión
+	const completeSessionMutation = useCompleteSession();
+
+	const handleCompleteSession = (sessionId: string) => {
+		setSelectedSession(sessionId);
+		setComentarios('');
+		onOpen();
+	};
+
+	const handleConfirmComplete = () => {
+		if (!selectedSession || !user?.id) return;
+
+		completeSessionMutation.mutate(
+			{
+				sessionId: selectedSession,
+				data: {
+					tutorId: user.id,
+					comentarios: comentarios.trim() || undefined,
+				},
+			},
+			{
+				onSuccess: () => {
+					onClose();
+					setSelectedSession(null);
+					setComentarios('');
+				},
+			},
+		);
+	};
 
 	// Detectar parámetro tab en la URL
 	useEffect(() => {
@@ -241,8 +291,16 @@ export default function TutorScheduled() {
 															Unirse
 														</Button>
 													)}
-													<Button size="sm" variant="light">
-														Detalles
+													<Button
+														size="sm"
+														color="success"
+														variant="flat"
+														startContent={<CheckCircle className="w-4 h-4" />}
+														onPress={() =>
+															handleCompleteSession(session.sessionId)
+														}
+													>
+														Completar
 													</Button>
 												</div>
 											</div>
@@ -269,6 +327,62 @@ export default function TutorScheduled() {
 					)}
 				</div>
 			)}
+
+			{/* Modal para completar sesión */}
+			<Modal isOpen={isOpen} onClose={onClose} size="lg">
+				<ModalContent>
+					<ModalHeader>
+						<h3 className="text-lg font-semibold">Completar Sesión</h3>
+					</ModalHeader>
+					<ModalBody>
+						{completeSessionMutation.isError && (
+							<Card className="bg-danger-50 border-danger-200">
+								<CardBody className="flex flex-row items-center gap-2">
+									<AlertCircle className="w-5 h-5 text-danger" />
+									<p className="text-sm text-danger">
+										{completeSessionMutation.error?.message ||
+											'Error al completar la sesión'}
+									</p>
+								</CardBody>
+							</Card>
+						)}
+
+						<p className="text-default-600">
+							¿Estás seguro de marcar esta sesión como completada?
+						</p>
+
+						<Textarea
+							label="Comentarios (opcional)"
+							placeholder="Agrega comentarios sobre la sesión..."
+							value={comentarios}
+							onValueChange={setComentarios}
+							minRows={3}
+							maxRows={5}
+						/>
+					</ModalBody>
+					<ModalFooter>
+						<Button
+							variant="light"
+							onPress={onClose}
+							isDisabled={completeSessionMutation.isPending}
+						>
+							Cancelar
+						</Button>
+						<Button
+							color="success"
+							onPress={handleConfirmComplete}
+							isLoading={completeSessionMutation.isPending}
+							startContent={
+								!completeSessionMutation.isPending && (
+									<CheckCircle className="w-4 h-4" />
+								)
+							}
+						>
+							Confirmar
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
 
 			{/* Contenido de Disponibilidad */}
 			{activeTab === 'availability' && (

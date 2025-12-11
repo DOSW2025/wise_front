@@ -254,3 +254,19 @@ export interface ConfirmedSession {
  * Respuesta del endpoint de confirmed sessions
  */
 export type ConfirmedSessionsResponse = ConfirmedSession[];
+
+/**
+ * Request para completar una sesión de tutoría
+ */
+export interface CompleteSessionRequest {
+	tutorId: string;
+	comentarios?: string;
+}
+
+/**
+ * Respuesta al completar una sesión de tutoría
+ */
+export interface CompleteSessionResponse {
+	message: string;
+	session: StudentSession;
+}
