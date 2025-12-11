@@ -373,6 +373,49 @@ export async function rejectSession(
 	}
 }
 
+/**
+ * Obtiene las sesiones confirmadas de un tutor
+ */
+export async function getConfirmedSessions(
+	tutorId: string,
+): Promise<import('../types/tutoria.types').ConfirmedSessionsResponse> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.CONFIRMED_SESSIONS.replace(
+			'{id}',
+			tutorId,
+		);
+		console.log('Fetching confirmed sessions:', { tutorId, url });
+
+		const response =
+			await apiClient.get<
+				import('../types/tutoria.types').ConfirmedSessionsResponse
+			>(url);
+
+		console.log('Confirmed sessions obtenidas:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al obtener sesiones confirmadas:', error);
+
+		if (axios.isAxiosError(error)) {
+			const status = error.response?.status;
+			const message = error.response?.data?.message || error.message;
+
+			if (status === 404) {
+				throw new Error('No se encontraron sesiones confirmadas');
+			}
+			if (status === 401 || status === 403) {
+				throw new Error('No tienes permisos para ver estas sesiones');
+			}
+
+			throw new Error(`Error del servidor (${status}): ${message}`);
+		}
+
+		throw new Error(
+			'No se pudieron obtener las sesiones confirmadas. Verifica tu conexión.',
+		);
+	}
+}
+
 // Exportar todas las funciones como un objeto de servicio
 export const tutoriaService = {
 	getTutores,
@@ -386,4 +429,5 @@ export const tutoriaService = {
 	getPendingSessions,
 	confirmSession,
 	rejectSession,
+	getConfirmedSessions,
 };

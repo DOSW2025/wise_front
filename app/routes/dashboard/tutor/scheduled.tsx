@@ -5,29 +5,19 @@ import {
 	CardBody,
 	CardHeader,
 	Chip,
+	Spinner,
 } from '@heroui/react';
-import { Calendar, Clock, MapPin, Video } from 'lucide-react';
+import { AlertCircle, Calendar, Clock, MapPin, Video } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { useAuth } from '~/contexts/auth-context';
+import { useConfirmedSessions } from './hooks/useConfirmedSessions';
 
 interface AvailabilitySlot {
 	day: string;
 	startTime: string;
 	endTime: string;
 	isAvailable: boolean;
-}
-
-interface ConfirmedSession {
-	id: string;
-	studentName: string;
-	studentAvatar?: string;
-	subject: string;
-	topic: string;
-	date: string;
-	time: string;
-	duration: number;
-	modality: 'presencial' | 'virtual';
-	location?: string;
 }
 
 const DAYS = [
@@ -68,10 +58,19 @@ const generateTimeSlots = () => {
 };
 
 export default function TutorScheduled() {
+	const { user } = useAuth();
 	const [searchParams] = useSearchParams();
 	const [activeTab, setActiveTab] = useState<'scheduled' | 'availability'>(
 		'scheduled',
 	);
+
+	// Obtener sesiones confirmadas usando React Query
+	const {
+		data: confirmedSessions = [],
+		isLoading,
+		isError,
+		error,
+	} = useConfirmedSessions(user?.id);
 
 	// Detectar parámetro tab en la URL
 	useEffect(() => {
@@ -84,20 +83,6 @@ export default function TutorScheduled() {
 	const [availabilitySlots, setAvailabilitySlots] = useState<
 		AvailabilitySlot[]
 	>(generateTimeSlots());
-
-	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
-	const confirmedSessions: ConfirmedSession[] = [
-		{
-			id: '-1',
-			studentName: 'Estudiante Ejemplo (Sin conexión)',
-			subject: 'Sin datos de API',
-			topic: 'Esperando conexión',
-			date: '1900-01-01',
-			time: '00:00',
-			duration: -1,
-			modality: 'virtual',
-		},
-	];
 
 	const toggleSlotAvailability = (day: string, startTime: string) => {
 		setAvailabilitySlots((prev) =>
@@ -145,75 +130,131 @@ export default function TutorScheduled() {
 				<div className="space-y-4">
 					<div className="flex items-center justify-between">
 						<h2 className="text-xl font-semibold">Próximas Sesiones</h2>
-						<Chip color="success" variant="flat">
-							{confirmedSessions.length} sesiones
-						</Chip>
+						{!isLoading && !isError && (
+							<Chip color="success" variant="flat">
+								{confirmedSessions.length} sesiones
+							</Chip>
+						)}
 					</div>
 
-					{confirmedSessions.length > 0 ? (
+					{/* Loading State */}
+					{isLoading && (
+						<Card>
+							<CardBody className="text-center py-12">
+								<Spinner size="lg" />
+								<p className="text-default-500 mt-4">Cargando sesiones...</p>
+							</CardBody>
+						</Card>
+					)}
+
+					{/* Error State */}
+					{isError && (
+						<Card>
+							<CardBody className="text-center py-12">
+								<AlertCircle className="w-12 h-12 text-danger mx-auto mb-4" />
+								<h3 className="text-lg font-semibold mb-2 text-danger">
+									Error al cargar sesiones
+								</h3>
+								<p className="text-default-500">
+									{error?.message || 'Ocurrió un error inesperado'}
+								</p>
+							</CardBody>
+						</Card>
+					)}
+
+					{/* Sesiones disponibles */}
+					{!isLoading && !isError && confirmedSessions.length > 0 && (
 						<div className="grid gap-4">
-							{confirmedSessions.map((session) => (
-								<Card key={session.id}>
-									<CardBody>
-										<div className="flex items-start justify-between">
-											<div className="space-y-2">
-												<div className="flex items-center gap-3">
-													<Avatar
-														src={session.studentAvatar}
-														name={session.studentName}
-														size="sm"
-														showFallback
-													/>
-													<div>
-														<h3 className="font-semibold">
-															{session.studentName}
-														</h3>
-														<Chip size="sm" color="primary" variant="flat">
-															{session.subject}
-														</Chip>
+							{confirmedSessions.map((session) => {
+								const sessionDate = new Date(session.scheduledAt);
+								const isVirtual = session.mode === 'VIRTUAL';
+
+								return (
+									<Card key={session.sessionId}>
+										<CardBody>
+											<div className="flex items-start justify-between">
+												<div className="space-y-2">
+													<div className="flex items-center gap-3">
+														<Avatar
+															name={session.studentName}
+															size="sm"
+															showFallback
+														/>
+														<div>
+															<h3 className="font-semibold">
+																{session.studentName}
+															</h3>
+															<Chip size="sm" color="primary" variant="flat">
+																{session.subjectCode} - {session.subjectName}
+															</Chip>
+														</div>
+													</div>
+
+													{session.comentarios && (
+														<p className="text-default-600 ml-11 text-sm">
+															{session.comentarios}
+														</p>
+													)}
+
+													<div className="flex items-center gap-4 text-sm text-default-500 ml-11">
+														<div className="flex items-center gap-1">
+															<Calendar className="w-4 h-4" />
+															{sessionDate.toLocaleDateString('es-CO', {
+																weekday: 'long',
+																year: 'numeric',
+																month: 'long',
+																day: 'numeric',
+															})}
+														</div>
+														<div className="flex items-center gap-1">
+															<Clock className="w-4 h-4" />
+															{session.startTime} - {session.endTime}
+														</div>
+														<div className="flex items-center gap-1">
+															{isVirtual ? (
+																<Video className="w-4 h-4" />
+															) : (
+																<MapPin className="w-4 h-4" />
+															)}
+															<span className="capitalize">{session.mode}</span>
+															{isVirtual && session.linkConexion && (
+																<span>- Virtual</span>
+															)}
+															{!isVirtual && session.lugar && (
+																<span>- {session.lugar}</span>
+															)}
+														</div>
 													</div>
 												</div>
-												<p className="text-default-600 ml-11">
-													{session.topic}
-												</p>
-												<div className="flex items-center gap-4 text-sm text-default-500 ml-11">
-													<div className="flex items-center gap-1">
-														<Calendar className="w-4 h-4" />
-														{new Date(session.date).toLocaleDateString()}
-													</div>
-													<div className="flex items-center gap-1">
-														<Clock className="w-4 h-4" />
-														{session.time} ({session.duration}min)
-													</div>
-													<div className="flex items-center gap-1">
-														{session.modality === 'virtual' ? (
-															<Video className="w-4 h-4" />
-														) : (
-															<MapPin className="w-4 h-4" />
-														)}
-														<span className="capitalize">
-															{session.modality}
-														</span>
-														{session.location && (
-															<span>- {session.location}</span>
-														)}
-													</div>
+
+												<div className="flex gap-2">
+													{isVirtual && session.linkConexion && (
+														<Button
+															as="a"
+															href={session.linkConexion}
+															target="_blank"
+															rel="noopener noreferrer"
+															size="sm"
+															color="primary"
+															variant="flat"
+														>
+															Unirse
+														</Button>
+													)}
+													<Button size="sm" variant="light">
+														Detalles
+													</Button>
 												</div>
 											</div>
-											<div className="flex gap-2">
-												<Button size="sm" color="primary" variant="flat">
-													Iniciar Sesión
-												</Button>
-												<Button size="sm" variant="light">
-													Detalles
-												</Button>
-											</div>
-										</div>
-									</CardBody>
-								</Card>
-							))}
+										</CardBody>
+									</Card>
+								);
+							})}
 						</div>
-					) : (
+					)}
+
+					{/* Empty State */}
+					{!isLoading && !isError && confirmedSessions.length === 0 && (
 						<Card>
 							<CardBody className="text-center py-12">
 								<Calendar className="w-12 h-12 text-default-300 mx-auto mb-4" />

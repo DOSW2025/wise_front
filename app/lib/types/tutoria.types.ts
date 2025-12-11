@@ -230,3 +230,27 @@ export interface PendingSession {
  * Respuesta del endpoint de pending sessions
  */
 export type PendingSessionsResponse = PendingSession[];
+
+/**
+ * Sesión confirmada (para tutor)
+ */
+export interface ConfirmedSession {
+	sessionId: string;
+	studentName: string;
+	subjectCode: string;
+	subjectName: string;
+	scheduledAt: string; // ISO 8601 format
+	day: WeekDay;
+	startTime: string; // Formato: "HH:mm"
+	endTime: string; // Formato: "HH:mm"
+	mode: 'VIRTUAL' | 'PRESENCIAL';
+	comentarios: string | null;
+	linkConexion: string | null;
+	lugar: string | null;
+	createdAt: string; // ISO 8601 format
+}
+
+/**
+ * Respuesta del endpoint de confirmed sessions
+ */
+export type ConfirmedSessionsResponse = ConfirmedSession[];

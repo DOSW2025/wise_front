@@ -12,7 +12,9 @@ export const usePendingSessions = (tutorId: string, enabled = true) => {
 		queryKey: ['pending-sessions', tutorId],
 		queryFn: () => tutoriaService.getPendingSessions(tutorId),
 		enabled: enabled && !!tutorId,
-		staleTime: 1000 * 60 * 2, // 2 minutos
+		staleTime: 1000 * 30, // 30 segundos
+		refetchInterval: 1000 * 30, // Refetch cada 30 segundos
 		refetchOnWindowFocus: true,
+		refetchOnMount: true,
 	});
 };

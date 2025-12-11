@@ -106,6 +106,7 @@ export const API_ENDPOINTS = {
 		CONFIRM_SESSION: '/wise/tutorias/sessions/{id}/confirmar',
 		REJECT_SESSION: '/wise/tutorias/sessions/{id}/rechazar',
 		PENDING_SESSIONS: '/wise/tutorias/{id}/pending-sessions',
+		CONFIRMED_SESSIONS: '/wise/tutorias/{id}/confirmed-sessions',
 	},
 	COMUNIDAD: {
 		CHATS: '/chats',
