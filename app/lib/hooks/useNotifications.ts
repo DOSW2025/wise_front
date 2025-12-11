@@ -75,6 +75,29 @@ export function useNotifications() {
 		? mockNotifications.filter((n) => !n.read).length
 		: unreadCount;
 
+	// Mutation para marcar como leída individual
+	const markAsReadMutation = useMutation({
+		mutationFn: notificationsService.markAsRead,
+		onSuccess: (_, notificationId) => {
+			queryClient.setQueryData(
+				QUERY_KEYS.notifications,
+				(old: NotificationDto[]) => {
+					if (!old) return old;
+					return old.map((n) =>
+						n.id === notificationId ? { ...n, read: true } : n,
+					);
+				},
+			);
+			queryClient.setQueryData(QUERY_KEYS.unreadCount, (oldCount: number) =>
+				Math.max(0, oldCount - 1),
+			);
+		},
+		onError: () => {
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notifications });
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.unreadCount });
+		},
+	});
+
 	// Mutation para marcar todas como leídas
 	const markAllAsReadMutation = useMutation({
 		mutationFn: notificationsService.markAllAsRead,
@@ -134,6 +157,7 @@ export function useNotifications() {
 		error: notificationsError,
 
 		// Actions
+		markAsRead: markAsReadMutation.mutate,
 		markAllAsRead: markAllAsReadMutation.mutate,
 		deleteNotification: deleteNotificationMutation.mutate,
 		refetch: () => {
@@ -142,6 +166,7 @@ export function useNotifications() {
 		},
 
 		// Loading states
+		isMarkingAsRead: markAsReadMutation.isPending,
 		isMarkingAllAsRead: markAllAsReadMutation.isPending,
 		isDeleting: deleteNotificationMutation.isPending,
 	};

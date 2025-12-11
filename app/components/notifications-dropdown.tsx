@@ -38,7 +38,9 @@ export function NotificationsDropdown() {
 		notifications,
 		unreadCount,
 		isLoading,
+		markAsRead,
 		markAllAsRead,
+		isMarkingAsRead,
 		isMarkingAllAsRead,
 	} = useNotifications();
 
@@ -138,6 +140,19 @@ export function NotificationsDropdown() {
 									<p className="text-tiny text-default-400">
 										{formatTime(notification.timestamp)}
 									</p>
+									{notification.read === false && (
+										<button
+											type="button"
+											onClick={(e) => {
+												e.stopPropagation();
+												markAsRead(notification.id);
+											}}
+											className="text-xs text-primary hover:underline"
+											disabled={isMarkingAsRead}
+										>
+											{isMarkingAsRead ? 'Marcando...' : 'Marcar como leída'}
+										</button>
+									)}
 								</div>
 							</div>
 						</div>

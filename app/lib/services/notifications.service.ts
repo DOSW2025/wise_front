@@ -43,6 +43,14 @@ export const notificationsService = {
 	},
 
 	/**
+	 * Marcar una notificación como leída
+	 */
+	markAsRead: async (id: string): Promise<void> => {
+		const endpoint = API_ENDPOINTS.NOTIFICATIONS.MARK_READ.replace(':id', id);
+		await apiClient.patch(endpoint);
+	},
+
+	/**
 	 * Marcar todas las notificaciones como leídas
 	 */
 	markAllAsRead: async (): Promise<void> => {
