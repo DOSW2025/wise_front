@@ -8,12 +8,15 @@ import {
 	TrendingUp,
 	Users,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
+import { TutorProfileModal } from '~/components/tutor-profile-modal';
 import { useStudentDashboard } from '~/lib/hooks/useStudentDashboard';
 
 export default function StudentDashboard() {
 	const { data: dashboardData, isLoading, error } = useStudentDashboard();
+	const [selectedTutorId, setSelectedTutorId] = useState<string | null>(null);
 
 	if (isLoading) {
 		return (
@@ -248,7 +251,11 @@ export default function StudentDashboard() {
 											key={tutor.id}
 											className="flex items-center justify-between p-3 bg-default-100 rounded-lg"
 										>
-											<div className="flex items-center gap-3">
+											<button
+												type="button"
+												className="flex items-center gap-3 cursor-pointer flex-1 bg-transparent border-none p-0 text-left"
+												onClick={() => setSelectedTutorId(tutor.id)}
+											>
 												<Avatar
 													src={tutor.avatar}
 													name={initials}
@@ -256,7 +263,9 @@ export default function StudentDashboard() {
 													className="bg-green-500 text-white"
 												/>
 												<div>
-													<p className="font-semibold text-sm">{tutor.name}</p>
+													<p className="font-semibold text-sm hover:text-primary transition-colors">
+														{tutor.name}
+													</p>
 													<p className="text-small text-default-600">
 														{tutor.subject}
 													</p>
@@ -268,7 +277,7 @@ export default function StudentDashboard() {
 														</span>
 													</div>
 												</div>
-											</div>
+											</button>
 											<Chip size="sm" color={availabilityColor} variant="flat">
 												{availabilityText}
 											</Chip>
@@ -425,6 +434,13 @@ export default function StudentDashboard() {
 					</CardBody>
 				</Card>
 			</div>
+
+			{/* Modal del perfil del tutor */}
+			<TutorProfileModal
+				isOpen={!!selectedTutorId}
+				onClose={() => setSelectedTutorId(null)}
+				tutorId={selectedTutorId}
+			/>
 		</div>
 	);
 }

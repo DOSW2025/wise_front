@@ -19,6 +19,7 @@ import { PageHeader } from '~/components/page-header';
 import type { ScheduledTutoring } from '~/components/scheduled-tutorings-modal';
 import TutorCard from '~/components/tutor-card';
 import TutorFilter from '~/components/tutor-filter';
+import { TutorProfileModal } from '~/components/tutor-profile-modal';
 
 interface Tutor {
 	id: number;
@@ -624,6 +625,7 @@ const StudentTutoringPage: React.FC = () => {
 		null,
 	);
 	const [selectedTutor, _setSelectedTutor] = useState<Tutor | null>(null);
+	const [selectedTutorId, setSelectedTutorId] = useState<string | null>(null);
 	const [scheduledTutorings, setScheduledTutorings] = useState<
 		ScheduledTutoring[]
 	>(mockScheduledTutorings);
@@ -766,7 +768,12 @@ const StudentTutoringPage: React.FC = () => {
 
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
 						{tutors.map((tutor) => (
-							<TutorCard key={tutor.id} tutor={tutor} onOpenChat={onOpenChat} />
+							<TutorCard
+								key={tutor.id}
+								tutor={tutor}
+								onOpenChat={onOpenChat}
+								onViewProfile={setSelectedTutorId}
+							/>
 						))}
 					</div>
 				</>
@@ -831,6 +838,13 @@ const StudentTutoringPage: React.FC = () => {
 				onConfirm={(session) => {
 					handleCancelSession(session.id);
 				}}
+			/>
+
+			{/* Modal del perfil del tutor */}
+			<TutorProfileModal
+				isOpen={!!selectedTutorId}
+				onClose={() => setSelectedTutorId(null)}
+				tutorId={selectedTutorId}
 			/>
 		</div>
 	);
