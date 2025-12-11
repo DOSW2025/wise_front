@@ -60,4 +60,10 @@ export const API_ENDPOINTS = {
 		THREADS: '/threads',
 		RESPONSES: '/responses',
 	},
+	NOTIFICATIONS: {
+		LIST: '/notification/:userId',
+		UNREAD_COUNT: '/notificacion/unread-count/:userId',
+		MARK_ALL_READ: '/notification/read-all/:userId',
+		DELETE: '/notification/:id',
+	},
 } as const;

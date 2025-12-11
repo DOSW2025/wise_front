@@ -199,3 +199,31 @@ export interface UserGrowthResponse {
 	totalUsuariosNuevos: number;
 	data: GrowthDataPoint[];
 }
+
+// Notification Types
+export interface NotificationDto {
+	id: string;
+	title: string;
+	message: string;
+	type: 'info' | 'success' | 'warning' | 'error' | 'achievement';
+	timestamp: string;
+	read: boolean;
+	userId: string;
+	avatar?: string;
+}
+
+export interface CreateNotificationRequest {
+	title: string;
+	message: string;
+	type: 'info' | 'success' | 'warning' | 'error' | 'achievement';
+	userId?: string;
+	avatar?: string;
+}
+
+export interface NotificationsResponse {
+	notifications: NotificationDto[];
+}
+
+export interface UnreadCountResponse {
+	unreadCount: number;
+}
