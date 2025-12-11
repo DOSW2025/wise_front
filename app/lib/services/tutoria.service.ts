@@ -289,6 +289,48 @@ export async function getPendingSessions(
 	}
 }
 
+/**
+ * Confirma una sesión de tutoría pendiente
+ */
+export async function confirmSession(
+	sessionId: string,
+	data: { tutorId: string },
+): Promise<{ message: string }> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.CONFIRM_SESSION.replace(
+			'{id}',
+			sessionId,
+		);
+		console.log('Confirmando sesión:', { sessionId, url, data });
+
+		const response = await apiClient.patch<{ message: string }>(url, data);
+
+		console.log('Sesión confirmada exitosamente:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al confirmar sesión:', error);
+
+		if (axios.isAxiosError(error)) {
+			const status = error.response?.status;
+			const message = error.response?.data?.message || error.message;
+
+			if (status === 404) {
+				throw new Error('La sesión no existe o ya fue confirmada');
+			}
+			if (status === 400) {
+				throw new Error(`Datos inválidos: ${message}`);
+			}
+			if (status === 401 || status === 403) {
+				throw new Error('No tienes permisos para confirmar esta tutoría');
+			}
+
+			throw new Error(`Error del servidor (${status}): ${message}`);
+		}
+
+		throw new Error('No se pudo confirmar la tutoría. Verifica tu conexión.');
+	}
+}
+
 // Exportar todas las funciones como un objeto de servicio
 export const tutoriaService = {
 	getTutores,
@@ -300,4 +342,5 @@ export const tutoriaService = {
 	getTutoriaStats,
 	cancelSession,
 	getPendingSessions,
+	confirmSession,
 };

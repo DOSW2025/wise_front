@@ -24,10 +24,12 @@ import {
 	X,
 } from 'lucide-react';
 import { useState } from 'react';
-import { EmptyState } from '~/components';
+import { EmptyState, FeedbackModal } from '~/components';
 import { useAuth } from '~/contexts/auth-context';
+import { useConfirmSession } from '~/lib/hooks/useConfirmSession';
 import { usePendingSessions } from '~/lib/hooks/usePendingSessions';
 import type { PendingSession } from '~/lib/types/tutoria.types';
+import { getErrorMessage } from '~/lib/utils/error-messages';
 
 const DAY_LABELS: Record<string, string> = {
 	monday: 'Lunes',
@@ -47,12 +49,24 @@ export default function TutorRequests() {
 	);
 	const [actionType, setActionType] = useState<'confirm' | 'cancel'>('confirm');
 	const [responseMessage, setResponseMessage] = useState('');
+	const [feedback, setFeedback] = useState<{
+		isOpen: boolean;
+		type: 'success' | 'error';
+		message: string;
+	}>({
+		isOpen: false,
+		type: 'success',
+		message: '',
+	});
 
 	const {
 		data: pendingSessions = [],
 		isLoading,
 		isError,
 	} = usePendingSessions(user?.id || '', !!user?.id);
+
+	const { mutate: confirmSession, isPending: isConfirming } =
+		useConfirmSession();
 
 	const handleAction = (
 		request: PendingSession,
@@ -65,9 +79,37 @@ export default function TutorRequests() {
 	};
 
 	const confirmAction = () => {
-		// NOTE: Implementar confirmación/rechazo con API cuando esté disponible el endpoint
-		console.log('Action:', actionType, 'Session:', selectedRequest?.sessionId);
-		onClose();
+		if (!selectedRequest || !user?.id) return;
+
+		if (actionType === 'confirm') {
+			confirmSession(
+				{
+					sessionId: selectedRequest.sessionId,
+					tutorId: user.id,
+				},
+				{
+					onSuccess: () => {
+						onClose();
+						setFeedback({
+							isOpen: true,
+							type: 'success',
+							message: `Tutoría con ${selectedRequest.studentName} confirmada exitosamente`,
+						});
+					},
+					onError: (error) => {
+						setFeedback({
+							isOpen: true,
+							type: 'error',
+							message: getErrorMessage(error),
+						});
+					},
+				},
+			);
+		} else {
+			// NOTE: Implementar rechazo con API cuando esté disponible el endpoint
+			console.log('Rechazar sesión:', selectedRequest.sessionId);
+			onClose();
+		}
 	};
 
 	if (isLoading) {
@@ -272,31 +314,27 @@ export default function TutorRequests() {
 										- {selectedRequest.startTime} a {selectedRequest.endTime}
 									</p>
 								</div>
-								<Textarea
-									label={
-										actionType === 'confirm'
-											? 'Mensaje de confirmación (opcional)'
-											: 'Motivo del rechazo'
-									}
-									placeholder={
-										actionType === 'confirm'
-											? 'Mensaje para el estudiante...'
-											: 'Explica brevemente el motivo del rechazo...'
-									}
-									value={responseMessage}
-									onValueChange={setResponseMessage}
-									minRows={3}
-								/>
+								{actionType === 'cancel' && (
+									<Textarea
+										label="Motivo del rechazo"
+										placeholder="Explica brevemente el motivo del rechazo..."
+										value={responseMessage}
+										onValueChange={setResponseMessage}
+										minRows={3}
+									/>
+								)}
 							</div>
 						)}
 					</ModalBody>
 					<ModalFooter>
-						<Button variant="light" onPress={onClose}>
+						<Button variant="light" onPress={onClose} isDisabled={isConfirming}>
 							Cancelar
 						</Button>
 						<Button
 							color={actionType === 'confirm' ? 'success' : 'danger'}
 							onPress={confirmAction}
+							isLoading={isConfirming}
+							isDisabled={isConfirming}
 						>
 							{actionType === 'confirm'
 								? 'Confirmar Tutoría'
@@ -305,6 +343,14 @@ export default function TutorRequests() {
 					</ModalFooter>
 				</ModalContent>
 			</Modal>
+
+			{/* Modal de Feedback */}
+			<FeedbackModal
+				isOpen={feedback.isOpen}
+				onClose={() => setFeedback({ ...feedback, isOpen: false })}
+				type={feedback.type}
+				message={feedback.message}
+			/>
 		</div>
 	);
 }
