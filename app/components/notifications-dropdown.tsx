@@ -13,6 +13,7 @@ import {
 	Calendar,
 	CheckCircle,
 	FileText,
+	Trash2,
 } from 'lucide-react';
 import { useNotifications } from '~/lib/hooks/useNotifications';
 
@@ -40,8 +41,10 @@ export function NotificationsDropdown() {
 		isLoading,
 		markAsRead,
 		markAllAsRead,
+		deleteNotification,
 		isMarkingAsRead,
 		isMarkingAllAsRead,
+		isDeleting,
 	} = useNotifications();
 
 	const formatTime = (dateString: string) => {
@@ -76,7 +79,7 @@ export function NotificationsDropdown() {
 			</DropdownTrigger>
 			<DropdownMenu
 				aria-label="Notificaciones"
-				className="w-80"
+				className="w-80 max-h-96 overflow-y-auto scrollbar-hide"
 				closeOnSelect={false}
 			>
 				<DropdownItem
@@ -116,7 +119,7 @@ export function NotificationsDropdown() {
 					<DropdownItem
 						key={notification.id}
 						className="h-auto py-3 data-[hover=true]:bg-default-100"
-						textValue={notification.title}
+						textValue={notification.asunto}
 					>
 						<div className="flex gap-3 w-full relative">
 							<div className="flex-shrink-0 mt-0.5">
@@ -125,34 +128,48 @@ export function NotificationsDropdown() {
 							<div className="flex-1 min-w-0">
 								<div className="flex justify-between items-start gap-2">
 									<p
-										className={`text-sm truncate ${notification.read === false ? 'font-semibold' : 'font-medium'}`}
+										className={`text-sm truncate ${notification.visto === false ? 'font-semibold' : 'font-medium'}`}
 									>
-										{notification.title}
+										{notification.asunto}
 									</p>
-									{notification.read === false && (
+									{notification.visto === false && (
 										<span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5"></span>
 									)}
 								</div>
 								<p className="text-tiny text-default-600 mt-1">
-									{notification.message}
+									{notification.resumen}
 								</p>
 								<div className="flex justify-between items-center mt-2">
 									<p className="text-tiny text-default-400">
-										{formatTime(notification.timestamp)}
+										{formatTime(notification.fechaCreacion)}
 									</p>
-									{notification.read === false && (
+									<div className="flex gap-1">
+										{notification.visto === false && (
+											<button
+												type="button"
+												onClick={(e) => {
+													e.stopPropagation();
+													markAsRead(notification.id);
+												}}
+												className="text-xs text-primary hover:underline"
+												disabled={isMarkingAsRead}
+											>
+												{isMarkingAsRead ? 'Marcando...' : 'Marcar como leída'}
+											</button>
+										)}
 										<button
 											type="button"
 											onClick={(e) => {
 												e.stopPropagation();
-												markAsRead(notification.id);
+												deleteNotification(notification.id);
 											}}
-											className="text-xs text-primary hover:underline"
-											disabled={isMarkingAsRead}
+											className="text-xs text-primary hover:underline flex items-center gap-1"
+											disabled={isDeleting}
+											title="Eliminar notificación"
 										>
-											{isMarkingAsRead ? 'Marcando...' : 'Marcar como leída'}
+											<Trash2 className="w-3 h-3" />
 										</button>
-									)}
+									</div>
 								</div>
 							</div>
 						</div>

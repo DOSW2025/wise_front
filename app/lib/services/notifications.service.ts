@@ -25,7 +25,7 @@ export const notificationsService = {
 		);
 		const response =
 			await apiClient.get<ApiResponse<NotificationDto[]>>(endpoint);
-		return response.data.data!;
+		return response.data!;
 	},
 
 	/**
@@ -39,7 +39,7 @@ export const notificationsService = {
 		);
 		const response =
 			await apiClient.get<ApiResponse<UnreadCountResponse>>(endpoint);
-		return response.data.data!.unreadCount;
+		return response.data!.Count;
 	},
 
 	/**

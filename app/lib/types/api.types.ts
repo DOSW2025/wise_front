@@ -203,11 +203,11 @@ export interface UserGrowthResponse {
 // Notification Types
 export interface NotificationDto {
 	id: string;
-	title: string;
-	message: string;
+	asunto: string;
+	resumen: string;
 	type: 'info' | 'success' | 'warning' | 'error' | 'achievement';
-	timestamp: string;
-	read: boolean;
+	fechaCreacion: string;
+	visto: boolean;
 	userId: string;
 	avatar?: string;
 }

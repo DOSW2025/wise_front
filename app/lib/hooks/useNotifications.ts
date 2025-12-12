@@ -8,8 +8,8 @@ import { notificationsService } from '../services/notifications.service';
 import type { NotificationDto } from '../types/api.types';
 
 const QUERY_KEYS = {
-	notifications: ['notifications'] as const,
-	unreadCount: ['notifications', 'unread-count'] as const,
+	notifications: ['notificaciones'] as const,
+	unreadCount: ['notificaciones', 'unread-count'] as const,
 };
 
 export function useNotifications() {
@@ -19,21 +19,21 @@ export function useNotifications() {
 	const mockNotifications: NotificationDto[] = [
 		{
 			id: '1',
-			title: 'Nueva tutoría programada',
-			message:
+			asunto: 'Nueva tutoría programada',
+			resumen:
 				'Tu tutoría de Cálculo con Dr. María García está programada para mañana a las 15:00',
 			type: 'info',
-			timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-			read: false,
+			fechaCreacion: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+			visto: false,
 			userId: 'dev-user',
 		},
 		{
 			id: '2',
-			title: 'Material disponible',
-			message: 'Nuevo material de Programación Orientada a Objetos disponible',
+			asunto: 'Material disponible',
+			resumen: 'Nuevo material de Programación Orientada a Objetos disponible',
 			type: 'success',
-			timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-			read: false,
+			fechaCreacion: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+			visto: false,
 			userId: 'dev-user',
 		},
 	];
@@ -72,7 +72,7 @@ export function useNotifications() {
 		? mockNotifications
 		: notifications;
 	const finalUnreadCount = notificationsError
-		? mockNotifications.filter((n) => !n.read).length
+		? mockNotifications.filter((n) => !n.visto).length
 		: unreadCount;
 
 	// Mutation para marcar como leída individual
@@ -84,7 +84,7 @@ export function useNotifications() {
 				(old: NotificationDto[]) => {
 					if (!old) return old;
 					return old.map((n) =>
-						n.id === notificationId ? { ...n, read: true } : n,
+						n.id === notificationId ? { ...n, visto: true } : n,
 					);
 				},
 			);
@@ -107,7 +107,7 @@ export function useNotifications() {
 				QUERY_KEYS.notifications,
 				(old: NotificationDto[]) => {
 					if (!old) return old;
-					return old.map((n) => ({ ...n, read: true }));
+					return old.map((n) => ({ ...n, visto: true }));
 				},
 			);
 			queryClient.setQueryData(QUERY_KEYS.unreadCount, 0);
@@ -130,7 +130,7 @@ export function useNotifications() {
 					const newNotifications = old.filter((n) => n.id !== notificationId);
 
 					// Actualizar contador si la notificación eliminada no estaba leída
-					if (!deletedNotification?.read) {
+					if (!deletedNotification?.visto) {
 						queryClient.setQueryData(
 							QUERY_KEYS.unreadCount,
 							(oldCount: number) => Math.max(0, oldCount - 1),
