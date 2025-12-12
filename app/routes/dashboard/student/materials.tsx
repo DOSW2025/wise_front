@@ -25,6 +25,29 @@ import PreviewModal from '~/components/materials/PreviewModal';
 // Tipos y datos
 import type { Comment, Material } from '~/components/materials/types';
 import { mockMaterials, sortOptions } from '~/components/materials/types';
+import { recommendationsService } from '~/lib/api/recommendations';
+
+const parseCommaSeparated = (value: string) =>
+	value
+		.split(',')
+		.map((item) => item.trim())
+		.filter(Boolean);
+
+const formatRecommendationResult = (result: unknown): string => {
+	if (result === null || result === undefined) return '';
+	if (typeof result === 'string') return result;
+	if (typeof result === 'number' || typeof result === 'boolean') {
+		return String(result);
+	}
+
+	if (Array.isArray(result)) {
+		return result
+			.map((item) => formatRecommendationResult(item))
+			.join('\n\n');
+	}
+
+	return JSON.stringify(result, null, 2);
+};
 
 export default function StudentMaterials() {
 	// Estados
@@ -41,6 +64,11 @@ export default function StudentMaterials() {
 	const [userRating, setUserRating] = useState(0);
 	const [isAssistOpen, setIsAssistOpen] = useState(false);
 	const [assistDescription, setAssistDescription] = useState('');
+	const [assistSubjects, setAssistSubjects] = useState('');
+	const [assistTopics, setAssistTopics] = useState('');
+	const [assistResult, setAssistResult] = useState<unknown>(null);
+	const [assistError, setAssistError] = useState<string | null>(null);
+	const [isAssistLoading, setIsAssistLoading] = useState(false);
 	const isGridView = viewMode === 'grid';
 	const layoutClass = isGridView
 		? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
@@ -195,16 +223,62 @@ export default function StudentMaterials() {
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
-	const handleAssistSubmit = () => {
-		if (!assistDescription.trim()) {
-			alert('Describe lo que buscas antes de enviar.');
+	const handleAssistSubmit = async () => {
+		const description = assistDescription.trim();
+
+		if (!description) {
+			setAssistError('Describe lo que buscas antes de enviar.');
 			return;
 		}
-		// TODO: Conectar con el backend/IA para enviar la descripcion y obtener recomendaciones.
-		console.log('Busqueda inteligente:', {
-			description: assistDescription,
-		});
-		alert('Busqueda inteligente enviada. (Simulado)');
+
+		const materiasFromInput = parseCommaSeparated(assistSubjects);
+		const materias =
+			materiasFromInput.length > 0
+				? materiasFromInput
+				: selectedSubject !== 'Todos'
+					? [selectedSubject]
+					: [];
+
+		const temasFromInput = parseCommaSeparated(assistTopics);
+		const temas =
+			temasFromInput.length > 0
+				? temasFromInput
+				: searchQuery.trim()
+					? [searchQuery.trim()]
+					: [];
+
+		if (!materias.length) {
+			setAssistError(
+				'Agrega al menos una materia (usa el filtro o escribe en Materias).',
+			);
+			return;
+		}
+
+		if (!temas.length) {
+			setAssistError('Agrega al menos un tema (usa Buscar o escribe en Temas).');
+			return;
+		}
+
+		setAssistError(null);
+		setAssistResult(null);
+		setIsAssistLoading(true);
+
+		try {
+			const response = await recommendationsService.getRecommendations({
+				descripcion: description,
+				materias,
+				temas,
+			});
+			setAssistResult(response);
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: 'No se pudo obtener recomendaciones.';
+			setAssistError(message);
+		} finally {
+			setIsAssistLoading(false);
+		}
 	};
 
 	return (
@@ -294,15 +368,48 @@ export default function StudentMaterials() {
 						isRequired
 					/>
 
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+						<Input
+							label="Materias"
+							placeholder="Ej: Historia, Matemáticas"
+							description="Separa las materias por coma. Si dejas vacío se usa el filtro seleccionado."
+							value={assistSubjects}
+							onValueChange={setAssistSubjects}
+						/>
+						<Input
+							label="Temas"
+							placeholder="Ej: Revolución Francesa, Cálculo"
+							description="Separa los temas por coma. Si dejas vacío se usa la búsqueda actual."
+							value={assistTopics}
+							onValueChange={setAssistTopics}
+						/>
+					</div>
+
 					<div className="flex flex-col sm:flex-row sm:items-center gap-3">
 						<Button
 							color="primary"
 							onClick={handleAssistSubmit}
 							className="sm:ml-auto"
+							isLoading={isAssistLoading}
 						>
 							Enviar
 						</Button>
 					</div>
+
+					{assistError && (
+						<div className="text-sm text-danger-500">{assistError}</div>
+					)}
+
+					{assistResult && (
+						<div className="bg-default-100 border border-default-200 rounded-lg p-3 space-y-2">
+							<p className="text-sm font-semibold text-foreground">
+								Recomendaciones del asistente
+							</p>
+							<pre className="whitespace-pre-wrap break-words text-sm text-default-700">
+								{formatRecommendationResult(assistResult)}
+							</pre>
+						</div>
+					)}
 				</div>
 			)}
 
