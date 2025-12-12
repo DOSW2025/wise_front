@@ -395,7 +395,7 @@ export function useCreateMaterial() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: (data: CreateMaterialRequest) =>
+		mutationFn: (data: CreateMaterialRequest & { userId: string }) =>
 			materialsService.createMaterial(data),
 		onSuccess: () => {
 			// Invalidar queries relacionadas

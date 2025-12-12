@@ -4,6 +4,7 @@
  */
 
 import apiClient from '../api/client';
+import { API_ENDPOINTS } from '../config/api.config';
 import type {
 	ApiResponse,
 	CreateMaterialRequest,
@@ -53,24 +54,73 @@ export class MaterialsService {
 	}
 
 	// Crear nuevo material
-	async createMaterial(data: CreateMaterialRequest): Promise<Material> {
+	async createMaterial(
+		data: CreateMaterialRequest & { userId: string },
+	): Promise<Material> {
 		const formData = new FormData();
-		formData.append('nombre', data.nombre);
-		formData.append('materia', data.materia);
-		formData.append('tipo', data.tipo);
-		formData.append('semestre', data.semestre.toString());
-		if (data.descripcion) formData.append('descripcion', data.descripcion);
+		formData.append('title', data.nombre);
+		formData.append('subject', data.materia);
+		formData.append('description', data.descripcion || '');
+		formData.append('userId', data.userId);
 		formData.append('file', data.file);
 
-		const response = await apiClient.post<ApiResponse<Material>>(
-			'/api/materials',
-			formData,
-			{
-				headers: { 'Content-Type': 'multipart/form-data' },
-			},
-		);
-		if (!response.data.data) throw new Error('Error al crear material');
-		return response.data.data;
+		try {
+			const response = await apiClient.post<any>(
+				API_ENDPOINTS.MATERIALS.UPLOAD,
+				formData,
+				{
+					headers: { 'Content-Type': 'multipart/form-data' },
+				},
+			);
+
+			console.log('API Response:', response.data);
+
+			// Mapear respuesta del API Gateway a estructura Material
+			const apiResponse = response.data;
+
+			// Validar que la respuesta tenga los campos esperados
+			if (!apiResponse?.id || !apiResponse?.title) {
+				throw new Error('Respuesta inválida del servidor');
+			}
+
+			// Mapear campos de la respuesta del API Gateway a Material
+			const material: Material = {
+				id: apiResponse.id,
+				nombre: apiResponse.title,
+				materia: apiResponse.subject,
+				descripcion: apiResponse.description || '',
+				fileUrl: apiResponse.fileUrl,
+				createdAt: apiResponse.createdAt,
+				updatedAt: apiResponse.createdAt, // El API no retorna updatedAt, usar createdAt
+				// Campos por defecto (el API no los retorna)
+				tipo: 'PDF',
+				semestre: 1,
+				tutor: 'Usuario',
+				calificacion: 0,
+				vistas: 0,
+				descargas: 0,
+			};
+
+			console.log('Material procesado:', material);
+			return material;
+		} catch (error: any) {
+			console.error('Error en createMaterial:', error);
+
+			// Manejar errores de validación (422 - Unprocessable Entity)
+			if (error?.response?.status === 422) {
+				const errorData = error.response.data;
+				const errorMessage = errorData?.message || 'Validación del PDF fallida';
+				console.error('Error de validación:', errorMessage);
+				throw new Error(errorMessage);
+			}
+
+			// Re-lanzar errores conocidos
+			if (error instanceof Error) {
+				throw error;
+			}
+
+			throw new Error('Error al crear material');
+		}
 	}
 
 	// Actualizar material
