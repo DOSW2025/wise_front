@@ -1,22 +1,55 @@
 import { Button } from '@heroui/react';
 import { Paperclip, Send } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 interface MessageInputProps {
 	onSendText: (text: string) => void;
 	onSendFile: (file: File) => void;
+	onTyping?: () => void;
+	onStopTyping?: () => void;
 }
 
 export default function MessageInput({
 	onSendText,
 	onSendFile,
+	onTyping,
+	onStopTyping,
 }: MessageInputProps) {
 	const [text, setText] = useState('');
+	const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	function handleSend() {
 		if (!text.trim()) return;
 		onSendText(text);
 		setText('');
+		if (onStopTyping) {
+			onStopTyping();
+		}
+		if (typingTimeoutRef.current) {
+			clearTimeout(typingTimeoutRef.current);
+			typingTimeoutRef.current = null;
+		}
+	}
+
+	function handleTextChange(e: React.ChangeEvent<HTMLInputElement>) {
+		const newText = e.target.value;
+		setText(newText);
+
+		if (newText.length > 0 && onTyping) {
+			onTyping();
+
+			if (typingTimeoutRef.current) {
+				clearTimeout(typingTimeoutRef.current);
+			}
+
+			typingTimeoutRef.current = setTimeout(() => {
+				if (onStopTyping) {
+					onStopTyping();
+				}
+			}, 1000);
+		} else if (newText.length === 0 && onStopTyping) {
+			onStopTyping();
+		}
 	}
 
 	function handleKey(e: React.KeyboardEvent) {
@@ -58,7 +91,7 @@ export default function MessageInput({
 				<input
 					type="text"
 					value={text}
-					onChange={(e) => setText(e.target.value)}
+					onChange={handleTextChange}
 					onKeyDown={handleKey}
 					className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
 					placeholder="Escribe un mensaje…"

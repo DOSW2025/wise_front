@@ -10,7 +10,9 @@ import {
 	ModalContent,
 } from '@heroui/react';
 import { Flag, MoreVertical, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '~/contexts/auth-context';
+import { useWebSocket } from '~/lib/hooks/useWebSocket';
 import { type ChatMessage, chatsService } from '~/lib/services/chats.service';
 import MessageInput from './messageInput';
 import MessageList from './messageList';
@@ -23,6 +25,9 @@ interface Message {
 	name?: string;
 	sender: 'student' | 'tutor';
 	timestamp: Date;
+	userAvatar?: string;
+	userName?: string;
+	userId?: string;
 }
 
 interface ChatOverlayProps {
@@ -41,15 +46,65 @@ export default function ChatOverlay({
 	tutor,
 	onClose,
 }: ChatOverlayProps) {
+	const { user } = useAuth();
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-	const [_isLoading, setIsLoading] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
+	const [typingUsers, setTypingUsers] = useState<string[]>([]);
+
+	const {
+		isConnected,
+		onNewMessage,
+		onUserTyping,
+		onUserStoppedTyping,
+		onUserJoined,
+		onUserLeft,
+		sendMessage: sendWebSocketMessage,
+		sendTyping,
+		sendStopTyping,
+	} = useWebSocket(groupId);
+
+	const loadMessages = useCallback(async () => {
+		if (!groupId) return;
+		setIsLoading(true);
+		try {
+			const data = await chatsService.getGroupMessages(groupId);
+			const convertedMessages = data.map((msg: ChatMessage) => {
+				const isCurrentUser = msg.usuarioId === user?.id;
+				const sender: 'student' | 'tutor' = isCurrentUser ? 'student' : 'tutor';
+				return {
+					id: msg.id,
+					type: 'text' as const,
+					content: msg.contenido,
+					sender,
+					timestamp: new Date(msg.fechaCreacion),
+					userAvatar:
+						msg.usuario?.avatar_url ||
+						(isCurrentUser ? user?.avatarUrl : undefined),
+					userName: msg.usuario
+						? `${msg.usuario.nombre} ${msg.usuario.apellido}`
+						: isCurrentUser
+							? user?.name
+							: 'Usuario',
+					userId: msg.usuarioId,
+				};
+			});
+			setMessages(convertedMessages);
+		} catch (error) {
+			console.error('Error loading messages:', error);
+		} finally {
+			setIsLoading(false);
+		}
+	}, [groupId, user]);
 
 	useEffect(() => {
 		if (groupId) {
+			// Marcar como loading y cargar mensajes
+			setIsLoading(true);
 			loadMessages();
 		} else if (tutor) {
 			// Mensaje de bienvenida automático del tutor si no hay groupId
+			setIsLoading(false);
 			setMessages([
 				{
 					id: 'welcome',
@@ -60,27 +115,93 @@ export default function ChatOverlay({
 				},
 			]);
 		}
-	}, [tutor, groupId]);
+	}, [tutor, groupId, loadMessages]);
 
-	const loadMessages = async () => {
-		if (!groupId) return;
-		setIsLoading(true);
-		try {
-			const data = await chatsService.getGroupMessages(groupId);
-			const convertedMessages = data.map((msg: ChatMessage) => ({
-				id: msg.id,
-				type: 'text' as const,
-				content: msg.contenido,
-				sender: 'student' as const,
-				timestamp: new Date(msg.fechaCreacion),
-			}));
-			setMessages(convertedMessages);
-		} catch (error) {
-			console.error('Error loading messages:', error);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	useEffect(() => {
+		if (!groupId || !isConnected) return;
+
+		const unsubscribeNewMessage = onNewMessage((message) => {
+			console.log('[ChatOverlay] New message received via WebSocket:', message);
+			const isCurrentUser = message.usuario.id === user?.id;
+			const sender: 'student' | 'tutor' = isCurrentUser ? 'student' : 'tutor';
+
+			const newMessage: Message = {
+				id: message.id,
+				type: 'text',
+				content: message.contenido,
+				sender,
+				timestamp: new Date(message.fechaCreacion),
+				userAvatar: message.usuario.avatar_url,
+				userName: `${message.usuario.nombre} ${message.usuario.apellido}`,
+				userId: message.usuario.id,
+			};
+
+			setMessages((prev) => {
+				// Evitar duplicados: buscar si ya existe el mensaje o un temporal con el mismo contenido
+				const existingIndex = prev.findIndex(
+					(m) =>
+						m.id === message.id ||
+						(m.id.startsWith('temp-') &&
+							m.content === message.contenido &&
+							m.userId === message.usuario.id),
+				);
+
+				if (existingIndex !== -1) {
+					// Reemplazar el mensaje temporal/existente con el real del servidor
+					const updated = [...prev];
+					updated[existingIndex] = newMessage;
+					return updated;
+				}
+
+				// Si no existe y no es nuestro mensaje (ya lo agregamos optimistamente), agregarlo
+				if (!isCurrentUser) {
+					return [...prev, newMessage];
+				}
+
+				// Si es nuestro mensaje pero no encontramos el temporal, agregarlo de todas formas
+				return [...prev, newMessage];
+			});
+		});
+
+		const unsubscribeUserTyping = onUserTyping((data) => {
+			console.log('[ChatOverlay] User typing:', data.email);
+			if (data.userId !== user?.id) {
+				setTypingUsers((prev) =>
+					prev.includes(data.userId) ? prev : [...prev, data.userId],
+				);
+			}
+		});
+
+		const unsubscribeUserStoppedTyping = onUserStoppedTyping((data) => {
+			console.log('[ChatOverlay] User stopped typing:', data.userId);
+			setTypingUsers((prev) => prev.filter((id) => id !== data.userId));
+		});
+
+		const unsubscribeUserJoined = onUserJoined((data) => {
+			console.log('[ChatOverlay] User joined:', data.email);
+		});
+
+		const unsubscribeUserLeft = onUserLeft((data) => {
+			console.log('[ChatOverlay] User left:', data.email);
+		});
+
+		return () => {
+			unsubscribeNewMessage();
+			unsubscribeUserTyping();
+			unsubscribeUserStoppedTyping();
+			unsubscribeUserJoined();
+			unsubscribeUserLeft();
+		};
+	}, [
+		groupId,
+		isConnected,
+		onNewMessage,
+		onUserTyping,
+		onUserStoppedTyping,
+		onUserJoined,
+		onUserLeft,
+		user?.id,
+	]);
 
 	async function sendText(text: string) {
 		if (!groupId) {
@@ -107,19 +228,57 @@ export default function ChatOverlay({
 			return;
 		}
 
-		// Enviar al backend
+		// Crear mensaje temporal para mostrar inmediatamente (optimistic update)
+		const tempId = `temp-${Date.now()}`;
+		const optimisticMessage: Message = {
+			id: tempId,
+			type: 'text',
+			content: text,
+			sender: 'student',
+			timestamp: new Date(),
+			userAvatar: user?.avatarUrl,
+			userName: user?.name || 'Tú',
+			userId: user?.id,
+		};
+
+		// Agregar mensaje inmediatamente a la UI
+		setMessages((prev) => [...prev, optimisticMessage]);
+
 		try {
-			const newMsg = await chatsService.sendMessage(groupId, text);
-			const message: Message = {
-				id: newMsg.id,
-				type: 'text',
-				content: newMsg.contenido,
-				sender: 'student',
-				timestamp: new Date(newMsg.fechaCreacion),
-			};
-			setMessages((prev) => [...prev, message]);
+			if (isConnected) {
+				console.log('[ChatOverlay] Sending message via WebSocket');
+				await sendWebSocketMessage(text);
+				// El evento 'newMessage' del WebSocket actualizará el mensaje automáticamente
+			} else {
+				console.log(
+					'[ChatOverlay] Sending message via HTTP (WebSocket not connected)',
+				);
+				const newMsg = await chatsService.sendMessage(groupId, text);
+
+				// Reemplazar mensaje temporal con el del servidor
+				setMessages((prev) =>
+					prev.map((msg) =>
+						msg.id === tempId
+							? {
+									id: newMsg.id,
+									type: 'text',
+									content: newMsg.contenido,
+									sender: 'student',
+									timestamp: new Date(newMsg.fechaCreacion),
+									userAvatar: newMsg.usuario?.avatar_url || user?.avatarUrl,
+									userName: newMsg.usuario
+										? `${newMsg.usuario.nombre} ${newMsg.usuario.apellido}`
+										: user?.name || 'Usuario',
+									userId: newMsg.usuarioId,
+								}
+							: msg,
+					),
+				);
+			}
 		} catch (error) {
-			console.error('Error sending message:', error);
+			console.error('[ChatOverlay] Error sending message:', error);
+			// Remover mensaje temporal si hay error
+			setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
 		}
 	}
 
@@ -195,10 +354,24 @@ export default function ChatOverlay({
 						{/* Header del chat */}
 						<div className="flex justify-between items-center p-4 border-b bg-gray-50">
 							<div className="flex items-center gap-3 flex-1">
-								<Avatar name={tutor.avatarInitials} color="danger" size="sm" />
+								<div className="relative">
+									<Avatar
+										name={tutor.avatarInitials}
+										color="danger"
+										size="sm"
+									/>
+									{isConnected && (
+										<span
+											className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
+											title="En línea"
+										/>
+									)}
+								</div>
 								<div>
 									<h2 className="font-semibold text-gray-800">{tutor.name}</h2>
-									<p className="text-xs text-gray-500">{tutor.title}</p>
+									<p className="text-xs text-gray-500">
+										{isConnected ? 'En línea' : tutor.title}
+									</p>
 								</div>
 							</div>
 
@@ -241,11 +414,21 @@ export default function ChatOverlay({
 
 						{/* Área de mensajes */}
 						<div className="flex-1 overflow-y-auto bg-white">
-							<MessageList messages={messages} tutorName={tutor.name} />
+							<MessageList
+								messages={messages}
+								tutorName={tutor.name}
+								typingUsers={typingUsers}
+								isLoading={isLoading}
+							/>
 						</div>
 
 						{/* Input de mensajes */}
-						<MessageInput onSendText={sendText} onSendFile={sendFile} />
+						<MessageInput
+							onSendText={sendText}
+							onSendFile={sendFile}
+							onTyping={sendTyping}
+							onStopTyping={sendStopTyping}
+						/>
 					</ModalBody>
 				</ModalContent>
 			</Modal>
