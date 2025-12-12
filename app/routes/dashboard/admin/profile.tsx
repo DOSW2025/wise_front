@@ -10,7 +10,7 @@ import {
 import { useAuth } from '~/contexts/auth-context';
 import { getAdminProfile } from '~/lib/services/admin.service';
 import { useAdminProfileForm } from './hooks/useAdminProfileForm';
-import { useAdminProfileSave } from './hooks/useProfileSave';
+import { useAdminProfileSave } from './hooks/useAdminProfileSave';
 
 export default function AdminProfile() {
 	const { user } = useAuth();
