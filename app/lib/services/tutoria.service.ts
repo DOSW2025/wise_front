@@ -460,6 +460,92 @@ export async function completeSession(
 	}
 }
 
+/**
+ * Obtiene la disponibilidad semanal de un tutor
+ */
+export async function getAvailability(
+	tutorId: string,
+): Promise<import('../types/tutoria.types').DisponibilidadSemanal> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.GET_AVAILABILITY.replace(
+			'{id}',
+			tutorId,
+		);
+		console.log('Fetching tutor availability:', { tutorId, url });
+
+		const response =
+			await apiClient.get<
+				import('../types/tutoria.types').DisponibilidadSemanal
+			>(url);
+
+		console.log('Tutor availability obtenida:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al obtener disponibilidad del tutor:', error);
+
+		if (axios.isAxiosError(error)) {
+			if (error.response?.status === 404) {
+				// Si no hay disponibilidad, retornar estructura vacía
+				return {
+					monday: [],
+					tuesday: [],
+					wednesday: [],
+					thursday: [],
+					friday: [],
+					saturday: [],
+					sunday: [],
+				};
+			}
+			const message =
+				error.response?.data?.message || 'Error al obtener disponibilidad';
+			throw new Error(message);
+		}
+
+		throw new Error(
+			'No se pudo obtener la disponibilidad del tutor. Verifica tu conexión.',
+		);
+	}
+}
+
+/**
+ * Actualiza la disponibilidad semanal de un tutor
+ */
+export async function updateAvailability(
+	tutorId: string,
+	data: {
+		disponibilidad: import('../types/tutoria.types').DisponibilidadSemanal;
+	},
+): Promise<{ message: string }> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.UPDATE_AVAILABILITY.replace(
+			'{id}',
+			tutorId,
+		);
+		console.log('Actualizando disponibilidad del tutor:', {
+			tutorId,
+			url,
+			data,
+		});
+
+		const response = await apiClient.patch<{ message: string }>(url, data);
+
+		console.log('Disponibilidad actualizada exitosamente:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al actualizar disponibilidad:', error);
+
+		if (axios.isAxiosError(error)) {
+			const message =
+				error.response?.data?.message || 'Error al actualizar disponibilidad';
+			throw new Error(message);
+		}
+
+		throw new Error(
+			'No se pudo actualizar la disponibilidad. Verifica tu conexión.',
+		);
+	}
+}
+
 // Exportar todas las funciones como un objeto de servicio
 export const tutoriaService = {
 	getTutores,
@@ -475,4 +561,6 @@ export const tutoriaService = {
 	rejectSession,
 	getConfirmedSessions,
 	completeSession,
+	getAvailability,
+	updateAvailability,
 };

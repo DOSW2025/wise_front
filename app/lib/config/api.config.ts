@@ -108,6 +108,8 @@ export const API_ENDPOINTS = {
 		PENDING_SESSIONS: '/wise/tutorias/{id}/pending-sessions',
 		CONFIRMED_SESSIONS: '/wise/tutorias/{id}/confirmed-sessions',
 		COMPLETE_SESSION: '/wise/tutorias/sessions/{id}/completar',
+		GET_AVAILABILITY: '/wise/tutorias/disponibilidad/id/{id}',
+		UPDATE_AVAILABILITY: '/wise/tutorias/id/{id}/availability',
 	},
 	COMUNIDAD: {
 		CHATS: '/chats',

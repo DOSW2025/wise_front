@@ -9,7 +9,7 @@
 export interface DisponibilidadSlot {
 	start: string; // Formato: "HH:mm"
 	end: string; // Formato: "HH:mm"
-	modalidad: 'VIRTUAL' | 'PRESENCIAL' | 'HIBRIDA';
+	modalidad: 'VIRTUAL' | 'PRESENCIAL';
 	lugar: string; // URL para virtual o ubicación física
 }
 
