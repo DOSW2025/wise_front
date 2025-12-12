@@ -19,38 +19,131 @@ import type {
 } from '../types/api.types';
 
 export class MaterialsService {
-	// Obtener materiales con paginación
+	// Obtener materiales con paginación desde API Gateway
 	async getMaterials(
 		filters?: MaterialFilters,
 	): Promise<PaginatedResponse<Material>> {
-		const params = new URLSearchParams();
+		try {
+			console.log('Obteniendo materiales de:', API_ENDPOINTS.MATERIALS.GET_ALL);
 
-		// Parámetros de paginación
-		if (filters?.page) params.append('page', filters.page.toString());
-		if (filters?.limit) params.append('limit', filters.limit.toString());
+			const response = await apiClient.get<any>(
+				API_ENDPOINTS.MATERIALS.GET_ALL,
+			);
 
-		// Parámetros de filtrado
-		if (filters?.subject) params.append('subject', filters.subject);
-		if (filters?.resourceType)
-			params.append('resourceType', filters.resourceType);
-		if (filters?.semester)
-			params.append('semester', filters.semester.toString());
-		if (filters?.search) params.append('search', filters.search);
+			console.log('API GET Materials Raw Response:', response);
+			console.log('API GET Materials Response Data:', response.data);
+			console.log('Response Data Type:', typeof response.data);
+			console.log('Is Array:', Array.isArray(response.data));
 
-		const url = params.toString()
-			? `/api/materials?${params}`
-			: '/api/materials';
-		const response = await apiClient.get<PaginatedResponse<Material>>(url);
-		return response.data;
+			// La respuesta es un array directo de materiales
+			let materials: Material[] = [];
+
+			if (Array.isArray(response.data)) {
+				console.log(
+					'Detectado array directo, mapeando',
+					response.data.length,
+					'materiales',
+				);
+				materials = response.data.map((item: any) =>
+					this.mapApiMaterialToMaterial(item),
+				);
+			} else if (Array.isArray(response.data?.data)) {
+				console.log(
+					'Detectado response.data.data array, mapeando',
+					response.data.data.length,
+					'materiales',
+				);
+				materials = response.data.data.map((item: any) =>
+					this.mapApiMaterialToMaterial(item),
+				);
+			} else {
+				console.warn('Estructura de respuesta inesperada:', response.data);
+			}
+
+			console.log('Materiales mapeados:', materials);
+
+			// Aplicar filtros en cliente si es necesario
+			let filtered = materials;
+
+			if (filters?.search) {
+				const searchLower = filters.search.toLowerCase();
+				filtered = filtered.filter(
+					(m) =>
+						m.nombre.toLowerCase().includes(searchLower) ||
+						m.materia.toLowerCase().includes(searchLower) ||
+						m.tutor.toLowerCase().includes(searchLower),
+				);
+			}
+
+			if (filters?.subject) {
+				filtered = filtered.filter((m) => m.materia === filters.subject);
+			}
+
+			// Simular paginación
+			const page = filters?.page || 1;
+			const limit = filters?.limit || 12;
+			const startIndex = (page - 1) * limit;
+			const endIndex = startIndex + limit;
+			const paginatedData = filtered.slice(startIndex, endIndex);
+
+			return {
+				data: paginatedData,
+				pagination: {
+					page,
+					limit,
+					totalItems: filtered.length,
+					totalPages: Math.ceil(filtered.length / limit),
+				},
+			};
+		} catch (error) {
+			console.error('Error al obtener materiales:', error);
+			throw error;
+		}
+	}
+
+	// Mapear respuesta del API Gateway a estructura Material
+	private mapApiMaterialToMaterial(item: any): Material {
+		console.log('Mapeando item del API:', item);
+
+		const mapped: Material = {
+			id: item.id,
+			nombre: item.nombre || item.title || 'Sin título',
+			materia: item.subject || item.tags?.[0] || 'Sin categoría',
+			tipo: item.extension?.toUpperCase() || 'PDF',
+			semestre: 1, // No viene en respuesta
+			tutor: item.userName || 'Usuario desconocido',
+			calificacion: 0, // No viene en respuesta
+			vistas: item.vistos || item.views || 0,
+			descargas: item.descargas || item.downloads || 0,
+			createdAt: item.createdAt,
+			updatedAt: item.updatedAt,
+			fileUrl: item.url || item.fileUrl,
+			descripcion: item.descripcion || item.description || '',
+		};
+
+		console.log('Material mapeado:', mapped);
+		return mapped;
 	}
 
 	// Obtener material por ID
 	async getMaterialById(id: string): Promise<Material> {
-		const response = await apiClient.get<ApiResponse<Material>>(
-			`/api/materials/${id}`,
-		);
-		if (!response.data.data) throw new Error('Material no encontrado');
-		return response.data.data;
+		try {
+			const response = await apiClient.get<any>(
+				API_ENDPOINTS.MATERIALS.GET_BY_ID(id),
+			);
+
+			console.log('API GET Material by ID Response:', response.data);
+
+			// Mapear respuesta a Material
+			if (response.data?.id) {
+				return this.mapApiMaterialToMaterial(response.data);
+			}
+
+			throw new Error('Material no encontrado');
+		} catch (error) {
+			console.error('Error al obtener material por ID:', error);
+			throw error;
+		}
 	}
 
 	// Crear nuevo material
@@ -171,10 +264,31 @@ export class MaterialsService {
 
 	// Obtener materiales del usuario
 	async getUserMaterials(userId: string): Promise<Material[]> {
-		const response = await apiClient.get<ApiResponse<Material[]>>(
-			`/api/users/${userId}/materials`,
-		);
-		return response.data.data || [];
+		try {
+			const response = await apiClient.get<any>(
+				API_ENDPOINTS.MATERIALS.GET_ALL,
+			);
+
+			console.log('API GET User Materials Response:', response.data);
+
+			// Filtrar solo materiales del usuario actual
+			let materials: Material[] = [];
+
+			if (Array.isArray(response.data)) {
+				materials = response.data
+					.filter((item: any) => item.userId === userId)
+					.map((item: any) => this.mapApiMaterialToMaterial(item));
+			} else if (Array.isArray(response.data?.data)) {
+				materials = response.data.data
+					.filter((item: any) => item.userId === userId)
+					.map((item: any) => this.mapApiMaterialToMaterial(item));
+			}
+
+			return materials;
+		} catch (error) {
+			console.error('Error al obtener materiales del usuario:', error);
+			return [];
+		}
 	}
 
 	// Obtener materiales populares

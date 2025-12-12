@@ -31,119 +31,7 @@ export const MATERIALS_QUERY_KEYS = {
 export function useMaterials(filters?: MaterialFilters) {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.list(filters),
-		queryFn: () => {
-			// TODO: PRODUCCIÓN - Descomentar para usar backend real:
-			// return materialsService.getMaterials(filters);
-
-			// MOCK DATA - Eliminar cuando se conecte con backend
-			// MOCK DATA completo
-			const allMaterials = [
-				{
-					id: '1',
-					nombre: 'Introducción a Algoritmos',
-					materia: 'Programación I',
-					tipo: 'PDF',
-					semestre: 2,
-					tutor: 'Dr. Juan Pérez',
-					calificacion: 4.5,
-					vistas: 125,
-					descargas: 89,
-					createdAt: '2024-01-15T10:00:00Z',
-					updatedAt: '2024-01-15T10:00:00Z',
-				},
-				{
-					id: '2',
-					nombre: 'Estructuras de Datos Básicas',
-					materia: 'Estructuras de Datos',
-					tipo: 'DOCX',
-					semestre: 3,
-					tutor: 'Dra. María García',
-					calificacion: 4.8,
-					vistas: 203,
-					descargas: 156,
-					createdAt: '2024-01-10T14:30:00Z',
-					updatedAt: '2024-01-10T14:30:00Z',
-				},
-				{
-					id: '3',
-					nombre: 'Ejercicios de Cálculo Diferencial',
-					materia: 'Cálculo I',
-					tipo: 'PDF',
-					semestre: 1,
-					tutor: 'Prof. Carlos López',
-					calificacion: 4.2,
-					vistas: 87,
-					descargas: 45,
-					createdAt: '2024-01-08T09:15:00Z',
-					updatedAt: '2024-01-08T09:15:00Z',
-				},
-				{
-					id: '4',
-					nombre: 'Matrices y Vectores',
-					materia: 'Álgebra Lineal',
-					tipo: 'PPT',
-					semestre: 2,
-					tutor: 'Dr. Ana Martínez',
-					calificacion: 4.6,
-					vistas: 95,
-					descargas: 67,
-					createdAt: '2024-01-12T16:20:00Z',
-					updatedAt: '2024-01-12T16:20:00Z',
-				},
-				{
-					id: '5',
-					nombre: 'Consultas SQL Básicas',
-					materia: 'Bases de Datos',
-					tipo: 'DOCX',
-					semestre: 4,
-					tutor: 'Prof. Luis Rodríguez',
-					calificacion: 4.3,
-					vistas: 112,
-					descargas: 78,
-					createdAt: '2024-01-05T11:45:00Z',
-					updatedAt: '2024-01-05T11:45:00Z',
-				},
-			];
-
-			// Simular filtrado
-			let filtered = allMaterials;
-			if (filters?.subject) {
-				filtered = filtered.filter((m) => m.materia === filters.subject);
-			}
-			if (filters?.resourceType) {
-				filtered = filtered.filter((m) => m.tipo === filters.resourceType);
-			}
-			if (filters?.semester) {
-				filtered = filtered.filter((m) => m.semestre === filters.semester);
-			}
-			if (filters?.search) {
-				const searchLower = filters.search.toLowerCase();
-				filtered = filtered.filter(
-					(m) =>
-						m.nombre.toLowerCase().includes(searchLower) ||
-						m.materia.toLowerCase().includes(searchLower) ||
-						m.tutor.toLowerCase().includes(searchLower),
-				);
-			}
-
-			// Simular paginación del backend
-			const page = filters?.page || 1;
-			const limit = filters?.limit || 12;
-			const startIndex = (page - 1) * limit;
-			const endIndex = startIndex + limit;
-			const paginatedData = filtered.slice(startIndex, endIndex);
-
-			// Retornar estructura esperada del backend
-			return Promise.resolve({
-				data: paginatedData,
-				pagination: {
-					page,
-					limit,
-					totalItems: filtered.length,
-					totalPages: Math.ceil(filtered.length / limit),
-				},
-			});
-		},
+		queryFn: () => materialsService.getMaterials(filters),
 		staleTime: 5 * 60 * 1000, // 5 minutos
 	});
 }
@@ -152,90 +40,7 @@ export function useMaterials(filters?: MaterialFilters) {
 export function useMaterial(id: string) {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.detail(id),
-		queryFn: () => {
-			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.getMaterialById(id);
-			// MOCK DATA - buscar material por ID
-			const allMaterials = [
-				{
-					id: '1',
-					nombre: 'Introducción a Algoritmos',
-					materia: 'Programación I',
-					tipo: 'PDF',
-					semestre: 2,
-					tutor: 'Dr. Juan Pérez',
-					calificacion: 4.5,
-					vistas: 125,
-					descargas: 89,
-					createdAt: '2024-01-15T10:00:00Z',
-					updatedAt: '2024-01-15T10:00:00Z',
-					descripcion:
-						'Material completo sobre algoritmos básicos y estructuras de control.',
-				},
-				{
-					id: '2',
-					nombre: 'Estructuras de Datos Básicas',
-					materia: 'Estructuras de Datos',
-					tipo: 'DOCX',
-					semestre: 3,
-					tutor: 'Dra. María García',
-					calificacion: 4.8,
-					vistas: 203,
-					descargas: 156,
-					createdAt: '2024-01-10T14:30:00Z',
-					updatedAt: '2024-01-10T14:30:00Z',
-					descripcion: 'Guía práctica sobre listas, pilas y colas.',
-				},
-				{
-					id: '3',
-					nombre: 'Ejercicios de Cálculo Diferencial',
-					materia: 'Cálculo I',
-					tipo: 'PDF',
-					semestre: 1,
-					tutor: 'Prof. Carlos López',
-					calificacion: 4.2,
-					vistas: 87,
-					descargas: 45,
-					createdAt: '2024-01-08T09:15:00Z',
-					updatedAt: '2024-01-08T09:15:00Z',
-					descripcion: 'Colección de ejercicios resueltos de derivadas.',
-				},
-				{
-					id: '4',
-					nombre: 'Matrices y Vectores',
-					materia: 'Álgebra Lineal',
-					tipo: 'PPT',
-					semestre: 2,
-					tutor: 'Dr. Ana Martínez',
-					calificacion: 4.6,
-					vistas: 95,
-					descargas: 67,
-					createdAt: '2024-01-12T16:20:00Z',
-					updatedAt: '2024-01-12T16:20:00Z',
-					descripcion: 'Presentación sobre operaciones con matrices.',
-				},
-				{
-					id: '5',
-					nombre: 'Consultas SQL Básicas',
-					materia: 'Bases de Datos',
-					tipo: 'DOCX',
-					semestre: 4,
-					tutor: 'Prof. Luis Rodríguez',
-					calificacion: 4.3,
-					vistas: 112,
-					descargas: 78,
-					createdAt: '2024-01-05T11:45:00Z',
-					updatedAt: '2024-01-05T11:45:00Z',
-					descripcion: 'Manual de consultas SELECT, INSERT, UPDATE y DELETE.',
-				},
-			];
-
-			const material = allMaterials.find((m) => m.id === id);
-			if (!material) {
-				throw new Error('Material no encontrado');
-			}
-
-			return Promise.resolve(material);
-		},
+		queryFn: () => materialsService.getMaterialById(id),
 		enabled: !!id,
 	});
 }
@@ -244,17 +49,7 @@ export function useMaterial(id: string) {
 export function useSubjects() {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.subjects,
-		queryFn: () => {
-			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.getSubjects();
-			// MOCK DATA para desarrollo
-			return Promise.resolve([
-				{ id: '1', nombre: 'Programación I' },
-				{ id: '2', nombre: 'Estructuras de Datos' },
-				{ id: '3', nombre: 'Cálculo I' },
-				{ id: '4', nombre: 'Álgebra Lineal' },
-				{ id: '5', nombre: 'Bases de Datos' },
-			]);
-		},
+		queryFn: () => materialsService.getSubjects(),
 		staleTime: 30 * 60 * 1000, // 30 minutos
 	});
 }
@@ -263,15 +58,7 @@ export function useSubjects() {
 export function useResourceTypes() {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.resourceTypes,
-		queryFn: () => {
-			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.getResourceTypes();
-			// MOCK DATA para desarrollo
-			return Promise.resolve([
-				{ id: '1', nombre: 'PDF' },
-				{ id: '2', nombre: 'DOCX' },
-				{ id: '3', nombre: 'PPT' },
-			]);
-		},
+		queryFn: () => materialsService.getResourceTypes(),
 		staleTime: 30 * 60 * 1000, // 30 minutos
 	});
 }
@@ -280,42 +67,7 @@ export function useResourceTypes() {
 export function useUserMaterials(userId: string) {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.userMaterials(userId),
-		queryFn: () => {
-			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.getUserMaterials(userId);
-			// MOCK DATA - materiales del usuario logueado
-			const userMaterials = [
-				{
-					id: '1',
-					nombre: 'Introducción a Algoritmos',
-					materia: 'Programación I',
-					tipo: 'PDF',
-					semestre: 2,
-					tutor: 'Tutor Desarrollo',
-					calificacion: 4.5,
-					vistas: 125,
-					descargas: 89,
-					createdAt: '2024-01-15T10:00:00Z',
-					updatedAt: '2024-01-15T10:00:00Z',
-					descripcion: 'Material completo sobre algoritmos básicos.',
-				},
-				{
-					id: '6',
-					nombre: 'Ejercicios de Programación',
-					materia: 'Programación I',
-					tipo: 'DOCX',
-					semestre: 2,
-					tutor: 'Tutor Desarrollo',
-					calificacion: 4.2,
-					vistas: 67,
-					descargas: 34,
-					createdAt: '2024-01-20T09:30:00Z',
-					updatedAt: '2024-01-20T09:30:00Z',
-					descripcion: 'Colección de ejercicios prácticos.',
-				},
-			];
-
-			return Promise.resolve(userMaterials);
-		},
+		queryFn: () => materialsService.getUserMaterials(userId),
 		enabled: !!userId,
 	});
 }
@@ -324,68 +76,7 @@ export function useUserMaterials(userId: string) {
 export function usePopularMaterials() {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.popular,
-		queryFn: () => {
-			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.getPopularMaterials();
-			// MOCK DATA - materiales populares
-			return Promise.resolve({
-				mostViewed: [
-					{
-						id: '2',
-						nombre: 'Estructuras de Datos Básicas',
-						materia: 'Estructuras de Datos',
-						tipo: 'DOCX',
-						semestre: 3,
-						tutor: 'Dra. María García',
-						calificacion: 4.8,
-						vistas: 203,
-						descargas: 156,
-						createdAt: '2024-01-10T14:30:00Z',
-						updatedAt: '2024-01-10T14:30:00Z',
-					},
-					{
-						id: '1',
-						nombre: 'Introducción a Algoritmos',
-						materia: 'Programación I',
-						tipo: 'PDF',
-						semestre: 2,
-						tutor: 'Dr. Juan Pérez',
-						calificacion: 4.5,
-						vistas: 125,
-						descargas: 89,
-						createdAt: '2024-01-15T10:00:00Z',
-						updatedAt: '2024-01-15T10:00:00Z',
-					},
-				],
-				mostDownloaded: [
-					{
-						id: '2',
-						nombre: 'Estructuras de Datos Básicas',
-						materia: 'Estructuras de Datos',
-						tipo: 'DOCX',
-						semestre: 3,
-						tutor: 'Dra. María García',
-						calificacion: 4.8,
-						vistas: 203,
-						descargas: 156,
-						createdAt: '2024-01-10T14:30:00Z',
-						updatedAt: '2024-01-10T14:30:00Z',
-					},
-					{
-						id: '5',
-						nombre: 'Consultas SQL Básicas',
-						materia: 'Bases de Datos',
-						tipo: 'DOCX',
-						semestre: 4,
-						tutor: 'Prof. Luis Rodríguez',
-						calificacion: 4.3,
-						vistas: 112,
-						descargas: 78,
-						createdAt: '2024-01-05T11:45:00Z',
-						updatedAt: '2024-01-05T11:45:00Z',
-					},
-				],
-			});
-		},
+		queryFn: () => materialsService.getPopularMaterials(),
 		staleTime: 10 * 60 * 1000, // 10 minutos
 	});
 }
