@@ -29,7 +29,7 @@ import type {
 	Material as MaterialCardType,
 } from '~/components/materials/types';
 import { sortOptions } from '~/components/materials/types';
-import { useMaterials } from '~/lib/hooks/useMaterials';
+import { useDownloadMaterial, useMaterials } from '~/lib/hooks/useMaterials';
 import type { Material } from '~/lib/types/api.types';
 
 // Función para adaptar Material del API al Material que espera MaterialCard
@@ -154,9 +154,25 @@ export default function StudentMaterials() {
 	}, []);
 
 	// Handlers
+	const downloadMutation = useDownloadMaterial();
+
 	const handleDownload = async (materialId: string) => {
-		console.log('Descargando material:', materialId);
-		alert(`Descargando material ${materialId}`);
+		try {
+			console.log('📥 Iniciando descarga del material:', materialId);
+			await downloadMutation.mutateAsync(materialId);
+			console.log('✅ Descarga completada');
+		} catch (error: any) {
+			console.error('❌ Error en descarga:', error);
+			const errorMsg =
+				error?.message || 'Error desconocido al descargar el material';
+			console.error('📊 Detalle del error:', {
+				message: errorMsg,
+				status: error?.response?.status,
+				statusText: error?.response?.statusText,
+				data: error?.response?.data,
+			});
+			alert(`Error al descargar: ${errorMsg}`);
+		}
 	};
 
 	const handleShare = async (material: Material) => {

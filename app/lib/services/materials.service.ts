@@ -142,7 +142,7 @@ export class MaterialsService {
 
 			console.log('✅ API GET Material by ID Raw Response:', response);
 			console.log('📦 Response Data:', response.data);
-			console.log('📊 Response Status:', response.status);
+			console.log('� Response Status:', response.status);
 
 			// Mapear respuesta a Material
 			if (response.data) {
@@ -256,11 +256,75 @@ export class MaterialsService {
 	}
 
 	// Descargar material
-	async downloadMaterial(id: string): Promise<Blob> {
-		const response = await apiClient.get(`/api/materials/${id}/download`, {
-			responseType: 'blob',
-		});
-		return response.data;
+	async downloadMaterial(id: string): Promise<void> {
+		try {
+			console.log('📥 Iniciando descarga del material:', id);
+			const endpoint = `${API_ENDPOINTS.MATERIALS.BASE}/${id}/download`;
+			console.log(
+				'📍 URL completa:',
+				`${apiClient.defaults.baseURL}${endpoint}`,
+			);
+			console.log('📍 Endpoint relativo:', endpoint);
+
+			const response = await apiClient.get<any>(endpoint, {
+				responseType: 'blob',
+			});
+
+			console.log('✅ Respuesta recibida - Status:', response.status);
+			console.log('📦 Blob Size:', response.data.size);
+			console.log('📦 Blob Type:', response.data.type);
+
+			// Crear un blob y descargarlo
+			const blob = response.data;
+
+			if (!blob || blob.size === 0) {
+				throw new Error('El archivo descargado está vacío');
+			}
+
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+
+			// Usar el nombre del archivo de la respuesta o un nombre por defecto
+			const contentDisposition = response.headers['content-disposition'];
+			let filename = `material-${id}.pdf`;
+
+			if (contentDisposition) {
+				console.log('📄 Content-Disposition:', contentDisposition);
+				const filenameMatch = contentDisposition.match(
+					/filename="?(.+?)"?(?:;|$)/,
+				);
+				if (filenameMatch) {
+					filename = filenameMatch[1];
+					console.log('📄 Nombre extraído:', filename);
+				}
+			}
+
+			link.download = filename;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+
+			console.log('✨ Archivo descargado:', filename);
+		} catch (error: any) {
+			console.error('❌ Error al descargar material');
+			console.error('📊 Status:', error?.response?.status);
+			console.error('📊 StatusText:', error?.response?.statusText);
+			console.error('📊 Message:', error?.message);
+
+			// Si es 500, es error del servidor
+			if (error?.response?.status === 500) {
+				throw new Error(
+					'Error del servidor (500). El endpoint /wise/materiales/:id/download devolvió un error interno. Verifica los logs del backend.',
+				);
+			}
+
+			// Si es otro error
+			throw new Error(
+				`Error ${error?.response?.status || 'desconocido'}: ${error?.response?.statusText || error?.message || 'Error al descargar'}`,
+			);
+		}
 	}
 
 	// Calificar material
