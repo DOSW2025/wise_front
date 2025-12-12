@@ -41,9 +41,7 @@ const formatRecommendationResult = (result: unknown): string => {
 	}
 
 	if (Array.isArray(result)) {
-		return result
-			.map((item) => formatRecommendationResult(item))
-			.join('\n\n');
+		return result.map((item) => formatRecommendationResult(item)).join('\n\n');
 	}
 
 	return JSON.stringify(result, null, 2);
@@ -255,7 +253,9 @@ export default function StudentMaterials() {
 		}
 
 		if (!temas.length) {
-			setAssistError('Agrega al menos un tema (usa Buscar o escribe en Temas).');
+			setAssistError(
+				'Agrega al menos un tema (usa Buscar o escribe en Temas).',
+			);
 			return;
 		}
 
@@ -401,13 +401,59 @@ export default function StudentMaterials() {
 					)}
 
 					{assistResult && (
-						<div className="bg-default-100 border border-default-200 rounded-lg p-3 space-y-2">
-							<p className="text-sm font-semibold text-foreground">
-								Recomendaciones del asistente
-							</p>
-							<pre className="whitespace-pre-wrap break-words text-sm text-default-700">
-								{formatRecommendationResult(assistResult)}
-							</pre>
+						<div className="space-y-4">
+							{/* Mensaje de la IA - Solo la introducción */}
+							{(assistResult as any).message && (
+								<div className="bg-default-100 border border-default-200 rounded-lg p-4">
+									<p className="text-sm font-semibold text-foreground mb-2">
+										Recomendación del Asistente IA
+									</p>
+									<p className="text-sm text-default-700">
+										{/* Extraer solo la introducción antes de los números */}
+										{(assistResult as any).message
+											.split(/\n\n1\.\s+/)[0]
+											.trim()}
+									</p>
+								</div>
+							)}
+
+							{/* Lista de Recomendaciones con Scroll Interno */}
+							{(assistResult as any).recommendations &&
+								(assistResult as any).recommendations.length > 0 && (
+									<div className="space-y-3">
+										<p className="text-sm font-semibold text-foreground">
+											Materiales Recomendados (
+											{(assistResult as any).recommendations.length})
+										</p>
+										<div className="max-h-96 overflow-y-auto pr-2 space-y-3">
+											{(assistResult as any).recommendations.map(
+												(rec: any, idx: number) => (
+													<div
+														key={rec.docId || idx}
+														className="bg-default-50 border border-default-200 rounded-lg p-3 space-y-2 hover:bg-default-100 transition flex-shrink-0"
+													>
+														<div className="flex justify-between items-start gap-2">
+															<h4 className="text-sm font-semibold text-foreground">
+																{rec.fileName}
+															</h4>
+															<span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded flex-shrink-0">
+																{rec.materia}
+															</span>
+														</div>
+														<p className="text-xs text-default-600">
+															<span className="font-semibold">Tema:</span>{' '}
+															{rec.tema}
+														</p>
+														<p className="text-xs text-default-600 line-clamp-2">
+															<span className="font-semibold">Resumen:</span>{' '}
+															{rec.summary}
+														</p>
+													</div>
+												),
+											)}
+										</div>
+									</div>
+								)}
 						</div>
 					)}
 				</div>
