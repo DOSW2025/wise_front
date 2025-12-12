@@ -56,6 +56,7 @@ function adaptMaterialForCard(apiMaterial: Material): MaterialCardType {
 		comments: 0, // No viene en respuesta
 		description: apiMaterial.descripcion,
 		commentsList: [],
+		fileUrl: apiMaterial.fileUrl, // URL del archivo para vista previa
 	};
 }
 

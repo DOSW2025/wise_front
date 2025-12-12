@@ -103,45 +103,61 @@ export class MaterialsService {
 
 	// Mapear respuesta del API Gateway a estructura Material
 	private mapApiMaterialToMaterial(item: any): Material {
-		console.log('Mapeando item del API:', item);
+		console.log('🔄 Mapeando item del API:', item);
 
-		const mapped: Material = {
-			id: item.id,
-			nombre: item.nombre || item.title || 'Sin título',
-			materia: item.subject || item.tags?.[0] || 'Sin categoría',
-			tipo: item.extension?.toUpperCase() || 'PDF',
-			semestre: 1, // No viene en respuesta
-			tutor: item.userName || 'Usuario desconocido',
-			calificacion: 0, // No viene en respuesta
-			vistas: item.vistos || item.views || 0,
-			descargas: item.descargas || item.downloads || 0,
-			createdAt: item.createdAt,
-			updatedAt: item.updatedAt,
-			fileUrl: item.url || item.fileUrl,
-			descripcion: item.descripcion || item.description || '',
-		};
+		try {
+			const mapped: Material = {
+				id: item.id,
+				nombre: item.nombre || item.title || 'Sin título',
+				materia: item.subject || item.tags?.[0] || 'Sin categoría',
+				tipo: item.extension?.toUpperCase() || 'PDF',
+				semestre: 1, // No viene en respuesta
+				tutor: item.userName || 'Usuario desconocido',
+				calificacion: 0, // No viene en respuesta
+				vistas: item.vistos || item.views || 0,
+				descargas: item.descargas || item.downloads || 0,
+				createdAt: item.createdAt,
+				updatedAt: item.updatedAt,
+				fileUrl: item.url || item.fileUrl,
+				descripcion: item.descripcion || item.description || '',
+			};
 
-		console.log('Material mapeado:', mapped);
-		return mapped;
+			console.log('✨ Material mapeado:', mapped);
+			console.log('📎 FileUrl mapeado:', mapped.fileUrl);
+			return mapped;
+		} catch (error) {
+			console.error('❌ Error al mapear material:', error);
+			throw error;
+		}
 	}
 
 	// Obtener material por ID
 	async getMaterialById(id: string): Promise<Material> {
 		try {
-			const response = await apiClient.get<any>(
-				API_ENDPOINTS.MATERIALS.GET_BY_ID(id),
-			);
+			console.log('🔍 Obteniendo material por ID:', id);
+			const endpoint = API_ENDPOINTS.MATERIALS.GET_BY_ID(id);
+			console.log('📍 Endpoint:', endpoint);
 
-			console.log('API GET Material by ID Response:', response.data);
+			const response = await apiClient.get<any>(endpoint);
+
+			console.log('✅ API GET Material by ID Raw Response:', response);
+			console.log('📦 Response Data:', response.data);
+			console.log('📊 Response Status:', response.status);
 
 			// Mapear respuesta a Material
-			if (response.data?.id) {
-				return this.mapApiMaterialToMaterial(response.data);
+			if (response.data) {
+				console.log('🔗 Response tiene data, mapeando...');
+				const mapped = this.mapApiMaterialToMaterial(response.data);
+				console.log('✨ Material por ID mapeado:', mapped);
+				return mapped;
 			}
 
-			throw new Error('Material no encontrado');
-		} catch (error) {
-			console.error('Error al obtener material por ID:', error);
+			throw new Error('Material no encontrado en la respuesta');
+		} catch (error: any) {
+			console.error('❌ Error al obtener material por ID:', error);
+			console.error('Error status:', error?.response?.status);
+			console.error('Error data:', error?.response?.data);
+			console.error('Error message:', error?.message);
 			throw error;
 		}
 	}
