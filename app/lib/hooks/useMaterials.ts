@@ -242,17 +242,17 @@ export function useDownloadMaterial() {
 
 	return useMutation({
 		mutationFn: async (id: string) => {
-			console.log('🔄 Hook: Iniciando descarga de material', id);
+			console.log('Hook: Iniciando descarga de material', id);
 			try {
 				await materialsService.downloadMaterial(id);
-				console.log('✅ Hook: Servicio completó descarga');
+				console.log('Hook: Servicio completó descarga');
 			} catch (error: any) {
-				console.error('❌ Hook: Error del servicio:', error);
+				console.error('Hook: Error del servicio:', error);
 				throw error;
 			}
 		},
 		onSuccess: (_, id) => {
-			console.log('✅ Hook: Descarga completada para', id);
+			console.log('Hook: Descarga completada para', id);
 			// Actualizar el contador de descargas en el cache
 			queryClient.setQueryData(
 				MATERIALS_QUERY_KEYS.detail(id),
@@ -271,8 +271,8 @@ export function useDownloadMaterial() {
 			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.lists() });
 		},
 		onError: (error: any) => {
-			console.error('❌ Hook: Error en descarga:', error);
-			console.error('❌ Hook: Error completo:', {
+			console.error('Hook: Error en descarga:', error);
+			console.error('Hook: Error completo:', {
 				message: error?.message,
 				status: error?.response?.status,
 				statusText: error?.response?.statusText,

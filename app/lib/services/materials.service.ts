@@ -103,17 +103,17 @@ export class MaterialsService {
 
 	// Mapear respuesta del API Gateway a estructura Material
 	private mapApiMaterialToMaterial(item: any): Material {
-		console.log('🔄 Mapeando item del API:', item);
+		console.log('Mapeando item del API:', item);
 
 		try {
 			// Detectar si la respuesta tiene estructura anidada (GET /:id) o plana (GET /)
 			const data = item.metadata || item;
 
 			console.log(
-				'📍 Estructura detectada:',
+				'Estructura detectada:',
 				item.metadata ? 'Con metadata' : 'Plana',
 			);
-			console.log('📦 Datos a mapear:', data);
+			console.log('Datos a mapear:', data);
 
 			const mapped: Material = {
 				id: data.id,
@@ -131,11 +131,10 @@ export class MaterialsService {
 				descripcion: data.descripcion || data.description || '',
 			};
 
-			console.log('✨ Material mapeado:', mapped);
-			console.log('📎 FileUrl mapeado:', mapped.fileUrl);
+			console.log('Material mapeado:', mapped);
 			return mapped;
 		} catch (error) {
-			console.error('❌ Error al mapear material:', error);
+			console.error('Error al mapear material:', error);
 			throw error;
 		}
 	}
@@ -143,30 +142,22 @@ export class MaterialsService {
 	// Obtener material por ID
 	async getMaterialById(id: string): Promise<Material> {
 		try {
-			console.log('🔍 Obteniendo material por ID:', id);
 			const endpoint = API_ENDPOINTS.MATERIALS.GET_BY_ID(id);
-			console.log('📍 Endpoint:', endpoint);
 
 			const response = await apiClient.get<any>(endpoint);
 
-			console.log('✅ API GET Material by ID Raw Response:', response);
-			console.log('📦 Response Data:', response.data);
-			console.log('� Response Status:', response.status);
+			console.log('API GET Material by ID Raw Response:', response);
 
 			// Mapear respuesta a Material
 			if (response.data) {
-				console.log('� Response tiene data, mapeando...');
 				const mapped = this.mapApiMaterialToMaterial(response.data);
-				console.log('✨ Material por ID mapeado:', mapped);
+				console.log('Material por ID mapeado:', mapped);
 				return mapped;
 			}
 
 			throw new Error('Material no encontrado en la respuesta');
 		} catch (error: any) {
-			console.error('❌ Error al obtener material por ID:', error);
-			console.error('Error status:', error?.response?.status);
-			console.error('Error data:', error?.response?.data);
-			console.error('Error message:', error?.message);
+			console.error('Error al obtener material por ID:', error);
 			throw error;
 		}
 	}
@@ -267,21 +258,12 @@ export class MaterialsService {
 	// Descargar material
 	async downloadMaterial(id: string): Promise<void> {
 		try {
-			console.log('📥 Iniciando descarga del material:', id);
+			console.log('Iniciando descarga del material:', id);
 			const endpoint = `${API_ENDPOINTS.MATERIALS.BASE}/${id}/download`;
-			console.log(
-				'📍 URL completa:',
-				`${apiClient.defaults.baseURL}${endpoint}`,
-			);
-			console.log('📍 Endpoint relativo:', endpoint);
 
 			const response = await apiClient.get<any>(endpoint, {
 				responseType: 'blob',
 			});
-
-			console.log('✅ Respuesta recibida - Status:', response.status);
-			console.log('📦 Blob Size:', response.data.size);
-			console.log('📦 Blob Type:', response.data.type);
 
 			// Crear un blob y descargarlo
 			const blob = response.data;
@@ -299,7 +281,7 @@ export class MaterialsService {
 			let filename = `material-${id}.pdf`;
 
 			if (contentDisposition) {
-				console.log('📄 Content-Disposition:', contentDisposition);
+				console.log(' Content-Disposition:', contentDisposition);
 				const filenameMatch = contentDisposition.match(
 					/filename="?(.+?)"?(?:;|$)/,
 				);
@@ -315,12 +297,9 @@ export class MaterialsService {
 			document.body.removeChild(link);
 			URL.revokeObjectURL(url);
 
-			console.log('✨ Archivo descargado:', filename);
+			console.log(' Archivo descargado:', filename);
 		} catch (error: any) {
-			console.error('❌ Error al descargar material');
-			console.error('📊 Status:', error?.response?.status);
-			console.error('📊 StatusText:', error?.response?.statusText);
-			console.error('📊 Message:', error?.message);
+			console.error(' Error al descargar material');
 
 			// Si es 500, es error del servidor
 			if (error?.response?.status === 500) {
