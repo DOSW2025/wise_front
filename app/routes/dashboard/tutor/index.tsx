@@ -10,11 +10,17 @@ import {
 import { Link, Outlet, useLocation } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
 import { useTutorDashboard } from '~/lib/hooks/useTutorDashboard';
+import { useUpcomingSessions } from './hooks/useUpcomingSessions';
 
 export default function TutorDashboard() {
 	const location = useLocation();
 	const isMainDashboard = location.pathname === '/dashboard/tutor';
 	const { data: dashboardData, isLoading, error } = useTutorDashboard();
+	const {
+		data: upcomingSessions,
+		isLoading: isLoadingSessions,
+		error: sessionsError,
+	} = useUpcomingSessions();
 
 	if (!isMainDashboard) {
 		return <Outlet />;
@@ -43,13 +49,23 @@ export default function TutorDashboard() {
 		);
 	}
 
-	const {
-		stats,
-		upcomingSessions,
-		recentRequests,
-		popularMaterials,
-		recentReviews,
-	} = dashboardData || {};
+	const { stats, recentRequests, popularMaterials, recentReviews } =
+		dashboardData || {};
+
+	const formatDate = (dateString: string) => {
+		const date = new Date(dateString);
+		const today = new Date();
+		const tomorrow = new Date(today);
+		tomorrow.setDate(tomorrow.getDate() + 1);
+
+		if (date.toDateString() === today.toDateString()) return 'Hoy';
+		if (date.toDateString() === tomorrow.toDateString()) return 'Mañana';
+		return date.toLocaleDateString('es-ES', {
+			weekday: 'short',
+			day: 'numeric',
+			month: 'short',
+		});
+	};
 
 	return (
 		<div className="space-y-6">
@@ -160,53 +176,47 @@ export default function TutorDashboard() {
 							</Button>
 						</div>
 						<div className="space-y-3">
-							{upcomingSessions?.length ? (
-								upcomingSessions.slice(0, 2).map((session) => {
+							{isLoadingSessions ? (
+								<div className="flex justify-center py-4">
+									<Spinner size="sm" />
+								</div>
+							) : sessionsError ? (
+								<p className="text-center text-danger py-4 text-sm">
+									Error al cargar sesiones
+								</p>
+							) : upcomingSessions?.length ? (
+								upcomingSessions.slice(0, 2).map((session, index) => {
 									const initials = session.studentName
 										.split(' ')
 										.map((n) => n[0])
 										.join('')
-										.toUpperCase();
-									const isToday =
-										new Date(session.date).toDateString() ===
-										new Date().toDateString();
+										.toUpperCase()
+										.slice(0, 2);
 									return (
 										<div
-											key={session.id}
+											key={index}
 											className="flex items-start justify-between p-3 bg-default-100 rounded-lg"
 										>
 											<div className="flex items-center gap-3">
 												<Avatar
-													src={session.studentAvatar}
 													name={initials}
 													size="sm"
 													className="bg-primary text-white"
 												/>
 												<div className="flex flex-col gap-1">
 													<p className="font-semibold text-sm">
-														{session.subject}
+														{session.subjectName}
 													</p>
 													<p className="text-small text-default-500">
 														{session.studentName}
 													</p>
 													<p className="text-tiny text-default-400">
-														{isToday ? 'Hoy' : 'Mañana'} {session.time} -{' '}
-														{session.modality === 'virtual'
-															? 'Virtual'
-															: 'Presencial'}
+														{formatDate(session.date)} a las {session.startTime}
 													</p>
 												</div>
 											</div>
-											<Chip
-												size="sm"
-												color={
-													session.status === 'confirmed' ? 'success' : 'warning'
-												}
-												variant="flat"
-											>
-												{session.status === 'confirmed'
-													? 'Confirmada'
-													: 'Pendiente'}
+											<Chip size="sm" color="success" variant="flat">
+												Confirmada
 											</Chip>
 										</div>
 									);

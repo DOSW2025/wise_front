@@ -18,8 +18,8 @@ import {
 } from '@heroui/react';
 import { Calendar, Clock, MapPin, Video } from 'lucide-react';
 import React, { useState } from 'react';
-import { useUpcomingSessions } from '../lib/hooks/useUpcomingSessions';
 import type { UpcomingSession } from '../lib/types/tutoria.types';
+import { useUpcomingSessions } from '../routes/dashboard/tutor/hooks/useUpcomingSessions';
 
 interface UpcomingTutoringsCardProps {
 	userId: string;
