@@ -60,8 +60,8 @@ export const API_ENDPOINTS = {
 		},
 		REVIEWS: {
 			RECENT: '/wise/tutor/reviews/recent',
-			RATINGS: (id: string) => `/wise/tutorias/${id}/ratings`,
-			REPUTACION: (id: string) => `/wise/tutorias/${id}/reputacion`,
+			RATINGS: (tutorId: string) => `/wise/tutorias/${tutorId}/ratings`,
+    		REPUTACION: (tutorId: string) => `/wise/tutorias/${tutorId}/reputacion`,
 		},
 		RATINGS: '/wise/tutorias/:id/ratings',
 		REPUTACION: '/wise/tutorias/:id/reputacion',
