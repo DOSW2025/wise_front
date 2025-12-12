@@ -1,6 +1,5 @@
 import { Calendar, MessageCircle, Star } from 'lucide-react';
 import type React from 'react';
-import { Link } from 'react-router';
 
 interface Tutor {
 	id: number;
@@ -20,6 +19,7 @@ interface TutorCardProps {
 	tutor: Tutor;
 	onOpenChat?: (tutor: Tutor) => void;
 	onOpen?: (tutor: Tutor) => void;
+	onViewProfile?: (tutorId: string) => void;
 }
 
 const getAvatarBg = (avatarColor?: string): string => {
@@ -35,7 +35,12 @@ const getAvatarBg = (avatarColor?: string): string => {
 	return colorMap[avatarColor] || 'bg-red-500';
 };
 
-const TutorCard: React.FC<TutorCardProps> = ({ tutor, onOpenChat, onOpen }) => {
+const TutorCard: React.FC<TutorCardProps> = ({
+	tutor,
+	onOpenChat,
+	onOpen,
+	onViewProfile,
+}) => {
 	const handleKey = (e: React.KeyboardEvent) => {
 		if (e.key === 'Enter' || e.key === ' ') onOpen?.(tutor);
 	};
@@ -94,12 +99,13 @@ const TutorCard: React.FC<TutorCardProps> = ({ tutor, onOpenChat, onOpen }) => {
 
 				{/* Acciones */}
 				<div className="flex gap-2 mt-auto pt-2 border-t border-gray-200">
-					<Link
-						to={`/dashboard/tutor/${tutor.id}`}
+					<button
+						type="button"
+						onClick={() => onViewProfile?.(tutor.id.toString())}
 						className="flex-grow bg-red-800 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors text-center"
 					>
 						Ver perfil
-					</Link>
+					</button>
 
 					<button
 						type="button"
