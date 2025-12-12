@@ -4,6 +4,7 @@ import {
 	DropdownItem,
 	DropdownMenu,
 	DropdownTrigger,
+	Spinner,
 } from '@heroui/react';
 import {
 	AlertTriangle,
@@ -12,48 +13,9 @@ import {
 	Calendar,
 	CheckCircle,
 	FileText,
+	Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
-
-interface Notification {
-	id: string;
-	title: string;
-	message: string;
-	type: 'info' | 'success' | 'warning' | 'error' | 'achievement';
-	timestamp: Date;
-	read: boolean;
-	avatar?: string;
-}
-
-const mockNotifications: Notification[] = [
-	{
-		id: '1',
-		title: 'Nueva tutoría programada',
-		message:
-			'Tu tutoría de Cálculo con Dr. María García está programada para mañana a las 15:00',
-		type: 'info',
-		timestamp: new Date(Date.now() - 5 * 60 * 1000),
-		read: false,
-		avatar: 'MG',
-	},
-	{
-		id: '2',
-		title: 'Material disponible',
-		message:
-			'Nuevo material de Programación Orientada a Objetos disponible para descarga',
-		type: 'success',
-		timestamp: new Date(Date.now() - 30 * 60 * 1000),
-		read: false,
-	},
-	{
-		id: '3',
-		title: 'Recordatorio',
-		message: 'Tu sesión de tutoría comienza en 1 hora',
-		type: 'warning',
-		timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-		read: true,
-	},
-];
+import { useNotifications } from '~/lib/hooks/useNotifications';
 
 const getNotificationIcon = (type: string) => {
 	switch (type) {
@@ -73,25 +35,20 @@ const getNotificationIcon = (type: string) => {
 };
 
 export function NotificationsDropdown() {
-	const [notifications, setNotifications] =
-		useState<Notification[]>(mockNotifications);
-	const unreadCount = notifications.filter((n) => !n.read).length;
+	const {
+		notifications,
+		unreadCount,
+		isLoading,
+		markAsRead,
+		markAllAsRead,
+		deleteNotification,
+		isMarkingAsRead,
+		isMarkingAllAsRead,
+		isDeleting,
+	} = useNotifications();
 
-	const markAsRead = (id: string) => {
-		setNotifications((prev) =>
-			prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-		);
-	};
-
-	const markAllAsRead = () => {
-		setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-	};
-
-	const _removeNotification = (id: string) => {
-		setNotifications((prev) => prev.filter((n) => n.id !== id));
-	};
-
-	const formatTime = (date: Date) => {
+	const formatTime = (dateString: string) => {
+		const date = new Date(dateString);
 		const now = new Date();
 		const diff = now.getTime() - date.getTime();
 		const minutes = Math.floor(diff / 60000);
@@ -101,6 +58,14 @@ export function NotificationsDropdown() {
 		if (hours < 24) return `hace ${hours}h`;
 		return date.toLocaleDateString();
 	};
+
+	if (isLoading) {
+		return (
+			<Button isIconOnly variant="light" size="md" className="relative">
+				<Spinner size="sm" />
+			</Button>
+		);
+	}
 
 	return (
 		<Dropdown placement="bottom-end">
@@ -114,7 +79,7 @@ export function NotificationsDropdown() {
 			</DropdownTrigger>
 			<DropdownMenu
 				aria-label="Notificaciones"
-				className="w-80"
+				className="w-80 max-h-96 overflow-y-auto scrollbar-hide"
 				closeOnSelect={false}
 			>
 				<DropdownItem
@@ -133,8 +98,9 @@ export function NotificationsDropdown() {
 							<Button
 								size="sm"
 								variant="light"
-								onPress={markAllAsRead}
+								onPress={() => markAllAsRead()}
 								className="text-primary"
+								isLoading={isMarkingAllAsRead}
 							>
 								Marcar todas como leídas
 							</Button>
@@ -153,7 +119,7 @@ export function NotificationsDropdown() {
 					<DropdownItem
 						key={notification.id}
 						className="h-auto py-3 data-[hover=true]:bg-default-100"
-						textValue={notification.title}
+						textValue={notification.asunto}
 					>
 						<div className="flex gap-3 w-full relative">
 							<div className="flex-shrink-0 mt-0.5">
@@ -162,33 +128,48 @@ export function NotificationsDropdown() {
 							<div className="flex-1 min-w-0">
 								<div className="flex justify-between items-start gap-2">
 									<p
-										className={`text-sm truncate ${notification.read === false ? 'font-semibold' : 'font-medium'}`}
+										className={`text-sm truncate ${notification.visto === false ? 'font-semibold' : 'font-medium'}`}
 									>
-										{notification.title}
+										{notification.asunto}
 									</p>
-									{notification.read === false && (
+									{notification.visto === false && (
 										<span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5"></span>
 									)}
 								</div>
 								<p className="text-tiny text-default-600 mt-1">
-									{notification.message}
+									{notification.resumen}
 								</p>
 								<div className="flex justify-between items-center mt-2">
 									<p className="text-tiny text-default-400">
-										{formatTime(notification.timestamp)}
+										{formatTime(notification.fechaCreacion)}
 									</p>
-									{notification.read === false && (
+									<div className="flex gap-1">
+										{notification.visto === false && (
+											<button
+												type="button"
+												onClick={(e) => {
+													e.stopPropagation();
+													markAsRead(notification.id);
+												}}
+												className="text-xs text-primary hover:underline"
+												disabled={isMarkingAsRead}
+											>
+												{isMarkingAsRead ? 'Marcando...' : 'Marcar como leída'}
+											</button>
+										)}
 										<button
 											type="button"
 											onClick={(e) => {
 												e.stopPropagation();
-												markAsRead(notification.id);
+												deleteNotification(notification.id);
 											}}
-											className="text-xs text-primary hover:underline"
+											className="text-xs text-primary hover:underline flex items-center gap-1"
+											disabled={isDeleting}
+											title="Eliminar notificación"
 										>
-											Marcar como leída
+											<Trash2 className="w-3 h-3" />
 										</button>
-									)}
+									</div>
 								</div>
 							</div>
 						</div>

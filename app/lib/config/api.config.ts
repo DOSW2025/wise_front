@@ -99,4 +99,11 @@ export const API_ENDPOINTS = {
 		THREADS: '/threads',
 		RESPONSES: '/responses',
 	},
+	NOTIFICATIONS: {
+		LIST: '/wise/notificaciones/:userId',
+		UNREAD_COUNT: '/wise/notificaciones/unread-count/:userId',
+		MARK_READ: '/wise/notificaciones/read/:id',
+		MARK_ALL_READ: '/wise/notificaciones/read-all/:userId',
+		DELETE: '/wise/notificaciones/:id',
+	},
 } as const;
