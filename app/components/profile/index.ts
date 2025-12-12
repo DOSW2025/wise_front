@@ -1,3 +1,4 @@
+export { ProfileContainer } from './ProfileContainer';
 export { ProfileConfigurationSection } from './profile-configuration-section';
 export { ProfileEditButtons } from './profile-edit-buttons';
 export { ProfileFormFields } from './profile-form-fields';

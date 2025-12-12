@@ -1,23 +1,15 @@
 import { Card, CardBody, Chip, Input } from '@heroui/react';
-import { useEffect, useState } from 'react';
-import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
-import {
-	ProfileConfigurationSection,
-	ProfileEditButtons,
-	ProfileFormFields,
-	ProfileHeader,
-} from '~/components/profile';
-import { useAuth } from '~/contexts/auth-context';
+import { useState } from 'react';
+import { StatsCard } from '~/components';
+import { ProfileContainer } from '~/components/profile';
+import { useProfileManager } from '~/lib/hooks/useProfileManager';
 import { getProfile } from '~/lib/services/student.service';
-import { useProfileForm } from './hooks/useProfileForm';
-import { useProfileSave } from './hooks/useProfileSave';
+import { useStudentProfileForm } from './hooks/useStudentProfileForm';
+import { useStudentProfileSave } from './hooks/useStudentProfileSave';
 
 export default function StudentProfile() {
-	const { user } = useAuth();
 	const [emailNotifications, setEmailNotifications] = useState(true);
-	const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
-	// Custom hooks for managing complex state
 	const {
 		profile,
 		setProfile,
@@ -26,173 +18,70 @@ export default function StudentProfile() {
 		isEditing,
 		setIsEditing,
 		avatarPreview,
-		setAvatarPreview,
-		validateForm,
-		handleImageUpload,
-		resetForm,
-	} = useProfileForm({
-		name: user?.name || '',
-		email: user?.email || '',
-		phone: '',
-		role: user?.role || '',
-		description: '',
-		avatar: user?.avatarUrl,
-		interests: [],
-		semester: '',
+		isSaving,
+		error,
+		success,
+		isLoadingProfile,
+		handleSave,
+		handleImageChange,
+		handleCancel,
+	} = useProfileManager({
+		initialProfile: {
+			name: '',
+			email: '',
+			phone: '',
+			role: '',
+			description: '',
+			avatarUrl: undefined,
+			interests: [],
+			semester: '',
+		},
+		getProfileFn: getProfile,
+		saveProfileFn: async (data) => data,
+		useFormHook: useStudentProfileForm,
+		useSaveHook: useStudentProfileSave,
 	});
 
-	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
-
-	// Cargar el perfil completo cuando el componente se monta
-	useEffect(() => {
-		const loadProfile = async () => {
-			if (!user) return;
-
-			try {
-				setIsLoadingProfile(true);
-				const profileData = await getProfile();
-
-				// Actualizar el estado del perfil con los datos cargados
-				setProfile({
-					...profileData,
-					avatar: user.avatarUrl, // Mantener el avatar del contexto
-					name: user.name, // Mantener nombre del contexto
-					email: user.email,
-					interests: profileData.interests || [],
-					semester: profileData.semester || '',
-					role: profileData.role || user.role || '',
-				});
-			} catch (err) {
-				console.error('Error cargando perfil:', err);
-				setError('Error al cargar tu perfil');
-			} finally {
-				setIsLoadingProfile(false);
-			}
-		};
-
-		loadProfile();
-	}, [user, setProfile, setError]); // ✅ corregido: dependemos de user completo
-
-	// Actualizar datos básicos del usuario desde el contexto
-	useEffect(() => {
-		if (user) {
-			setProfile((prev) => ({
-				...prev,
-				name: user.name,
-				email: user.email,
-				avatar: user.avatarUrl,
-			}));
-		}
-	}, [user, setProfile]);
-
-	const handleSave = async () => {
-		if (!validateForm()) {
-			setError('Por favor corrige los errores en el formulario');
-			return;
-		}
-
-		const saved = await saveProfile({
-			name: profile.name,
-			email: profile.email,
-			phone: profile.phone,
-			role: profile.role,
-			description: profile.description,
-		});
-
-		if (saved) {
-			setIsEditing(false);
-			setAvatarPreview(null);
-		}
-	};
-
-	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const result = handleImageUpload(event);
-		if (result?.error) {
-			setError(result.error);
-		}
-	};
-
-	const handleCancel = () => {
-		if (user) {
-			resetForm(user);
-		}
-	};
-
-	// Mostrar loading mientras carga el perfil
-	if (isLoadingProfile) {
-		return (
-			<div className="flex items-center justify-center min-h-screen">
-				<div className="text-center">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-					<p className="text-lg">Cargando perfil...</p>
-				</div>
-			</div>
-		);
-	}
-
 	return (
-		<div className="space-y-6">
-			<ProfileHeader
+		<>
+			<ProfileContainer
 				title="Mi Perfil"
 				description="Gestiona tu información personal y configuración"
-			/>
-
-			{/* Mensajes de error y éxito */}
-			{error && <AlertMessage message={error} type="error" />}
-			{success && <AlertMessage message={success} type="success" />}
-
-			{/* Información Personal */}
-			<Card>
-				<CardBody className="gap-6">
-					<div className="flex justify-between items-center">
-						<h2 className="text-xl font-semibold">Información Personal</h2>
-						<ProfileEditButtons
-							isEditing={isEditing}
-							isSaving={isSaving}
-							onEdit={() => setIsEditing(true)}
-							onSave={handleSave}
-							onCancel={handleCancel}
-						/>
-					</div>
-
-					<div className="flex flex-col md:flex-row gap-6">
-						<ProfileAvatar
-							src={profile.avatar}
-							name={profile.name}
-							isEditing={isEditing}
-							onImageChange={handleImageChange}
-							preview={avatarPreview}
-						/>
-						<ProfileFormFields
-							profile={profile}
-							isEditing={isEditing}
-							formErrors={formErrors}
-							onProfileChange={setProfile}
-							onErrorClear={(field) =>
-								setFormErrors({ ...formErrors, [field]: undefined })
-							}
-							nameReadOnly={true}
-							emailReadOnly={true}
-							descriptionLabel="Sobre Mí"
-							descriptionPlaceholder="Cuéntanos sobre tus intereses y objetivos..."
-							showRoleField={true}
-						>
-							<Input
-								label="Semestre"
-								placeholder="7"
-								value={profile.semester}
-								isReadOnly={true}
-								variant="flat"
-								description="No se puede modificar"
-							/>
-						</ProfileFormFields>
-					</div>
-
+				profile={profile}
+				setProfile={setProfile}
+				formErrors={formErrors}
+				setFormErrors={setFormErrors}
+				isEditing={isEditing}
+				isSaving={isSaving}
+				error={error}
+				success={success}
+				avatarPreview={avatarPreview}
+				isLoadingProfile={isLoadingProfile}
+				onEdit={() => setIsEditing(true)}
+				onSave={handleSave}
+				onCancel={handleCancel}
+				onImageChange={handleImageChange}
+				descriptionLabel="Sobre Mí"
+				descriptionPlaceholder="Cuéntanos sobre tus intereses y objetivos..."
+				showRoleField={true}
+				emailNotifications={emailNotifications}
+				onEmailNotificationsChange={setEmailNotifications}
+				additionalFields={
+					<Input
+						label="Semestre"
+						placeholder="7"
+						value={profile.semester}
+						isReadOnly={true}
+						variant="flat"
+						description="No se puede modificar"
+					/>
+				}
+				additionalSections={
 					<div className="space-y-2">
 						<span className="text-sm font-medium block">Áreas de Interés</span>
 						<div className="flex flex-wrap gap-2">
 							{profile.interests && profile.interests.length > 0 ? (
-								profile.interests.map((interest) => (
+								profile.interests.map((interest: string) => (
 									<Chip
 										key={interest}
 										onClose={
@@ -202,7 +91,7 @@ export default function StudentProfile() {
 															...profile,
 															interests:
 																profile.interests?.filter(
-																	(i) => i !== interest,
+																	(i: string) => i !== interest,
 																) || [],
 														})
 												: undefined
@@ -237,8 +126,8 @@ export default function StudentProfile() {
 							)}
 						</div>
 					</div>
-				</CardBody>
-			</Card>
+				}
+			/>
 
 			{/* Estadísticas */}
 			<Card>
@@ -272,18 +161,6 @@ export default function StudentProfile() {
 					</div>
 				</CardBody>
 			</Card>
-
-			{/* Configuración */}
-			<Card>
-				<CardBody className="gap-4">
-					<h2 className="text-xl font-semibold">Configuración de Cuenta</h2>
-					<ProfileConfigurationSection
-						emailNotifications={emailNotifications}
-						onEmailNotificationsChange={setEmailNotifications}
-						emailNotificationsDescription="Recibe notificaciones de nuevas tutorías y materiales"
-					/>
-				</CardBody>
-			</Card>
-		</div>
+		</>
 	);
 }
