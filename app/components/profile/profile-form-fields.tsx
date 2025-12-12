@@ -1,5 +1,5 @@
 import { Input, Textarea } from '@heroui/react';
-import { Mail, MapPin, Phone } from 'lucide-react';
+import { Mail, Phone, Shield } from 'lucide-react';
 import type { FormErrors } from '~/lib/hooks/useProfileFormBase';
 
 interface BaseProfileData {
@@ -18,10 +18,13 @@ interface ProfileFormFieldsProps<T extends BaseProfileData> {
 	onErrorClear: (field: keyof FormErrors) => void;
 	nameReadOnly?: boolean;
 	emailReadOnly?: boolean;
+	roleReadOnly?: boolean;
 	nameDescription?: string;
 	emailDescription?: string;
+	roleDescription?: string;
 	descriptionLabel?: string;
 	descriptionPlaceholder?: string;
+	showRoleField?: boolean;
 	children?: React.ReactNode;
 }
 
@@ -33,10 +36,13 @@ export function ProfileFormFields<T extends BaseProfileData>({
 	onErrorClear,
 	nameReadOnly = true,
 	emailReadOnly = true,
+	roleReadOnly = true,
 	nameDescription = 'No se puede modificar',
 	emailDescription = 'No se puede modificar',
+	roleDescription = 'No se puede modificar',
 	descriptionLabel = 'Sobre Mí',
 	descriptionPlaceholder = 'Cuéntanos sobre tus intereses y objetivos...',
+	showRoleField = false,
 	children,
 }: ProfileFormFieldsProps<T>) {
 	return (
@@ -89,20 +95,23 @@ export function ProfileFormFields<T extends BaseProfileData>({
 					errorMessage={formErrors.phone}
 					startContent={<Phone className="w-4 h-4 text-default-400" />}
 				/>
-				{/*
-				<Input
-					label="Role"
-					placeholder="Tu rol en la plataforma"
-					value={profile.role}
-					onValueChange={(value) => {
-						onProfileChange({ ...profile, role: value });
-						onErrorClear('role');
-					}}
-					isReadOnly={!isEditing}
-					variant={isEditing ? 'bordered' : 'flat'}
-					startContent={<MapPin className="w-4 h-4 text-default-400" />}
-				/>
-	*/}
+
+				{showRoleField && (
+					<Input
+						label="Rol"
+						placeholder="Tu rol en la plataforma"
+						value={profile.role}
+						onValueChange={(value) => {
+							onProfileChange({ ...profile, role: value });
+							onErrorClear('role');
+						}}
+						isReadOnly={roleReadOnly || !isEditing}
+						variant={isEditing && !roleReadOnly ? 'bordered' : 'flat'}
+						startContent={<Shield className="w-4 h-4 text-default-400" />}
+						description={roleReadOnly ? roleDescription : undefined}
+					/>
+				)}
+
 				{children}
 			</div>
 

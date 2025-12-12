@@ -175,20 +175,12 @@ export default function StudentProfile() {
 							emailReadOnly={true}
 							descriptionLabel="Sobre Mí"
 							descriptionPlaceholder="Cuéntanos sobre tus intereses y objetivos..."
+							showRoleField={true}
 						>
 							<Input
 								label="Semestre"
 								placeholder="7"
 								value={profile.semester}
-								isReadOnly={true}
-								variant="flat"
-								description="No se puede modificar"
-							/>
-
-							<Input
-								label="Rol"
-								placeholder="Estudiante"
-								value={profile.role}
 								isReadOnly={true}
 								variant="flat"
 								description="No se puede modificar"
