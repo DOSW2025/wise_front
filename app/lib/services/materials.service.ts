@@ -106,20 +106,29 @@ export class MaterialsService {
 		console.log('🔄 Mapeando item del API:', item);
 
 		try {
+			// Detectar si la respuesta tiene estructura anidada (GET /:id) o plana (GET /)
+			const data = item.metadata || item;
+
+			console.log(
+				'📍 Estructura detectada:',
+				item.metadata ? 'Con metadata' : 'Plana',
+			);
+			console.log('📦 Datos a mapear:', data);
+
 			const mapped: Material = {
-				id: item.id,
-				nombre: item.nombre || item.title || 'Sin título',
-				materia: item.subject || item.tags?.[0] || 'Sin categoría',
-				tipo: item.extension?.toUpperCase() || 'PDF',
+				id: data.id,
+				nombre: data.nombre || data.title || 'Sin título',
+				materia: data.subject || data.tags?.[0] || 'Sin categoría',
+				tipo: data.extension?.toUpperCase() || 'PDF',
 				semestre: 1, // No viene en respuesta
-				tutor: item.userName || 'Usuario desconocido',
-				calificacion: 0, // No viene en respuesta
-				vistas: item.vistos || item.views || 0,
-				descargas: item.descargas || item.downloads || 0,
-				createdAt: item.createdAt,
-				updatedAt: item.updatedAt,
-				fileUrl: item.url || item.fileUrl,
-				descripcion: item.descripcion || item.description || '',
+				tutor: data.userName || 'Usuario desconocido',
+				calificacion: item.calificación || 0, // En respuesta individual viene como "calificación"
+				vistas: data.vistos || data.views || 0,
+				descargas: data.descargas || data.downloads || 0,
+				createdAt: data.createdAt,
+				updatedAt: data.updatedAt,
+				fileUrl: item.previewURL || data.url || data.fileUrl,
+				descripcion: data.descripcion || data.description || '',
 			};
 
 			console.log('✨ Material mapeado:', mapped);
@@ -146,7 +155,7 @@ export class MaterialsService {
 
 			// Mapear respuesta a Material
 			if (response.data) {
-				console.log('🔗 Response tiene data, mapeando...');
+				console.log('� Response tiene data, mapeando...');
 				const mapped = this.mapApiMaterialToMaterial(response.data);
 				console.log('✨ Material por ID mapeado:', mapped);
 				return mapped;
