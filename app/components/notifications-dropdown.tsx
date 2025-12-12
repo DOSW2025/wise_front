@@ -14,6 +14,7 @@ import {
 	CheckCircle,
 	FileText,
 	Trash2,
+	X,
 } from 'lucide-react';
 import { useNotifications } from '~/lib/hooks/useNotifications';
 
@@ -29,6 +30,8 @@ const getNotificationIcon = (type: string) => {
 			return <AlertTriangle className="w-5 h-5 text-red-500" />;
 		case 'achievement':
 			return <Award className="w-5 h-5 text-purple-500" />;
+		case 'denied':
+			return <X className="w-5 h-5 text-red-600" />;
 		default:
 			return <FileText className="w-5 h-5 text-gray-500" />;
 	}
