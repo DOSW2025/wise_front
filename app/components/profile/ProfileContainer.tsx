@@ -28,6 +28,7 @@ interface ProfileContainerProps<T extends BaseProfileData> {
 	descriptionLabel?: string;
 	descriptionPlaceholder?: string;
 	showRoleField?: boolean;
+	roleReadOnly?: boolean;
 	additionalFields?: React.ReactNode;
 	additionalSections?: React.ReactNode;
 	emailNotifications?: boolean;
@@ -58,6 +59,7 @@ function ProfileContainer<T extends BaseProfileData>({
 	descriptionLabel = 'Sobre Mí',
 	descriptionPlaceholder = 'Cuéntanos sobre ti...',
 	showRoleField = true,
+	roleReadOnly,
 	additionalFields,
 	additionalSections,
 	emailNotifications = true,
@@ -116,7 +118,7 @@ function ProfileContainer<T extends BaseProfileData>({
 							nameReadOnly={true}
 							emailReadOnly={true}
 							showRoleField={showRoleField}
-							roleReadOnly={true}
+							roleReadOnly={roleReadOnly}
 							roleDescription="No se puede modificar"
 							descriptionLabel={descriptionLabel}
 							descriptionPlaceholder={descriptionPlaceholder}

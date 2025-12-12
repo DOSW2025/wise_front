@@ -6,7 +6,7 @@ interface BaseProfileData {
 	name: string;
 	email: string;
 	phone: string;
-	role: string;
+	role?: string;
 	description: string;
 }
 
