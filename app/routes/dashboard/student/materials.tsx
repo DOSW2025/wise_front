@@ -37,10 +37,63 @@ import type {
 	RecommendationItem,
 } from '~/lib/types/api.types';
 
-// Helper: validar que el item sea alfanumérico, espacios, guiones y guiones bajos, máx 100 caracteres
-const isValidItem = (item: string) => /^[\w\s-]{1,100}$/.test(item);
+/**
+ * Valida que un item sea seguro para procesamiento.
+ *
+ * Esta función previene ataques de inyección de código verificando que el input
+ * solo contenga caracteres alfanuméricos, espacios, guiones y caracteres españoles.
+ * Rechaza caracteres especiales que podrían ser usados para inyección de scripts.
+ *
+ * @param item - El string a validar
+ * @returns `true` si el item es válido y seguro, `false` en caso contrario
+ *
+ * **Caracteres permitidos:**
+ * - Letras A-Z (mayúsculas y minúsculas)
+ * - Vocales acentuadas: á, é, í, ó, ú
+ * - Letra ñ (mayúscula y minúscula)
+ * - Espacios en blanco
+ * - Guiones (-)
+ * - Longitud: 1-100 caracteres
+ *
+ * @example
+ * isValidItem("Matemáticas") // true
+ * isValidItem("Español Avanzado") // true
+ * isValidItem("<script>alert(1)</script>") // false - rechaza caracteres maliciosos
+ * isValidItem("a".repeat(101)) // false - excede longitud máxima
+ */
+const isValidItem = (item: string) => /^[a-zA-ZáéíóúñÑ\s-]{1,100}$/u.test(item);
 
-// Limitar a 20 items y validar cada uno para prevenir input malicioso
+/**
+ * Parsea y sanitiza una cadena separada por comas en un array de items válidos.
+ *
+ * Esta función procesa input del usuario para campos de materias y temas,
+ * aplicando múltiples capas de validación para prevenir input malicioso:
+ * 1. Divide por comas
+ * 2. Elimina espacios al inicio/fin de cada item
+ * 3. Elimina items vacíos
+ * 4. Valida cada item con `isValidItem` (solo caracteres seguros)
+ * 5. Limita el resultado a máximo 20 items
+ *
+ * @param value - String separado por comas ingresado por el usuario
+ * @returns Array de strings validados y sanitizados, máximo 20 elementos
+ *
+ * **Protecciones de seguridad:**
+ * - Previene inyección de scripts rechazando caracteres especiales
+ * - Limita cantidad de items para prevenir ataques de denegación de servicio
+ * - Valida longitud individual de cada item (máx 100 caracteres)
+ *
+ * @example
+ * parseCommaSeparated("Matemáticas, Física, Química")
+ * // Retorna: ["Matemáticas", "Física", "Química"]
+ *
+ * @example
+ * parseCommaSeparated("Math<script>, Normal, ")
+ * // Retorna: ["Normal"] - rechaza el item con script, elimina el vacío
+ *
+ * @example
+ * parseCommaSeparated("a,b,c,...".repeat(10)) // 30+ items
+ * // Retorna: solo los primeros 20 items validados
+ */
 const parseCommaSeparated = (value: string) =>
 	value
 		.split(',')
@@ -49,7 +102,25 @@ const parseCommaSeparated = (value: string) =>
 		.filter(isValidItem)
 		.slice(0, 20);
 
-// Extrae la introducción del mensaje de IA con fallback seguro
+/**
+ * Extrae la introducción del mensaje de IA con fallback seguro.
+ *
+ * Esta función intenta extraer solo la parte introductoria del mensaje de la IA,
+ * evitando mostrar la lista de recomendaciones numeradas que se muestran por separado.
+ *
+ * @param message - El mensaje completo devuelto por el servicio de IA
+ * @returns La introducción del mensaje sin la lista numerada, o cadena vacía si no hay mensaje
+ *
+ * @example
+ * // Mensaje con lista numerada
+ * extractIntroduction("Basado en tu búsqueda, aquí están mis recomendaciones:\n\n1. Material A\n2. Material B")
+ * // Retorna: "Basado en tu búsqueda, aquí están mis recomendaciones:"
+ *
+ * @example
+ * // Mensaje sin lista numerada
+ * extractIntroduction("Aquí tienes los mejores materiales para tu búsqueda.")
+ * // Retorna: "Aquí tienes los mejores materiales para tu búsqueda."
+ */
 const extractIntroduction = (message: string | undefined): string => {
 	if (!message) return '';
 
@@ -506,7 +577,7 @@ export default function StudentMaterials() {
 					{assistResult && (
 						<div className="space-y-4">
 							{/* Mensaje de la IA - Solo para la introducción */}
-							{assistResult?.message && (
+							{assistResult.message && (
 								<div className="bg-default-100 border border-default-200 rounded-lg p-4">
 									<p className="text-sm font-semibold text-foreground mb-2">
 										Recomendación del Asistente IA
@@ -519,7 +590,7 @@ export default function StudentMaterials() {
 							)}
 
 							{/* Lista de Recomendaciones con Scroll Interno */}
-							{assistResult?.recommendations &&
+							{assistResult.recommendations &&
 								assistResult.recommendations.length > 0 && (
 									<div className="space-y-3">
 										<p className="text-sm font-semibold text-foreground">
@@ -544,6 +615,10 @@ export default function StudentMaterials() {
 															);
 															if (fullMaterial) {
 																setPreviewMaterial(fullMaterial);
+															} else {
+																// Si no está en la página actual, actualizar la búsqueda
+																setSearchQuery(rec.fileName);
+																setCurrentSkip(0); // Resetear a la primera página
 															}
 														}}
 														onKeyDown={(e) => {
@@ -557,6 +632,10 @@ export default function StudentMaterials() {
 																);
 																if (fullMaterial) {
 																	setPreviewMaterial(fullMaterial);
+																} else {
+																	// Si no está en la página actual, actualizar la búsqueda
+																	setSearchQuery(rec.fileName);
+																	setCurrentSkip(0); // Resetear a la primera página
 																}
 															}
 														}}

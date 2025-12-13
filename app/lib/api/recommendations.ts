@@ -1,5 +1,11 @@
 import { API_ENDPOINTS } from '../config/api.config';
+import type { AssistantResponse } from '../types/api.types';
 import apiClient from './client';
+
+interface AxiosErrorResponse {
+	status?: number;
+	data?: unknown;
+}
 
 export interface RecommendationsRequestDto {
 	descripcion: string;
@@ -7,48 +13,31 @@ export interface RecommendationsRequestDto {
 	temas: string[];
 }
 
-export type RecommendationsResponse = unknown;
-
 export const recommendationsService = {
 	async getRecommendations(
 		payload: RecommendationsRequestDto,
-	): Promise<RecommendationsResponse> {
+	): Promise<AssistantResponse> {
 		try {
 			const { data } = await apiClient.post(
 				API_ENDPOINTS.IA.RECOMMENDATIONS,
 				payload,
 			);
 			return data;
-		} catch (error: unknown) {
+		} catch (error) {
 			// Capturar específicamente errores 502 del servicio de IA
-			const errorWithResponse = error as Record<string, unknown>;
-			if (
-				typeof error === 'object' &&
-				error !== null &&
-				'response' in error &&
-				typeof errorWithResponse.response === 'object' &&
-				errorWithResponse.response !== null &&
-				'status' in errorWithResponse.response &&
-				(errorWithResponse.response as Record<string, unknown>).status === 502
-			) {
+			const axiosError = error as { response?: AxiosErrorResponse };
+			if (axiosError?.response?.status === 502) {
 				throw new Error(
-					'Disculpa la IA no está, se encuentra estudiando el material de ECIwise+ para ayudarte, estará disponible en breve.',
+					'Disculpa, el servicio de IA no está disponible en este momento. Se encuentra estudiando el material de ECIwise+ para ayudarte mejor. Estará disponible en breve.',
 				);
 			}
 
-			// Re-lanzar otros errores, asegurando que siempre sea una instancia de Error
+			// Re-lanzar errores conocidos
 			if (error instanceof Error) {
 				throw error;
 			}
-			if (
-				typeof error === 'object' &&
-				error !== null &&
-				'message' in error &&
-				typeof (error as Record<string, unknown>).message === 'string'
-			) {
-				throw new Error((error as Record<string, unknown>).message as string);
-			}
-			throw new Error(`Unknown error occurred: ${JSON.stringify(error)}`);
+
+			throw new Error('No se pudo obtener recomendaciones');
 		}
 	},
 };
