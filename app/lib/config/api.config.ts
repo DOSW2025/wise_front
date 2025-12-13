@@ -84,6 +84,15 @@ export const API_ENDPOINTS = {
 		},
 	},
 
+	MATERIALS: {
+		BASE: '/wise/materiales',
+		UPLOAD: '/wise/materiales',
+		GET_ALL: '/wise/materiales',
+		GET_BY_ID: (id: string) => `/wise/materiales/${id}`,
+		UPDATE: (id: string) => `/wise/materiales/${id}`,
+		DELETE: (id: string) => `/wise/materiales/${id}`,
+	},
+
 	USERS: {
 		LIST: '/wise/gestion-usuarios',
 		UPDATE_ROLE: '/wise/gestion-usuarios/:id/rol',
@@ -107,7 +116,6 @@ export const API_ENDPOINTS = {
 		DELETE: '/wise/notificaciones/:id',
 	},
 	IA: {
-		RECOMMENDATIONS: '/wise/ia/chat/recommendations',
-		NAVIGATION_CHAT: 'wise/ia/chat/nav',
+		NAVIGATION_CHAT: '/wise/ia/chat/nav',
 	},
 } as const;

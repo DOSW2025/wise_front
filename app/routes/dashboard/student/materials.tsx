@@ -5,6 +5,7 @@ import {
 	DropdownMenu,
 	DropdownTrigger,
 	Input,
+	Spinner,
 	Textarea,
 } from '@heroui/react';
 
@@ -23,29 +24,41 @@ import FiltersPanel from '~/components/materials/filtersPanel';
 import MaterialCard from '~/components/materials/materialCard';
 import PreviewModal from '~/components/materials/PreviewModal';
 // Tipos y datos
-import type { Comment, Material } from '~/components/materials/types';
-import { mockMaterials, sortOptions } from '~/components/materials/types';
-import { recommendationsService } from '~/lib/api/recommendations';
+import type {
+	Comment,
+	Material as MaterialCardType,
+} from '~/components/materials/types';
+import { sortOptions } from '~/components/materials/types';
+import { useDownloadMaterial, useMaterials } from '~/lib/hooks/useMaterials';
+import type { Material } from '~/lib/types/api.types';
 
-const parseCommaSeparated = (value: string) =>
-	value
-		.split(',')
-		.map((item) => item.trim())
-		.filter(Boolean);
+// Función para adaptar Material del API al Material que espera MaterialCard
+function adaptMaterialForCard(apiMaterial: Material): MaterialCardType {
+	const semesters = ['1er', '2do', '3er', '4to'];
+	const semesterNum = apiMaterial.semestre || 1;
+	const semesterStr = semesters[semesterNum - 1] || semesters[0];
 
-const formatRecommendationResult = (result: unknown): string => {
-	if (result === null || result === undefined) return '';
-	if (typeof result === 'string') return result;
-	if (typeof result === 'number' || typeof result === 'boolean') {
-		return String(result);
-	}
-
-	if (Array.isArray(result)) {
-		return result.map((item) => formatRecommendationResult(item)).join('\n\n');
-	}
-
-	return JSON.stringify(result, null, 2);
-};
+	return {
+		id: apiMaterial.id,
+		title: apiMaterial.nombre,
+		author: apiMaterial.tutor,
+		subject: apiMaterial.materia,
+		semester: `${semesterStr} Semestre`,
+		fileType: 'PDF',
+		date: new Date(apiMaterial.createdAt).toLocaleDateString('es-ES', {
+			day: '2-digit',
+			month: 'short',
+			year: 'numeric',
+		}),
+		rating: apiMaterial.calificacion,
+		ratingsCount: 0, // No viene en respuesta
+		downloads: apiMaterial.descargas,
+		comments: 0, // No viene en respuesta
+		description: apiMaterial.descripcion || 'Sin descripción disponible.',
+		commentsList: [],
+		fileUrl: apiMaterial.fileUrl, // URL del archivo para vista previa
+	};
+}
 
 export default function StudentMaterials() {
 	// Estados
@@ -55,18 +68,34 @@ export default function StudentMaterials() {
 	const [selectedSubject, setSelectedSubject] = useState('Todos');
 	const [selectedSemester, setSelectedSemester] = useState('Todos');
 	const [sortBy, setSortBy] = useState('Todos');
-	const [previewMaterial, setPreviewMaterial] = useState<Material | null>(null);
-	const [commentsMaterial, setCommentsMaterial] = useState<Material | null>(
-		null,
-	);
+	const [previewMaterial, setPreviewMaterial] =
+		useState<MaterialCardType | null>(null);
+	const [commentsMaterial, setCommentsMaterial] =
+		useState<MaterialCardType | null>(null);
 	const [userRating, setUserRating] = useState(0);
 	const [isAssistOpen, setIsAssistOpen] = useState(false);
 	const [assistDescription, setAssistDescription] = useState('');
-	const [assistSubjects, setAssistSubjects] = useState('');
-	const [assistTopics, setAssistTopics] = useState('');
-	const [assistResult, setAssistResult] = useState<unknown>(null);
-	const [assistError, setAssistError] = useState<string | null>(null);
-	const [isAssistLoading, setIsAssistLoading] = useState(false);
+	const [currentSkip, setCurrentSkip] = useState(0);
+
+	// Calcular items por página - ambos modos usan 15
+	const itemsPerPage = 15;
+
+	// Crear filtros para la API
+	const filters = {
+		skip: currentSkip,
+		take: itemsPerPage,
+		search: searchQuery || undefined,
+	};
+
+	// Obtener materiales del API con paginación
+	const { data: materialsData, isLoading, error } = useMaterials(filters);
+	const apiMaterials = materialsData?.data || [];
+	const totalPages = materialsData?.pagination?.totalPages || 1;
+
+	// Adaptar materiales del API al formato que espera MaterialCard
+	const allMaterials: MaterialCardType[] = useMemo(() => {
+		return apiMaterials.map(adaptMaterialForCard);
+	}, [apiMaterials]);
 	const isGridView = viewMode === 'grid';
 	const layoutClass = isGridView
 		? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
@@ -76,23 +105,15 @@ export default function StudentMaterials() {
 	const listButtonVariant = isGridView ? 'flat' : 'solid';
 	const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
 
-	// ESTADOS para paginación
-	const [currentPage, setCurrentPage] = useState(1);
-
 	// Filtrar y ordenar materiales
 	const filteredMaterials = useMemo(() => {
-		const filtered = mockMaterials.filter((material) => {
-			const matchesSearch =
-				material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				material.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				material.subject.toLowerCase().includes(searchQuery.toLowerCase());
-
+		const filtered = allMaterials.filter((material) => {
 			const matchesSubject =
 				selectedSubject === 'Todos' || material.subject === selectedSubject;
 			const matchesSemester =
 				selectedSemester === 'Todos' || material.semester === selectedSemester;
 
-			return matchesSearch && matchesSubject && matchesSemester;
+			return matchesSubject && matchesSemester;
 		});
 
 		// Ordenar
@@ -116,33 +137,44 @@ export default function StudentMaterials() {
 		}
 
 		return filtered;
-	}, [searchQuery, selectedSubject, selectedSemester, sortBy]);
+	}, [allMaterials, selectedSubject, selectedSemester, sortBy]);
 
-	// Calcular items por página basado en la vista
-	const itemsPerPage = isGridView ? 12 : 15;
-
-	// Calcular materiales paginados
-	const paginatedMaterials = useMemo(() => {
-		const startIndex = (currentPage - 1) * itemsPerPage;
-		const endIndex = startIndex + itemsPerPage;
-		return filteredMaterials.slice(startIndex, endIndex);
-	}, [filteredMaterials, currentPage, itemsPerPage]);
-
-	// Calcular total de páginas
-	const totalPages = Math.ceil(filteredMaterials.length / itemsPerPage);
+	// Los materiales ya vienen paginados de la API
+	const paginatedMaterials = filteredMaterials;
+	const currentPage = Math.floor(currentSkip / itemsPerPage) + 1;
 
 	// Resetear a página 1 cuando cambien los filtros o la vista
 	useEffect(() => {
-		setCurrentPage(1);
+		setCurrentSkip(0);
 	}, []);
 
 	// Handlers
+	const downloadMutation = useDownloadMaterial();
+
 	const handleDownload = async (materialId: string) => {
-		console.log('Descargando material:', materialId);
-		alert(`Descargando material ${materialId}`);
+		try {
+			console.log('Iniciando descarga del material:', materialId);
+			await downloadMutation.mutateAsync(materialId);
+			console.log('Descarga completada');
+		} catch (error) {
+			console.error('Error en descarga:', error);
+			const axiosError = error as {
+				message?: string;
+				response?: { status?: number; statusText?: string; data?: unknown };
+			};
+			const errorMsg =
+				axiosError?.message || 'Error desconocido al descargar el material';
+			console.error('Detalle del error:', {
+				message: errorMsg,
+				status: axiosError?.response?.status,
+				statusText: axiosError?.response?.statusText,
+				data: axiosError?.response?.data,
+			});
+			alert(`Error al descargar: ${errorMsg}`);
+		}
 	};
 
-	const handleShare = async (material: Material) => {
+	const handleShare = async (material: MaterialCardType): Promise<void> => {
 		if (navigator.share) {
 			try {
 				await navigator.share({
@@ -151,20 +183,34 @@ export default function StudentMaterials() {
 					url: window.location.href,
 				});
 			} catch (error) {
-				console.log('Error al compartir:', error);
+				// User cancelled the share dialog or share failed
+				console.log(
+					'Error al compartir:',
+					error instanceof Error ? error.message : 'Error desconocido',
+				);
 			}
 		} else {
-			navigator.clipboard.writeText(`${material.title} - ${material.author}`);
-			alert('Enlace copiado al portapapeles');
+			try {
+				await navigator.clipboard.writeText(
+					`${material.title} - ${material.author}`,
+				);
+				alert('Enlace copiado al portapapeles');
+			} catch (error) {
+				console.error(
+					'Error al copiar al portapapeles:',
+					error instanceof Error ? error.message : 'Error desconocido',
+				);
+				alert('No se pudo copiar al portapapeles');
+			}
 		}
 	};
 
-	const handleReport = async (material: Material) => {
+	const handleReport = (material: MaterialCardType) => {
 		console.log('Reportando material:', material.id);
 		alert(`Reportando material: ${material.title}`);
 	};
 
-	const handleRateMaterial = async (material: Material, rating: number) => {
+	const handleRateMaterial = (material: MaterialCardType, rating: number) => {
 		if (rating > 0) {
 			console.log(`Valorando material ${material.id} con ${rating} estrellas`);
 			alert(
@@ -175,13 +221,13 @@ export default function StudentMaterials() {
 	};
 
 	// Abrir modal SOLO de comentarios (desde la tarjeta)
-	const handleOpenCommentsModal = (material: Material) => {
+	const handleOpenCommentsModal = (material: MaterialCardType) => {
 		console.log('Abrir modal de comentarios para:', material.title);
 		setCommentsMaterial(material);
 	};
 
 	// Esta función ahora es para abrir comentarios DENTRO del modal de vista previa
-	const handleOpenCommentsInPreview = (material: Material) => {
+	const handleOpenCommentsInPreview = (material: MaterialCardType) => {
 		console.log(
 			'Abrir sección de comentarios en vista previa:',
 			material.title,
@@ -216,69 +262,22 @@ export default function StudentMaterials() {
 
 	//Handler para cambio de página
 	const handlePageChange = (page: number) => {
-		setCurrentPage(page);
+		const newSkip = (page - 1) * itemsPerPage;
+		setCurrentSkip(newSkip);
 		// Scroll to top cuando cambie de página
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
-	const handleAssistSubmit = async () => {
-		const description = assistDescription.trim();
-
-		if (!description) {
-			setAssistError('Describe lo que buscas antes de enviar.');
+	const handleAssistSubmit = () => {
+		if (!assistDescription.trim()) {
+			alert('Describe lo que buscas antes de enviar.');
 			return;
 		}
-
-		const materiasFromInput = parseCommaSeparated(assistSubjects);
-		const materias =
-			materiasFromInput.length > 0
-				? materiasFromInput
-				: selectedSubject !== 'Todos'
-					? [selectedSubject]
-					: [];
-
-		const temasFromInput = parseCommaSeparated(assistTopics);
-		const temas =
-			temasFromInput.length > 0
-				? temasFromInput
-				: searchQuery.trim()
-					? [searchQuery.trim()]
-					: [];
-
-		if (!materias.length) {
-			setAssistError(
-				'Agrega al menos una materia (usa el filtro o escribe en Materias).',
-			);
-			return;
-		}
-
-		if (!temas.length) {
-			setAssistError(
-				'Agrega al menos un tema (usa Buscar o escribe en Temas).',
-			);
-			return;
-		}
-
-		setAssistError(null);
-		setAssistResult(null);
-		setIsAssistLoading(true);
-
-		try {
-			const response = await recommendationsService.getRecommendations({
-				descripcion: description,
-				materias,
-				temas,
-			});
-			setAssistResult(response);
-		} catch (error) {
-			const message =
-				error instanceof Error
-					? error.message
-					: 'No se pudo obtener recomendaciones.';
-			setAssistError(message);
-		} finally {
-			setIsAssistLoading(false);
-		}
+		// TODO: Conectar con el backend/IA para enviar la descripcion y obtener recomendaciones.
+		console.log('Busqueda inteligente:', {
+			description: assistDescription,
+		});
+		alert('Busqueda inteligente enviada. (Simulado)');
 	};
 
 	return (
@@ -368,94 +367,15 @@ export default function StudentMaterials() {
 						isRequired
 					/>
 
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-						<Input
-							label="Materias"
-							placeholder="Ej: Historia, Matemáticas"
-							description="Separa las materias por coma. Si dejas vacío se usa el filtro seleccionado."
-							value={assistSubjects}
-							onValueChange={setAssistSubjects}
-						/>
-						<Input
-							label="Temas"
-							placeholder="Ej: Revolución Francesa, Cálculo"
-							description="Separa los temas por coma. Si dejas vacío se usa la búsqueda actual."
-							value={assistTopics}
-							onValueChange={setAssistTopics}
-						/>
-					</div>
-
 					<div className="flex flex-col sm:flex-row sm:items-center gap-3">
 						<Button
 							color="primary"
 							onClick={handleAssistSubmit}
 							className="sm:ml-auto"
-							isLoading={isAssistLoading}
 						>
 							Enviar
 						</Button>
 					</div>
-
-					{assistError && (
-						<div className="text-sm text-danger-500">{assistError}</div>
-					)}
-
-					{assistResult && (
-						<div className="space-y-4">
-							{/* Mensaje de la IA - Solo la introducción */}
-							{(assistResult as any).message && (
-								<div className="bg-default-100 border border-default-200 rounded-lg p-4">
-									<p className="text-sm font-semibold text-foreground mb-2">
-										Recomendación del Asistente IA
-									</p>
-									<p className="text-sm text-default-700">
-										{/* Extraer solo la introducción antes de los números */}
-										{(assistResult as any).message
-											.split(/\n\n1\.\s+/)[0]
-											.trim()}
-									</p>
-								</div>
-							)}
-
-							{/* Lista de Recomendaciones con Scroll Interno */}
-							{(assistResult as any).recommendations &&
-								(assistResult as any).recommendations.length > 0 && (
-									<div className="space-y-3">
-										<p className="text-sm font-semibold text-foreground">
-											Materiales Recomendados (
-											{(assistResult as any).recommendations.length})
-										</p>
-										<div className="max-h-96 overflow-y-auto pr-2 space-y-3">
-											{(assistResult as any).recommendations.map(
-												(rec: any, idx: number) => (
-													<div
-														key={rec.docId || idx}
-														className="bg-default-50 border border-default-200 rounded-lg p-3 space-y-2 hover:bg-default-100 transition flex-shrink-0"
-													>
-														<div className="flex justify-between items-start gap-2">
-															<h4 className="text-sm font-semibold text-foreground">
-																{rec.fileName}
-															</h4>
-															<span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded flex-shrink-0">
-																{rec.materia}
-															</span>
-														</div>
-														<p className="text-xs text-default-600">
-															<span className="font-semibold">Tema:</span>{' '}
-															{rec.tema}
-														</p>
-														<p className="text-xs text-default-600 line-clamp-2">
-															<span className="font-semibold">Resumen:</span>{' '}
-															{rec.summary}
-														</p>
-													</div>
-												),
-											)}
-										</div>
-									</div>
-								)}
-						</div>
-					)}
 				</div>
 			)}
 
@@ -507,19 +427,33 @@ export default function StudentMaterials() {
 			</div>
 
 			{/* Vista de materiales */}
-			<div className={layoutClass}>
-				{paginatedMaterials.map((material) => (
-					<MaterialCard
-						key={material.id}
-						material={material}
-						viewMode={viewMode}
-						onPreview={setPreviewMaterial}
-						onDownload={handleDownload}
-						onRate={setPreviewMaterial}
-						onComment={handleOpenCommentsModal}
-					/>
-				))}
-			</div>
+			{isLoading ? (
+				<div className="flex justify-center items-center py-12">
+					<Spinner label="Cargando materiales..." />
+				</div>
+			) : error ? (
+				<div className="text-center py-12">
+					<p className="text-danger">Error al cargar los materiales</p>
+				</div>
+			) : allMaterials.length === 0 ? (
+				<div className="text-center py-12">
+					<p className="text-default-500">No hay materiales disponibles</p>
+				</div>
+			) : (
+				<div className={layoutClass}>
+					{paginatedMaterials.map((material) => (
+						<MaterialCard
+							key={material.id}
+							material={material}
+							viewMode={viewMode}
+							onPreview={setPreviewMaterial}
+							onDownload={handleDownload}
+							onRate={setPreviewMaterial}
+							onComment={handleOpenCommentsModal}
+						/>
+					))}
+				</div>
+			)}
 
 			{/* Modal de vista previa */}
 			<PreviewModal
