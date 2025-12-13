@@ -62,6 +62,101 @@ export function NotificationsDropdown() {
 		return date.toLocaleDateString();
 	};
 
+	// Crear items del dropdown
+	const dropdownItems = [
+		{
+			key: 'header',
+			content: (
+				<div className="flex justify-between items-center w-full">
+					<div>
+						<p className="font-semibold">Notificaciones</p>
+						<p className="text-tiny text-default-500">{unreadCount} sin leer</p>
+					</div>
+					{unreadCount > 0 && (
+						<Button
+							size="sm"
+							variant="light"
+							onPress={() => markAllAsRead()}
+							className="text-primary"
+							isLoading={isMarkingAllAsRead}
+						>
+							Marcar todas como leídas
+						</Button>
+					)}
+				</div>
+			),
+		},
+		...(notifications.length === 0
+			? [
+					{
+						key: 'empty',
+						content: (
+							<p className="text-center text-default-500 py-4">
+								No hay notificaciones
+							</p>
+						),
+					},
+				]
+			: []),
+		...notifications.map((notification) => ({
+			key: notification.id,
+			content: (
+				<div className="flex gap-3 w-full relative">
+					<div className="flex-shrink-0 mt-0.5">
+						{getNotificationIcon(notification.type)}
+					</div>
+					<div className="flex-1 min-w-0">
+						<div className="flex justify-between items-start gap-2">
+							<p
+								className={`text-sm truncate ${notification.visto === false ? 'font-semibold' : 'font-medium'}`}
+							>
+								{notification.asunto}
+							</p>
+							{notification.visto === false && (
+								<span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5"></span>
+							)}
+						</div>
+						<p className="text-tiny text-default-600 mt-1">
+							{notification.resumen}
+						</p>
+						<div className="flex justify-between items-center mt-2">
+							<p className="text-tiny text-default-400">
+								{formatTime(notification.fechaCreacion)}
+							</p>
+							<div className="flex gap-1">
+								{notification.visto === false && (
+									<button
+										type="button"
+										onClick={(e) => {
+											e.stopPropagation();
+											markAsRead(notification.id);
+										}}
+										className="text-xs text-primary hover:underline"
+										disabled={isMarkingAsRead}
+									>
+										{isMarkingAsRead ? 'Marcando...' : 'Marcar como leída'}
+									</button>
+								)}
+								<button
+									type="button"
+									onClick={(e) => {
+										e.stopPropagation();
+										deleteNotification(notification.id);
+									}}
+									className="text-xs text-primary hover:underline flex items-center gap-1"
+									disabled={isDeleting}
+									title="Eliminar notificación"
+								>
+									<Trash2 className="w-3 h-3" />
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			),
+		})),
+	];
+
 	if (isLoading) {
 		return (
 			<Button isIconOnly variant="light" size="md" className="relative">
@@ -85,97 +180,17 @@ export function NotificationsDropdown() {
 				className="w-80 max-h-96 overflow-y-auto scrollbar-hide"
 				closeOnSelect={false}
 			>
-				<DropdownItem
-					key="header"
-					className="h-14 gap-2 data-[hover=true]:bg-transparent"
-					textValue="header"
-				>
-					<div className="flex justify-between items-center w-full">
-						<div>
-							<p className="font-semibold">Notificaciones</p>
-							<p className="text-tiny text-default-500">
-								{unreadCount} sin leer
-							</p>
-						</div>
-						{unreadCount > 0 && (
-							<Button
-								size="sm"
-								variant="light"
-								onPress={() => markAllAsRead()}
-								className="text-primary"
-								isLoading={isMarkingAllAsRead}
-							>
-								Marcar todas como leídas
-							</Button>
-						)}
-					</div>
-				</DropdownItem>
-
-				{notifications.length === 0 ? (
-					<DropdownItem key="empty" textValue="empty">
-						<p className="text-center text-default-500 py-4">
-							No hay notificaciones
-						</p>
-					</DropdownItem>
-				) : null}
-				{notifications.map((notification) => (
+				{dropdownItems.map((item) => (
 					<DropdownItem
-						key={notification.id}
-						className="h-auto py-3 data-[hover=true]:bg-default-100"
-						textValue={notification.asunto}
+						key={item.key}
+						className={
+							item.key === 'header'
+								? 'h-14 gap-2 data-[hover=true]:bg-transparent'
+								: 'h-auto py-3 data-[hover=true]:bg-default-100'
+						}
+						textValue={item.key === 'header' ? 'header' : item.key}
 					>
-						<div className="flex gap-3 w-full relative">
-							<div className="flex-shrink-0 mt-0.5">
-								{getNotificationIcon(notification.type)}
-							</div>
-							<div className="flex-1 min-w-0">
-								<div className="flex justify-between items-start gap-2">
-									<p
-										className={`text-sm truncate ${notification.visto === false ? 'font-semibold' : 'font-medium'}`}
-									>
-										{notification.asunto}
-									</p>
-									{notification.visto === false && (
-										<span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5"></span>
-									)}
-								</div>
-								<p className="text-tiny text-default-600 mt-1">
-									{notification.resumen}
-								</p>
-								<div className="flex justify-between items-center mt-2">
-									<p className="text-tiny text-default-400">
-										{formatTime(notification.fechaCreacion)}
-									</p>
-									<div className="flex gap-1">
-										{notification.visto === false && (
-											<button
-												type="button"
-												onClick={(e) => {
-													e.stopPropagation();
-													markAsRead(notification.id);
-												}}
-												className="text-xs text-primary hover:underline"
-												disabled={isMarkingAsRead}
-											>
-												{isMarkingAsRead ? 'Marcando...' : 'Marcar como leída'}
-											</button>
-										)}
-										<button
-											type="button"
-											onClick={(e) => {
-												e.stopPropagation();
-												deleteNotification(notification.id);
-											}}
-											className="text-xs text-primary hover:underline flex items-center gap-1"
-											disabled={isDeleting}
-											title="Eliminar notificación"
-										>
-											<Trash2 className="w-3 h-3" />
-										</button>
-									</div>
-								</div>
-							</div>
-						</div>
+						{item.content}
 					</DropdownItem>
 				))}
 			</DropdownMenu>

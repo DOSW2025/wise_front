@@ -6,9 +6,12 @@
 import apiClient from '../api/client';
 import { API_ENDPOINTS } from '../config/api.config';
 import type {
+	ApiMaterialRawResponse,
 	ApiResponse,
+	AxiosErrorResponse,
 	CreateMaterialRequest,
 	Material,
+	MaterialCountResponse,
 	MaterialFilters,
 	MaterialRating,
 	MaterialStats,
@@ -19,16 +22,38 @@ import type {
 } from '../types/api.types';
 
 export class MaterialsService {
+	// Obtener total de materiales
+	async getMaterialsCount(): Promise<number> {
+		try {
+			const response = await apiClient.get<MaterialCountResponse>(
+				`${API_ENDPOINTS.MATERIALS.GET_ALL}/stats/count`,
+			);
+			console.log('Materials count response:', response.data);
+			return response.data.Count || 0;
+		} catch (error) {
+			console.error('Error al obtener conteo de materiales:', error);
+			return 0;
+		}
+	}
+
 	// Obtener materiales con paginación desde API Gateway
 	async getMaterials(
 		filters?: MaterialFilters,
 	): Promise<PaginatedResponse<Material>> {
 		try {
 			console.log('Obteniendo materiales de:', API_ENDPOINTS.MATERIALS.GET_ALL);
+			console.log('Con filtros:', filters);
 
-			const response = await apiClient.get<any>(
-				API_ENDPOINTS.MATERIALS.GET_ALL,
-			);
+			// Construir parámetros de query
+			const params: Record<string, number | string> = {};
+			if (filters?.skip !== undefined) params.skip = filters.skip;
+			if (filters?.take !== undefined) params.take = filters.take;
+			if (filters?.search) params.search = filters.search;
+			if (filters?.subject) params.subject = filters.subject;
+
+			const response = await apiClient.get<
+				ApiMaterialRawResponse[] | { data: ApiMaterialRawResponse[] }
+			>(API_ENDPOINTS.MATERIALS.GET_ALL, { params });
 
 			console.log('API GET Materials Raw Response:', response);
 			console.log('API GET Materials Response Data:', response.data);
@@ -44,7 +69,7 @@ export class MaterialsService {
 					response.data.length,
 					'materiales',
 				);
-				materials = response.data.map((item: any) =>
+				materials = response.data.map((item) =>
 					this.mapApiMaterialToMaterial(item),
 				);
 			} else if (Array.isArray(response.data?.data)) {
@@ -53,7 +78,7 @@ export class MaterialsService {
 					response.data.data.length,
 					'materiales',
 				);
-				materials = response.data.data.map((item: any) =>
+				materials = response.data.data.map((item) =>
 					this.mapApiMaterialToMaterial(item),
 				);
 			} else {
@@ -62,37 +87,26 @@ export class MaterialsService {
 
 			console.log('Materiales mapeados:', materials);
 
-			// Aplicar filtros en cliente si es necesario
-			let filtered = materials;
+			// Aplicar filtros adicionales en cliente si es necesario
+			const filtered = materials;
 
-			if (filters?.search) {
-				const searchLower = filters.search.toLowerCase();
-				filtered = filtered.filter(
-					(m) =>
-						m.nombre.toLowerCase().includes(searchLower) ||
-						m.materia.toLowerCase().includes(searchLower) ||
-						m.tutor.toLowerCase().includes(searchLower),
-				);
-			}
+			// Nota: search y subject ya se filtran en el backend si se envían como parámetros
+			// Estos filtros en cliente son redundantes si el backend los maneja
 
-			if (filters?.subject) {
-				filtered = filtered.filter((m) => m.materia === filters.subject);
-			}
+			// Obtener total de items para calcular hasMore
+			const total = await this.getMaterialsCount();
 
-			// Simular paginación
-			const page = filters?.page || 1;
-			const limit = filters?.limit || 12;
-			const startIndex = (page - 1) * limit;
-			const endIndex = startIndex + limit;
-			const paginatedData = filtered.slice(startIndex, endIndex);
+			// Calcular información de paginación
+			const skip = filters?.skip || 0;
+			const take = filters?.take || 15;
 
 			return {
-				data: paginatedData,
+				data: filtered,
 				pagination: {
-					page,
-					limit,
-					totalItems: filtered.length,
-					totalPages: Math.ceil(filtered.length / limit),
+					page: Math.floor(skip / take) + 1,
+					limit: take,
+					totalItems: total,
+					totalPages: Math.ceil(total / take),
 				},
 			};
 		} catch (error) {
@@ -102,7 +116,7 @@ export class MaterialsService {
 	}
 
 	// Mapear respuesta del API Gateway a estructura Material
-	private mapApiMaterialToMaterial(item: any): Material {
+	private mapApiMaterialToMaterial(item: ApiMaterialRawResponse): Material {
 		console.log('Mapeando item del API:', item);
 
 		try {
@@ -126,7 +140,7 @@ export class MaterialsService {
 				vistas: data.vistos || data.views || 0,
 				descargas: data.descargas || data.downloads || 0,
 				createdAt: data.createdAt,
-				updatedAt: data.updatedAt,
+				updatedAt: data.updatedAt || data.createdAt,
 				fileUrl: item.previewURL || data.url || data.fileUrl,
 				descripcion: data.descripcion || data.description || '',
 			};
@@ -144,7 +158,7 @@ export class MaterialsService {
 		try {
 			const endpoint = API_ENDPOINTS.MATERIALS.GET_BY_ID(id);
 
-			const response = await apiClient.get<any>(endpoint);
+			const response = await apiClient.get<ApiMaterialRawResponse>(endpoint);
 
 			console.log('API GET Material by ID Raw Response:', response);
 
@@ -156,7 +170,7 @@ export class MaterialsService {
 			}
 
 			throw new Error('Material no encontrado en la respuesta');
-		} catch (error: any) {
+		} catch (error) {
 			console.error('Error al obtener material por ID:', error);
 			throw error;
 		}
@@ -174,7 +188,7 @@ export class MaterialsService {
 		formData.append('file', data.file);
 
 		try {
-			const response = await apiClient.post<any>(
+			const response = await apiClient.post<Partial<Material>>(
 				API_ENDPOINTS.MATERIALS.UPLOAD,
 				formData,
 				{
@@ -188,19 +202,19 @@ export class MaterialsService {
 			const apiResponse = response.data;
 
 			// Validar que la respuesta tenga los campos esperados
-			if (!apiResponse?.id || !apiResponse?.title) {
+			if (!apiResponse?.id || !apiResponse?.nombre) {
 				throw new Error('Respuesta inválida del servidor');
 			}
 
 			// Mapear campos de la respuesta del API Gateway a Material
 			const material: Material = {
 				id: apiResponse.id,
-				nombre: apiResponse.title,
-				materia: apiResponse.subject,
-				descripcion: apiResponse.description || '',
+				nombre: apiResponse.nombre,
+				materia: apiResponse.materia || '',
+				descripcion: apiResponse.descripcion || '',
 				fileUrl: apiResponse.fileUrl,
-				createdAt: apiResponse.createdAt,
-				updatedAt: apiResponse.createdAt, // El API no retorna updatedAt, usar createdAt
+				createdAt: apiResponse.createdAt || new Date().toISOString(),
+				updatedAt: apiResponse.createdAt || new Date().toISOString(), // El API no retorna updatedAt, usar createdAt
 				// Campos por defecto (el API no los retorna)
 				tipo: 'PDF',
 				semestre: 1,
@@ -212,12 +226,13 @@ export class MaterialsService {
 
 			console.log('Material procesado:', material);
 			return material;
-		} catch (error: any) {
+		} catch (error) {
 			console.error('Error en createMaterial:', error);
 
 			// Manejar errores de validación (422 - Unprocessable Entity)
-			if (error?.response?.status === 422) {
-				const errorData = error.response.data;
+			const axiosError = error as { response?: AxiosErrorResponse };
+			if (axiosError?.response?.status === 422) {
+				const errorData = axiosError.response.data;
 				const errorMessage = errorData?.message || 'Validación del PDF fallida';
 				console.error('Error de validación:', errorMessage);
 				throw new Error(errorMessage);
@@ -261,7 +276,7 @@ export class MaterialsService {
 			console.log('Iniciando descarga del material:', id);
 			const endpoint = `${API_ENDPOINTS.MATERIALS.BASE}/${id}/download`;
 
-			const response = await apiClient.get<any>(endpoint, {
+			const response = await apiClient.get<Blob>(endpoint, {
 				responseType: 'blob',
 			});
 
@@ -277,7 +292,9 @@ export class MaterialsService {
 			link.href = url;
 
 			// Usar el nombre del archivo de la respuesta o un nombre por defecto
-			const contentDisposition = response.headers['content-disposition'];
+			const contentDisposition = response.headers[
+				'content-disposition'
+			] as string;
 			let filename = `material-${id}.pdf`;
 
 			if (contentDisposition) {
@@ -298,19 +315,24 @@ export class MaterialsService {
 			URL.revokeObjectURL(url);
 
 			console.log(' Archivo descargado:', filename);
-		} catch (error: any) {
+		} catch (error) {
 			console.error(' Error al descargar material');
 
 			// Si es 500, es error del servidor
-			if (error?.response?.status === 500) {
+			const axiosError = error as { response?: AxiosErrorResponse };
+			if (axiosError?.response?.status === 500) {
 				throw new Error(
 					'Error del servidor (500). El endpoint /wise/materiales/:id/download devolvió un error interno. Verifica los logs del backend.',
 				);
 			}
 
 			// Si es otro error
+			const statusCode = axiosError?.response?.status || 'desconocido';
+			const statusText = axiosError?.response?.statusText || '';
+			const errorMessage =
+				error instanceof Error ? error.message : 'Error al descargar';
 			throw new Error(
-				`Error ${error?.response?.status || 'desconocido'}: ${error?.response?.statusText || error?.message || 'Error al descargar'}`,
+				`Error ${statusCode}${statusText ? `: ${statusText}` : ''}: ${errorMessage}`,
 			);
 		}
 	}
@@ -333,9 +355,9 @@ export class MaterialsService {
 	// Obtener materiales del usuario
 	async getUserMaterials(userId: string): Promise<Material[]> {
 		try {
-			const response = await apiClient.get<any>(
-				API_ENDPOINTS.MATERIALS.GET_ALL,
-			);
+			const response = await apiClient.get<
+				ApiMaterialRawResponse[] | { data: ApiMaterialRawResponse[] }
+			>(API_ENDPOINTS.MATERIALS.GET_ALL);
 
 			console.log('API GET User Materials Response:', response.data);
 
@@ -344,12 +366,12 @@ export class MaterialsService {
 
 			if (Array.isArray(response.data)) {
 				materials = response.data
-					.filter((item: any) => item.userId === userId)
-					.map((item: any) => this.mapApiMaterialToMaterial(item));
+					.filter((item) => item.userId === userId)
+					.map((item) => this.mapApiMaterialToMaterial(item));
 			} else if (Array.isArray(response.data?.data)) {
 				materials = response.data.data
-					.filter((item: any) => item.userId === userId)
-					.map((item: any) => this.mapApiMaterialToMaterial(item));
+					.filter((item) => item.userId === userId)
+					.map((item) => this.mapApiMaterialToMaterial(item));
 			}
 
 			return materials;
