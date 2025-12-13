@@ -159,7 +159,7 @@ export function NotificationsDropdown() {
 						<div className="flex-1 min-w-0">
 							<div className="flex justify-between items-start gap-2">
 								<p
-									className={`text-sm truncate ${!notification.visto ? 'font-semibold' : 'font-medium'}`}
+									className={`text-sm truncate ${notification.visto ? 'font-medium' : 'font-semibold'}`}
 									title={notification.asunto ?? ''}
 								>
 									{notification.asunto ?? 'Sin asunto'}

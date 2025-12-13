@@ -174,20 +174,34 @@ export default function StudentMaterials() {
 		}
 	};
 
-	const handleShare = (material: MaterialCardType) => {
+	const handleShare = async (material: MaterialCardType): Promise<void> => {
 		if (navigator.share) {
 			try {
-				navigator.share({
+				await navigator.share({
 					title: material.title,
 					text: material.description,
 					url: window.location.href,
 				});
 			} catch (error) {
-				console.log('Error al compartir:', error);
+				// User cancelled the share dialog or share failed
+				console.log(
+					'Error al compartir:',
+					error instanceof Error ? error.message : 'Error desconocido',
+				);
 			}
 		} else {
-			navigator.clipboard.writeText(`${material.title} - ${material.author}`);
-			alert('Enlace copiado al portapapeles');
+			try {
+				await navigator.clipboard.writeText(
+					`${material.title} - ${material.author}`,
+				);
+				alert('Enlace copiado al portapapeles');
+			} catch (error) {
+				console.error(
+					'Error al copiar al portapapeles:',
+					error instanceof Error ? error.message : 'Error desconocido',
+				);
+				alert('No se pudo copiar al portapapeles');
+			}
 		}
 	};
 

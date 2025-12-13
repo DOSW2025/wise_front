@@ -331,9 +331,8 @@ export class MaterialsService {
 			const statusText = axiosError?.response?.statusText || '';
 			const errorMessage =
 				error instanceof Error ? error.message : 'Error al descargar';
-			throw new Error(
-				`Error ${statusCode}${statusText ? `: ${statusText}` : ''}: ${errorMessage}`,
-			);
+			const statusDetail = statusText ? `: ${statusText}` : '';
+			throw new Error(`Error ${statusCode}${statusDetail}: ${errorMessage}`);
 		}
 	}
 
