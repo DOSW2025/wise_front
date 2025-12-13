@@ -5,11 +5,12 @@ import {
 	DropdownItem,
 	DropdownMenu,
 	DropdownTrigger,
-	Input,
+	Spinner,
 	Tooltip,
 } from '@heroui/react';
-import { MessageSquare, Plus, Search } from 'lucide-react';
-import { useState } from 'react';
+import { MessageSquare, Plus } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useChats, useCreateChat } from '~/lib/hooks/useChats';
 import { CreateGroupModal } from './create-group-modal';
 
 interface Chat {
@@ -21,55 +22,49 @@ interface Chat {
 	unread: boolean;
 }
 
-const mockChats: Chat[] = [
-	{
-		id: '1',
-		name: 'Dr. María García',
-		avatar: 'MG',
-		lastMessage:
-			'¡Perfecto! Nos vemos mañana a las 15:00 para la tutoría de Cálculo',
-		timestamp: new Date(Date.now() - 5 * 60 * 1000),
-		unread: true,
-	},
-	{
-		id: '2',
-		name: 'Ing. Carlos Rodríguez',
-		avatar: 'CR',
-		lastMessage: 'Te envié el material de React que me pediste',
-		timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-		unread: false,
-	},
-	{
-		id: '3',
-		name: 'Grupo Cálculo 2024-1',
-		avatar: 'GC',
-		lastMessage: 'Ana: ¿Alguien tiene las notas de la clase de hoy?',
-		timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-		unread: true,
-	},
-];
-
 interface ChatDropdownProps {
-	onOpenChat?: (tutor: {
+	onOpenChat?: (data: {
 		id: number;
 		name: string;
 		title: string;
 		avatarInitials: string;
+		groupId?: string;
 	}) => void;
 }
 
 export function ChatDropdown({ onOpenChat }: Readonly<ChatDropdownProps>) {
-	const [chats, setChats] = useState<Chat[]>(mockChats);
-	const [searchValue, setSearchValue] = useState('');
 	const [isOpen, setIsOpen] = useState(false);
 	const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+
+	const { data: chatsData, isLoading, error } = useChats();
+	const createChatMutation = useCreateChat();
+
+	const chats = useMemo<Chat[]>(() => {
+		if (!chatsData) {
+			console.log('ChatDropdown: No chatsData available');
+			return [];
+		}
+		console.log('ChatDropdown: Chats loaded:', chatsData);
+		return chatsData.map((group) => ({
+			id: group.id,
+			name: group.nombre,
+			avatar: group.nombre
+				.split(' ')
+				.map((word) => word[0])
+				.join('')
+				.substring(0, 2)
+				.toUpperCase(),
+			lastMessage: 'Grupo creado',
+			timestamp: new Date(group.fechaCreacion),
+			unread: false,
+		}));
+	}, [chatsData]);
+
 	const unreadCount = chats.filter((c) => c.unread).length;
 
-	const filteredChats = chats.filter(
-		(chat) =>
-			chat.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-			chat.lastMessage.toLowerCase().includes(searchValue.toLowerCase()),
-	);
+	if (error) {
+		console.error('ChatDropdown: Error loading chats:', error);
+	}
 
 	const formatTime = (date: Date) => {
 		const now = new Date();
@@ -85,45 +80,31 @@ export function ChatDropdown({ onOpenChat }: Readonly<ChatDropdownProps>) {
 	const handleChatClick = (chat: Chat) => {
 		if (onOpenChat) {
 			const id = Number.parseInt(chat.id, 10);
-			let title = 'Grupo';
-			if (chat.name.includes('Dr.')) title = 'Profesor';
-			else if (chat.name.includes('Ing.')) title = 'Tutor';
-
 			onOpenChat({
 				id,
 				name: chat.name,
-				title,
+				title: 'Grupo',
 				avatarInitials: chat.avatar,
+				groupId: chat.id,
 			});
 			setIsOpen(false);
 		}
 	};
 
-	const handleCreateGroup = () => {
-		setIsCreateGroupOpen(true);
-		setIsOpen(false);
-	};
-
-	const handleGroupCreated = (groupData: {
+	const handleGroupCreated = async (groupData: {
 		name: string;
 		description: string;
-		members: string[];
+		emails: string[];
 	}) => {
-		const newGroup: Chat = {
-			id: (chats.length + 1).toString(),
-			name: groupData.name,
-			avatar: groupData.name
-				.split(' ')
-				.map((word) => word[0])
-				.join('')
-				.substring(0, 2)
-				.toUpperCase(),
-			lastMessage: 'Grupo creado',
-			timestamp: new Date(),
-			unread: false,
-		};
-		setChats((prev) => [newGroup, ...prev]);
-		console.log('Grupo creado:', groupData);
+		try {
+			await createChatMutation.mutateAsync({
+				nombre: groupData.name,
+				emails: groupData.emails,
+			});
+			setIsCreateGroupOpen(false);
+		} catch (error) {
+			console.error('Error al crear grupo:', error);
+		}
 	};
 
 	return (
@@ -140,81 +121,72 @@ export function ChatDropdown({ onOpenChat }: Readonly<ChatDropdownProps>) {
 				<DropdownMenu aria-label="Chats" className="w-80" closeOnSelect={false}>
 					<DropdownItem
 						key="header"
-						className="h-auto py-3 data-[hover=true]:bg-transparent"
-						textValue="header"
+						className="h-auto py-3 cursor-default"
+						textValue="Chats Header"
+						isReadOnly
 					>
-						<div className="flex flex-col gap-3 w-full">
-							<div className="flex justify-between items-center">
-								<p className="font-semibold text-lg">Chats</p>
-								<Tooltip content="Crear grupo" placement="left">
-									<Button
-										isIconOnly
-										size="sm"
-										className="bg-red-500 hover:bg-red-600 text-white"
-										onPress={handleCreateGroup}
-									>
-										<Plus className="w-4 h-4" />
-									</Button>
-								</Tooltip>
-							</div>
-							<Input
-								placeholder="Buscar en chats..."
-								value={searchValue}
-								onValueChange={setSearchValue}
-								startContent={<Search className="w-4 h-4 text-default-400" />}
-								size="sm"
-								variant="bordered"
-								isClearable
-								onClear={() => setSearchValue('')}
-							/>
+						<div className="flex justify-between items-center">
+							<h3 className="text-lg font-semibold">Chats</h3>
+							<Tooltip content="Crear grupo">
+								<Button
+									isIconOnly
+									size="sm"
+									variant="light"
+									onPress={() => setIsCreateGroupOpen(true)}
+								>
+									<Plus className="w-5 h-5" />
+								</Button>
+							</Tooltip>
 						</div>
 					</DropdownItem>
-
-					{filteredChats.length === 0 ? (
-						<DropdownItem
-							key="empty"
-							className="data-[hover=true]:bg-transparent"
-							textValue="empty"
-						>
-							<p className="text-center text-default-500 py-4">
-								{searchValue ? 'No se encontraron chats' : 'No hay chats'}
-							</p>
-						</DropdownItem>
-					) : null}
-					{filteredChats.map((chat) => (
-						<DropdownItem
-							key={chat.id}
-							className={`h-auto py-3 cursor-pointer ${chat.unread ? 'bg-blue-50 data-[hover=true]:bg-blue-100' : 'data-[hover=true]:bg-default-100'}`}
-							textValue={chat.name}
-							onPress={() => handleChatClick(chat)}
-						>
-							<div className="flex gap-3 w-full">
-								<Avatar name={chat.avatar} size="md" color="primary" />
-								<div className="flex-1 min-w-0">
-									<div className="flex justify-between items-start">
-										<p
-											className={`text-sm truncate ${chat.unread ? 'font-semibold' : 'font-medium'}`}
-										>
-											{chat.name}
-										</p>
-										<p className="text-tiny text-default-400 ml-2">
-											{formatTime(chat.timestamp)}
-										</p>
-									</div>
-									<p
-										className={`text-tiny mt-1 truncate ${chat.unread ? 'text-default-700 font-medium' : 'text-default-500'}`}
-									>
-										{chat.lastMessage}
-									</p>
-									{chat.unread && (
-										<div className="flex justify-end mt-1">
-											<span className="w-2 h-2 bg-primary rounded-full"></span>
-										</div>
-									)}
-								</div>
+					{isLoading ? (
+						<DropdownItem key="loading" textValue="Cargando...">
+							<div className="flex justify-center items-center py-8">
+								<Spinner size="sm" />
 							</div>
 						</DropdownItem>
-					))}
+					) : chats.length === 0 ? (
+						<DropdownItem key="empty" textValue="No hay chats">
+							<p className="text-center text-default-500 py-4">
+								{error ? 'Error al cargar chats' : 'No hay chats'}
+							</p>
+						</DropdownItem>
+					) : (
+						chats.map((chat) => (
+							<DropdownItem
+								key={chat.id}
+								className={`h-auto py-3 cursor-pointer ${chat.unread ? 'bg-blue-50 data-[hover=true]:bg-blue-100' : 'data-[hover=true]:bg-default-100'}`}
+								textValue={chat.name}
+								onPress={() => handleChatClick(chat)}
+							>
+								<div className="flex gap-3 w-full">
+									<Avatar name={chat.avatar} size="md" color="primary" />
+									<div className="flex-1 min-w-0">
+										<div className="flex justify-between items-start">
+											<p
+												className={`text-sm truncate ${chat.unread ? 'font-semibold' : 'font-medium'}`}
+											>
+												{chat.name}
+											</p>
+											<p className="text-tiny text-default-400 ml-2">
+												{formatTime(chat.timestamp)}
+											</p>
+										</div>
+										<p
+											className={`text-tiny mt-1 truncate ${chat.unread ? 'text-default-700 font-medium' : 'text-default-500'}`}
+										>
+											{chat.lastMessage}
+										</p>
+										{chat.unread && (
+											<div className="flex justify-end mt-1">
+												<span className="w-2 h-2 bg-primary rounded-full"></span>
+											</div>
+										)}
+									</div>
+								</div>
+							</DropdownItem>
+						))
+					)}
 				</DropdownMenu>
 			</Dropdown>
 
