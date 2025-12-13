@@ -50,16 +50,23 @@ export function NotificationsDropdown() {
 		isDeleting,
 	} = useNotifications();
 
-	const formatTime = (dateString: string) => {
-		const date = new Date(dateString);
-		const now = new Date();
-		const diff = now.getTime() - date.getTime();
-		const minutes = Math.floor(diff / 60000);
-		const hours = Math.floor(minutes / 60);
+	const formatTime = (dateString: string): string => {
+		try {
+			const date = new Date(dateString);
+			if (Number.isNaN(date.getTime())) {
+				return 'fecha inválida';
+			}
+			const now = new Date();
+			const diff = now.getTime() - date.getTime();
+			const minutes = Math.floor(diff / 60000);
+			const hours = Math.floor(minutes / 60);
 
-		if (minutes < 60) return `hace ${minutes}m`;
-		if (hours < 24) return `hace ${hours}h`;
-		return date.toLocaleDateString();
+			if (minutes < 60) return `hace ${minutes}m`;
+			if (hours < 24) return `hace ${hours}h`;
+			return date.toLocaleDateString('es-ES');
+		} catch {
+			return 'fecha inválida';
+		}
 	};
 
 	// Crear items del dropdown
@@ -108,11 +115,11 @@ export function NotificationsDropdown() {
 					<div className="flex-1 min-w-0">
 						<div className="flex justify-between items-start gap-2">
 							<p
-								className={`text-sm truncate ${notification.visto === false ? 'font-semibold' : 'font-medium'}`}
+								className={`text-sm truncate ${!notification.visto ? 'font-semibold' : 'font-medium'}`}
 							>
 								{notification.asunto}
 							</p>
-							{notification.visto === false && (
+							{!notification.visto && (
 								<span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5"></span>
 							)}
 						</div>
@@ -124,7 +131,7 @@ export function NotificationsDropdown() {
 								{formatTime(notification.fechaCreacion)}
 							</p>
 							<div className="flex gap-1">
-								{notification.visto === false && (
+								{!notification.visto && (
 									<button
 										type="button"
 										onClick={(e) => {
