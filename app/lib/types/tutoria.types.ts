@@ -51,7 +51,7 @@ export interface TutorProfileData {
 	usuarioId: string;
 	bio: string;
 	reputacion: number;
-	tutorMaterias: string[];
+	tutorMaterias: TutorMateria[];
 	calificacion: number; // Promedio de calificaciones (1-5)
 	comentarios: number; // Cantidad total de calificaciones
 }

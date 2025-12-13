@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, CardBody, Chip, Spinner } from '@heroui/react';
+import { Button, Card, CardBody, Spinner } from '@heroui/react';
 import {
 	AlertCircle,
 	BookOpen,
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { RecommendedTutorsList } from '~/components/recommended-tutors-list';
 import { StatsCard } from '~/components/stats-card';
 import { StudentUpcomingTutoringsCard } from '~/components/student-upcoming-tutorings-card';
 import { TutorProfileModal } from '~/components/tutor-profile-modal';
@@ -48,8 +49,7 @@ export default function StudentDashboard() {
 		);
 	}
 
-	const { recommendedTutors, recentMaterials, recentActivity } =
-		dashboardData || {};
+	const { recentMaterials, recentActivity } = dashboardData || {};
 
 	return (
 		<div className="space-y-6">
@@ -150,70 +150,7 @@ export default function StudentDashboard() {
 								Ver más
 							</Button>
 						</div>
-						<div className="space-y-3">
-							{recommendedTutors?.length ? (
-								recommendedTutors.slice(0, 2).map((tutor) => {
-									const initials = tutor.name
-										.split(' ')
-										.map((n) => n[0])
-										.join('')
-										.toUpperCase();
-
-									let availabilityColor: 'success' | 'warning' | 'default' =
-										'default';
-									let availabilityText = 'Desconectado';
-
-									if (tutor.availability === 'available') {
-										availabilityColor = 'success';
-										availabilityText = 'Disponible';
-									} else if (tutor.availability === 'busy') {
-										availabilityColor = 'warning';
-										availabilityText = 'Ocupado';
-									}
-									return (
-										<div
-											key={tutor.id}
-											className="flex items-center justify-between p-3 bg-default-100 rounded-lg"
-										>
-											<button
-												type="button"
-												className="flex items-center gap-3 cursor-pointer flex-1 bg-transparent border-none p-0 text-left"
-												onClick={() => setSelectedTutorId(tutor.id)}
-											>
-												<Avatar
-													src={tutor.avatar}
-													name={initials}
-													size="sm"
-													className="bg-green-500 text-white"
-												/>
-												<div>
-													<p className="font-semibold text-sm hover:text-primary transition-colors">
-														{tutor.name}
-													</p>
-													<p className="text-small text-default-600">
-														{tutor.subject}
-													</p>
-													<div className="flex items-center gap-1 mt-1">
-														<Star className="w-3 h-3 text-yellow-500 fill-current" />
-														<span className="text-tiny">
-															{tutor.rating.toFixed(1)} ({tutor.reviewCount}{' '}
-															reseñas)
-														</span>
-													</div>
-												</div>
-											</button>
-											<Chip size="sm" color={availabilityColor} variant="flat">
-												{availabilityText}
-											</Chip>
-										</div>
-									);
-								})
-							) : (
-								<p className="text-center text-default-500 py-4">
-									No hay tutores disponibles
-								</p>
-							)}
-						</div>
+						<RecommendedTutorsList />
 					</CardBody>
 				</Card>
 			</div>
