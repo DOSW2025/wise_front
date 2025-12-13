@@ -268,16 +268,64 @@ export default function StudentMaterials() {
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
-	const handleAssistSubmit = () => {
-		if (!assistDescription.trim()) {
-			alert('Describe lo que buscas antes de enviar.');
+	const handleAssistSubmit = async () => {
+		const description = assistDescription.trim();
+
+		if (!description) {
+			setAssistError('Describe lo que buscas antes de enviar.');
 			return;
 		}
-		// TODO: Conectar con el backend/IA para enviar la descripcion y obtener recomendaciones.
-		console.log('Busqueda inteligente:', {
-			description: assistDescription,
-		});
-		alert('Busqueda inteligente enviada. (Simulado)');
+
+		const materiasFromInput = parseCommaSeparated(assistSubjects);
+		const materias =
+			materiasFromInput.length > 0
+				? materiasFromInput
+				: selectedSubject !== 'Todos'
+					? [selectedSubject]
+					: [];
+
+		const temasFromInput = parseCommaSeparated(assistTopics);
+		const temas =
+			temasFromInput.length > 0
+				? temasFromInput
+				: searchQuery.trim()
+					? [searchQuery.trim()]
+					: [];
+
+		if (!materias.length) {
+			setAssistError(
+				'Agrega al menos una materia (usa el filtro o escribe en Materias).',
+			);
+			return;
+		}
+
+		if (!temas.length) {
+			setAssistError(
+				'Agrega al menos un tema (usa Buscar o escribe en Temas).',
+			);
+			return;
+		}
+
+		setAssistError(null);
+		setAssistResult(null);
+		setIsAssistLoading(true);
+
+		try {
+			const response = await recommendationsService.getRecommendations({
+				descripcion: description,
+				materias,
+				temas,
+			});
+			setAssistResult(response);
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: 'No se pudo obtener recomendaciones.';
+			setAssistError(message);
+		} finally {
+			setIsAssistLoading(false);
+		}
 	};
 
 	return (
@@ -367,15 +415,94 @@ export default function StudentMaterials() {
 						isRequired
 					/>
 
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+						<Input
+							label="Materias"
+							placeholder="Ej: Historia, Matemáticas"
+							description="Separa las materias por coma. Si dejas vacío se usa el filtro seleccionado."
+							value={assistSubjects}
+							onValueChange={setAssistSubjects}
+						/>
+						<Input
+							label="Temas"
+							placeholder="Ej: Revolución Francesa, Cálculo"
+							description="Separa los temas por coma. Si dejas vacío se usa la búsqueda actual."
+							value={assistTopics}
+							onValueChange={setAssistTopics}
+						/>
+					</div>
+
 					<div className="flex flex-col sm:flex-row sm:items-center gap-3">
 						<Button
 							color="primary"
 							onClick={handleAssistSubmit}
 							className="sm:ml-auto"
+							isLoading={isAssistLoading}
 						>
 							Enviar
 						</Button>
 					</div>
+
+					{assistError && (
+						<div className="text-sm text-danger-500">{assistError}</div>
+					)}
+
+					{assistResult && (
+						<div className="space-y-4">
+							{/* Mensaje de la IA - Solo la introducción */}
+							{(assistResult as any).message && (
+								<div className="bg-default-100 border border-default-200 rounded-lg p-4">
+									<p className="text-sm font-semibold text-foreground mb-2">
+										Recomendación del Asistente IA
+									</p>
+									<p className="text-sm text-default-700">
+										{/* Extraer solo la introducción antes de los números */}
+										{(assistResult as any).message
+											.split(/\n\n1\.\s+/)[0]
+											.trim()}
+									</p>
+								</div>
+							)}
+
+							{/* Lista de Recomendaciones con Scroll Interno */}
+							{(assistResult as any).recommendations &&
+								(assistResult as any).recommendations.length > 0 && (
+									<div className="space-y-3">
+										<p className="text-sm font-semibold text-foreground">
+											Materiales Recomendados (
+											{(assistResult as any).recommendations.length})
+										</p>
+										<div className="max-h-96 overflow-y-auto pr-2 space-y-3">
+											{(assistResult as any).recommendations.map(
+												(rec: any, idx: number) => (
+													<div
+														key={rec.docId || idx}
+														className="bg-default-50 border border-default-200 rounded-lg p-3 space-y-2 hover:bg-default-100 transition flex-shrink-0"
+													>
+														<div className="flex justify-between items-start gap-2">
+															<h4 className="text-sm font-semibold text-foreground">
+																{rec.fileName}
+															</h4>
+															<span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded flex-shrink-0">
+																{rec.materia}
+															</span>
+														</div>
+														<p className="text-xs text-default-600">
+															<span className="font-semibold">Tema:</span>{' '}
+															{rec.tema}
+														</p>
+														<p className="text-xs text-default-600 line-clamp-2">
+															<span className="font-semibold">Resumen:</span>{' '}
+															{rec.summary}
+														</p>
+													</div>
+												),
+											)}
+										</div>
+									</div>
+								)}
+						</div>
+					)}
 				</div>
 			)}
 
