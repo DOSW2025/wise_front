@@ -342,10 +342,10 @@ export default function AdminValidation() {
 											<div className="flex flex-wrap items-start justify-between gap-3">
 												<div className="flex flex-col gap-1">
 													<p className="font-semibold text-foreground">
-														{material.title}
+														{material.nombre}
 													</p>
 													<div className="flex flex-wrap items-center gap-2 text-sm text-default-500">
-														<span>{material.author}</span>
+														<span>{material.tutor}</span>
 														<span aria-hidden="true">•</span>
 														<span>{material.subject}</span>
 														<span aria-hidden="true">•</span>
@@ -406,7 +406,7 @@ export default function AdminValidation() {
 										<FileText className="w-5 h-5 text-default-500" />
 										<div className="flex flex-col">
 											<span className="font-semibold text-sm">
-												{selectedMaterial.title}
+												{selectedmaterial.nombre}
 											</span>
 											<span className="text-xs text-default-500">
 												{selectedMaterial.subject} • {selectedMaterial.pages}{' '}
@@ -421,12 +421,12 @@ export default function AdminValidation() {
 									<div className="flex items-center gap-3 text-sm text-default-500">
 										<Avatar
 											className="bg-danger-100 text-danger"
-											name={selectedMaterial.author}
+											name={selectedmaterial.tutor}
 											size="sm"
 										/>
 										<div className="flex flex-col">
 											<span className="text-foreground font-medium">
-												{selectedMaterial.author}
+												{selectedmaterial.tutor}
 											</span>
 											<span>{selectedMaterial.email}</span>
 										</div>
@@ -583,7 +583,7 @@ export default function AdminValidation() {
 								<div className="aspect-[4/3] bg-white">
 									{selectedMaterial?.previewUrl ? (
 										<iframe
-											title={`Vista previa de ${selectedMaterial.title}`}
+											title={`Vista previa de ${selectedmaterial.nombre}`}
 											src={selectedMaterial.previewUrl}
 											className="w-full h-full"
 											loading="lazy"
