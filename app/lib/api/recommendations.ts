@@ -19,14 +19,23 @@ export const recommendationsService = {
 				payload,
 			);
 			return data;
-		} catch (error: any) {
-			// Capturar específicamente errores 502 del servicio de IA, por si no coneta quede chevre
-			if (error?.response?.status === 502) {
+		} catch (error: unknown) {
+			// Capturar específicamente errores 502 del servicio de IA, por si no conecta quede chévre
+			const errorWithResponse = error as Record<string, unknown>;
+			if (
+				typeof error === 'object' &&
+				error !== null &&
+				'response' in error &&
+				typeof errorWithResponse.response === 'object' &&
+				errorWithResponse.response !== null &&
+				'status' in errorWithResponse.response &&
+				(errorWithResponse.response as Record<string, unknown>).status === 502
+			) {
 				throw new Error(
 					'Disculpa la IA no está, se encuentra estudiando el material de ECIwise+ para ayudarte, estará disponible en breve.',
 				);
 			}
-			// Re-lanzar otros errores tal cual, por si tienen algun manejo de erores desde IA o algo.
+			// Re-lanzar otros errores
 			throw error;
 		}
 	},

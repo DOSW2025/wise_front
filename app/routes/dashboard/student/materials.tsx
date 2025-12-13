@@ -33,24 +33,43 @@ import { recommendationsService } from '~/lib/api/recommendations';
 import { useDownloadMaterial, useMaterials } from '~/lib/hooks/useMaterials';
 import type { Material } from '~/lib/types/api.types';
 
+interface RecommendationItem {
+	docId?: string;
+	fileName: string;
+	materia: string;
+	tema: string;
+	summary: string;
+}
+
+interface AssistantResponse {
+	message?: string;
+	recommendations?: RecommendationItem[];
+}
+
 const parseCommaSeparated = (value: string) =>
 	value
 		.split(',')
 		.map((item) => item.trim())
 		.filter(Boolean);
 
-const formatRecommendationResult = (result: unknown): string => {
-	if (result === null || result === undefined) return '';
-	if (typeof result === 'string') return result;
-	if (typeof result === 'number' || typeof result === 'boolean') {
-		return String(result);
+// Extrae la introducción del mensaje de IA con fallback seguro
+const extractIntroduction = (message: string | undefined): string => {
+	if (!message) return '';
+
+	// Intentar dividir por el patrón de lista numerada
+	const parts = message.split(/\n\n1\.\s+/);
+	if (parts.length > 1 && parts[0].trim()) {
+		return parts[0].trim();
 	}
 
-	if (Array.isArray(result)) {
-		return result.map((item) => formatRecommendationResult(item)).join('\n\n');
+	// Fallback: si no hay el patrón esperado, mostrar los primeros párrafos
+	const paragraphs = message.split('\n\n');
+	if (paragraphs.length > 0 && paragraphs[0].trim()) {
+		return paragraphs[0].trim();
 	}
 
-	return JSON.stringify(result, null, 2);
+	// Último fallback: devolver el mensaje completo
+	return message.trim();
 };
 
 // Función para adaptar Material del API al Material que espera MaterialCard
@@ -98,7 +117,9 @@ export default function StudentMaterials() {
 	const [assistDescription, setAssistDescription] = useState('');
 	const [assistSubjects, setAssistSubjects] = useState('');
 	const [assistTopics, setAssistTopics] = useState('');
-	const [assistResult, setAssistResult] = useState<unknown>(null);
+	const [assistResult, setAssistResult] = useState<AssistantResponse | null>(
+		null,
+	);
 	const [assistError, setAssistError] = useState<string | null>(null);
 	const [isAssistLoading, setIsAssistLoading] = useState(false);
 	const [currentSkip, setCurrentSkip] = useState(0);
@@ -476,31 +497,32 @@ export default function StudentMaterials() {
 					{assistResult && (
 						<div className="space-y-4">
 							{/* Mensaje de la IA - Solo para la introducción */}
-							{(assistResult as any).message && (
+							{assistResult?.message && (
 								<div className="bg-default-100 border border-default-200 rounded-lg p-4">
 									<p className="text-sm font-semibold text-foreground mb-2">
 										Recomendación del Asistente IA
 									</p>
 									<p className="text-sm text-default-700">
-										{/* Extraer solo la introducción antes de los números */}
-										{(assistResult as any).message
-											.split(/\n\n1\.\s+/)[0]
-											.trim()}
+										{/* Extraer la introducción del mensaje de forma segura */}
+										{extractIntroduction(assistResult?.message)}
 									</p>
 								</div>
 							)}
 
 							{/* Lista de Recomendaciones con Scroll Interno */}
-							{(assistResult as any).recommendations &&
-								(assistResult as any).recommendations.length > 0 && (
+							{assistResult?.recommendations &&
+								assistResult.recommendations.length > 0 && (
 									<div className="space-y-3">
 										<p className="text-sm font-semibold text-foreground">
 											Materiales Recomendados (
-											{(assistResult as any).recommendations.length})
+											{assistResult?.recommendations?.length})
 										</p>
-										<div className="max-h-96 overflow-y-auto pr-2 space-y-3">
-											{(assistResult as any).recommendations.map(
-												(rec: any, idx: number) => (
+										<section
+											className="max-h-96 overflow-y-auto pr-2 space-y-3"
+											aria-label="Lista de materiales recomendados por el asistente de IA"
+										>
+											{assistResult?.recommendations?.map(
+												(rec: RecommendationItem, idx: number) => (
 													<div
 														key={rec.docId || idx}
 														className="bg-default-50 border border-default-200 rounded-lg p-3 space-y-2 hover:bg-default-100 transition flex-shrink-0"
@@ -524,7 +546,7 @@ export default function StudentMaterials() {
 													</div>
 												),
 											)}
-										</div>
+										</section>
 									</div>
 								)}
 						</div>
