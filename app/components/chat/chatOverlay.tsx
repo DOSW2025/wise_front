@@ -9,7 +9,7 @@ import {
 	ModalBody,
 	ModalContent,
 } from '@heroui/react';
-import { Flag, MoreVertical, X } from 'lucide-react';
+import { Flag, MoreVertical, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '~/contexts/auth-context';
 import { useWebSocket } from '~/lib/hooks/useWebSocket';
@@ -311,6 +311,17 @@ export default function ChatOverlay({
 		alert('Reporte enviado exitosamente. Nuestro equipo lo revisará pronto.');
 	}
 
+	function handleDeleteChat() {
+		setIsDeleteModalOpen(true);
+	}
+
+	function confirmDeleteChat() {
+		console.log('Chat eliminado:', tutor?.id);
+		// TODO: Implementar eliminación del chat en el backend
+		setIsDeleteModalOpen(false);
+		onClose();
+	}
+
 	if (!tutor) return null;
 
 	return (
@@ -390,6 +401,14 @@ export default function ChatOverlay({
 									</DropdownTrigger>
 									<DropdownMenu aria-label="Opciones del chat">
 										<DropdownItem
+											key="delete"
+											color="danger"
+											startContent={<Trash2 className="w-4 h-4" />}
+											onPress={handleDeleteChat}
+										>
+											Eliminar chat
+										</DropdownItem>
+										<DropdownItem
 											key="report"
 											color="danger"
 											startContent={<Flag className="w-4 h-4" />}
@@ -440,6 +459,49 @@ export default function ChatOverlay({
 				tutorName={tutor.name}
 				onSubmitReport={handleReport}
 			/>
+
+			{/* Modal de confirmación de eliminación */}
+			<Modal
+				isOpen={isDeleteModalOpen}
+				onClose={() => setIsDeleteModalOpen(false)}
+				size="sm"
+			>
+				<ModalContent>
+					<ModalBody className="p-6">
+						<div className="flex flex-col items-center text-center gap-4">
+							<div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+								<Trash2 className="w-6 h-6 text-red-600" />
+							</div>
+							<div>
+								<h3 className="text-lg font-semibold text-gray-900">
+									¿Eliminar chat?
+								</h3>
+								<p className="text-sm text-gray-500 mt-2">
+									¿Estás seguro de que quieres eliminar este chat con{' '}
+									<span className="font-medium">{tutor?.name}</span>? Esta
+									acción no se puede deshacer.
+								</p>
+							</div>
+							<div className="flex gap-3 w-full mt-2">
+								<Button
+									variant="light"
+									onPress={() => setIsDeleteModalOpen(false)}
+									className="flex-1"
+								>
+									Cancelar
+								</Button>
+								<Button
+									color="danger"
+									onPress={confirmDeleteChat}
+									className="flex-1"
+								>
+									Eliminar
+								</Button>
+							</div>
+						</div>
+					</ModalBody>
+				</ModalContent>
+			</Modal>
 		</>
 	);
 }
