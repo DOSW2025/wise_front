@@ -1,6 +1,15 @@
 import { Avatar } from '@heroui/react';
 import { Paperclip } from 'lucide-react';
 
+function fixGoogleAvatarUrl(url: string | undefined): string | undefined {
+	if (!url) return undefined;
+	if (url.includes('googleusercontent.com')) {
+		const baseUrl = url.split('=')[0];
+		return `${baseUrl}=s96-c`;
+	}
+	return url;
+}
+
 interface MessageItemProps {
 	message: {
 		id: string;
@@ -9,6 +18,9 @@ interface MessageItemProps {
 		name?: string;
 		sender: 'student' | 'tutor';
 		timestamp: Date;
+		userAvatar?: string;
+		userName?: string;
+		userId?: string;
 	};
 	tutorName: string;
 }
@@ -16,16 +28,34 @@ interface MessageItemProps {
 export default function MessageItem({ message, tutorName }: MessageItemProps) {
 	const isStudent = message.sender === 'student';
 
+	const getAvatarProps = () => {
+		if (message.userAvatar) {
+			const fixedUrl = fixGoogleAvatarUrl(message.userAvatar);
+			return {
+				src: fixedUrl,
+				name: message.userName || tutorName,
+				showFallback: true,
+				imgProps: {
+					referrerPolicy: 'no-referrer' as const,
+				},
+			};
+		}
+		return {
+			name: (message.userName || tutorName)
+				.split(' ')
+				.map((n) => n[0])
+				.join(''),
+			showFallback: true,
+		};
+	};
+
 	return (
 		<div
 			className={`flex gap-2 ${isStudent ? 'justify-end' : 'justify-start'}`}
 		>
 			{!isStudent && (
 				<Avatar
-					name={tutorName
-						.split(' ')
-						.map((n) => n[0])
-						.join('')}
+					{...getAvatarProps()}
 					color="danger"
 					size="sm"
 					className="flex-shrink-0"
@@ -68,7 +98,12 @@ export default function MessageItem({ message, tutorName }: MessageItemProps) {
 			</div>
 
 			{isStudent && (
-				<Avatar name="Tú" color="default" size="sm" className="flex-shrink-0" />
+				<Avatar
+					{...getAvatarProps()}
+					color="default"
+					size="sm"
+					className="flex-shrink-0"
+				/>
 			)}
 		</div>
 	);

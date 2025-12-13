@@ -5,6 +5,7 @@ import {
 	DropdownMenu,
 	DropdownTrigger,
 	Input,
+	Spinner,
 	Textarea,
 } from '@heroui/react';
 
@@ -46,6 +47,41 @@ const formatRecommendationResult = (result: unknown): string => {
 
 	return JSON.stringify(result, null, 2);
 };
+import type {
+	Comment,
+	Material as MaterialCardType,
+} from '~/components/materials/types';
+import { sortOptions } from '~/components/materials/types';
+import { useDownloadMaterial, useMaterials } from '~/lib/hooks/useMaterials';
+import type { Material } from '~/lib/types/api.types';
+
+// Función para adaptar Material del API al Material que espera MaterialCard
+function adaptMaterialForCard(apiMaterial: Material): MaterialCardType {
+	const semesters = ['1er', '2do', '3er', '4to'];
+	const semesterNum = apiMaterial.semestre || 1;
+	const semesterStr = semesters[semesterNum - 1] || semesters[0];
+
+	return {
+		id: apiMaterial.id,
+		title: apiMaterial.nombre,
+		author: apiMaterial.tutor,
+		subject: apiMaterial.materia,
+		semester: `${semesterStr} Semestre`,
+		fileType: 'PDF',
+		date: new Date(apiMaterial.createdAt).toLocaleDateString('es-ES', {
+			day: '2-digit',
+			month: 'short',
+			year: 'numeric',
+		}),
+		rating: apiMaterial.calificacion,
+		ratingsCount: 0, // No viene en respuesta
+		downloads: apiMaterial.descargas,
+		comments: 0, // No viene en respuesta
+		description: apiMaterial.descripcion || 'Sin descripción disponible.',
+		commentsList: [],
+		fileUrl: apiMaterial.fileUrl, // URL del archivo para vista previa
+	};
+}
 
 export default function StudentMaterials() {
 	// Estados
@@ -55,10 +91,10 @@ export default function StudentMaterials() {
 	const [selectedSubject, setSelectedSubject] = useState('Todos');
 	const [selectedSemester, setSelectedSemester] = useState('Todos');
 	const [sortBy, setSortBy] = useState('Todos');
-	const [previewMaterial, setPreviewMaterial] = useState<Material | null>(null);
-	const [commentsMaterial, setCommentsMaterial] = useState<Material | null>(
-		null,
-	);
+	const [previewMaterial, setPreviewMaterial] =
+		useState<MaterialCardType | null>(null);
+	const [commentsMaterial, setCommentsMaterial] =
+		useState<MaterialCardType | null>(null);
 	const [userRating, setUserRating] = useState(0);
 	const [isAssistOpen, setIsAssistOpen] = useState(false);
 	const [assistDescription, setAssistDescription] = useState('');
@@ -67,6 +103,27 @@ export default function StudentMaterials() {
 	const [assistResult, setAssistResult] = useState<unknown>(null);
 	const [assistError, setAssistError] = useState<string | null>(null);
 	const [isAssistLoading, setIsAssistLoading] = useState(false);
+	const [currentSkip, setCurrentSkip] = useState(0);
+
+	// Calcular items por página - ambos modos usan 15
+	const itemsPerPage = 15;
+
+	// Crear filtros para la API
+	const filters = {
+		skip: currentSkip,
+		take: itemsPerPage,
+		search: searchQuery || undefined,
+	};
+
+	// Obtener materiales del API con paginación
+	const { data: materialsData, isLoading, error } = useMaterials(filters);
+	const apiMaterials = materialsData?.data || [];
+	const totalPages = materialsData?.pagination?.totalPages || 1;
+
+	// Adaptar materiales del API al formato que espera MaterialCard
+	const allMaterials: MaterialCardType[] = useMemo(() => {
+		return apiMaterials.map(adaptMaterialForCard);
+	}, [apiMaterials]);
 	const isGridView = viewMode === 'grid';
 	const layoutClass = isGridView
 		? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
@@ -76,23 +133,15 @@ export default function StudentMaterials() {
 	const listButtonVariant = isGridView ? 'flat' : 'solid';
 	const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
 
-	// ESTADOS para paginación
-	const [currentPage, setCurrentPage] = useState(1);
-
 	// Filtrar y ordenar materiales
 	const filteredMaterials = useMemo(() => {
-		const filtered = mockMaterials.filter((material) => {
-			const matchesSearch =
-				material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				material.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				material.subject.toLowerCase().includes(searchQuery.toLowerCase());
-
+		const filtered = allMaterials.filter((material) => {
 			const matchesSubject =
 				selectedSubject === 'Todos' || material.subject === selectedSubject;
 			const matchesSemester =
 				selectedSemester === 'Todos' || material.semester === selectedSemester;
 
-			return matchesSearch && matchesSubject && matchesSemester;
+			return matchesSubject && matchesSemester;
 		});
 
 		// Ordenar
@@ -116,33 +165,44 @@ export default function StudentMaterials() {
 		}
 
 		return filtered;
-	}, [searchQuery, selectedSubject, selectedSemester, sortBy]);
+	}, [allMaterials, selectedSubject, selectedSemester, sortBy]);
 
-	// Calcular items por página basado en la vista
-	const itemsPerPage = isGridView ? 12 : 15;
-
-	// Calcular materiales paginados
-	const paginatedMaterials = useMemo(() => {
-		const startIndex = (currentPage - 1) * itemsPerPage;
-		const endIndex = startIndex + itemsPerPage;
-		return filteredMaterials.slice(startIndex, endIndex);
-	}, [filteredMaterials, currentPage, itemsPerPage]);
-
-	// Calcular total de páginas
-	const totalPages = Math.ceil(filteredMaterials.length / itemsPerPage);
+	// Los materiales ya vienen paginados de la API
+	const paginatedMaterials = filteredMaterials;
+	const currentPage = Math.floor(currentSkip / itemsPerPage) + 1;
 
 	// Resetear a página 1 cuando cambien los filtros o la vista
 	useEffect(() => {
-		setCurrentPage(1);
+		setCurrentSkip(0);
 	}, []);
 
 	// Handlers
+	const downloadMutation = useDownloadMaterial();
+
 	const handleDownload = async (materialId: string) => {
-		console.log('Descargando material:', materialId);
-		alert(`Descargando material ${materialId}`);
+		try {
+			console.log('Iniciando descarga del material:', materialId);
+			await downloadMutation.mutateAsync(materialId);
+			console.log('Descarga completada');
+		} catch (error) {
+			console.error('Error en descarga:', error);
+			const axiosError = error as {
+				message?: string;
+				response?: { status?: number; statusText?: string; data?: unknown };
+			};
+			const errorMsg =
+				axiosError?.message || 'Error desconocido al descargar el material';
+			console.error('Detalle del error:', {
+				message: errorMsg,
+				status: axiosError?.response?.status,
+				statusText: axiosError?.response?.statusText,
+				data: axiosError?.response?.data,
+			});
+			alert(`Error al descargar: ${errorMsg}`);
+		}
 	};
 
-	const handleShare = async (material: Material) => {
+	const handleShare = async (material: MaterialCardType): Promise<void> => {
 		if (navigator.share) {
 			try {
 				await navigator.share({
@@ -151,20 +211,34 @@ export default function StudentMaterials() {
 					url: window.location.href,
 				});
 			} catch (error) {
-				console.log('Error al compartir:', error);
+				// User cancelled the share dialog or share failed
+				console.log(
+					'Error al compartir:',
+					error instanceof Error ? error.message : 'Error desconocido',
+				);
 			}
 		} else {
-			navigator.clipboard.writeText(`${material.title} - ${material.author}`);
-			alert('Enlace copiado al portapapeles');
+			try {
+				await navigator.clipboard.writeText(
+					`${material.title} - ${material.author}`,
+				);
+				alert('Enlace copiado al portapapeles');
+			} catch (error) {
+				console.error(
+					'Error al copiar al portapapeles:',
+					error instanceof Error ? error.message : 'Error desconocido',
+				);
+				alert('No se pudo copiar al portapapeles');
+			}
 		}
 	};
 
-	const handleReport = async (material: Material) => {
+	const handleReport = (material: MaterialCardType) => {
 		console.log('Reportando material:', material.id);
 		alert(`Reportando material: ${material.title}`);
 	};
 
-	const handleRateMaterial = async (material: Material, rating: number) => {
+	const handleRateMaterial = (material: MaterialCardType, rating: number) => {
 		if (rating > 0) {
 			console.log(`Valorando material ${material.id} con ${rating} estrellas`);
 			alert(
@@ -175,13 +249,13 @@ export default function StudentMaterials() {
 	};
 
 	// Abrir modal SOLO de comentarios (desde la tarjeta)
-	const handleOpenCommentsModal = (material: Material) => {
+	const handleOpenCommentsModal = (material: MaterialCardType) => {
 		console.log('Abrir modal de comentarios para:', material.title);
 		setCommentsMaterial(material);
 	};
 
 	// Esta función ahora es para abrir comentarios DENTRO del modal de vista previa
-	const handleOpenCommentsInPreview = (material: Material) => {
+	const handleOpenCommentsInPreview = (material: MaterialCardType) => {
 		console.log(
 			'Abrir sección de comentarios en vista previa:',
 			material.title,
@@ -216,7 +290,8 @@ export default function StudentMaterials() {
 
 	//Handler para cambio de página
 	const handlePageChange = (page: number) => {
-		setCurrentPage(page);
+		const newSkip = (page - 1) * itemsPerPage;
+		setCurrentSkip(newSkip);
 		// Scroll to top cuando cambie de página
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
@@ -507,19 +582,33 @@ export default function StudentMaterials() {
 			</div>
 
 			{/* Vista de materiales */}
-			<div className={layoutClass}>
-				{paginatedMaterials.map((material) => (
-					<MaterialCard
-						key={material.id}
-						material={material}
-						viewMode={viewMode}
-						onPreview={setPreviewMaterial}
-						onDownload={handleDownload}
-						onRate={setPreviewMaterial}
-						onComment={handleOpenCommentsModal}
-					/>
-				))}
-			</div>
+			{isLoading ? (
+				<div className="flex justify-center items-center py-12">
+					<Spinner label="Cargando materiales..." />
+				</div>
+			) : error ? (
+				<div className="text-center py-12">
+					<p className="text-danger">Error al cargar los materiales</p>
+				</div>
+			) : allMaterials.length === 0 ? (
+				<div className="text-center py-12">
+					<p className="text-default-500">No hay materiales disponibles</p>
+				</div>
+			) : (
+				<div className={layoutClass}>
+					{paginatedMaterials.map((material) => (
+						<MaterialCard
+							key={material.id}
+							material={material}
+							viewMode={viewMode}
+							onPreview={setPreviewMaterial}
+							onDownload={handleDownload}
+							onRate={setPreviewMaterial}
+							onComment={handleOpenCommentsModal}
+						/>
+					))}
+				</div>
+			)}
 
 			{/* Modal de vista previa */}
 			<PreviewModal
