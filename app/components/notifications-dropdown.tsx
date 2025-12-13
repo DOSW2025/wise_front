@@ -16,9 +16,12 @@ import {
 	Trash2,
 	X,
 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useNotifications } from '~/lib/hooks/useNotifications';
 
-const getNotificationIcon = (type: string) => {
+const MAX_CONTENT_LENGTH = 130;
+
+const getNotificationIcon = (type: string): ReactNode => {
 	switch (type) {
 		case 'info':
 			return <Calendar className="w-5 h-5 text-blue-500" />;
@@ -37,6 +40,16 @@ const getNotificationIcon = (type: string) => {
 	}
 };
 
+const truncateText = (
+	text: string,
+	maxLength: number = MAX_CONTENT_LENGTH,
+): string => {
+	if (!text || typeof text !== 'string') {
+		return '';
+	}
+	return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+};
+
 export function NotificationsDropdown() {
 	const {
 		notifications,
@@ -52,6 +65,9 @@ export function NotificationsDropdown() {
 
 	const formatTime = (dateString: string): string => {
 		try {
+			if (!dateString || typeof dateString !== 'string') {
+				return 'fecha inválida';
+			}
 			const date = new Date(dateString);
 			if (Number.isNaN(date.getTime())) {
 				return 'fecha inválida';
@@ -67,6 +83,30 @@ export function NotificationsDropdown() {
 		} catch {
 			return 'fecha inválida';
 		}
+	};
+
+	const handleMarkAsRead = (
+		notificationId: string,
+		e: React.MouseEvent,
+	): void => {
+		e.stopPropagation();
+		if (!notificationId || typeof notificationId !== 'string') {
+			console.error('Invalid notification ID');
+			return;
+		}
+		markAsRead(notificationId);
+	};
+
+	const handleDeleteNotification = (
+		notificationId: string,
+		e: React.MouseEvent,
+	): void => {
+		e.stopPropagation();
+		if (!notificationId || typeof notificationId !== 'string') {
+			console.error('Invalid notification ID');
+			return;
+		}
+		deleteNotification(notificationId);
 	};
 
 	// Crear items del dropdown
@@ -105,63 +145,68 @@ export function NotificationsDropdown() {
 					},
 				]
 			: []),
-		...notifications.map((notification) => ({
-			key: notification.id,
-			content: (
-				<div className="flex gap-3 w-full relative">
-					<div className="flex-shrink-0 mt-0.5">
-						{getNotificationIcon(notification.type)}
-					</div>
-					<div className="flex-1 min-w-0">
-						<div className="flex justify-between items-start gap-2">
-							<p
-								className={`text-sm truncate ${!notification.visto ? 'font-semibold' : 'font-medium'}`}
-							>
-								{notification.asunto}
-							</p>
-							{!notification.visto && (
-								<span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5"></span>
-							)}
+		...notifications.map((notification) => {
+			const truncatedResumen = truncateText(notification.resumen ?? '');
+			const notificationId = notification.id ?? '';
+
+			return {
+				key: notificationId || 'unknown',
+				content: (
+					<div className="flex gap-3 w-full relative">
+						<div className="flex-shrink-0 mt-0.5">
+							{getNotificationIcon(notification.type ?? 'info')}
 						</div>
-						<p className="text-tiny text-default-600 mt-1">
-							{notification.resumen}
-						</p>
-						<div className="flex justify-between items-center mt-2">
-							<p className="text-tiny text-default-400">
-								{formatTime(notification.fechaCreacion)}
-							</p>
-							<div className="flex gap-1">
+						<div className="flex-1 min-w-0">
+							<div className="flex justify-between items-start gap-2">
+								<p
+									className={`text-sm truncate ${!notification.visto ? 'font-semibold' : 'font-medium'}`}
+									title={notification.asunto ?? ''}
+								>
+									{notification.asunto ?? 'Sin asunto'}
+								</p>
 								{!notification.visto && (
+									<span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5"></span>
+								)}
+							</div>
+							<p
+								className="text-tiny text-default-600 mt-1 line-clamp-2"
+								title={notification.resumen ?? ''}
+							>
+								{truncatedResumen}
+							</p>
+							<div className="flex justify-between items-center mt-2">
+								<p className="text-tiny text-default-400">
+									{formatTime(notification.fechaCreacion ?? '')}
+								</p>
+								<div className="flex gap-1">
+									{!notification.visto && (
+										<button
+											type="button"
+											onClick={(e) => handleMarkAsRead(notificationId, e)}
+											className="text-xs text-primary hover:underline"
+											disabled={isMarkingAsRead}
+											aria-label="Marcar como leída"
+										>
+											{isMarkingAsRead ? 'Marcando...' : 'Marcar como leída'}
+										</button>
+									)}
 									<button
 										type="button"
-										onClick={(e) => {
-											e.stopPropagation();
-											markAsRead(notification.id);
-										}}
-										className="text-xs text-primary hover:underline"
-										disabled={isMarkingAsRead}
+										onClick={(e) => handleDeleteNotification(notificationId, e)}
+										className="text-xs text-primary hover:underline flex items-center gap-1"
+										disabled={isDeleting}
+										title="Eliminar notificación"
+										aria-label="Eliminar notificación"
 									>
-										{isMarkingAsRead ? 'Marcando...' : 'Marcar como leída'}
+										<Trash2 className="w-3 h-3" />
 									</button>
-								)}
-								<button
-									type="button"
-									onClick={(e) => {
-										e.stopPropagation();
-										deleteNotification(notification.id);
-									}}
-									className="text-xs text-primary hover:underline flex items-center gap-1"
-									disabled={isDeleting}
-									title="Eliminar notificación"
-								>
-									<Trash2 className="w-3 h-3" />
-								</button>
+								</div>
 							</div>
 						</div>
 					</div>
-				</div>
-			),
-		})),
+				),
+			};
+		}),
 	];
 
 	if (isLoading) {
