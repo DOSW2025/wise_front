@@ -92,16 +92,11 @@ export function Navbar({
 			<NavbarContent className="sm:hidden pr-3" justify="center">
 				<NavbarBrand>
 					<Link to="/dashboard" className="flex items-center gap-2">
-						<svg
-							className="w-8 h-8 text-primary"
-							fill="currentColor"
-							viewBox="0 0 24 24"
-							aria-label="ECIWISE+ logo"
-						>
-							<title>ECIWISE+ logo</title>
-							<path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
-							<path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
-						</svg>
+						<img
+							src="/logo/logoeciwise.svg"
+							alt="ECIWISE+ logo"
+							className="w-8 h-8"
+						/>
 						<p className="font-bold text-xl text-primary">ECIWISE+</p>
 					</Link>
 				</NavbarBrand>
@@ -110,22 +105,14 @@ export function Navbar({
 			<NavbarContent className="hidden sm:flex gap-4" justify="start">
 				<NavbarBrand>
 					<Link to="/dashboard" className="flex items-center gap-2">
-						<svg
-							className="w-8 h-8 text-primary"
-							fill="currentColor"
-							viewBox="0 0 24 24"
-							aria-label="ECIWISE+ logo"
-						>
-							<title>ECIWISE+ logo</title>
-							<path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
-							<path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
-						</svg>
+						<img
+							src="/logo/logoeciwise.svg"
+							alt="ECIWISE+ logo"
+							className="w-8 h-8"
+						/>
 						<p className="font-bold text-xl text-primary">ECIWISE+</p>
 					</Link>
 				</NavbarBrand>
-			</NavbarContent>
-
-			<NavbarContent className="hidden sm:flex gap-4" justify="center">
 				{menuItems.map((item) => (
 					<NavbarItem
 						key={item.path}

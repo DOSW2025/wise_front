@@ -1,7 +1,6 @@
 import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react';
 import { MessageCircle, Send, X } from 'lucide-react';
-import { type KeyboardEvent, useState } from 'react';
-import { navigationChatService } from '~/lib/api/navigation-chat';
+import { useState } from 'react';
 
 interface Message {
 	id: string;
@@ -25,12 +24,10 @@ export function ChatbotWidget({ isChatOpen = false }: ChatbotWidgetProps) {
 		},
 	]);
 	const [inputValue, setInputValue] = useState('');
-	const [isSending, setIsSending] = useState(false);
-	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-	const handleSendMessage = async () => {
-		const textToSend = inputValue.trim();
-		if (!textToSend || isSending) return;
+	const handleSendMessage = () => {
+		const textToSend = inputValue;
+		if (!textToSend.trim()) return;
 
 		const userMessage: Message = {
 			id: Date.now().toString(),
@@ -41,14 +38,12 @@ export function ChatbotWidget({ isChatOpen = false }: ChatbotWidgetProps) {
 
 		setMessages((prev) => [...prev, userMessage]);
 		setInputValue('');
-		setIsSending(true);
-		setErrorMessage(null);
 
-		try {
-			const reply = await navigationChatService.sendMessage(textToSend);
+		// Simulate bot response
+		setTimeout(() => {
 			const botMessage: Message = {
-				id: `${Date.now()}-bot`,
-				text: reply,
+				id: (Date.now() + 1).toString(),
+				text: 'Gracias por tu mensaje. Estoy aquí para ayudarte con tutorías, materiales de estudio y cualquier pregunta sobre la plataforma.',
 				isUser: false,
 				timestamp: new Date(),
 			};
@@ -71,7 +66,7 @@ export function ChatbotWidget({ isChatOpen = false }: ChatbotWidgetProps) {
 		}
 	};
 
-	const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
+	const handleKeyPress = (e: React.KeyboardEvent) => {
 		if (e.key === 'Enter') {
 			handleSendMessage();
 		}
@@ -118,22 +113,16 @@ export function ChatbotWidget({ isChatOpen = false }: ChatbotWidgetProps) {
 									onChange={(e) => setInputValue(e.target.value)}
 									onKeyPress={handleKeyPress}
 									size="sm"
-									isDisabled={isSending}
 								/>
 								<Button
 									isIconOnly
 									color="primary"
 									size="sm"
 									onClick={handleSendMessage}
-									isLoading={isSending}
-									isDisabled={isSending || !inputValue.trim()}
 								>
 									<Send size={16} />
 								</Button>
 							</div>
-							{errorMessage && (
-								<p className="text-xs text-danger-500 mt-2">{errorMessage}</p>
-							)}
 						</div>
 					</CardBody>
 				</Card>
