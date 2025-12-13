@@ -4,7 +4,7 @@ interface ProfileData {
 	name: string;
 	email: string;
 	phone: string;
-	rol: string;
+	role: string;
 	description: string;
 	avatar?: string;
 	interests: string[];

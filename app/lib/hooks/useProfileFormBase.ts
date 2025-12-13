@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { EMAIL_REGEX, PHONE_REGEX } from '../utils/validation';
+import {
+	EMAIL_REGEX,
+	PHONE_REGEX,
+	VALIDATION_LIMITS,
+} from '../utils/validation';
 
 export interface FormErrors {
 	name?: string;
@@ -39,12 +43,20 @@ export function useProfileFormBase<T extends BaseProfileData>(
 			errors.email = 'Email inválido';
 		}
 
-		if (profile.phone && !PHONE_REGEX.test(profile.phone.trim())) {
-			errors.phone = 'Teléfono inválido';
+		if (profile.phone) {
+			const phoneValue = profile.phone.trim();
+			if (phoneValue.length > VALIDATION_LIMITS.PHONE_MAX_LENGTH) {
+				errors.phone = `Teléfono inválido. Verifica teléfono (máx ${VALIDATION_LIMITS.PHONE_MAX_LENGTH}).`;
+			} else if (!PHONE_REGEX.test(phoneValue)) {
+				errors.phone = `Teléfono inválido. Verifica teléfono (máx ${VALIDATION_LIMITS.PHONE_MAX_LENGTH}).`;
+			}
 		}
 
-		if (profile.description && profile.description.length > 500) {
-			errors.description = 'La descripción no puede exceder 500 caracteres';
+		if (
+			profile.description &&
+			profile.description.length > VALIDATION_LIMITS.BIO_MAX_LENGTH
+		) {
+			errors.description = `Descripción inválida. Verifica biografía (máx ${VALIDATION_LIMITS.BIO_MAX_LENGTH}).`;
 		}
 
 		setFormErrors(errors);
@@ -54,10 +66,6 @@ export function useProfileFormBase<T extends BaseProfileData>(
 	const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (!file) return null;
-
-		if (file.size > 2 * 1024 * 1024) {
-			return { error: 'La imagen no puede ser mayor a 2MB' };
-		}
 
 		const reader = new FileReader();
 		reader.onloadend = () => {
