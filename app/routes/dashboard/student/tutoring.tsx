@@ -78,7 +78,7 @@ interface StudentSession {
 	time?: string;
 	duration?: number;
 	status: 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA' | 'RECHAZADA';
-	hasRating?: boolean; // Indica si ya fue calificada
+	rated?: boolean; // Indica si el estudiante ya calificó la sesión
 }
 
 const getAvatarBg = (avatarColor?: string): string => {
@@ -320,8 +320,8 @@ const SessionCardItem: React.FC<{
 	// Actualizar el tutorName en la vista
 	const viewWithTutorName = { ...view, tutorName };
 
-	const showRatingButton = view.status === 'COMPLETADA' && !session.hasRating;
-	const alreadyRated = view.status === 'COMPLETADA' && session.hasRating;
+	const showRatingButton = view.status === 'COMPLETADA' && !session.rated;
+	const alreadyRated = view.status === 'COMPLETADA' && session.rated;
 
 	return (
 		<Card>
@@ -362,7 +362,7 @@ const SessionCardItem: React.FC<{
 							)}
 							{alreadyRated && (
 								<Chip size="sm" color="success" variant="flat">
-									Ya calificaste
+									Calificada
 								</Chip>
 							)}
 						</div>
@@ -602,6 +602,7 @@ const transformBackendSessionToComponentSession = (
 		status: statusMap[backendSession.status] || 'PENDIENTE',
 		location: backendSession.lugar || backendSession.linkConexion || undefined,
 		comentarios: backendSession.comentarios || undefined,
+		rated: backendSession.rated || false,
 	};
 };
 
@@ -887,6 +888,7 @@ const StudentTutoringPage: React.FC = () => {
 	const [feedback, setFeedback] = useState<{
 		isOpen: boolean;
 		type: 'success' | 'error';
+		title?: string;
 		message: string;
 	}>({
 		isOpen: false,
@@ -1010,6 +1012,7 @@ const StudentTutoringPage: React.FC = () => {
 		setFeedback({
 			isOpen: true,
 			type: 'success',
+			title: '¡Sesión Calificada!',
 			message: 'Calificación enviada exitosamente. ¡Gracias por tu feedback!',
 		});
 		setSessionToRate(null);
@@ -1227,6 +1230,7 @@ const StudentTutoringPage: React.FC = () => {
 				isOpen={feedback.isOpen}
 				onClose={() => setFeedback({ ...feedback, isOpen: false })}
 				type={feedback.type}
+				title={feedback.title}
 				message={feedback.message}
 			/>
 		</div>

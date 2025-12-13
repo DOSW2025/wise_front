@@ -107,6 +107,7 @@ export interface StudentSession {
 	lugar: string | null;
 	comentarios: string | null;
 	createdAt: string;
+	rated?: boolean; // Indica si el estudiante ya calificó la sesión
 }
 
 /**
