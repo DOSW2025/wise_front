@@ -21,13 +21,42 @@ export function DashboardLayout({
 	userAvatar,
 	onLogout,
 }: DashboardLayoutProps) {
-	// ← AGREGA ESTO: Estado para el chat
 	const [selectedTutor, setSelectedTutor] = useState<{
 		id: number;
 		name: string;
 		title: string;
 		avatarInitials: string;
 	} | null>(null);
+
+	const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(
+		undefined,
+	);
+
+	const handleOpenChat = (data: {
+		id: number;
+		name: string;
+		title: string;
+		avatarInitials: string;
+		groupId?: string;
+	}) => {
+		if (data.groupId) {
+			setSelectedGroupId(data.groupId);
+			setSelectedTutor({
+				id: data.id,
+				name: data.name,
+				title: data.title,
+				avatarInitials: data.avatarInitials,
+			});
+		} else {
+			setSelectedTutor(data);
+			setSelectedGroupId(undefined);
+		}
+	};
+
+	const handleCloseChat = () => {
+		setSelectedTutor(null);
+		setSelectedGroupId(undefined);
+	};
 
 	return (
 		<div className="min-h-screen bg-background flex">
@@ -42,18 +71,19 @@ export function DashboardLayout({
 				{/* Header con iconos de chat y notificaciones */}
 				<div className="flex justify-end items-center mb-6 mr-8">
 					<div className="flex items-center gap-6">
-						<ChatDropdown onOpenChat={setSelectedTutor} />
+						<ChatDropdown onOpenChat={handleOpenChat} />
 						<NotificationsDropdown />
 					</div>
 				</div>
 
-				<Outlet context={{ onOpenChat: setSelectedTutor }} />
+				<Outlet context={{ onOpenChat: handleOpenChat }} />
 			</main>
 
 			{/* Chat overlay global */}
 			<ChatOverlay
+				groupId={selectedGroupId}
 				tutor={selectedTutor}
-				onClose={() => setSelectedTutor(null)}
+				onClose={handleCloseChat}
 			/>
 
 			{/* Chatbot Widget */}
