@@ -9,7 +9,11 @@ interface Message {
 	timestamp: Date;
 }
 
-export function ChatbotWidget() {
+interface ChatbotWidgetProps {
+	isChatOpen?: boolean;
+}
+
+export function ChatbotWidget({ isChatOpen = false }: ChatbotWidgetProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [messages, setMessages] = useState<Message[]>([
 		{
@@ -54,7 +58,9 @@ export function ChatbotWidget() {
 	};
 
 	return (
-		<div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
+		<div
+			className={`fixed bottom-4 z-50 flex flex-col items-end transition-all duration-300 ${isChatOpen ? 'right-[560px]' : 'right-4'}`}
+		>
 			{isOpen && (
 				<Card className="w-80 h-[28rem] shadow-xl mb-4 animate-in slide-in-from-bottom-4 zoom-in-95 fade-in duration-500 ease-out">
 					<CardHeader className="flex justify-between items-center bg-primary text-white rounded-t-lg">
