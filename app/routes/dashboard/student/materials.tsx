@@ -402,7 +402,7 @@ export default function StudentMaterials() {
 
 					{assistResult && (
 						<div className="space-y-4">
-							{/* Mensaje de la IA - Solo la introducción */}
+							{/* Mensaje de la IA - Solo para la introducción */}
 							{(assistResult as any).message && (
 								<div className="bg-default-100 border border-default-200 rounded-lg p-4">
 									<p className="text-sm font-semibold text-foreground mb-2">
