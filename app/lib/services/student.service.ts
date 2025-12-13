@@ -141,6 +141,8 @@ export async function updateProfile(
 		const biografia = profile.description?.trim();
 
 		// Validar límites antes de enviar al backend
+		// Nota: valores vacíos o solo espacios después del trim se convierten en undefined
+		// (comportamiento intencional - estos campos son opcionales)
 		if (telefono && telefono.length > VALIDATION_LIMITS.PHONE_MAX_LENGTH) {
 			throw new Error(
 				`Teléfono excede el límite de ${VALIDATION_LIMITS.PHONE_MAX_LENGTH} caracteres`,
@@ -153,8 +155,8 @@ export async function updateProfile(
 		}
 
 		const updateDto: UpdatePersonalInfoDto = {
-			telefono: telefono && telefono.length > 0 ? telefono : undefined,
-			biografia: biografia && biografia.length > 0 ? biografia : undefined,
+			telefono: telefono || undefined,
+			biografia: biografia || undefined,
 		};
 
 		const response = await apiClient.patch<ApiResponse<unknown>>(
@@ -174,6 +176,7 @@ export async function updateProfile(
 			role: (backendData.rol as string) ?? profile.role,
 			description: (backendData.biografia as string) ?? '',
 			semester: profile.semester,
+			interests: profile.interests,
 		};
 	} catch (error: unknown) {
 		throw new Error(
