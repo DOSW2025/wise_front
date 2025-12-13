@@ -48,7 +48,7 @@ export function useProfileFormBase<T extends BaseProfileData>(
 			if (phoneValue.length > VALIDATION_LIMITS.PHONE_MAX_LENGTH) {
 				errors.phone = `Teléfono inválido. Verifica teléfono (máx ${VALIDATION_LIMITS.PHONE_MAX_LENGTH}).`;
 			} else if (!PHONE_REGEX.test(phoneValue)) {
-				errors.phone = 'Teléfono inválido';
+				errors.phone = `Teléfono inválido. Verifica teléfono (máx ${VALIDATION_LIMITS.PHONE_MAX_LENGTH}).`;
 			}
 		}
 

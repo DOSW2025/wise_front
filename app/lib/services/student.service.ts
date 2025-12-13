@@ -15,6 +15,7 @@ export interface StudentProfile {
 	role: string;
 	description: string;
 	semester?: string;
+	interests?: string[];
 }
 
 /**
@@ -124,6 +125,12 @@ function extractErrorMessage(error: unknown, defaultMessage: string): string {
 /**
  * Actualizar información personal del estudiante
  * Solo actualiza teléfono y biografía
+ *
+ * Campos read-only (no se envían al backend):
+ * - name: Controlado por el contexto de autenticación
+ * - email: Controlado por el contexto de autenticación
+ * - role: Asignado por el backend
+ * - semester: Asignado por el backend (campo académico, no editable)
  */
 export async function updateProfile(
 	profile: StudentProfile,
@@ -132,19 +139,22 @@ export async function updateProfile(
 		// Mapear los campos del frontend al DTO del backend con sanitización
 		const telefono = profile.phone?.trim();
 		const biografia = profile.description?.trim();
+
+		// Validar límites antes de enviar al backend
+		if (telefono && telefono.length > VALIDATION_LIMITS.PHONE_MAX_LENGTH) {
+			throw new Error(
+				`Teléfono excede el límite de ${VALIDATION_LIMITS.PHONE_MAX_LENGTH} caracteres`,
+			);
+		}
+		if (biografia && biografia.length > VALIDATION_LIMITS.BIO_MAX_LENGTH) {
+			throw new Error(
+				`Biografía excede el límite de ${VALIDATION_LIMITS.BIO_MAX_LENGTH} caracteres`,
+			);
+		}
+
 		const updateDto: UpdatePersonalInfoDto = {
-			telefono:
-				telefono && telefono.length > 0
-					? telefono.length > VALIDATION_LIMITS.PHONE_MAX_LENGTH
-						? telefono.slice(0, VALIDATION_LIMITS.PHONE_MAX_LENGTH)
-						: telefono
-					: undefined,
-			biografia:
-				biografia && biografia.length > 0
-					? biografia.length > VALIDATION_LIMITS.BIO_MAX_LENGTH
-						? biografia.slice(0, VALIDATION_LIMITS.BIO_MAX_LENGTH)
-						: biografia
-					: undefined,
+			telefono: telefono && telefono.length > 0 ? telefono : undefined,
+			biografia: biografia && biografia.length > 0 ? biografia : undefined,
 		};
 
 		const response = await apiClient.patch<ApiResponse<unknown>>(
@@ -158,11 +168,11 @@ export async function updateProfile(
 
 		// Retornar el perfil actualizado en el formato del frontend
 		return {
-			name: (backendData.nombre as string) || profile.name,
-			email: (backendData.email as string) || profile.email,
-			phone: (backendData.telefono as string) || '',
-			role: (backendData.rol as string) || profile.role,
-			description: (backendData.biografia as string) || '',
+			name: (backendData.nombre as string) ?? profile.name,
+			email: (backendData.email as string) ?? profile.email,
+			phone: (backendData.telefono as string) ?? '',
+			role: (backendData.rol as string) ?? profile.role,
+			description: (backendData.biografia as string) ?? '',
 			semester: profile.semester,
 		};
 	} catch (error: unknown) {
@@ -193,9 +203,10 @@ export async function getProfile(): Promise<StudentProfile> {
 		const phone = (backendData.telefono as string) ?? '';
 		const description = (backendData.biografia as string) ?? '';
 		const semester = (backendData.semestre as string) ?? '';
+		// rol puede ser un string o un objeto con propiedad 'nombre'
 		const role =
 			typeof backendData.rol === 'string'
-				? ((backendData.rol as string) ?? '')
+				? backendData.rol
 				: ((backendData.rol as { nombre?: string })?.nombre ?? '');
 
 		return { name, email, phone, description, role, semester };
