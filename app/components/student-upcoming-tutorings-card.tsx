@@ -156,12 +156,10 @@ export function StudentUpcomingTutoringsCard() {
 	return (
 		<Card className="w-full">
 			<CardHeader className="flex flex-col items-start gap-1 pb-4">
-				<h3 className="text-xl font-bold text-default-900">
+				<h3 className="text-xl font-bold text-default-900 flex items-center gap-2">
+					<Clock className="w-5 h-5 text-primary" />
 					Próximas Tutorías
 				</h3>
-				<p className="text-sm text-default-500">
-					Tus sesiones de tutoría confirmadas
-				</p>
 			</CardHeader>
 			<CardBody className="pt-0">
 				{isLoading && <TutoringsSkeletonList />}

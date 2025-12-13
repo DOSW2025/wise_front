@@ -45,6 +45,18 @@ export interface Estado {
 }
 
 /**
+ * Perfil de tutoría con calificaciones
+ */
+export interface TutorProfileData {
+	usuarioId: string;
+	bio: string;
+	reputacion: number;
+	tutorMaterias: string[];
+	calificacion: number; // Promedio de calificaciones (1-5)
+	comentarios: number; // Cantidad total de calificaciones
+}
+
+/**
  * Perfil completo del tutor
  */
 export interface TutorProfile {
@@ -60,6 +72,9 @@ export interface TutorProfile {
 	updated_at: string;
 	rol: Rol;
 	estado: Estado;
+	tutorProfile?: TutorProfileData; // Datos del perfil de tutoría (anidado)
+	calificacion?: number; // También puede venir en el nivel superior (retrocompatibilidad)
+	comentarios?: number; // También puede venir en el nivel superior (retrocompatibilidad)
 }
 
 /**

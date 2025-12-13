@@ -667,6 +667,25 @@ const transformTutorProfileToTutor = (profile: TutorProfile): Tutor => {
 	const avatarColor =
 		colors[Number.parseInt(profile.id.slice(-1), 16) % colors.length];
 
+	// Usar calificación y comentarios reales del backend
+	// Buscar primero en tutorProfile (anidado), luego en el nivel superior
+	const rating =
+		profile.tutorProfile?.calificacion ?? profile.calificacion ?? 0;
+	const reviews = profile.tutorProfile?.comentarios ?? profile.comentarios ?? 0;
+
+	// 🔍 DEBUG: Ver qué datos llegan del backend
+	console.log('📊 Tutor Profile Data:', {
+		tutorId: profile.id,
+		nombre: `${profile.nombre} ${profile.apellido}`,
+		'tutorProfile.calificacion': profile.tutorProfile?.calificacion,
+		'tutorProfile.comentarios': profile.tutorProfile?.comentarios,
+		'profile.calificacion': profile.calificacion,
+		'profile.comentarios': profile.comentarios,
+		'rating (final)': rating,
+		'reviews (final)': reviews,
+		fullProfile: profile,
+	});
+
 	return {
 		id:
 			Number.parseInt(profile.id.replaceAll(/\D/g, '').slice(0, 8), 10) ||
@@ -677,8 +696,8 @@ const transformTutorProfileToTutor = (profile: TutorProfile): Tutor => {
 		department: profile.rol.nombre,
 		avatarInitials,
 		avatarColor,
-		rating: 4.5,
-		reviews: 0,
+		rating,
+		reviews,
 		tags: allSlots
 			.map((slot) => slot.modalidad)
 			.filter((v, i, a) => a.indexOf(v) === i),
@@ -1083,13 +1102,6 @@ const StudentTutoringPage: React.FC = () => {
 								<p className="text-default-600">
 									{tutors.length} tutores encontrados
 								</p>
-								<Button
-									variant="light"
-									color="danger"
-									startContent={<Calendar className="w-5 h-5" />}
-								>
-									Ver calendario
-								</Button>
 							</div>
 
 							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

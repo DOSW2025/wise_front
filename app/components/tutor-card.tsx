@@ -71,15 +71,24 @@ const TutorCard: React.FC<TutorCardProps> = ({
 						</h3>
 						<p className="text-sm text-gray-600">{tutor.title}</p>
 
-						<div className="flex items-center mt-1">
-							<Star className="w-4 h-4 mr-1 text-red-700 fill-red-700" />
-							<span className="text-sm font-medium text-red-700">
-								{tutor.rating}
-							</span>
-							<span className="text-xs text-gray-400 ml-1">
-								({tutor.reviews})
-							</span>
-						</div>
+						{/* Calificación y reseñas */}
+						{tutor.rating > 0 && tutor.reviews > 0 ? (
+							<div className="flex items-center mt-1">
+								<Star className="w-4 h-4 mr-1 text-red-700 fill-red-700" />
+								<span className="text-sm font-medium text-red-700">
+									{tutor.rating.toFixed(1)}
+								</span>
+								<span className="text-xs text-gray-400 ml-1">
+									({tutor.reviews} {tutor.reviews === 1 ? 'reseña' : 'reseñas'})
+								</span>
+							</div>
+						) : (
+							<div className="mt-1">
+								<span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+									Nuevo tutor
+								</span>
+							</div>
+						)}
 					</div>
 				</button>
 

@@ -88,7 +88,6 @@ export default function TutorDashboard() {
 				<StatsCard
 					title="Tutorías Realizadas"
 					value={stats?.tutoriasRealizadas || 0}
-					description="Este semestre"
 					color="success"
 					icon={
 						<svg
