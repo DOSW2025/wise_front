@@ -45,8 +45,11 @@ export class WebSocketService {
 		}
 
 		// Obtener URL base y eliminar barra final si existe
-		let wsUrl =
-			import.meta.env.VITE_WS_COMUNIDAD_URL || 'http://localhost:3004';
+		let wsUrl = import.meta.env.VITE_WS_COMUNIDAD_URL;
+		if (!wsUrl) {
+			console.error('[WebSocket] VITE_WS_COMUNIDAD_URL is not defined in .env');
+			return;
+		}
 		wsUrl = wsUrl.replace(/\/$/, ''); // Eliminar barra final
 
 		console.log('[WebSocket] Connecting to:', `${wsUrl}/chat`);
