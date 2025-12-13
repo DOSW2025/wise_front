@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { EMAIL_REGEX, PHONE_REGEX } from '../utils/validation';
+import {
+	EMAIL_REGEX,
+	PHONE_REGEX,
+	VALIDATION_LIMITS,
+} from '../utils/validation';
 
 export interface FormErrors {
 	name?: string;
@@ -41,15 +45,18 @@ export function useProfileFormBase<T extends BaseProfileData>(
 
 		if (profile.phone) {
 			const phoneValue = profile.phone.trim();
-			if (phoneValue.length > 10) {
-				errors.phone = 'El teléfono no puede exceder 10 caracteres';
+			if (phoneValue.length > VALIDATION_LIMITS.PHONE_MAX_LENGTH) {
+				errors.phone = `El teléfono no puede exceder ${VALIDATION_LIMITS.PHONE_MAX_LENGTH} caracteres`;
 			} else if (!PHONE_REGEX.test(phoneValue)) {
 				errors.phone = 'Teléfono inválido';
 			}
 		}
 
-		if (profile.description && profile.description.length > 500) {
-			errors.description = 'La descripción no puede exceder 500 caracteres';
+		if (
+			profile.description &&
+			profile.description.length > VALIDATION_LIMITS.BIO_MAX_LENGTH
+		) {
+			errors.description = `La descripción no puede exceder ${VALIDATION_LIMITS.BIO_MAX_LENGTH} caracteres`;
 		}
 
 		setFormErrors(errors);

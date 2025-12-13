@@ -62,7 +62,7 @@ export default function StudentProfile() {
 					description: profileData.description || '',
 					role: profileData.role || user.role || '',
 					semester: profileData.semester || '',
-					// interests y semester mantienen valores por defecto del estado inicial
+					// Nota: interests ya no se maneja en el perfil; mantenemos solo semester
 				}));
 			} catch (err) {
 				console.error('Error cargando perfil:', err);

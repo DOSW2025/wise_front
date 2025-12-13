@@ -6,6 +6,7 @@
 import apiClient from '../api/client';
 import { API_ENDPOINTS } from '../config/api.config';
 import type { ApiResponse } from '../types/api.types';
+import { VALIDATION_LIMITS } from '../utils/validation';
 
 export interface StudentProfile {
 	name: string;
@@ -87,7 +88,7 @@ function extractErrorMessage(error: unknown, defaultMessage: string): string {
 
 		// Mensajes específicos por código
 		if (response.status === 400) {
-			return 'Datos inválidos. Verifica teléfono (máx 10) y biografía (máx 500).';
+			return 'Datos inválidos. Verifica teléfono (máx 20) y biografía (máx 500).';
 		}
 		if (response.status === 401) {
 			return 'Tu sesión expiró. Inicia sesión nuevamente.';
@@ -134,11 +135,11 @@ export async function updateProfile(
 		const updateDto: UpdatePersonalInfoDto = {
 			telefono:
 				telefono && telefono.length > 0
-					? telefono.slice(0, 20) // límite backend
+					? telefono.slice(0, VALIDATION_LIMITS.PHONE_MAX_LENGTH)
 					: undefined,
 			biografia:
 				biografia && biografia.length > 0
-					? biografia.slice(0, 500) // límite backend
+					? biografia.slice(0, VALIDATION_LIMITS.BIO_MAX_LENGTH)
 					: undefined,
 		};
 
@@ -179,63 +180,22 @@ export async function getProfile(): Promise<StudentProfile> {
 		);
 
 		// El backend retorna directamente el objeto del usuario
-		const backendData = response.data;
+		const backendData = response.data as Record<string, unknown>;
 
 		// Mapear del formato backend al formato frontend
-		const fullName =
-			`${backendData.nombre ?? ''} ${backendData.apellido ?? ''}`.trim();
-		const roleFromObject =
-			typeof backendData.rol === 'object' && backendData.rol
-				? ((backendData.rol as { nombre?: string }).nombre ?? '')
-				: undefined;
+		const name =
+			`${(backendData.nombre as string) ?? ''} ${(backendData.apellido as string) ?? ''}`.trim();
+		const email = (backendData.email as string) ?? '';
+		const phone = (backendData.telefono as string) ?? '';
+		const description = (backendData.biografia as string) ?? '';
+		const semester = (backendData.semestre as string) ?? '';
+		const role =
+			typeof backendData.rol === 'string'
+				? ((backendData.rol as string) ?? '')
+				: ((backendData.rol as { nombre?: string })?.nombre ?? '');
 
-		const profile: StudentProfile = {
-			name: fullName || (backendData.nombre as string) || '',
-			email: (backendData.email as string) || '',
-			phone: (backendData.telefono as string) || '',
-			role: (
-				roleFromObject ||
-				(backendData.rol as string) ||
-				'estudiante'
-			).toString(),
-			description: (backendData.biografia as string) || '',
-			semester:
-				backendData.semestre !== undefined
-					? String(backendData.semestre)
-					: undefined,
-		};
-
-		return profile;
+		return { name, email, phone, description, role, semester };
 	} catch (error: unknown) {
-		// Manejo de errores específicos
-		if (
-			error &&
-			typeof error === 'object' &&
-			'response' in error &&
-			(error as Record<string, unknown>).response &&
-			typeof (error as Record<string, unknown>).response === 'object'
-		) {
-			const response = (error as Record<string, unknown>).response as Record<
-				string,
-				unknown
-			>;
-
-			if (response.status === 401) {
-				throw new Error('Tu sesión expiró. Inicia sesión nuevamente.');
-			}
-			if (response.status === 500) {
-				throw new Error('Error del servidor al procesar la solicitud.');
-			}
-			if (response.status === 404) {
-				throw new Error('El endpoint del perfil no existe en el backend.');
-			}
-		}
-
-		// Si el error tiene mensaje, usarlo
-		if (error instanceof Error) {
-			throw new Error(`Error al cargar el perfil: ${error.message}`);
-		}
-
-		throw new Error('Error al cargar el perfil. Intenta nuevamente.');
+		throw new Error(extractErrorMessage(error, 'No se pudo cargar el perfil.'));
 	}
 }
