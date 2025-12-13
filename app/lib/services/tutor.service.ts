@@ -6,6 +6,7 @@
 import apiClient from '../api/client';
 import { API_ENDPOINTS } from '../config/api.config';
 import type { ApiResponse } from '../types/api.types';
+import type { TutorRating, TutorReputation } from '../types/tutor-rating.types';
 
 export interface TutorProfile {
 	name: string;
@@ -115,3 +116,55 @@ export async function getProfile(): Promise<TutorProfile> {
 		throw new Error(extractErrorMessage(error, 'Error al obtener el perfil'));
 	}
 }
+
+/**
+ * Obtener todas las calificaciones
+ */
+export async function getTutorRatings(tutorId: string): Promise<TutorRating[]> {
+	try {
+		const response = await apiClient.get(
+			API_ENDPOINTS.TUTOR.REVIEWS.RATINGS(tutorId)
+		);
+
+		const data = extractResponseData<any>(response.data);
+
+		return data.ratings.map((r: any): TutorRating => ({
+			id: String(r.id),
+			rating: r.score,
+			comentario: r.comment,
+			fecha: r.createdAt,
+			estudianteNombre: r.rater?.nombre ?? 'Estudiante desconocido',
+			materia: r.session?.materia ?? '',
+			codigoMateria: r.session?.codigoMateria ?? ''
+		}));
+	} catch (error: unknown) {
+		throw new Error(
+			extractErrorMessage(error, 'Error al obtener calificaciones del tutor')
+		);
+	}
+}
+
+/**
+ * Obtener reputación del tutor
+ */
+export async function getTutorReputation(tutorId: string): Promise<TutorReputation> {
+	try {
+		const response = await apiClient.get(
+			API_ENDPOINTS.TUTOR.REVIEWS.REPUTACION(tutorId)
+		);
+
+		const data = extractResponseData<any>(response.data);
+
+		return {
+			tutorId: data.tutorId,
+			nombreTutor: data.nombreTutor,
+			reputacion: data.reputacion,
+			totalRatings: data.totalRatings
+		};
+	} catch (error: unknown) {
+		throw new Error(
+			extractErrorMessage(error, 'Error al obtener reputación del tutor')
+		);
+	}
+}
+
