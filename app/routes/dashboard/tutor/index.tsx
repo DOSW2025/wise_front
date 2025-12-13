@@ -10,6 +10,7 @@ import {
 import { Link, Outlet, useLocation } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
 import { useTutorDashboard } from '~/lib/hooks/useTutorDashboard';
+import { usePendingSessions } from './hooks/usePendingSessions';
 import { useUpcomingSessions } from './hooks/useUpcomingSessions';
 
 export default function TutorDashboard() {
@@ -21,6 +22,11 @@ export default function TutorDashboard() {
 		isLoading: isLoadingSessions,
 		error: sessionsError,
 	} = useUpcomingSessions();
+	const {
+		data: pendingSessions,
+		isLoading: isLoadingPending,
+		error: pendingError,
+	} = usePendingSessions();
 
 	if (!isMainDashboard) {
 		return <Outlet />;
@@ -249,60 +255,53 @@ export default function TutorDashboard() {
 							</Button>
 						</div>
 						<div className="space-y-3">
-							{recentRequests?.length ? (
-								recentRequests.slice(0, 2).map((request) => {
+							{isLoadingPending ? (
+								<div className="flex justify-center py-4">
+									<Spinner size="sm" />
+								</div>
+							) : pendingError ? (
+								<p className="text-center text-danger py-4 text-sm">
+									Error al cargar solicitudes
+								</p>
+							) : pendingSessions?.length ? (
+								pendingSessions.slice(0, 2).map((request, index) => {
 									const initials = request.studentName
 										.split(' ')
 										.map((n) => n[0])
 										.join('')
-										.toUpperCase();
-									const timeAgo = new Date(
-										Date.now() - new Date(request.createdAt).getTime(),
-									).getHours();
-									const bgColor =
-										request.status === 'pending'
-											? 'bg-orange-50 border border-orange-200'
-											: 'bg-green-50 border border-green-200';
-									const avatarColor =
-										request.status === 'pending'
-											? 'bg-orange-500'
-											: 'bg-green-500';
+										.toUpperCase()
+										.slice(0, 2);
+									const timeAgo = Math.floor(
+										(Date.now() - new Date(request.createdAt).getTime()) /
+											(1000 * 60 * 60),
+									);
 									return (
 										<div
-											key={request.id}
-											className={`flex items-center justify-between p-3 rounded-lg ${bgColor}`}
+											key={index}
+											className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg"
 										>
 											<div className="flex items-center gap-3">
 												<Avatar
-													src={request.studentAvatar}
 													name={initials}
 													size="sm"
-													className={`${avatarColor} text-white`}
+													className="bg-warning text-white"
 												/>
-												<div>
+												<div className="flex flex-col gap-1">
 													<p className="font-semibold text-sm">
 														{request.studentName}
 													</p>
 													<p className="text-small text-default-600">
-														{request.subject}
+														{request.subjectName}
 													</p>
 													<p className="text-tiny text-default-400">
 														{timeAgo > 0
-															? `Hace ${timeAgo} horas`
+															? `Hace ${timeAgo} hora${timeAgo > 1 ? 's' : ''}`
 															: 'Hace poco'}
 													</p>
 												</div>
 											</div>
-											<Chip
-												size="sm"
-												color={
-													request.status === 'pending' ? 'warning' : 'success'
-												}
-												variant="flat"
-											>
-												{request.status === 'pending'
-													? 'Pendiente'
-													: 'Confirmada'}
+											<Chip size="sm" color="warning" variant="flat">
+												Pendiente
 											</Chip>
 										</div>
 									);
