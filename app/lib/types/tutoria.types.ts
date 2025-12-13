@@ -286,3 +286,13 @@ export interface CompleteSessionResponse {
 	message: string;
 	session: StudentSession;
 }
+
+/**
+ * Reputación del tutor
+ */
+export interface TutorReputacion {
+	tutorId: string;
+	nombreTutor: string;
+	reputacion: number; // Calificación promedio (1-5)
+	totalRatings: number; // Cantidad total de calificaciones
+}

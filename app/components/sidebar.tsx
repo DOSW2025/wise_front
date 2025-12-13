@@ -219,7 +219,7 @@ export function Sidebar({
 			case 'student':
 				return 'Panel de Estudiante';
 			case 'tutor':
-				return 'Panel de Docente';
+				return 'Panel de Tutor';
 			case 'admin':
 				return 'Panel de Administrador';
 			default:

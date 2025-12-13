@@ -17,6 +17,7 @@ import type {
 	TutorMateriasResponse,
 	TutorNameResponse,
 	TutorProfile,
+	TutorReputacion,
 	UpcomingSessionsResponse,
 } from '../types/tutoria.types';
 
@@ -546,6 +547,27 @@ export async function updateAvailability(
 	}
 }
 
+/**
+ * Obtiene la reputación y calificación promedio de un tutor
+ */
+export async function getTutorReputacion(
+	tutorId: string,
+): Promise<TutorReputacion> {
+	try {
+		const url = API_ENDPOINTS.TUTOR.REVIEWS.REPUTACION(tutorId);
+		console.log('Fetching tutor reputacion:', { tutorId, url });
+		const response = await apiClient.get<TutorReputacion>(url);
+		console.log('Tutor reputacion received:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al obtener reputación del tutor:', error);
+		if (error instanceof Error) {
+			throw error;
+		}
+		throw new Error('No se pudo obtener la reputación del tutor');
+	}
+}
+
 // Exportar todas las funciones como un objeto de servicio
 export const tutoriaService = {
 	getTutores,
@@ -563,4 +585,5 @@ export const tutoriaService = {
 	completeSession,
 	getAvailability,
 	updateAvailability,
+	getTutorReputacion,
 };

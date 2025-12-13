@@ -4,19 +4,34 @@ import {
 	BookOpen,
 	Clock,
 	MessageSquare,
+	Star,
 	TrendingUp,
 	Users,
 } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
+import { useAuth } from '~/contexts/auth-context';
 import { useTutorDashboard } from '~/lib/hooks/useTutorDashboard';
+import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 import { usePendingSessions } from './hooks/usePendingSessions';
+import { useTutorReputacion } from './hooks/useTutorReputacion';
 import { useUpcomingSessions } from './hooks/useUpcomingSessions';
 
 export default function TutorDashboard() {
 	const location = useLocation();
 	const isMainDashboard = location.pathname === '/dashboard/tutor';
+	const { user } = useAuth();
 	const { data: dashboardData, isLoading, error } = useTutorDashboard();
+
+	// Obtener estadísticas reales desde el backend
+	const { data: tutoriaStats, isLoading: isLoadingStats } = useTutoriaStats(
+		user?.id || '',
+		!!user?.id,
+	);
+
+	// Obtener reputación del tutor desde el backend
+	const { data: reputacionData, isLoading: isLoadingReputacion } =
+		useTutorReputacion(user?.id || '', !!user?.id);
 	const {
 		data: upcomingSessions,
 		isLoading: isLoadingSessions,
@@ -87,7 +102,10 @@ export default function TutorDashboard() {
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatsCard
 					title="Tutorías Realizadas"
-					value={stats?.tutoriasRealizadas || 0}
+					value={
+						isLoadingStats ? '...' : (tutoriaStats?.sesionesCompletadas ?? 0)
+					}
+					description="Sesiones completadas"
 					color="success"
 					icon={
 						<svg
@@ -110,58 +128,36 @@ export default function TutorDashboard() {
 				<StatsCard
 					title="Calificación Promedio"
 					value={
-						stats?.totalRatings === 0
-							? 'Sin calificaciones'
-							: (stats?.calificacionPromedio?.toFixed(1) ?? '0.0')
+						isLoadingReputacion
+							? '...'
+							: reputacionData && reputacionData.totalRatings > 0
+								? reputacionData.reputacion.toFixed(1)
+								: 'Sin calificaciones'
 					}
 					description={
-						stats?.totalRatings === 0
-							? 'Aún no ha recibido valoraciones'
-							: 'De 5.0 estrellas'
+						reputacionData && reputacionData.totalRatings > 0
+							? `${reputacionData.totalRatings} ${reputacionData.totalRatings === 1 ? 'valoración' : 'valoraciones'}`
+							: 'Aún no ha recibido valoraciones'
 					}
 					color="warning"
-					icon={
-						<svg
-							className="w-6 h-6"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							aria-label="Star icon"
-						>
-							<title>Calificación promedio</title>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-							/>
-						</svg>
-					}
+					icon={<Star className="w-6 h-6" />}
 				/>
 				<StatsCard
-					title="Estudiantes Atendidos"
-					value={stats?.estudiantesAtendidos || 0}
-					description="Únicos este mes"
-					color="primary"
-					icon={
-						<svg
-							className="w-6 h-6"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-							/>
-						</svg>
+					title="Horas de Tutoría"
+					value={
+						isLoadingStats
+							? '...'
+							: `${tutoriaStats?.horasDeTutoria?.toFixed(1) ?? 0}h`
 					}
+					description="Tiempo total dedicado"
+					color="primary"
+					icon={<Clock className="w-6 h-6" />}
 				/>
 				<StatsCard
 					title="Solicitudes Pendientes"
-					value={stats?.solicitudesPendientes || 0}
+					value={
+						isLoadingStats ? '...' : (tutoriaStats?.sesionesPendientes ?? 0)
+					}
 					description="Requieren atención"
 					color="danger"
 					icon={<AlertCircle className="w-6 h-6" />}
