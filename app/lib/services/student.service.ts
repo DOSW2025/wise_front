@@ -135,11 +135,15 @@ export async function updateProfile(
 		const updateDto: UpdatePersonalInfoDto = {
 			telefono:
 				telefono && telefono.length > 0
-					? telefono.slice(0, VALIDATION_LIMITS.PHONE_MAX_LENGTH)
+					? telefono.length > VALIDATION_LIMITS.PHONE_MAX_LENGTH
+						? telefono.slice(0, VALIDATION_LIMITS.PHONE_MAX_LENGTH)
+						: telefono
 					: undefined,
 			biografia:
 				biografia && biografia.length > 0
-					? biografia.slice(0, VALIDATION_LIMITS.BIO_MAX_LENGTH)
+					? biografia.length > VALIDATION_LIMITS.BIO_MAX_LENGTH
+						? biografia.slice(0, VALIDATION_LIMITS.BIO_MAX_LENGTH)
+						: biografia
 					: undefined,
 		};
 

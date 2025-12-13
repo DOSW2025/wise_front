@@ -25,10 +25,7 @@ export default function StudentProfile() {
 		setFormErrors,
 		isEditing,
 		setIsEditing,
-		avatarPreview,
-		setAvatarPreview,
 		validateForm,
-		handleImageUpload,
 		resetForm,
 	} = useProfileForm({
 		name: user?.name || '',
@@ -62,7 +59,7 @@ export default function StudentProfile() {
 					description: profileData.description || '',
 					role: profileData.role || user.role || '',
 					semester: profileData.semester || '',
-					// Nota: interests ya no se maneja en el perfil; mantenemos solo semester
+					// Nota: los intereses se mantienen localmente para futuro uso y no se persisten en backend
 				}));
 			} catch (err) {
 				console.error('Error cargando perfil:', err);
@@ -105,14 +102,6 @@ export default function StudentProfile() {
 
 		if (saved) {
 			setIsEditing(false);
-			setAvatarPreview(null);
-		}
-	};
-
-	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const result = handleImageUpload(event);
-		if (result?.error) {
-			setError(result.error);
 		}
 	};
 
@@ -160,13 +149,7 @@ export default function StudentProfile() {
 					</div>
 
 					<div className="flex flex-col md:flex-row gap-6">
-						<ProfileAvatar
-							src={profile.avatar}
-							name={profile.name}
-							isEditing={isEditing}
-							onImageChange={handleImageChange}
-							preview={avatarPreview}
-						/>
+						<ProfileAvatar src={profile.avatar} name={profile.name} />
 						<ProfileFormFields
 							profile={profile}
 							isEditing={isEditing}

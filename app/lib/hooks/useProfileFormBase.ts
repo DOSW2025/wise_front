@@ -46,7 +46,7 @@ export function useProfileFormBase<T extends BaseProfileData>(
 		if (profile.phone) {
 			const phoneValue = profile.phone.trim();
 			if (phoneValue.length > VALIDATION_LIMITS.PHONE_MAX_LENGTH) {
-				errors.phone = `El teléfono no puede exceder ${VALIDATION_LIMITS.PHONE_MAX_LENGTH} caracteres`;
+				errors.phone = `Teléfono inválido. Verifica teléfono (máx ${VALIDATION_LIMITS.PHONE_MAX_LENGTH}).`;
 			} else if (!PHONE_REGEX.test(phoneValue)) {
 				errors.phone = 'Teléfono inválido';
 			}
@@ -56,7 +56,7 @@ export function useProfileFormBase<T extends BaseProfileData>(
 			profile.description &&
 			profile.description.length > VALIDATION_LIMITS.BIO_MAX_LENGTH
 		) {
-			errors.description = `La descripción no puede exceder ${VALIDATION_LIMITS.BIO_MAX_LENGTH} caracteres`;
+			errors.description = `Descripción inválida. Verifica biografía (máx ${VALIDATION_LIMITS.BIO_MAX_LENGTH}).`;
 		}
 
 		setFormErrors(errors);
@@ -66,10 +66,6 @@ export function useProfileFormBase<T extends BaseProfileData>(
 	const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (!file) return null;
-
-		if (file.size > 2 * 1024 * 1024) {
-			return { error: 'La imagen no puede ser mayor a 2MB' };
-		}
 
 		const reader = new FileReader();
 		reader.onloadend = () => {
