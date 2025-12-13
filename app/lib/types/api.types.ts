@@ -267,3 +267,17 @@ export interface AxiosErrorResponse {
 		[key: string]: unknown;
 	};
 }
+
+// IA Recommendations Types
+export interface RecommendationItem {
+	docId?: string;
+	fileName: string;
+	materia: string;
+	tema: string;
+	summary: string;
+}
+
+export interface AssistantResponse {
+	message?: string;
+	recommendations?: RecommendationItem[];
+}

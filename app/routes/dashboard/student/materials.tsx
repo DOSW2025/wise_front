@@ -29,8 +29,116 @@ import type {
 	Material as MaterialCardType,
 } from '~/components/materials/types';
 import { sortOptions } from '~/components/materials/types';
+import { recommendationsService } from '~/lib/api/recommendations';
 import { useDownloadMaterial, useMaterials } from '~/lib/hooks/useMaterials';
-import type { Material } from '~/lib/types/api.types';
+import type {
+	AssistantResponse,
+	Material,
+	RecommendationItem,
+} from '~/lib/types/api.types';
+
+/**
+ * Valida que un item sea seguro para procesamiento.
+ *
+ * Esta función previene ataques de inyección de código verificando que el input
+ * solo contenga caracteres alfanuméricos, espacios, guiones y caracteres españoles.
+ * Rechaza caracteres especiales que podrían ser usados para inyección de scripts.
+ *
+ * @param item - El string a validar
+ * @returns `true` si el item es válido y seguro, `false` en caso contrario
+ *
+ * **Caracteres permitidos:**
+ * - Letras A-Z (mayúsculas y minúsculas)
+ * - Vocales acentuadas: á, é, í, ó, ú
+ * - Letra ñ (mayúscula y minúscula)
+ * - Espacios en blanco
+ * - Guiones (-)
+ * - Longitud: 1-100 caracteres
+ *
+ * @example
+ * isValidItem("Matemáticas") // true
+ * isValidItem("Español Avanzado") // true
+ * isValidItem("<script>alert(1)</script>") // false - rechaza caracteres maliciosos
+ * isValidItem("a".repeat(101)) // false - excede longitud máxima
+ */
+const isValidItem = (item: string) => /^[a-zA-ZáéíóúñÑ\s-]{1,100}$/u.test(item);
+
+/**
+ * Parsea y sanitiza una cadena separada por comas en un array de items válidos.
+ *
+ * Esta función procesa input del usuario para campos de materias y temas,
+ * aplicando múltiples capas de validación para prevenir input malicioso:
+ * 1. Divide por comas
+ * 2. Elimina espacios al inicio/fin de cada item
+ * 3. Elimina items vacíos
+ * 4. Valida cada item con `isValidItem` (solo caracteres seguros)
+ * 5. Limita el resultado a máximo 20 items
+ *
+ * @param value - String separado por comas ingresado por el usuario
+ * @returns Array de strings validados y sanitizados, máximo 20 elementos
+ *
+ * **Protecciones de seguridad:**
+ * - Previene inyección de scripts rechazando caracteres especiales
+ * - Limita cantidad de items para prevenir ataques de denegación de servicio
+ * - Valida longitud individual de cada item (máx 100 caracteres)
+ *
+ * @example
+ * parseCommaSeparated("Matemáticas, Física, Química")
+ * // Retorna: ["Matemáticas", "Física", "Química"]
+ *
+ * @example
+ * parseCommaSeparated("Math<script>, Normal, ")
+ * // Retorna: ["Normal"] - rechaza el item con script, elimina el vacío
+ *
+ * @example
+ * parseCommaSeparated("a,b,c,...".repeat(10)) // 30+ items
+ * // Retorna: solo los primeros 20 items validados
+ */
+const parseCommaSeparated = (value: string) =>
+	value
+		.split(',')
+		.map((item) => item.trim())
+		.filter(Boolean)
+		.filter(isValidItem)
+		.slice(0, 20);
+
+/**
+ * Extrae la introducción del mensaje de IA con fallback seguro.
+ *
+ * Esta función intenta extraer solo la parte introductoria del mensaje de la IA,
+ * evitando mostrar la lista de recomendaciones numeradas que se muestran por separado.
+ *
+ * @param message - El mensaje completo devuelto por el servicio de IA
+ * @returns La introducción del mensaje sin la lista numerada, o cadena vacía si no hay mensaje
+ *
+ * @example
+ * // Mensaje con lista numerada
+ * extractIntroduction("Basado en tu búsqueda, aquí están mis recomendaciones:\n\n1. Material A\n2. Material B")
+ * // Retorna: "Basado en tu búsqueda, aquí están mis recomendaciones:"
+ *
+ * @example
+ * // Mensaje sin lista numerada
+ * extractIntroduction("Aquí tienes los mejores materiales para tu búsqueda.")
+ * // Retorna: "Aquí tienes los mejores materiales para tu búsqueda."
+ */
+const extractIntroduction = (message: string | undefined): string => {
+	if (!message) return '';
+
+	// Intentar dividir por el patrón de lista numerada
+	const parts = message.split(/\n\n1\.\s+/);
+	if (parts.length > 1 && parts[0].trim()) {
+		return parts[0].trim();
+	}
+
+	// Fallback: si no hay el patrón esperado, mostrar los primeros párrafos
+	const paragraphs = message.split('\n\n');
+	if (paragraphs.length > 0 && paragraphs[0].trim()) {
+		return paragraphs[0].trim();
+	}
+
+	// Último fallback: devolver el mensaje completo
+	return message.trim();
+};
 
 // Función para adaptar Material del API al Material que espera MaterialCard
 function adaptMaterialForCard(apiMaterial: Material): MaterialCardType {
@@ -75,6 +183,13 @@ export default function StudentMaterials() {
 	const [userRating, setUserRating] = useState(0);
 	const [isAssistOpen, setIsAssistOpen] = useState(false);
 	const [assistDescription, setAssistDescription] = useState('');
+	const [assistSubjects, setAssistSubjects] = useState('');
+	const [assistTopics, setAssistTopics] = useState('');
+	const [assistResult, setAssistResult] = useState<AssistantResponse | null>(
+		null,
+	);
+	const [assistError, setAssistError] = useState<string | null>(null);
+	const [isAssistLoading, setIsAssistLoading] = useState(false);
 	const [currentSkip, setCurrentSkip] = useState(0);
 
 	// Calcular items por página - ambos modos usan 15
@@ -268,16 +383,64 @@ export default function StudentMaterials() {
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 
-	const handleAssistSubmit = () => {
-		if (!assistDescription.trim()) {
-			alert('Describe lo que buscas antes de enviar.');
+	const handleAssistSubmit = async () => {
+		const description = assistDescription.trim();
+
+		if (!description) {
+			setAssistError('Describe lo que buscas antes de enviar.');
 			return;
 		}
-		// TODO: Conectar con el backend/IA para enviar la descripcion y obtener recomendaciones.
-		console.log('Busqueda inteligente:', {
-			description: assistDescription,
-		});
-		alert('Busqueda inteligente enviada. (Simulado)');
+
+		const materiasFromInput = parseCommaSeparated(assistSubjects);
+		const materias =
+			materiasFromInput.length > 0
+				? materiasFromInput
+				: selectedSubject !== 'Todos'
+					? [selectedSubject]
+					: [];
+
+		const temasFromInput = parseCommaSeparated(assistTopics);
+		const temas =
+			temasFromInput.length > 0
+				? temasFromInput
+				: searchQuery.trim()
+					? [searchQuery.trim()]
+					: [];
+
+		if (!materias.length) {
+			setAssistError(
+				'Agrega al menos una materia (usa el filtro o escribe en Materias).',
+			);
+			return;
+		}
+
+		if (!temas.length) {
+			setAssistError(
+				'Agrega al menos un tema (usa Buscar o escribe en Temas).',
+			);
+			return;
+		}
+
+		setAssistError(null);
+		setAssistResult(null);
+		setIsAssistLoading(true);
+
+		try {
+			const response = await recommendationsService.getRecommendations({
+				descripcion: description,
+				materias,
+				temas,
+			});
+			setAssistResult(response);
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: 'No se pudo obtener recomendaciones.';
+			setAssistError(message);
+		} finally {
+			setIsAssistLoading(false);
+		}
 	};
 
 	return (
@@ -361,21 +524,148 @@ export default function StudentMaterials() {
 						maxLength={5000}
 						value={assistDescription}
 						onValueChange={(value) => {
-							if (value.length <= 5000) setAssistDescription(value);
+							if (value.length <= 5000) {
+								setAssistDescription(value);
+								// Limpiar errores cuando el usuario empieza a corregir
+								if (assistError) setAssistError(null);
+							}
 						}}
 						description={`${assistDescription.length}/5000 caracteres`}
 						isRequired
 					/>
+
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+						<Input
+							label="Materias"
+							placeholder="Ej: Historia, Matemáticas"
+							description="Separa las materias por coma. Si dejas vacío se usa el filtro seleccionado."
+							value={assistSubjects}
+							onValueChange={(value) => {
+								setAssistSubjects(value);
+								// Limpiar errores cuando el usuario empieza a corregir
+								if (assistError) setAssistError(null);
+							}}
+						/>
+						<Input
+							label="Temas"
+							placeholder="Ej: Revolución Francesa, Cálculo"
+							description="Separa los temas por coma. Si dejas vacío se usa la búsqueda actual."
+							value={assistTopics}
+							onValueChange={(value) => {
+								setAssistTopics(value);
+								// Limpiar errores cuando el usuario empieza a corregir
+								if (assistError) setAssistError(null);
+							}}
+						/>
+					</div>
 
 					<div className="flex flex-col sm:flex-row sm:items-center gap-3">
 						<Button
 							color="primary"
 							onClick={handleAssistSubmit}
 							className="sm:ml-auto"
+							isLoading={isAssistLoading}
 						>
 							Enviar
 						</Button>
 					</div>
+
+					{assistError && (
+						<div className="text-sm text-danger-500">{assistError}</div>
+					)}
+
+					{assistResult && (
+						<div className="space-y-4">
+							{/* Mensaje de la IA - Solo para la introducción */}
+							{assistResult.message && (
+								<div className="bg-default-100 border border-default-200 rounded-lg p-4">
+									<p className="text-sm font-semibold text-foreground mb-2">
+										Recomendación del Asistente IA
+									</p>
+									<p className="text-sm text-default-700">
+										{/* Extraer la introducción del mensaje de forma segura */}
+										{extractIntroduction(assistResult.message)}
+									</p>
+								</div>
+							)}
+
+							{/* Lista de Recomendaciones con Scroll Interno */}
+							{assistResult.recommendations &&
+								assistResult.recommendations.length > 0 && (
+									<div className="space-y-3">
+										<p className="text-sm font-semibold text-foreground">
+											Materiales Recomendados (
+											{assistResult.recommendations.length})
+										</p>
+										<section
+											className="max-h-96 overflow-y-auto pr-2 space-y-3"
+											aria-label="Lista de materiales recomendados por el asistente de IA"
+										>
+											{assistResult.recommendations.map(
+												(rec: RecommendationItem, idx: number) => (
+													<button
+														key={rec.docId || idx}
+														type="button"
+														onClick={() => {
+															// Buscar el material completo en allMaterials
+															const fullMaterial = allMaterials.find(
+																(m) =>
+																	m.id === rec.docId ||
+																	m.title === rec.fileName,
+															);
+															if (fullMaterial) {
+																setPreviewMaterial(fullMaterial);
+															} else {
+																// Si no está en la página actual, actualizar la búsqueda
+																setSearchQuery(rec.fileName);
+																setCurrentSkip(0); // Resetear a la primera página
+															}
+														}}
+														onKeyDown={(e) => {
+															// Permitir Enter y Space para activar el botón
+															if (e.key === 'Enter' || e.key === ' ') {
+																e.preventDefault();
+																const fullMaterial = allMaterials.find(
+																	(m) =>
+																		m.id === rec.docId ||
+																		m.title === rec.fileName,
+																);
+																if (fullMaterial) {
+																	setPreviewMaterial(fullMaterial);
+																} else {
+																	// Si no está en la página actual, actualizar la búsqueda
+																	setSearchQuery(rec.fileName);
+																	setCurrentSkip(0); // Resetear a la primera página
+																}
+															}
+														}}
+														className="bg-default-50 border border-default-200 rounded-lg p-3 space-y-2 hover:bg-default-100 transition text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary w-full"
+														aria-label={`Ver material recomendado: ${rec.fileName}`}
+													>
+														<div className="flex justify-between items-start gap-2">
+															<h4 className="text-sm font-semibold text-foreground">
+																{rec.fileName}
+															</h4>
+															<span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded flex-shrink-0">
+																{rec.materia}
+															</span>
+														</div>
+														<p className="text-xs text-default-600">
+															<span className="font-semibold">Tema:</span>{' '}
+															{rec.tema}
+														</p>
+														<p className="text-xs text-default-600 line-clamp-2">
+															<span className="font-semibold">Resumen:</span>{' '}
+															{rec.summary}
+														</p>
+													</button>
+												),
+											)}
+										</section>
+									</div>
+								)}
+						</div>
+					)}
 				</div>
 			)}
 
