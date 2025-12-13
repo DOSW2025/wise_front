@@ -49,6 +49,7 @@ export default function ChatOverlay({
 	const { user } = useAuth();
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
