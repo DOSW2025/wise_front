@@ -8,12 +8,18 @@ import {
 	Modal,
 	ModalBody,
 	ModalContent,
+	ModalHeader,
 } from '@heroui/react';
-import { Flag, MoreVertical, Trash2, X } from 'lucide-react';
+import { Flag, MoreVertical, Trash2, Users, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '~/contexts/auth-context';
+import { useDeleteChat } from '~/lib/hooks/useChats';
 import { useWebSocket } from '~/lib/hooks/useWebSocket';
-import { type ChatMessage, chatsService } from '~/lib/services/chats.service';
+import {
+	type ChatMember,
+	type ChatMessage,
+	chatsService,
+} from '~/lib/services/chats.service';
 import MessageInput from './messageInput';
 import MessageList from './messageList';
 import ReportChatModal from './reportContent/reportChatModal';
@@ -50,8 +56,12 @@ export default function ChatOverlay({
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+	const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [typingUsers, setTypingUsers] = useState<string[]>([]);
+	const [members, setMembers] = useState<ChatMember[]>([]);
+
+	const deleteChatMutation = useDeleteChat();
 
 	const {
 		isConnected,
@@ -98,11 +108,24 @@ export default function ChatOverlay({
 		}
 	}, [groupId, user]);
 
+	const loadMembers = useCallback(async () => {
+		if (!groupId) return;
+		try {
+			const groupData = await chatsService.getGroupById(groupId);
+			if (groupData.miembros) {
+				setMembers(groupData.miembros);
+			}
+		} catch (error) {
+			console.error('Error loading members:', error);
+		}
+	}, [groupId]);
+
 	useEffect(() => {
 		if (groupId) {
 			// Marcar como loading y cargar mensajes
 			setIsLoading(true);
 			loadMessages();
+			loadMembers();
 		} else if (tutor) {
 			// Mensaje de bienvenida automático del tutor si no hay groupId
 			setIsLoading(false);
@@ -116,7 +139,7 @@ export default function ChatOverlay({
 				},
 			]);
 		}
-	}, [tutor, groupId, loadMessages]);
+	}, [tutor, groupId, loadMessages, loadMembers]);
 
 	useEffect(() => {
 		if (!groupId || !isConnected) return;
@@ -148,7 +171,18 @@ export default function ChatOverlay({
 				);
 
 				if (existingIndex !== -1) {
-					// Reemplazar el mensaje temporal/existente con el real del servidor
+					// Si es nuestro mensaje temporal, solo actualizar el ID pero mantener los mismos datos
+					// para evitar re-render del avatar
+					if (isCurrentUser) {
+						const updated = [...prev];
+						updated[existingIndex] = {
+							...prev[existingIndex],
+							id: message.id,
+							timestamp: new Date(message.fechaCreacion),
+						};
+						return updated;
+					}
+					// Si es mensaje de otro usuario, reemplazarlo completamente
 					const updated = [...prev];
 					updated[existingIndex] = newMessage;
 					return updated;
@@ -316,11 +350,23 @@ export default function ChatOverlay({
 		setIsDeleteModalOpen(true);
 	}
 
-	function confirmDeleteChat() {
-		console.log('Chat eliminado:', tutor?.id);
-		// TODO: Implementar eliminación del chat en el backend
-		setIsDeleteModalOpen(false);
-		onClose();
+	async function confirmDeleteChat() {
+		if (!groupId) {
+			console.warn('No hay groupId para eliminar');
+			setIsDeleteModalOpen(false);
+			onClose();
+			return;
+		}
+
+		try {
+			await deleteChatMutation.mutateAsync(groupId);
+			console.log('Chat eliminado exitosamente:', groupId);
+			setIsDeleteModalOpen(false);
+			onClose();
+		} catch (error) {
+			console.error('Error al eliminar el chat:', error);
+			alert('Error al eliminar el chat. Por favor, intenta de nuevo.');
+		}
 	}
 
 	if (!tutor) return null;
@@ -332,18 +378,18 @@ export default function ChatOverlay({
 				onClose={onClose}
 				size="lg"
 				scrollBehavior="inside"
-				isDismissable={false}
 				hideCloseButton={true}
 				classNames={{
-					backdrop: 'bg-transparent',
-					wrapper: '!justify-end !items-stretch',
-					base: 'rounded-3xl',
-					body: 'rounded-3xl',
+					backdrop: 'bg-transparent pointer-events-none',
+					wrapper:
+						'!justify-end !items-end !pr-0 !pb-0 !m-0 pointer-events-none',
+					base: 'rounded-t-3xl !mb-0 !m-0 max-h-[90vh] w-[450px] shadow-2xl pointer-events-auto fixed bottom-0 right-20',
+					body: 'rounded-t-3xl',
 				}}
 				motionProps={{
 					variants: {
 						enter: {
-							x: 0,
+							y: 0,
 							opacity: 1,
 							transition: {
 								duration: 0.3,
@@ -351,10 +397,10 @@ export default function ChatOverlay({
 							},
 						},
 						exit: {
-							x: 50,
+							y: 100,
 							opacity: 0,
 							transition: {
-								duration: 0.2,
+								duration: 0.25,
 								ease: 'easeIn',
 							},
 						},
@@ -362,26 +408,26 @@ export default function ChatOverlay({
 				}}
 			>
 				<ModalContent>
-					<ModalBody className="p-0 flex flex-col h-[600px]">
+					<ModalBody className="p-0 flex flex-col h-[600px] rounded-t-3xl overflow-hidden">
 						{/* Header del chat */}
-						<div className="flex justify-between items-center p-4 border-b bg-gray-50">
+						<div className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-primary/5 to-secondary/5">
 							<div className="flex items-center gap-3 flex-1">
 								<div className="relative">
 									<Avatar
 										name={tutor.avatarInitials}
-										color="danger"
-										size="sm"
+										color="primary"
+										size="md"
 									/>
 									{isConnected && (
 										<span
-											className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
+											className="absolute bottom-0 right-0 w-3 h-3 bg-success border-2 border-white rounded-full"
 											title="En línea"
 										/>
 									)}
 								</div>
 								<div>
-									<h2 className="font-semibold text-gray-800">{tutor.name}</h2>
-									<p className="text-xs text-gray-500">
+									<h2 className="font-semibold text-gray-900">{tutor.name}</h2>
+									<p className="text-xs text-gray-600">
 										{isConnected ? 'En línea' : tutor.title}
 									</p>
 								</div>
@@ -401,6 +447,13 @@ export default function ChatOverlay({
 										</Button>
 									</DropdownTrigger>
 									<DropdownMenu aria-label="Opciones del chat">
+										<DropdownItem
+											key="members"
+											startContent={<Users className="w-4 h-4" />}
+											onPress={() => setIsMembersModalOpen(true)}
+										>
+											Ver miembros
+										</DropdownItem>
 										<DropdownItem
 											key="delete"
 											color="danger"
@@ -433,7 +486,7 @@ export default function ChatOverlay({
 						</div>
 
 						{/* Área de mensajes */}
-						<div className="flex-1 overflow-y-auto bg-white">
+						<div className="flex-1 overflow-y-auto bg-gray-100 scrollbar-hide">
 							<MessageList
 								messages={messages}
 								tutorName={tutor.name}
@@ -488,6 +541,7 @@ export default function ChatOverlay({
 									variant="light"
 									onPress={() => setIsDeleteModalOpen(false)}
 									className="flex-1"
+									isDisabled={deleteChatMutation.isPending}
 								>
 									Cancelar
 								</Button>
@@ -495,10 +549,75 @@ export default function ChatOverlay({
 									color="danger"
 									onPress={confirmDeleteChat}
 									className="flex-1"
+									isLoading={deleteChatMutation.isPending}
 								>
 									Eliminar
 								</Button>
 							</div>
+						</div>
+					</ModalBody>
+				</ModalContent>
+			</Modal>
+
+			{/* Modal de miembros */}
+			<Modal
+				isOpen={isMembersModalOpen}
+				onClose={() => setIsMembersModalOpen(false)}
+				size="md"
+				scrollBehavior="inside"
+				placement="top-center"
+				classNames={{
+					backdrop: 'bg-transparent pointer-events-none',
+					wrapper: 'pointer-events-none !items-start !justify-end pr-24 pt-20',
+					base: 'pointer-events-auto max-h-[80vh] w-[380px]',
+				}}
+			>
+				<ModalContent>
+					<ModalHeader className="flex flex-col gap-1">
+						<div className="flex items-center gap-2">
+							<Users className="w-5 h-5 text-primary" />
+							<h3 className="text-lg font-semibold">Miembros del grupo</h3>
+						</div>
+					</ModalHeader>
+					<ModalBody className="p-4">
+						<div className="flex flex-col gap-3">
+							{members.length === 0 ? (
+								<p className="text-center text-gray-500 py-4">
+									No hay miembros para mostrar
+								</p>
+							) : (
+								members.map((member) => (
+									<div
+										key={member.id}
+										className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+									>
+										<Avatar
+											src={member.usuario?.avatar_url}
+											name={
+												member.usuario
+													? `${member.usuario.nombre} ${member.usuario.apellido}`
+													: 'Usuario'
+											}
+											size="md"
+											color="primary"
+											showFallback
+											imgProps={{
+												referrerPolicy: 'no-referrer' as const,
+											}}
+										/>
+										<div className="flex-1">
+											<p className="font-semibold text-gray-900">
+												{member.usuario
+													? `${member.usuario.nombre} ${member.usuario.apellido}`
+													: 'Usuario'}
+											</p>
+											<p className="text-sm text-gray-500">
+												{member.usuario?.email || 'Sin email'}
+											</p>
+										</div>
+									</div>
+								))
+							)}
 						</div>
 					</ModalBody>
 				</ModalContent>
