@@ -31,26 +31,23 @@ import type {
 import { sortOptions } from '~/components/materials/types';
 import { recommendationsService } from '~/lib/api/recommendations';
 import { useDownloadMaterial, useMaterials } from '~/lib/hooks/useMaterials';
-import type { Material } from '~/lib/types/api.types';
+import type {
+	AssistantResponse,
+	Material,
+	RecommendationItem,
+} from '~/lib/types/api.types';
 
-interface RecommendationItem {
-	docId?: string;
-	fileName: string;
-	materia: string;
-	tema: string;
-	summary: string;
-}
+// Helper: validar que el item sea alfanumérico, espacios, guiones y guiones bajos, máx 100 caracteres
+const isValidItem = (item: string) => /^[\w\s-]{1,100}$/.test(item);
 
-interface AssistantResponse {
-	message?: string;
-	recommendations?: RecommendationItem[];
-}
-
+// Limitar a 20 items y validar cada uno para prevenir input malicioso
 const parseCommaSeparated = (value: string) =>
 	value
 		.split(',')
 		.map((item) => item.trim())
-		.filter(Boolean);
+		.filter(Boolean)
+		.filter(isValidItem)
+		.slice(0, 20);
 
 // Extrae la introducción del mensaje de IA con fallback seguro
 const extractIntroduction = (message: string | undefined): string => {
@@ -456,7 +453,11 @@ export default function StudentMaterials() {
 						maxLength={5000}
 						value={assistDescription}
 						onValueChange={(value) => {
-							if (value.length <= 5000) setAssistDescription(value);
+							if (value.length <= 5000) {
+								setAssistDescription(value);
+								// Limpiar errores cuando el usuario empieza a corregir
+								if (assistError) setAssistError(null);
+							}
 						}}
 						description={`${assistDescription.length}/5000 caracteres`}
 						isRequired
@@ -468,14 +469,22 @@ export default function StudentMaterials() {
 							placeholder="Ej: Historia, Matemáticas"
 							description="Separa las materias por coma. Si dejas vacío se usa el filtro seleccionado."
 							value={assistSubjects}
-							onValueChange={setAssistSubjects}
+							onValueChange={(value) => {
+								setAssistSubjects(value);
+								// Limpiar errores cuando el usuario empieza a corregir
+								if (assistError) setAssistError(null);
+							}}
 						/>
 						<Input
 							label="Temas"
 							placeholder="Ej: Revolución Francesa, Cálculo"
 							description="Separa los temas por coma. Si dejas vacío se usa la búsqueda actual."
 							value={assistTopics}
-							onValueChange={setAssistTopics}
+							onValueChange={(value) => {
+								setAssistTopics(value);
+								// Limpiar errores cuando el usuario empieza a corregir
+								if (assistError) setAssistError(null);
+							}}
 						/>
 					</div>
 
@@ -504,7 +513,7 @@ export default function StudentMaterials() {
 									</p>
 									<p className="text-sm text-default-700">
 										{/* Extraer la introducción del mensaje de forma segura */}
-										{extractIntroduction(assistResult?.message)}
+										{extractIntroduction(assistResult.message)}
 									</p>
 								</div>
 							)}
@@ -515,17 +524,44 @@ export default function StudentMaterials() {
 									<div className="space-y-3">
 										<p className="text-sm font-semibold text-foreground">
 											Materiales Recomendados (
-											{assistResult?.recommendations?.length})
+											{assistResult.recommendations.length})
 										</p>
 										<section
 											className="max-h-96 overflow-y-auto pr-2 space-y-3"
 											aria-label="Lista de materiales recomendados por el asistente de IA"
 										>
-											{assistResult?.recommendations?.map(
+											{assistResult.recommendations.map(
 												(rec: RecommendationItem, idx: number) => (
-													<div
+													<button
 														key={rec.docId || idx}
-														className="bg-default-50 border border-default-200 rounded-lg p-3 space-y-2 hover:bg-default-100 transition flex-shrink-0"
+														type="button"
+														onClick={() => {
+															// Buscar el material completo en allMaterials
+															const fullMaterial = allMaterials.find(
+																(m) =>
+																	m.id === rec.docId ||
+																	m.title === rec.fileName,
+															);
+															if (fullMaterial) {
+																setPreviewMaterial(fullMaterial);
+															}
+														}}
+														onKeyDown={(e) => {
+															// Permitir Enter y Space para activar el botón
+															if (e.key === 'Enter' || e.key === ' ') {
+																e.preventDefault();
+																const fullMaterial = allMaterials.find(
+																	(m) =>
+																		m.id === rec.docId ||
+																		m.title === rec.fileName,
+																);
+																if (fullMaterial) {
+																	setPreviewMaterial(fullMaterial);
+																}
+															}
+														}}
+														className="bg-default-50 border border-default-200 rounded-lg p-3 space-y-2 hover:bg-default-100 transition text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary w-full"
+														aria-label={`Ver material recomendado: ${rec.fileName}`}
 													>
 														<div className="flex justify-between items-start gap-2">
 															<h4 className="text-sm font-semibold text-foreground">
@@ -543,7 +579,7 @@ export default function StudentMaterials() {
 															<span className="font-semibold">Resumen:</span>{' '}
 															{rec.summary}
 														</p>
-													</div>
+													</button>
 												),
 											)}
 										</section>

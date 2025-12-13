@@ -20,7 +20,7 @@ export const recommendationsService = {
 			);
 			return data;
 		} catch (error: unknown) {
-			// Capturar específicamente errores 502 del servicio de IA, por si no conecta quede chévre
+			// Capturar específicamente errores 502 del servicio de IA
 			const errorWithResponse = error as Record<string, unknown>;
 			if (
 				typeof error === 'object' &&
@@ -35,8 +35,20 @@ export const recommendationsService = {
 					'Disculpa la IA no está, se encuentra estudiando el material de ECIwise+ para ayudarte, estará disponible en breve.',
 				);
 			}
-			// Re-lanzar otros errores
-			throw error;
+
+			// Re-lanzar otros errores, asegurando que siempre sea una instancia de Error
+			if (error instanceof Error) {
+				throw error;
+			}
+			if (
+				typeof error === 'object' &&
+				error !== null &&
+				'message' in error &&
+				typeof (error as Record<string, unknown>).message === 'string'
+			) {
+				throw new Error((error as Record<string, unknown>).message as string);
+			}
+			throw new Error(`Unknown error occurred: ${JSON.stringify(error)}`);
 		}
 	},
 };
