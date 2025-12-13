@@ -110,6 +110,7 @@ export const API_ENDPOINTS = {
 		COMPLETE_SESSION: '/wise/tutorias/sessions/{id}/completar',
 		GET_AVAILABILITY: '/wise/tutorias/disponibilidad/id/{id}',
 		UPDATE_AVAILABILITY: '/wise/tutorias/id/{id}/availability',
+		RATINGS: '/wise/tutorias/ratings',
 	},
 	COMUNIDAD: {
 		CHATS: '/chats',

@@ -12,11 +12,12 @@ import {
 	Textarea,
 	useDisclosure,
 } from '@heroui/react';
-import { Calendar, Clock, MapPin, Search, Video, X } from 'lucide-react';
+import { Calendar, Clock, MapPin, Search, Star, Video, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { FeedbackModal } from '~/components';
 import { PageHeader } from '~/components/page-header';
+import { RatingModal } from '~/components/rating-modal';
 import ScheduledTutoringsModal, {
 	type ScheduledTutoring,
 } from '~/components/scheduled-tutorings-modal';
@@ -77,6 +78,7 @@ interface StudentSession {
 	time?: string;
 	duration?: number;
 	status: 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA' | 'RECHAZADA';
+	hasRating?: boolean; // Indica si ya fue calificada
 }
 
 const getAvatarBg = (avatarColor?: string): string => {
@@ -295,7 +297,8 @@ const SessionCardItem: React.FC<{
 	session: StudentSession;
 	onViewDetails: (session: StudentSession) => void;
 	onCancel: (session: StudentSession) => void;
-}> = ({ session, onViewDetails, onCancel }) => {
+	onRate?: (session: StudentSession) => void;
+}> = ({ session, onViewDetails, onCancel, onRate }) => {
 	const [tutorName, setTutorName] = React.useState<string>('Cargando...');
 	const view = buildSessionViewModel(session);
 
@@ -316,6 +319,9 @@ const SessionCardItem: React.FC<{
 
 	// Actualizar el tutorName en la vista
 	const viewWithTutorName = { ...view, tutorName };
+
+	const showRatingButton = view.status === 'COMPLETADA' && !session.hasRating;
+	const alreadyRated = view.status === 'COMPLETADA' && session.hasRating;
 
 	return (
 		<Card>
@@ -342,6 +348,22 @@ const SessionCardItem: React.FC<{
 								>
 									Cancelar
 								</Button>
+							)}
+							{showRatingButton && onRate && (
+								<Button
+									size="sm"
+									variant="flat"
+									color="warning"
+									onPress={() => onRate(session)}
+									startContent={<Star className="w-4 h-4" />}
+								>
+									Calificar
+								</Button>
+							)}
+							{alreadyRated && (
+								<Chip size="sm" color="success" variant="flat">
+									Ya calificaste
+								</Chip>
 							)}
 						</div>
 					}
@@ -854,6 +876,9 @@ const StudentTutoringPage: React.FC = () => {
 	const [sessionToCancel, setSessionToCancel] = useState<StudentSession | null>(
 		null,
 	);
+	const [sessionToRate, setSessionToRate] = useState<StudentSession | null>(
+		null,
+	);
 	const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
 	const [scheduledTutorings, setScheduledTutorings] = useState<
 		ScheduledTutoring[]
@@ -875,6 +900,12 @@ const StudentTutoringPage: React.FC = () => {
 		isOpen: isConfirmOpen,
 		onOpen: onOpenConfirm,
 		onClose: onCloseConfirm,
+	} = useDisclosure();
+
+	const {
+		isOpen: isRatingOpen,
+		onOpen: onOpenRating,
+		onClose: onCloseRating,
 	} = useDisclosure();
 
 	const { onOpenChat } = useOutletContext<{
@@ -968,6 +999,20 @@ const StudentTutoringPage: React.FC = () => {
 		setScheduledTutorings(
 			scheduledTutorings.filter((t: ScheduledTutoring) => t.id !== id),
 		);
+	};
+
+	const handleOpenRating = (session: StudentSession) => {
+		setSessionToRate(session);
+		onOpenRating();
+	};
+
+	const handleRatingSuccess = () => {
+		setFeedback({
+			isOpen: true,
+			type: 'success',
+			message: 'Calificación enviada exitosamente. ¡Gracias por tu feedback!',
+		});
+		setSessionToRate(null);
 	};
 
 	return (
@@ -1121,6 +1166,7 @@ const StudentTutoringPage: React.FC = () => {
 											setSessionToCancel(currentSession);
 											onOpenConfirm();
 										}}
+										onRate={handleOpenRating}
 									/>
 								))}
 							</div>
@@ -1148,6 +1194,18 @@ const StudentTutoringPage: React.FC = () => {
 				onConfirm={handleCancelSession}
 				isPending={isCanceling}
 			/>
+			{/* Modal de Calificación */}
+			{sessionToRate && (
+				<RatingModal
+					isOpen={isRatingOpen}
+					onClose={onCloseRating}
+					sessionId={sessionToRate.id}
+					raterId={user?.id || ''}
+					tutorName={sessionToRate.tutorName}
+					subjectName={sessionToRate.subject}
+					onSuccess={handleRatingSuccess}
+				/>
+			)}
 			{/* Modal de agendar tutoría */}
 			<TutorScheduleModal
 				tutor={selectedTutor}
