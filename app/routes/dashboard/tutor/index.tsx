@@ -88,8 +88,16 @@ export default function TutorDashboard() {
 				/>
 				<StatsCard
 					title="Calificación Promedio"
-					value={stats?.calificacionPromedio?.toFixed(1) || '0.0'}
-					description="De 5.0 estrellas"
+					value={
+						stats && stats.totalRatings === 0
+							? 'Sin calificaciones'
+							: stats?.calificacionPromedio?.toFixed(1)
+					}
+					description={
+						stats && stats.totalRatings === 0
+							? 'Aún no ha recibido valoraciones'
+							: 'De 5.0 estrellas'
+					}
 					color="warning"
 					icon={
 						<svg
