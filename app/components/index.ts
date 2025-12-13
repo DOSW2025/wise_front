@@ -21,5 +21,6 @@ export { SessionDetailsModal } from './session-details-modal';
 export { Sidebar } from './sidebar';
 export { StarRating } from './star-rating';
 export { StatsCard } from './stats-card';
+export { StudentUpcomingTutoringsCard } from './student-upcoming-tutorings-card';
 export { TutoringCard } from './tutoring-card';
 export { UpcomingTutoringsCard } from './upcoming-tutorings-card';

@@ -2,7 +2,6 @@ import { Avatar, Button, Card, CardBody, Chip, Spinner } from '@heroui/react';
 import {
 	AlertCircle,
 	BookOpen,
-	Clock,
 	MessageSquare,
 	Star,
 	TrendingUp,
@@ -11,6 +10,7 @@ import {
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { StatsCard } from '~/components/stats-card';
+import { StudentUpcomingTutoringsCard } from '~/components/student-upcoming-tutorings-card';
 import { TutorProfileModal } from '~/components/tutor-profile-modal';
 import { useAuth } from '~/contexts/auth-context';
 import { useStudentDashboard } from '~/lib/hooks/useStudentDashboard';
@@ -48,12 +48,8 @@ export default function StudentDashboard() {
 		);
 	}
 
-	const {
-		upcomingTutoring,
-		recommendedTutors,
-		recentMaterials,
-		recentActivity,
-	} = dashboardData || {};
+	const { recommendedTutors, recentMaterials, recentActivity } =
+		dashboardData || {};
 
 	return (
 		<div className="space-y-6">
@@ -134,85 +130,7 @@ export default function StudentDashboard() {
 			{/* Main Content Grid */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				{/* Próximas Tutorías */}
-				<Card>
-					<CardBody className="gap-4">
-						<div className="flex items-center justify-between">
-							<h2 className="text-xl font-semibold flex items-center gap-2">
-								<Clock className="w-5 h-5 text-primary" />
-								Próximas Tutorías
-							</h2>
-							<Button
-								as={Link}
-								to="/dashboard/student/tutoring"
-								size="sm"
-								variant="light"
-								color="primary"
-							>
-								Ver todas
-							</Button>
-						</div>
-						<div className="space-y-3">
-							{upcomingTutoring?.length ? (
-								upcomingTutoring.slice(0, 2).map((tutoring) => {
-									const initials = tutoring.tutorName
-										.split(' ')
-										.map((n) => n[0])
-										.join('')
-										.toUpperCase();
-									const isToday =
-										new Date(tutoring.date).toDateString() ===
-										new Date().toDateString();
-									return (
-										<div
-											key={tutoring.id}
-											className="flex items-start justify-between p-3 bg-default-100 rounded-lg"
-										>
-											<div className="flex items-center gap-3">
-												<Avatar
-													src={tutoring.tutorAvatar}
-													name={initials}
-													size="sm"
-													className="bg-primary text-white"
-												/>
-												<div className="flex flex-col gap-1">
-													<p className="font-semibold text-sm">
-														{tutoring.subject}
-													</p>
-													<p className="text-small text-default-500">
-														{tutoring.tutorName}
-													</p>
-													<p className="text-tiny text-default-400">
-														{isToday ? 'Hoy' : 'Mañana'} {tutoring.time} -{' '}
-														{tutoring.modality === 'virtual'
-															? 'Virtual'
-															: 'Presencial'}
-													</p>
-												</div>
-											</div>
-											<Chip
-												size="sm"
-												color={
-													tutoring.status === 'confirmed'
-														? 'success'
-														: 'warning'
-												}
-												variant="flat"
-											>
-												{tutoring.status === 'confirmed'
-													? 'Confirmada'
-													: 'Pendiente'}
-											</Chip>
-										</div>
-									);
-								})
-							) : (
-								<p className="text-center text-default-500 py-4">
-									No hay tutorías próximas
-								</p>
-							)}
-						</div>
-					</CardBody>
-				</Card>
+				<StudentUpcomingTutoringsCard />
 
 				{/* Tutores Recomendados */}
 				<Card>
