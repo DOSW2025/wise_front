@@ -11,10 +11,9 @@ export interface StudentProfile {
 	name: string;
 	email: string;
 	phone: string;
-	role?: string;
+	role: string;
 	description: string;
 	semester?: string;
-	interests?: string[];
 }
 
 /**
@@ -86,7 +85,13 @@ function extractErrorMessage(error: unknown, defaultMessage: string): string {
 			unknown
 		>;
 
-		// Detectar error 404 o método no permitido
+		// Mensajes específicos por código
+		if (response.status === 400) {
+			return 'Datos inválidos. Verifica teléfono (máx 10) y biografía (máx 500).';
+		}
+		if (response.status === 401) {
+			return 'Tu sesión expiró. Inicia sesión nuevamente.';
+		}
 		if (response.status === 404 || response.status === 405) {
 			return 'El endpoint no está disponible en el backend';
 		}
@@ -123,10 +128,18 @@ export async function updateProfile(
 	profile: StudentProfile,
 ): Promise<StudentProfile> {
 	try {
-		// Mapear los campos del frontend al DTO del backend
+		// Mapear los campos del frontend al DTO del backend con sanitización
+		const telefono = profile.phone?.trim();
+		const biografia = profile.description?.trim();
 		const updateDto: UpdatePersonalInfoDto = {
-			telefono: profile.phone || undefined,
-			biografia: profile.description || undefined,
+			telefono:
+				telefono && telefono.length > 0
+					? telefono.slice(0, 20) // límite backend
+					: undefined,
+			biografia:
+				biografia && biografia.length > 0
+					? biografia.slice(0, 500) // límite backend
+					: undefined,
 		};
 
 		const response = await apiClient.patch<ApiResponse<unknown>>(
@@ -134,20 +147,18 @@ export async function updateProfile(
 			updateDto,
 		);
 
-		// El backend devuelve el usuario completo
-		const backendData = extractResponseData<Record<string, unknown>>(
-			response.data,
-		);
+		// El backend devuelve { message, user } o directamente el usuario
+		const payload = extractResponseData<Record<string, unknown>>(response.data);
+		const backendData = (payload.user as Record<string, unknown>) || payload;
 
 		// Retornar el perfil actualizado en el formato del frontend
 		return {
 			name: (backendData.nombre as string) || profile.name,
 			email: (backendData.email as string) || profile.email,
 			phone: (backendData.telefono as string) || '',
-			role: (backendData.role as string) || profile.role,
+			role: (backendData.rol as string) || profile.role,
 			description: (backendData.biografia as string) || '',
 			semester: profile.semester,
-			interests: profile.interests,
 		};
 	} catch (error: unknown) {
 		throw new Error(
@@ -158,28 +169,73 @@ export async function updateProfile(
 
 /**
  * Obtener perfil completo del estudiante
+ * Endpoint: GET /wise/gestion-usuarios/me
+ * Retorna: { id, nombre, email, rol, estado, telefono, biografia }
  */
 export async function getProfile(): Promise<StudentProfile> {
 	try {
-		const response = await apiClient.get<ApiResponse<unknown>>(
-			API_ENDPOINTS.STUDENT.GET_PROFILE, // Necesitamos agregar esta ruta
+		const response = await apiClient.get<Record<string, unknown>>(
+			API_ENDPOINTS.STUDENT.GET_PROFILE,
 		);
 
-		const backendData = extractResponseData<Record<string, unknown>>(
-			response.data,
-		);
+		// El backend retorna directamente el objeto del usuario
+		const backendData = response.data;
 
 		// Mapear del formato backend al formato frontend
-		return {
-			name: `${(backendData.nombre as string) || ''} ${(backendData.apellido as string) || ''}`.trim(),
+		const fullName =
+			`${backendData.nombre ?? ''} ${backendData.apellido ?? ''}`.trim();
+		const roleFromObject =
+			typeof backendData.rol === 'object' && backendData.rol
+				? ((backendData.rol as { nombre?: string }).nombre ?? '')
+				: undefined;
+
+		const profile: StudentProfile = {
+			name: fullName || (backendData.nombre as string) || '',
 			email: (backendData.email as string) || '',
 			phone: (backendData.telefono as string) || '',
-			role: (backendData.role as string) || 'estudiante', // Este campo no existe en el backend aún
+			role: (
+				roleFromObject ||
+				(backendData.rol as string) ||
+				'estudiante'
+			).toString(),
 			description: (backendData.biografia as string) || '',
-			semester: (backendData.semestre as string) || '',
-			interests: (backendData.intereses as string[]) || [],
+			semester:
+				backendData.semestre !== undefined
+					? String(backendData.semestre)
+					: undefined,
 		};
+
+		return profile;
 	} catch (error: unknown) {
-		throw new Error(extractErrorMessage(error, 'Error al obtener el perfil'));
+		// Manejo de errores específicos
+		if (
+			error &&
+			typeof error === 'object' &&
+			'response' in error &&
+			(error as Record<string, unknown>).response &&
+			typeof (error as Record<string, unknown>).response === 'object'
+		) {
+			const response = (error as Record<string, unknown>).response as Record<
+				string,
+				unknown
+			>;
+
+			if (response.status === 401) {
+				throw new Error('Tu sesión expiró. Inicia sesión nuevamente.');
+			}
+			if (response.status === 500) {
+				throw new Error('Error del servidor al procesar la solicitud.');
+			}
+			if (response.status === 404) {
+				throw new Error('El endpoint del perfil no existe en el backend.');
+			}
+		}
+
+		// Si el error tiene mensaje, usarlo
+		if (error instanceof Error) {
+			throw new Error(`Error al cargar el perfil: ${error.message}`);
+		}
+
+		throw new Error('Error al cargar el perfil. Intenta nuevamente.');
 	}
 }

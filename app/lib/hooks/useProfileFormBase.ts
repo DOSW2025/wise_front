@@ -39,8 +39,13 @@ export function useProfileFormBase<T extends BaseProfileData>(
 			errors.email = 'Email inválido';
 		}
 
-		if (profile.phone && !PHONE_REGEX.test(profile.phone.trim())) {
-			errors.phone = 'Teléfono inválido';
+		if (profile.phone) {
+			const phoneValue = profile.phone.trim();
+			if (phoneValue.length > 10) {
+				errors.phone = 'El teléfono no puede exceder 10 caracteres';
+			} else if (!PHONE_REGEX.test(phoneValue)) {
+				errors.phone = 'Teléfono inválido';
+			}
 		}
 
 		if (profile.description && profile.description.length > 500) {
