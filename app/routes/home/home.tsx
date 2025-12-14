@@ -26,6 +26,22 @@ import {
 	Users,
 } from 'lucide-react';
 
+const scrollbarStyles = `
+	::-webkit-scrollbar {
+		width: 10px;
+	}
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	::-webkit-scrollbar-thumb {
+		background: rgba(155, 155, 155, 0.5);
+		border-radius: 6px;
+	}
+	::-webkit-scrollbar-thumb:hover {
+		background: rgba(155, 155, 155, 0.8);
+	}
+`;
+
 export function meta() {
 	return [
 		{ title: 'ECIWISE+ - Aprender, conectar y compartir sin limites' },
@@ -114,6 +130,7 @@ export default function Home() {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-white via-content1 to-default-100">
+			<style>{scrollbarStyles}</style>
 			{/* Navbar - Clean & Minimalist */}
 			<Navbar
 				isBordered={false}
