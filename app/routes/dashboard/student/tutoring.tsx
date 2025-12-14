@@ -739,7 +739,7 @@ const StudentTutoringPage: React.FC = () => {
 							<div className="mb-4">
 								<Input
 									type="text"
-									placeholder="Buscar por nombre, materia o tema..."
+									placeholder="Buscar por nombre de material"
 									value={searchValue}
 									onValueChange={setSearchValue}
 									startContent={<Search className="w-5 h-5 text-default-400" />}

@@ -3,16 +3,9 @@
  * Sección de materiales más vistos y descargados
  */
 
+import { Card, CardBody, CardHeader, Progress, Spinner } from '@heroui/react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-	Card,
-	CardBody,
-	CardHeader,
-	Divider,
-	Progress,
-	Spinner,
-} from '@heroui/react';
-import {
-	Award,
 	BarChart3,
 	Download,
 	Eye,
@@ -20,86 +13,48 @@ import {
 	Star,
 	TrendingUp,
 } from 'lucide-react';
-import { usePopularMaterials } from '~/lib/hooks/useMaterials';
+import { useEffect } from 'react';
+import {
+	useTagsPercentage,
+	useTopDownloadedMaterials,
+	useTopViewedMaterials,
+	useUserStats,
+} from '~/lib/hooks/useMaterials';
 import type { Material } from '~/lib/types/api.types';
 
 interface PopularMaterialsProps {
 	onMaterialClick?: (material: Material) => void;
+	userId?: string;
 }
 
-export function PopularMaterials({ onMaterialClick }: PopularMaterialsProps) {
-	const { data: popularData, isLoading, error } = usePopularMaterials();
+export function PopularMaterials({
+	onMaterialClick,
+	userId,
+}: PopularMaterialsProps) {
+	const queryClient = useQueryClient();
 
-	if (isLoading) {
-		return (
-			<Card>
-				<CardBody>
-					<div className="flex justify-center items-center py-8">
-						<div className="text-center">
-							<Spinner size="lg" color="primary" />
-							<p className="mt-4 text-default-600">
-								Cargando materiales populares...
-							</p>
-						</div>
-					</div>
-				</CardBody>
-			</Card>
-		);
-	}
+	// Refrescar datos cada vez que se accede a la pantalla
+	useEffect(() => {
+		if (userId) {
+			queryClient.invalidateQueries({ queryKey: ['user-stats', userId] });
+			queryClient.invalidateQueries({ queryKey: ['top-viewed', userId] });
+			queryClient.invalidateQueries({ queryKey: ['top-downloaded', userId] });
+			queryClient.invalidateQueries({ queryKey: ['tags-percentage', userId] });
+		}
+	}, [userId, queryClient]);
 
-	if (error || !popularData) {
-		return (
-			<Card>
-				<CardBody>
-					<div className="text-center py-8">
-						<p className="text-danger">Error al cargar materiales populares</p>
-					</div>
-				</CardBody>
-			</Card>
-		);
-	}
-
-	const renderMaterialCard = (material: Material, rank: number) => (
-		<Card
-			key={material.id}
-			isPressable
-			onPress={() => onMaterialClick?.(material)}
-			className="hover:shadow-md transition-shadow"
-		>
-			<CardBody className="p-4">
-				<div className="flex items-start gap-3">
-					<div className="flex items-center justify-center w-8 h-8 bg-primary-100 text-primary-700 rounded-full font-bold text-sm">
-						{rank}
-					</div>
-					<div className="flex-1 min-w-0">
-						<h4 className="font-semibold text-sm text-foreground truncate mb-1">
-							{material.nombre}
-						</h4>
-						<p className="text-xs text-default-600 mb-2">
-							{material.materia} • {material.tutor}
-						</p>
-						<div className="flex items-center gap-3 text-xs text-default-500">
-							<div className="flex items-center gap-1">
-								<Eye className="w-3 h-3" />
-								<span>{material.vistas}</span>
-							</div>
-							<div className="flex items-center gap-1">
-								<Download className="w-3 h-3" />
-								<span>{material.descargas}</span>
-							</div>
-							<div className="flex items-center gap-1">
-								<Star className="w-3 h-3 text-yellow-500" />
-								<span>{material.calificacion.toFixed(1)}</span>
-							</div>
-						</div>
-					</div>
-				</div>
-			</CardBody>
-		</Card>
+	const { data: userStats, isLoading: isLoadingStats } = useUserStats(
+		userId || '',
 	);
+	const { data: topViewed = [], isLoading: isLoadingTopViewed } =
+		useTopViewedMaterials(userId || '');
+	const { data: topDownloaded = [], isLoading: isLoadingTopDownloaded } =
+		useTopDownloadedMaterials(userId || '');
+	const { data: tagsPercentage = [], isLoading: isLoadingTags } =
+		useTagsPercentage(userId || '');
 
-	// Datos mock para estadísticas generales
-	const generalStats = {
+	// Datos mock para estadísticas generales (fallback)
+	const mockGeneralStats = {
 		totalMateriales: 1247,
 		totalDescargas: 15890,
 		totalVistas: 45230,
@@ -111,6 +66,22 @@ export function PopularMaterials({ onMaterialClick }: PopularMaterialsProps) {
 			{ nombre: 'Programación', porcentaje: 15 },
 		],
 	};
+
+	// Usar datos reales del usuario si están disponibles
+	const generalStats = userStats
+		? {
+				totalMateriales: userStats.totalMateriales,
+				totalDescargas: userStats.totalDescargas,
+				totalVistas: userStats.totalVistas,
+				calificacionPromedio: userStats.calificacionPromedio,
+				materiasMasPopulares: [
+					{ nombre: 'Matemáticas', porcentaje: 35 },
+					{ nombre: 'Física', porcentaje: 28 },
+					{ nombre: 'Química', porcentaje: 22 },
+					{ nombre: 'Programación', porcentaje: 15 },
+				],
+			}
+		: mockGeneralStats;
 
 	return (
 		<div className="space-y-6">
@@ -184,11 +155,73 @@ export function PopularMaterials({ onMaterialClick }: PopularMaterialsProps) {
 										<Eye className="w-4 h-4 text-blue-600" />
 										<h4 className="font-medium text-gray-700">Más Vistos</h4>
 									</div>
-									<div className="space-y-3">
-										{popularData.mostViewed.map((material, index) =>
-											renderMaterialCard(material, index + 1),
-										)}
-									</div>
+									{isLoadingTopViewed ? (
+										<div className="flex justify-center py-4">
+											<Spinner size="sm" />
+										</div>
+									) : topViewed.length > 0 ? (
+										<div className="space-y-3">
+											{topViewed.map((material, index) => (
+												<Card
+													key={material.id}
+													isPressable
+													onPress={() => {
+														// Crear un objeto Material para pasar al callback
+														onMaterialClick?.({
+															id: material.id,
+															nombre: material.nombre,
+															materia: '',
+															tutor: '',
+															vistas: material.vistos,
+															descargas: material.descargas,
+															calificacion: material.calificacionPromedio,
+															tags: [],
+															descripcion: '',
+															archivo: '',
+															tipo: 'PDF',
+															semestre: 1,
+															createdAt: new Date().toISOString(),
+															updatedAt: new Date().toISOString(),
+														} as Material);
+													}}
+													className="hover:shadow-md transition-shadow cursor-pointer"
+												>
+													<CardBody className="p-4">
+														<div className="flex items-start gap-3">
+															<div className="flex items-center justify-center w-8 h-8 bg-primary-100 text-primary-700 rounded-full font-bold text-sm">
+																{index + 1}
+															</div>
+															<div className="flex-1 min-w-0">
+																<h4 className="font-semibold text-sm text-foreground truncate mb-1">
+																	{material.nombre}
+																</h4>
+																<div className="flex items-center gap-3 text-xs text-default-500">
+																	<div className="flex items-center gap-1">
+																		<Eye className="w-3 h-3" />
+																		<span>{material.vistos}</span>
+																	</div>
+																	<div className="flex items-center gap-1">
+																		<Download className="w-3 h-3" />
+																		<span>{material.descargas}</span>
+																	</div>
+																	<div className="flex items-center gap-1">
+																		<Star className="w-3 h-3 text-yellow-500" />
+																		<span>
+																			{material.calificacionPromedio.toFixed(1)}
+																		</span>
+																	</div>
+																</div>
+															</div>
+														</div>
+													</CardBody>
+												</Card>
+											))}
+										</div>
+									) : (
+										<p className="text-sm text-default-500">
+											Sin datos disponibles
+										</p>
+									)}
 								</div>
 
 								{/* Más Descargados */}
@@ -199,11 +232,73 @@ export function PopularMaterials({ onMaterialClick }: PopularMaterialsProps) {
 											Más Descargados
 										</h4>
 									</div>
-									<div className="space-y-3">
-										{popularData.mostDownloaded.map((material, index) =>
-											renderMaterialCard(material, index + 1),
-										)}
-									</div>
+									{isLoadingTopDownloaded ? (
+										<div className="flex justify-center py-4">
+											<Spinner size="sm" />
+										</div>
+									) : topDownloaded.length > 0 ? (
+										<div className="space-y-3">
+											{topDownloaded.map((material, index) => (
+												<Card
+													key={material.id}
+													isPressable
+													onPress={() => {
+														// Crear un objeto Material para pasar al callback
+														onMaterialClick?.({
+															id: material.id,
+															nombre: material.nombre,
+															materia: '',
+															tutor: '',
+															vistas: material.vistos,
+															descargas: material.descargas,
+															calificacion: material.calificacionPromedio,
+															tags: [],
+															descripcion: '',
+															archivo: '',
+															tipo: 'PDF',
+															semestre: 1,
+															createdAt: new Date().toISOString(),
+															updatedAt: new Date().toISOString(),
+														} as Material);
+													}}
+													className="hover:shadow-md transition-shadow cursor-pointer"
+												>
+													<CardBody className="p-4">
+														<div className="flex items-start gap-3">
+															<div className="flex items-center justify-center w-8 h-8 bg-primary-100 text-primary-700 rounded-full font-bold text-sm">
+																{index + 1}
+															</div>
+															<div className="flex-1 min-w-0">
+																<h4 className="font-semibold text-sm text-foreground truncate mb-1">
+																	{material.nombre}
+																</h4>
+																<div className="flex items-center gap-3 text-xs text-default-500">
+																	<div className="flex items-center gap-1">
+																		<Eye className="w-3 h-3" />
+																		<span>{material.vistos}</span>
+																	</div>
+																	<div className="flex items-center gap-1">
+																		<Download className="w-3 h-3" />
+																		<span>{material.descargas}</span>
+																	</div>
+																	<div className="flex items-center gap-1">
+																		<Star className="w-3 h-3 text-yellow-500" />
+																		<span>
+																			{material.calificacionPromedio.toFixed(1)}
+																		</span>
+																	</div>
+																</div>
+															</div>
+														</div>
+													</CardBody>
+												</Card>
+											))}
+										</div>
+									) : (
+										<p className="text-sm text-default-500">
+											Sin datos disponibles
+										</p>
+									)}
 								</div>
 							</div>
 						</CardBody>
@@ -219,47 +314,35 @@ export function PopularMaterials({ onMaterialClick }: PopularMaterialsProps) {
 								<h3 className="text-lg font-semibold">Materias Populares</h3>
 							</div>
 						</CardHeader>
-						<CardBody className="pt-0">
-							<div className="space-y-4">
-								{generalStats.materiasMasPopulares.map((materia, _index) => (
-									<div key={materia.nombre} className="space-y-2">
-										<div className="flex justify-between items-center">
-											<span className="text-sm font-medium text-gray-700">
-												{materia.nombre}
-											</span>
-											<span className="text-sm text-gray-500">
-												{materia.porcentaje}%
-											</span>
+						<CardBody className="pt-0 pr-0">
+							<div className="space-y-4 max-h-96 overflow-y-auto pr-4 [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent scrollbar-hide">
+								{isLoadingTags ? (
+									<div className="flex justify-center py-4">
+										<Spinner size="sm" />
+									</div>
+								) : tagsPercentage.length > 0 ? (
+									tagsPercentage.map((materia) => (
+										<div key={materia.tag} className="space-y-2">
+											<div className="flex justify-between items-center">
+												<span className="text-sm font-medium text-gray-700">
+													{materia.tag}
+												</span>
+												<span className="text-sm text-gray-500">
+													{materia.porcentaje.toFixed(2)}%
+												</span>
+											</div>
+											<Progress
+												value={materia.porcentaje}
+												className="[&_[data-filled=true]]:bg-[#8B1A1A]"
+												size="sm"
+											/>
 										</div>
-										<Progress
-											value={materia.porcentaje}
-											className="[&_[data-filled=true]]:bg-[#8B1A1A]"
-											size="sm"
-										/>
-									</div>
-								))}
-							</div>
-
-							<Divider className="my-4" />
-
-							{/* Resumen adicional */}
-							<div className="bg-gray-50 rounded-lg p-4">
-								<div className="flex items-center gap-2 mb-2">
-									<Award className="w-4 h-4 text-[#8B1A1A]" />
-									<h4 className="font-medium text-gray-700">Resumen Semanal</h4>
-								</div>
-								<div className="space-y-2 text-sm">
-									<div className="flex justify-between">
-										<span className="text-gray-600">Nuevos materiales:</span>
-										<span className="font-medium">+23</span>
-									</div>
-									<div className="flex justify-between">
-										<span className="text-gray-600">
-											Descargas esta semana:
-										</span>
-										<span className="font-medium">+1,247</span>
-									</div>
-								</div>
+									))
+								) : (
+									<p className="text-sm text-default-500">
+										Sin datos disponibles
+									</p>
+								)}
 							</div>
 						</CardBody>
 					</Card>

@@ -158,13 +158,14 @@ function adaptMaterialForCard(apiMaterial: Material): MaterialCardType {
 			month: 'short',
 			year: 'numeric',
 		}),
-		rating: apiMaterial.calificacion,
+		rating: (apiMaterial.calificacion ?? 0) as number,
 		ratingsCount: 0, // No viene en respuesta
 		downloads: apiMaterial.descargas,
-		comments: 0, // No viene en respuesta
+		comments: apiMaterial.totalComentarios || 0,
 		description: apiMaterial.descripcion || 'Sin descripción disponible.',
 		commentsList: [],
 		fileUrl: apiMaterial.fileUrl, // URL del archivo para vista previa
+		tags: apiMaterial.tags, // Tags del material
 	};
 }
 
@@ -173,8 +174,7 @@ export default function StudentMaterials() {
 	const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 	const [searchQuery, setSearchQuery] = useState('');
-	const [selectedSubject, setSelectedSubject] = useState('Todos');
-	const [selectedSemester, setSelectedSemester] = useState('Todos');
+	const [selectedTags, setSelectedTags] = useState<string[]>([]);
 	const [sortBy, setSortBy] = useState('Todos');
 	const [previewMaterial, setPreviewMaterial] =
 		useState<MaterialCardType | null>(null);
@@ -223,12 +223,15 @@ export default function StudentMaterials() {
 	// Filtrar y ordenar materiales
 	const filteredMaterials = useMemo(() => {
 		const filtered = allMaterials.filter((material) => {
-			const matchesSubject =
-				selectedSubject === 'Todos' || material.subject === selectedSubject;
-			const matchesSemester =
-				selectedSemester === 'Todos' || material.semester === selectedSemester;
+			// Si no hay tags seleccionados, mostrar todos
+			if (selectedTags.length === 0) return true;
 
-			return matchesSubject && matchesSemester;
+			// Si hay tags seleccionados, el material debe tener al menos uno de ellos
+			return selectedTags.some((tag) =>
+				material.tags?.some(
+					(materialTag) => materialTag.toLowerCase() === tag.toLowerCase(),
+				),
+			);
 		});
 
 		// Ordenar
@@ -252,7 +255,7 @@ export default function StudentMaterials() {
 		}
 
 		return filtered;
-	}, [allMaterials, selectedSubject, selectedSemester, sortBy]);
+	}, [allMaterials, selectedTags, sortBy]);
 
 	// Los materiales ya vienen paginados de la API
 	const paginatedMaterials = filteredMaterials;
@@ -467,7 +470,7 @@ export default function StudentMaterials() {
 			{/* Barra de búsqueda y botón filtros */}
 			<div className="flex gap-4">
 				<Input
-					placeholder="Buscar por título, autor o materia..."
+					placeholder="Buscar por nombre de material"
 					startContent={<Search size={20} />}
 					value={searchQuery}
 					onValueChange={setSearchQuery}
@@ -672,10 +675,8 @@ export default function StudentMaterials() {
 			{/* Panel de filtros */}
 			<FiltersPanel
 				isOpen={isFiltersOpen}
-				selectedSubject={selectedSubject}
-				selectedSemester={selectedSemester}
-				onSubjectChange={setSelectedSubject}
-				onSemesterChange={setSelectedSemester}
+				selectedTags={selectedTags}
+				onTagsChange={setSelectedTags}
 			/>
 
 			{/* Ordenar por y cambiar vista */}
