@@ -21,6 +21,7 @@ export interface Material {
 	description: string;
 	commentsList: Comment[];
 	fileUrl?: string; // URL del archivo para vista previa
+	tags?: string[]; // Tags del material
 }
 
 // Configuraciones

@@ -91,6 +91,20 @@ export const API_ENDPOINTS = {
 		GET_BY_ID: (id: string) => `/wise/materiales/${id}`,
 		UPDATE: (id: string) => `/wise/materiales/${id}`,
 		DELETE: (id: string) => `/wise/materiales/${id}`,
+		GET_USER_MATERIALS: (userId: string) => `/wise/materiales/user/${userId}`,
+		GET_USER_STATS: (userId: string) => `/wise/materiales/user/${userId}/stats`,
+		GET_TOP_VIEWED: (userId: string) =>
+			`/wise/materiales/user/${userId}/top-viewed`,
+		GET_TOP_DOWNLOADED: (userId: string) =>
+			`/wise/materiales/user/${userId}/top-downloaded`,
+		GET_RATINGS: (id: string) => `/wise/materiales/${id}/ratings`,
+		GET_RATINGS_LIST: (id: string) => `/wise/materiales/${id}/ratings/list`,
+		GET_TAGS_PERCENTAGE: (userId: string) =>
+			`/wise/materiales/user/${userId}/tags-percentage`,
+		SEARCH: '/wise/materiales/search',
+	},
+	PDF_EXPORT: {
+		STATS: (id: string) => `/wise/pdf-export/${id}/stats/export`,
 	},
 
 	USERS: {
