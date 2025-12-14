@@ -28,7 +28,7 @@ import {
 	Star,
 	X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { DeleteConfirmationModal } from '~/components/delete-confirmation-modal';
 import { EditMaterialForm } from '~/components/edit-material-form';
 import { MaterialDetailModal } from '~/components/material-detail-modal';
@@ -42,16 +42,15 @@ import {
 	useSubjects,
 	useUserMaterials,
 } from '~/lib/hooks/useMaterials';
-import type { Material, MaterialFilters } from '~/lib/types/api.types';
+import type { MaterialFilters } from '~/lib/types/api.types';
 
-const ITEMS_PER_PAGE_LIST = 15;
-const ITEMS_PER_PAGE_GRID = 15;
+const ITEMS_PER_PAGE = 12;
 
 export default function TutorMaterials() {
 	const [filters, setFilters] = useState<MaterialFilters>({});
 	const [showFilters, setShowFilters] = useState(false);
 	const [searchTerm, setSearchTerm] = useState('');
-	const [currentSkip, setCurrentSkip] = useState(0);
+	const [page, setPage] = useState(1);
 	const debouncedSearch = useDebounce(searchTerm, 500);
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const {
@@ -79,52 +78,42 @@ export default function TutorMaterials() {
 	);
 	const [selectedMaterialName, setSelectedMaterialName] = useState('');
 	const [selectedMaterialForStats, setSelectedMaterialForStats] =
-		useState<Material | null>(null);
+		useState<any>(null);
 	const [activeTab, setActiveTab] = useState('all');
 	const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-
-	// Calcular items por página según el modo de vista
-	const itemsPerPage =
-		viewMode === 'list' ? ITEMS_PER_PAGE_LIST : ITEMS_PER_PAGE_GRID;
 
 	// Combinar filtros con búsqueda debounced y paginación
 	const combinedFilters = {
 		...filters,
 		search: debouncedSearch || undefined,
-		skip: currentSkip,
-		take: itemsPerPage,
+		page,
+		limit: ITEMS_PER_PAGE,
 	};
 
 	const { data: materialsResponse, isLoading } = useMaterials(combinedFilters);
 	const materials = materialsResponse?.data || [];
 	const totalPages = materialsResponse?.pagination?.totalPages || 1;
 	const totalItems = materialsResponse?.pagination?.totalItems || 0;
-	const currentPage = Math.floor(currentSkip / itemsPerPage) + 1;
 	const { data: userMaterials = [] } = useUserMaterials('dev-tutor-1');
 	const { data: subjects = [] } = useSubjects();
-
-	// Resetear paginación cuando cambia el modo de vista
-	useEffect(() => {
-		setCurrentSkip(0);
-	}, []);
 
 	const handleFilterChange = (
 		key: keyof MaterialFilters,
 		value: string | number | undefined,
 	) => {
 		setFilters((prev) => ({ ...prev, [key]: value || undefined }));
-		setCurrentSkip(0); // Reset to first page when filters change
+		setPage(1); // Reset to first page when filters change
 	};
 
 	const clearFilters = () => {
 		setFilters({});
 		setSearchTerm('');
-		setCurrentSkip(0);
+		setPage(1);
 	};
 
 	const handleSearch = (value: string) => {
 		setSearchTerm(value);
-		setCurrentSkip(0); // Reset to first page on search
+		setPage(1); // Reset to first page on search
 	};
 
 	const hasActiveFilters = filters.subject || filters.semester || searchTerm;
@@ -446,9 +435,9 @@ export default function TutorMaterials() {
 									showControls
 									showShadow
 									color="primary"
-									page={currentPage}
+									page={page}
 									total={totalPages}
-									onChange={(page) => setCurrentSkip((page - 1) * itemsPerPage)}
+									onChange={setPage}
 								/>
 							</div>
 						</>
@@ -505,7 +494,7 @@ export default function TutorMaterials() {
 						onClose={onClose}
 						onSuccess={() => {
 							// Refrescar la lista de materiales
-							setCurrentSkip(0);
+							setPage(1);
 							window.location.reload();
 						}}
 					/>

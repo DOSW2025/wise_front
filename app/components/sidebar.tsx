@@ -280,20 +280,13 @@ export function Sidebar({
 				<div className="p-6 border-b border-divider bg-gradient-to-b from-primary-50 to-transparent">
 					<Link
 						to="/dashboard"
-						className="flex items-center gap-2"
+						className="flex flex-col items-start gap-1"
 						onClick={() => setIsMobileMenuOpen(false)}
 					>
-						<img
-							src="/logo/logoeciwise.svg"
-							alt="ECIWISE+ logo"
-							className="w-11 h-11"
-						/>
-						<div className="flex flex-col items-start gap-1 pl-2">
-							<h1 className="text-2xl font-bold text-primary">ECIWISE+</h1>
-							<p className="text-sm text-default-600 font-medium">
-								{getRoleLabel()}
-							</p>
-						</div>
+						<h1 className="text-2xl font-bold text-primary">ECIWISE+</h1>
+						<p className="text-sm text-default-600 font-medium">
+							{getRoleLabel()}
+						</p>
 					</Link>
 				</div>
 

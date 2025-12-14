@@ -5,8 +5,10 @@
 
 import { Button, Card, CardBody, Chip, Divider, Spinner } from '@heroui/react';
 import { Download, Edit, Eye, FileText, Star, Trash2, X } from 'lucide-react';
+import { useEffect } from 'react';
 import { useDownloadMaterial, useMaterial } from '~/lib/hooks/useMaterials';
 import { useToast } from '~/lib/hooks/useToast';
+import { useViewTracker } from '~/lib/hooks/useViewTracker';
 import type { Material } from '~/lib/types/api.types';
 
 interface MaterialDetailModalProps {
@@ -23,17 +25,16 @@ export function MaterialDetailModal({
 	onDelete,
 }: MaterialDetailModalProps) {
 	const { data: material, isLoading, error } = useMaterial(materialId);
+	const { trackView } = useViewTracker();
 	const downloadMaterial = useDownloadMaterial();
 	const { showToast } = useToast();
 
-	// Nota: Se comentó el registro automático de vistas para evitar incrementar
-	// el contador cada vez que se abre el modal
-	// const { trackView } = useViewTracker();
-	// useEffect(() => {
-	//   if (material) {
-	//     trackView(materialId);
-	//   }
-	// }, [material, materialId, trackView]);
+	// Registrar vista automáticamente al abrir el modal
+	useEffect(() => {
+		if (material) {
+			trackView(materialId);
+		}
+	}, [material, materialId, trackView]);
 
 	if (isLoading) {
 		return (
@@ -51,11 +52,6 @@ export function MaterialDetailModal({
 	}
 
 	if (error || !material) {
-		console.error(' Error en MaterialDetailModal:', {
-			materialId,
-			error,
-			material,
-		});
 		return (
 			<Card className="w-full max-w-2xl">
 				<CardBody className="p-6">
@@ -65,17 +61,9 @@ export function MaterialDetailModal({
 							<X className="w-4 h-4" />
 						</Button>
 					</div>
-					<div className="space-y-4">
-						<p className="text-danger">
-							No se pudo cargar el material. Intente nuevamente.
-						</p>
-						{error && (
-							<div className="bg-danger-50 border border-danger rounded-lg p-3 text-sm text-danger">
-								<p className="font-semibold mb-1">Detalles del error:</p>
-								<p>{String(error)}</p>
-							</div>
-						)}
-					</div>
+					<p className="text-center text-danger py-8">
+						No se pudo cargar el material. Intente nuevamente.
+					</p>
 				</CardBody>
 			</Card>
 		);
@@ -96,22 +84,13 @@ export function MaterialDetailModal({
 
 				<div className="space-y-6">
 					{/* Vista previa del archivo */}
-					{material.fileUrl ? (
-						<div className="border rounded-lg overflow-hidden bg-gray-50">
-							<iframe
-								src={`https://docs.google.com/gview?url=${encodeURIComponent(material.fileUrl)}&embedded=true`}
-								className="w-full h-96 border-0"
-								title={`Vista previa de ${material.nombre}`}
-								sandbox="allow-same-origin allow-scripts allow-popups"
-							/>
-						</div>
-					) : (
-						<div className="bg-gray-50 rounded-lg p-8 text-center">
-							<FileText className="w-16 h-16 text-[#8B1A1A] mx-auto mb-3" />
-							<p className="text-gray-600 text-sm mb-1">Archivo PDF</p>
-							<p className="text-xs text-gray-500">{material.nombre}.pdf</p>
-						</div>
-					)}
+					<div className="bg-gray-50 rounded-lg p-8 text-center">
+						<FileText className="w-16 h-16 text-[#8B1A1A] mx-auto mb-3" />
+						<p className="text-gray-600 text-sm mb-1">Archivo PDF</p>
+						<p className="text-xs text-gray-500">{material.nombre}.pdf</p>
+					</div>
+
+					{/* Información principal */}
 					<div>
 						<h4 className="text-2xl font-bold text-foreground mb-2">
 							{material.nombre}

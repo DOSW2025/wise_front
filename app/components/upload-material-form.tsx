@@ -9,12 +9,13 @@ import {
 	CardBody,
 	Input,
 	Progress,
+	Select,
+	SelectItem,
 	Textarea,
 } from '@heroui/react';
 import { CheckCircle, FileText, Upload, X } from 'lucide-react';
 import { useState } from 'react';
-import { useAuth } from '~/contexts';
-import { useCreateMaterial } from '~/lib/hooks/useMaterials';
+import { useCreateMaterial, useSubjects } from '~/lib/hooks/useMaterials';
 
 interface UploadMaterialFormProps {
 	onClose: () => void;
@@ -36,7 +37,7 @@ export function UploadMaterialForm({
 	const [isDragOver, setIsDragOver] = useState(false);
 	const [showSuccess, setShowSuccess] = useState(false);
 
-	const { user } = useAuth();
+	const { data: subjects = [] } = useSubjects();
 	const createMaterial = useCreateMaterial();
 
 	const allowedTypes = ['application/pdf'];
@@ -136,7 +137,7 @@ export function UploadMaterialForm({
 			return;
 		}
 
-		if (!file || !user) return;
+		if (!file) return;
 
 		try {
 			// Simular progreso de subida
@@ -158,7 +159,6 @@ export function UploadMaterialForm({
 				semestre: 1,
 				descripcion: formData.descripcion,
 				file,
-				userId: user.id,
 			});
 
 			clearInterval(interval);
@@ -172,24 +172,13 @@ export function UploadMaterialForm({
 		} catch (error: unknown) {
 			let errorMessage = 'Error al subir el material. Intente nuevamente.';
 
-			console.error('Error completo:', error);
-
 			if (error instanceof Error) {
-				console.error('Mensaje de error:', error.message);
-				errorMessage = error.message;
-
-				// Mensajes más específicos según el tipo de error
-				if (error.message.includes('PDF falló la validación')) {
-					errorMessage =
-						'El PDF no pasó la validación de contenido. Verifique que el PDF sea válido.';
-				} else if (error.message.includes('extraction failed')) {
-					errorMessage = 'Error al procesar el PDF. Intente con otro archivo.';
-				} else if (error.message.includes('network')) {
+				if (error.message.includes('network')) {
 					errorMessage = 'Error de conexión. Verifique su internet.';
 				} else if (error.message.includes('size')) {
-					errorMessage = 'El archivo es demasiado grande. Máximo 10MB.';
+					errorMessage = 'El archivo es demasiado grande.';
 				} else if (error.message.includes('format')) {
-					errorMessage = 'Formato de archivo no válido. Solo se aceptan PDF.';
+					errorMessage = 'Formato de archivo no válido.';
 				}
 			}
 
@@ -225,21 +214,24 @@ export function UploadMaterialForm({
 						isRequired
 					/>
 
-					<Input
-						label="Materia/Asignatura"
-						placeholder="Ej: Matemáticas, Programación, Física..."
-						value={formData.materia}
-						onValueChange={(value) => {
+					<Select
+						label="Materia"
+						placeholder="Seleccionar materia"
+						selectedKeys={formData.materia ? [formData.materia] : []}
+						onSelectionChange={(keys) => {
+							const value = Array.from(keys)[0] as string;
 							setFormData((prev) => ({ ...prev, materia: value }));
-							// Clear error when user types
-							if (value.trim().length > 0 && errors.materia) {
-								setErrors((prev) => ({ ...prev, materia: '' }));
-							}
 						}}
 						isInvalid={!!errors.materia}
 						errorMessage={errors.materia}
 						isRequired
-					/>
+					>
+						{subjects.map((subject) => (
+							<SelectItem key={subject.nombre} textValue={subject.nombre}>
+								{subject.nombre}
+							</SelectItem>
+						))}
+					</Select>
 
 					<Textarea
 						label="Descripción (opcional)"
@@ -279,7 +271,7 @@ export function UploadMaterialForm({
 								className="hidden"
 								id="file-upload"
 							/>
-							<div className="cursor-pointer">
+							<label htmlFor="file-upload" className="cursor-pointer">
 								{file ? (
 									<div className="flex flex-col items-center">
 										<FileText className="w-8 h-8 mx-auto mb-2 text-[#8B1A1A]" />
@@ -301,7 +293,7 @@ export function UploadMaterialForm({
 										</p>
 									</div>
 								)}
-							</div>
+							</label>
 						</button>
 						{errors.file && (
 							<p className="text-xs text-danger">{errors.file}</p>

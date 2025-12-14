@@ -7,6 +7,7 @@ import {
 	Divider,
 	Link,
 } from '@heroui/react';
+import { GraduationCap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { authService } from '../../lib/api/auth';
@@ -40,11 +41,7 @@ export default function Login() {
 			<Card className="w-full max-w-md container mx-auto bg-content2 shadow-lg">
 				<CardHeader className="flex flex-col items-center pb-2 mt-5">
 					<div className="p-4 rounded-full bg-primary/10 mb-4">
-						<img
-							src="/logo/logoeciwise.svg"
-							alt="ECIWISE+ logo"
-							className="w-12 h-12"
-						/>
+						<GraduationCap className="text-primary" size={48} />
 					</div>
 				</CardHeader>
 				<CardBody className="flex flex-col items-center text-center px-8">

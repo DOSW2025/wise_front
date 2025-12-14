@@ -115,4 +115,7 @@ export const API_ENDPOINTS = {
 		MARK_ALL_READ: '/wise/notificaciones/read-all/:userId',
 		DELETE: '/wise/notificaciones/:id',
 	},
+	IA: {
+		NAVIGATION_CHAT: '/wise/ia/chat/nav',
+	},
 } as const;

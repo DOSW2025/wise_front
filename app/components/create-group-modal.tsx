@@ -9,20 +9,25 @@ import {
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
-	Spinner,
 	Textarea,
 } from '@heroui/react';
 import { Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { useUsers } from '~/lib/hooks/useUsers';
+import { useState } from 'react';
 
 interface User {
 	id: string;
-	email: string;
 	name: string;
 	avatar: string;
-	role: string;
+	role: 'student' | 'tutor';
 }
+
+const mockUsers: User[] = [
+	{ id: '1', name: 'Dr. María García', avatar: 'MG', role: 'tutor' },
+	{ id: '2', name: 'Ing. Carlos Rodríguez', avatar: 'CR', role: 'tutor' },
+	{ id: '3', name: 'Ana Martínez', avatar: 'AM', role: 'student' },
+	{ id: '4', name: 'Luis Pérez', avatar: 'LP', role: 'student' },
+	{ id: '5', name: 'Sofia González', avatar: 'SG', role: 'student' },
+];
 
 interface CreateGroupModalProps {
 	isOpen: boolean;
@@ -30,7 +35,7 @@ interface CreateGroupModalProps {
 	onCreateGroup: (groupData: {
 		name: string;
 		description: string;
-		emails: string[];
+		members: User[];
 	}) => void;
 }
 
@@ -44,28 +49,8 @@ export function CreateGroupModal({
 	const [searchValue, setSearchValue] = useState('');
 	const [selectedMembers, setSelectedMembers] = useState<User[]>([]);
 
-	const { data: usersData, isLoading } = useUsers(searchValue);
-
-	const users = useMemo<User[]>(() => {
-		if (!usersData?.data) return [];
-		return usersData.data.map((user) => ({
-			id: user.id,
-			email: user.email,
-			name: `${user.nombre} ${user.apellido}`,
-			avatar:
-				user.avatarUrl || `${user.nombre[0]}${user.apellido[0]}`.toUpperCase(),
-			role: user.rol,
-		}));
-	}, [usersData]);
-
-	const filteredUsers = useMemo(
-		() =>
-			users.filter(
-				(user) =>
-					user.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-					user.email.toLowerCase().includes(searchValue.toLowerCase()),
-			),
-		[users, searchValue],
+	const filteredUsers = mockUsers.filter((user) =>
+		user.name.toLowerCase().includes(searchValue.toLowerCase()),
 	);
 
 	const handleMemberToggle = (user: User) => {
@@ -88,7 +73,7 @@ export function CreateGroupModal({
 			onCreateGroup({
 				name: groupName,
 				description: groupDescription,
-				emails: selectedMembers.map((m) => m.email),
+				members: selectedMembers,
 			});
 			handleClose();
 		}
@@ -172,36 +157,30 @@ export function CreateGroupModal({
 					/>
 
 					<div className="max-h-48 overflow-y-auto">
-						{isLoading ? (
-							<div className="flex justify-center items-center py-8">
-								<Spinner size="sm" />
-							</div>
-						) : (
-							<>
-								{filteredUsers.map((user) => (
-									<div
-										key={user.id}
-										className="flex items-center gap-3 p-2 hover:bg-default-100 rounded-lg"
-									>
-										<Checkbox
-											isSelected={selectedMembers.some(
-												(member) => member.id === user.id,
-											)}
-											onValueChange={() => handleMemberToggle(user)}
-										/>
-										<Avatar name={user.avatar} size="sm" color="primary" />
-										<div className="flex-1">
-											<p className="text-sm font-medium">{user.name}</p>
-											<p className="text-xs text-default-500">{user.email}</p>
-										</div>
-									</div>
-								))}
-								{filteredUsers.length === 0 && !isLoading && (
-									<p className="text-center text-default-500 py-4">
-										No se encontraron usuarios
+						{filteredUsers.map((user) => (
+							<div
+								key={user.id}
+								className="flex items-center gap-3 p-2 hover:bg-default-100 rounded-lg"
+							>
+								<Checkbox
+									isSelected={selectedMembers.some(
+										(member) => member.id === user.id,
+									)}
+									onValueChange={() => handleMemberToggle(user)}
+								/>
+								<Avatar name={user.avatar} size="sm" color="primary" />
+								<div className="flex-1">
+									<p className="text-sm font-medium">{user.name}</p>
+									<p className="text-xs text-default-500 capitalize">
+										{user.role}
 									</p>
-								)}
-							</>
+								</div>
+							</div>
+						))}
+						{filteredUsers.length === 0 && (
+							<p className="text-center text-default-500 py-4">
+								No se encontraron usuarios
+							</p>
 						)}
 					</div>
 				</ModalBody>

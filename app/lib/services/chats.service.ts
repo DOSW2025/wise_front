@@ -141,21 +141,11 @@ export class ChatsService {
 	/**
 	 * Manejo de errores
 	 */
-	private handleError(error: unknown, defaultMessage: string): Error {
-		if (
-			error &&
-			typeof error === 'object' &&
-			'response' in error &&
-			error.response &&
-			typeof error.response === 'object' &&
-			'data' in error.response &&
-			error.response.data &&
-			typeof error.response.data === 'object' &&
-			'message' in error.response.data
-		) {
-			return new Error(String(error.response.data.message));
+	private handleError(error: any, defaultMessage: string): Error {
+		if (error.response?.data?.message) {
+			return new Error(error.response.data.message);
 		}
-		if (error instanceof Error) {
+		if (error.message) {
 			return new Error(error.message);
 		}
 		return new Error(defaultMessage);

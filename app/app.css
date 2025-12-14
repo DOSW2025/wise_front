@@ -39,13 +39,3 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
 	display: none; /* Chrome, Safari and Opera */
 }
-
-/* Animación para mensajes */
-@keyframes fadeIn {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
-}
