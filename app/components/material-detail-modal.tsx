@@ -119,20 +119,21 @@ export function MaterialDetailModal({
 						<p className="text-default-600 mb-4">Por: {material.tutor}</p>
 
 						<div className="flex flex-wrap gap-2 mb-4">
-							<Chip
-								size="sm"
-								variant="flat"
-								className="bg-gray-100 text-gray-700"
-							>
-								{material.materia}
-							</Chip>
-							<Chip
-								size="sm"
-								variant="flat"
-								className="bg-gray-100 text-gray-700"
-							>
-								Semestre {material.semestre}
-							</Chip>
+							{material.tags && material.tags.length > 0 ? (
+								material.tags.map((tag) => (
+									<Chip key={tag} size="sm" variant="flat" color="primary">
+										{tag}
+									</Chip>
+								))
+							) : (
+								<Chip
+									size="sm"
+									variant="flat"
+									className="bg-gray-100 text-gray-700"
+								>
+									{material.materia}
+								</Chip>
+							)}
 						</div>
 
 						{material.descripcion && (
@@ -149,7 +150,7 @@ export function MaterialDetailModal({
 						<div className="flex items-center gap-2">
 							<Star className="w-5 h-5 text-yellow-500 fill-current" />
 							<span className="font-semibold">
-								{material.calificacion.toFixed(1)}
+								{(material.calificacion ?? 0).toFixed(1)}
 							</span>
 							<span className="text-sm text-gray-500">
 								calificación promedio

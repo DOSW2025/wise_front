@@ -27,7 +27,6 @@ export function UploadMaterialForm({
 }: UploadMaterialFormProps) {
 	const [formData, setFormData] = useState({
 		nombre: '',
-		materia: '',
 		descripcion: '',
 	});
 	const [file, setFile] = useState<File | null>(null);
@@ -40,7 +39,7 @@ export function UploadMaterialForm({
 	const createMaterial = useCreateMaterial();
 
 	const allowedTypes = ['application/pdf'];
-	const maxSize = 10 * 1024 * 1024; // 10MB
+	const maxSize = 100 * 1024 * 1024; // 100MB
 
 	const validateFile = (selectedFile: File) => {
 		const newErrors: Record<string, string> = {};
@@ -55,7 +54,7 @@ export function UploadMaterialForm({
 		}
 
 		if (selectedFile.size > maxSize) {
-			newErrors.file = 'El archivo es demasiado grande. Máximo 10MB';
+			newErrors.file = 'El archivo es demasiado grande. Máximo 100MB';
 		}
 
 		if (selectedFile.size === 0) {
@@ -111,10 +110,6 @@ export function UploadMaterialForm({
 			newErrors.nombre = 'El título debe tener al menos 3 caracteres';
 		}
 
-		if (!formData.materia) {
-			newErrors.materia = 'La materia es requerida';
-		}
-
 		if (formData.descripcion.length > 300) {
 			newErrors.descripcion =
 				'La descripción no puede superar los 300 caracteres';
@@ -153,12 +148,12 @@ export function UploadMaterialForm({
 
 			await createMaterial.mutateAsync({
 				nombre: formData.nombre,
-				materia: formData.materia,
 				tipo: 'PDF',
 				semestre: 1,
 				descripcion: formData.descripcion,
 				file,
 				userId: user.id,
+				materia: undefined,
 			});
 
 			clearInterval(interval);
@@ -176,21 +171,8 @@ export function UploadMaterialForm({
 
 			if (error instanceof Error) {
 				console.error('Mensaje de error:', error.message);
+				// Usar el mensaje mapeado del servicio directamente
 				errorMessage = error.message;
-
-				// Mensajes más específicos según el tipo de error
-				if (error.message.includes('PDF falló la validación')) {
-					errorMessage =
-						'El PDF no pasó la validación de contenido. Verifique que el PDF sea válido.';
-				} else if (error.message.includes('extraction failed')) {
-					errorMessage = 'Error al procesar el PDF. Intente con otro archivo.';
-				} else if (error.message.includes('network')) {
-					errorMessage = 'Error de conexión. Verifique su internet.';
-				} else if (error.message.includes('size')) {
-					errorMessage = 'El archivo es demasiado grande. Máximo 10MB.';
-				} else if (error.message.includes('format')) {
-					errorMessage = 'Formato de archivo no válido. Solo se aceptan PDF.';
-				}
 			}
 
 			setErrors({ submit: errorMessage });
@@ -222,22 +204,6 @@ export function UploadMaterialForm({
 						}}
 						isInvalid={!!errors.nombre}
 						errorMessage={errors.nombre}
-						isRequired
-					/>
-
-					<Input
-						label="Materia/Asignatura"
-						placeholder="Ej: Matemáticas, Programación, Física..."
-						value={formData.materia}
-						onValueChange={(value) => {
-							setFormData((prev) => ({ ...prev, materia: value }));
-							// Clear error when user types
-							if (value.trim().length > 0 && errors.materia) {
-								setErrors((prev) => ({ ...prev, materia: '' }));
-							}
-						}}
-						isInvalid={!!errors.materia}
-						errorMessage={errors.materia}
 						isRequired
 					/>
 

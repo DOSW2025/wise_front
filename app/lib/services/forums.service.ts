@@ -172,6 +172,7 @@ export class ForumsService {
 		updates: {
 			title?: string;
 			description?: string;
+			editorId: string;
 		},
 	): Promise<Forum> {
 		try {

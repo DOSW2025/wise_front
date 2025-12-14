@@ -274,7 +274,7 @@ export default function AdminValidation() {
 						<div className="flex flex-wrap gap-3">
 							<Input
 								className="max-w-md"
-								placeholder="Buscar por título, autor o código..."
+								placeholder="Buscar por nombre de material"
 								startContent={<Search className="w-4 h-4 text-default-400" />}
 								value={search}
 								onValueChange={setSearch}
@@ -342,10 +342,10 @@ export default function AdminValidation() {
 											<div className="flex flex-wrap items-start justify-between gap-3">
 												<div className="flex flex-col gap-1">
 													<p className="font-semibold text-foreground">
-														{material.nombre}
+														{material.title}
 													</p>
 													<div className="flex flex-wrap items-center gap-2 text-sm text-default-500">
-														<span>{material.tutor}</span>
+														<span>{material.author}</span>
 														<span aria-hidden="true">•</span>
 														<span>{material.subject}</span>
 														<span aria-hidden="true">•</span>
@@ -406,7 +406,7 @@ export default function AdminValidation() {
 										<FileText className="w-5 h-5 text-default-500" />
 										<div className="flex flex-col">
 											<span className="font-semibold text-sm">
-												{selectedmaterial.nombre}
+												{selectedMaterial.title}
 											</span>
 											<span className="text-xs text-default-500">
 												{selectedMaterial.subject} • {selectedMaterial.pages}{' '}
@@ -421,12 +421,12 @@ export default function AdminValidation() {
 									<div className="flex items-center gap-3 text-sm text-default-500">
 										<Avatar
 											className="bg-danger-100 text-danger"
-											name={selectedmaterial.tutor}
+											name={selectedMaterial.author}
 											size="sm"
 										/>
 										<div className="flex flex-col">
 											<span className="text-foreground font-medium">
-												{selectedmaterial.tutor}
+												{selectedMaterial.author}
 											</span>
 											<span>{selectedMaterial.email}</span>
 										</div>
@@ -583,7 +583,7 @@ export default function AdminValidation() {
 								<div className="aspect-[4/3] bg-white">
 									{selectedMaterial?.previewUrl ? (
 										<iframe
-											title={`Vista previa de ${selectedmaterial.nombre}`}
+											title={`Vista previa de ${selectedMaterial.title}`}
 											src={selectedMaterial.previewUrl}
 											className="w-full h-full"
 											loading="lazy"

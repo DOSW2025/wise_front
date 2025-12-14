@@ -12,6 +12,7 @@ import {
 	Switch,
 	useDisclosure,
 } from '@heroui/react';
+import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { AlertMessage, ProfileAvatar } from '~/components';
@@ -21,6 +22,8 @@ import {
 	ProfileFormFields,
 	ProfileHeader,
 } from '~/components/profile';
+import { DeleteAccount } from '~/components/profile/DeleteAccount';
+import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
@@ -29,6 +32,11 @@ export default function TutorProfile() {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
+	const {
+		isOpen: isDeleteOpen,
+		onOpen: onDeleteOpen,
+		onClose: onDeleteClose,
+	} = useDisclosure();
 
 	// Custom hooks for managing complex state
 	const {
@@ -103,6 +111,18 @@ export default function TutorProfile() {
 		}
 	};
 
+	const handleDeleteAccount = async () => {
+		try {
+			// TODO: Implementar API call para eliminar cuenta
+			// await deleteAccount();
+			onDeleteClose();
+			// Redirigir al login después de eliminar
+			navigate('/login');
+		} catch (error) {
+			console.error('Error al eliminar cuenta:', error);
+		}
+	};
+
 	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const result = handleImageUpload(event);
 		if (result?.error) {
@@ -169,43 +189,25 @@ export default function TutorProfile() {
 					</div>
 
 					{isEditing && (
-						<div className="space-y-2">
-							<span className="text-sm font-medium block">
-								Materias que enseñas
-							</span>
-							<div className="flex flex-wrap gap-2">
-								{profile.subjects.map((subject) => (
-									<Chip
-										key={subject}
-										onClose={() =>
-											setProfile({
-												...profile,
-												subjects: profile.subjects.filter((s) => s !== subject),
-											})
-										}
-										variant="flat"
-										color="primary"
-									>
-										{subject}
-									</Chip>
-								))}
-								<Chip
-									variant="bordered"
-									className="cursor-pointer"
-									onClick={() => {
-										const newSubject = prompt('Ingresa una nueva materia:');
-										if (newSubject) {
-											setProfile({
-												...profile,
-												subjects: [...profile.subjects, newSubject],
-											});
-										}
-									}}
-								>
-									+ Agregar
-								</Chip>
-							</div>
-						</div>
+						<InterestsChips
+							title="Materias que enseñas"
+							items={profile.subjects}
+							isEditing={isEditing}
+							onRemove={(value) =>
+								setProfile({
+									...profile,
+									subjects: profile.subjects.filter((s) => s !== value),
+								})
+							}
+							onAdd={(value) =>
+								setProfile({
+									...profile,
+									subjects: [...profile.subjects, value],
+								})
+							}
+							emptyText="No has agregado materias"
+							addLabel="+ Agregar"
+						/>
 					)}
 				</CardBody>
 			</Card>
@@ -296,6 +298,8 @@ export default function TutorProfile() {
 					</ModalFooter>
 				</ModalContent>
 			</Modal>
+
+			<DeleteAccount onDelete={handleDeleteAccount} />
 		</div>
 	);
 }
