@@ -284,7 +284,10 @@ export function Sidebar({
 						onClick={() => setIsMobileMenuOpen(false)}
 					>
 						<img
-							src="/logo/logoeciwise.svg"
+							src="/logo/logo.png"
+							onError={(e) => {
+								e.currentTarget.src = '/logo/logo.png';
+							}}
 							alt="ECIWISE+ logo"
 							className="w-11 h-11"
 						/>
