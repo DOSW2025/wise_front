@@ -393,14 +393,7 @@ export default function AdminUsers() {
 					);
 				case 'role':
 					return (
-						<Chip
-							size="md"
-							color={roleColors[user.rol.nombre]}
-							variant="bordered"
-							classNames={{
-								base: 'border-1 border-black',
-							}}
-						>
+						<Chip size="sm" color={roleColors[user.rol.nombre]} variant="flat">
 							{roleLabels[user.rol.nombre]}
 						</Chip>
 					);
