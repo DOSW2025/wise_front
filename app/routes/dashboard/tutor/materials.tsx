@@ -7,8 +7,6 @@ import {
 	Modal,
 	ModalContent,
 	Pagination,
-	Select,
-	SelectItem,
 	Spinner,
 	Tab,
 	Tabs,
@@ -35,24 +33,24 @@ import { MaterialDetailModal } from '~/components/material-detail-modal';
 import { MaterialStatsModal } from '~/components/material-stats-modal';
 import { MyMaterialsList } from '~/components/my-materials-list';
 import { PopularMaterials } from '~/components/popular-materials';
-import { UploadMaterialForm } from '~/components/upload-material-form';
+import { useAuth } from '~/contexts/auth-context';
 import { useDebounce } from '~/lib/hooks/useDebounce';
-import {
-	useMaterials,
-	useSubjects,
-	useUserMaterials,
-} from '~/lib/hooks/useMaterials';
-import type { MaterialFilters } from '~/lib/types/api.types';
+import { useMaterials, useUserMaterials } from '~/lib/hooks/useMaterials';
+import type { Material, MaterialFilters } from '~/lib/types/api.types';
 
 const ITEMS_PER_PAGE = 12;
 
 export default function TutorMaterials() {
+	const { user } = useAuth();
+	const userId = user?.id;
+
 	const [filters, setFilters] = useState<MaterialFilters>({});
 	const [showFilters, setShowFilters] = useState(false);
+	const [selectedTags, setSelectedTags] = useState<string[]>([]);
+	const [tagInput, setTagInput] = useState('');
 	const [searchTerm, setSearchTerm] = useState('');
 	const [page, setPage] = useState(1);
 	const debouncedSearch = useDebounce(searchTerm, 500);
-	const { isOpen, onOpen, onClose } = useDisclosure();
 	const {
 		isOpen: isDetailOpen,
 		onOpen: onDetailOpen,
@@ -73,6 +71,7 @@ export default function TutorMaterials() {
 		onOpen: onStatsOpen,
 		onClose: onStatsClose,
 	} = useDisclosure();
+	const { onOpen } = useDisclosure();
 	const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(
 		null,
 	);
@@ -91,13 +90,29 @@ export default function TutorMaterials() {
 	};
 
 	const { data: materialsResponse, isLoading } = useMaterials(combinedFilters);
-	const materials = materialsResponse?.data || [];
+	let materials = materialsResponse?.data || [];
+
+	// Filtrar materiales por tags seleccionados
+	if (selectedTags.length > 0) {
+		materials = materials.filter((material) =>
+			selectedTags.some((tag) =>
+				material.tags?.some(
+					(materialTag) => materialTag.toLowerCase() === tag.toLowerCase(),
+				),
+			),
+		);
+	}
 	const totalPages = materialsResponse?.pagination?.totalPages || 1;
 	const totalItems = materialsResponse?.pagination?.totalItems || 0;
-	const { data: userMaterials = [] } = useUserMaterials('dev-tutor-1');
-	const { data: subjects = [] } = useSubjects();
+	const currentPage = Math.floor(currentSkip / itemsPerPage) + 1;
+	const { data: userMaterials = [] } = useUserMaterials(userId || '');
 
-	const handleFilterChange = (
+	// Resetear paginación cuando cambia el modo de vista
+	useEffect(() => {
+		setCurrentSkip(0);
+	}, []);
+
+	const _handleFilterChange = (
 		key: keyof MaterialFilters,
 		value: string | number | undefined,
 	) => {
@@ -105,10 +120,32 @@ export default function TutorMaterials() {
 		setPage(1); // Reset to first page when filters change
 	};
 
+	const handleAddTag = () => {
+		if (tagInput.trim() && !selectedTags.includes(tagInput.trim())) {
+			setSelectedTags([...selectedTags, tagInput.trim()]);
+			setTagInput('');
+			setCurrentSkip(0);
+		}
+	};
+
+	const handleRemoveTag = (tagToRemove: string) => {
+		setSelectedTags(selectedTags.filter((tag) => tag !== tagToRemove));
+		setCurrentSkip(0);
+	};
+
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			handleAddTag();
+		}
+	};
+
 	const clearFilters = () => {
 		setFilters({});
 		setSearchTerm('');
-		setPage(1);
+		setSelectedTags([]);
+		setTagInput('');
+		setCurrentSkip(0);
 	};
 
 	const handleSearch = (value: string) => {
@@ -116,7 +153,7 @@ export default function TutorMaterials() {
 		setPage(1); // Reset to first page on search
 	};
 
-	const hasActiveFilters = filters.subject || filters.semester || searchTerm;
+	const hasActiveFilters = selectedTags.length > 0 || searchTerm;
 
 	return (
 		<div className="space-y-6">
@@ -206,24 +243,23 @@ export default function TutorMaterials() {
 							color={hasActiveFilters ? 'primary' : 'default'}
 							onPress={() => setShowFilters(!showFilters)}
 						>
-							Filtros{' '}
-							{hasActiveFilters &&
-								`(${Object.values(filters).filter(Boolean).length})`}
+							Filtros {hasActiveFilters && `(${selectedTags.length})`}
 						</Button>
 
 						{/* Indicadores de filtros activos */}
-						{hasActiveFilters && (
+						{selectedTags.length > 0 && (
 							<div className="flex flex-wrap gap-2">
-								{filters.subject && (
-									<Chip size="sm" color="primary" variant="flat">
-										Materia: {filters.subject}
+								{selectedTags.map((tag) => (
+									<Chip
+										key={tag}
+										size="sm"
+										color="primary"
+										variant="flat"
+										onClose={() => handleRemoveTag(tag)}
+									>
+										{tag}
 									</Chip>
-								)}
-								{filters.semester && (
-									<Chip size="sm" color="default" variant="flat">
-										Semestre: {filters.semester}
-									</Chip>
-								)}
+								))}
 							</div>
 						)}
 					</div>
@@ -234,7 +270,7 @@ export default function TutorMaterials() {
 							<CardBody className="p-6">
 								<div className="space-y-4">
 									<div className="flex items-center justify-between">
-										<h4 className="font-semibold">Filtrar materiales</h4>
+										<h4 className="font-semibold">Filtrar por Tags</h4>
 										{hasActiveFilters && (
 											<Button
 												size="sm"
@@ -247,52 +283,32 @@ export default function TutorMaterials() {
 										)}
 									</div>
 
-									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-										<Select
-											label="Materia"
-											placeholder="Seleccionar materia"
-											selectedKeys={filters.subject ? [filters.subject] : []}
-											onSelectionChange={(keys) => {
-												const value = Array.from(keys)[0] as string;
-												handleFilterChange('subject', value);
-											}}
-											size="sm"
+									<div>
+										<label
+											htmlFor="add-tags-input"
+											className="block text-sm font-medium text-gray-700 mb-2"
 										>
-											{subjects.map((subject) => (
-												<SelectItem
-													key={subject.nombre}
-													textValue={subject.nombre}
-												>
-													{subject.nombre}
-												</SelectItem>
-											))}
-										</Select>
-
-										<Select
-											label="Semestre"
-											placeholder="Seleccionar semestre"
-											selectedKeys={
-												filters.semester ? [filters.semester.toString()] : []
-											}
-											onSelectionChange={(keys) => {
-												const selectedArray = Array.from(keys);
-												const value = selectedArray[0] as string;
-												handleFilterChange(
-													'semester',
-													value ? Number(value) : undefined,
-												);
-											}}
-											size="sm"
-										>
-											{[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((semester) => (
-												<SelectItem
-													key={semester}
-													textValue={`Semestre ${semester}`}
-												>
-													Semestre {semester}
-												</SelectItem>
-											))}
-										</Select>
+											Agregar Tags
+										</label>
+										<div className="flex gap-2">
+											<Input
+												id="add-tags-input"
+												placeholder="Escribe un tag y presiona Enter..."
+												value={tagInput}
+												onValueChange={setTagInput}
+												onKeyDown={handleKeyDown}
+												size="sm"
+												className="flex-1"
+											/>
+											<Button
+												color="primary"
+												size="sm"
+												onClick={handleAddTag}
+												disabled={!tagInput.trim()}
+											>
+												Agregar
+											</Button>
+										</div>
 									</div>
 								</div>
 							</CardBody>
@@ -365,17 +381,29 @@ export default function TutorMaterials() {
 															<div className="flex items-center gap-1">
 																<Star className="w-4 h-4 text-yellow-500 fill-current" />
 																<span className="text-sm font-medium">
-																	{material.calificacion.toFixed(1)}
+																	{material.calificacion
+																		? material.calificacion.toFixed(1)
+																		: '0.0'}
 																</span>
 															</div>
 														</div>
 														<div className="flex flex-wrap gap-2 mb-3">
-															<Chip size="sm" variant="flat" color="primary">
-																{material.materia}
-															</Chip>
-															<Chip size="sm" variant="flat">
-																Semestre {material.semestre}
-															</Chip>
+															{material.tags && material.tags.length > 0 ? (
+																material.tags.map((tag) => (
+																	<Chip
+																		key={tag}
+																		size="sm"
+																		variant="flat"
+																		color="primary"
+																	>
+																		{tag}
+																	</Chip>
+																))
+															) : (
+																<Chip size="sm" variant="flat" color="primary">
+																	{material.materia}
+																</Chip>
+															)}
 														</div>
 														<div className="flex items-center gap-4 text-sm text-default-500">
 															<div className="flex items-center gap-1">
@@ -399,19 +427,37 @@ export default function TutorMaterials() {
 														{material.tutor}
 													</p>
 													<div className="flex flex-wrap gap-1 justify-center mb-2">
-														<Chip
-															size="sm"
-															variant="flat"
-															color="primary"
-															className="text-xs"
-														>
-															{material.materia}
-														</Chip>
+														{material.tags && material.tags.length > 0 ? (
+															material.tags.slice(0, 2).map((tag) => (
+																<Chip
+																	key={tag}
+																	size="sm"
+																	variant="flat"
+																	color="primary"
+																	className="text-xs"
+																>
+																	{tag}
+																</Chip>
+															))
+														) : (
+															<Chip
+																size="sm"
+																variant="flat"
+																color="primary"
+																className="text-xs"
+															>
+																{material.materia}
+															</Chip>
+														)}
 													</div>
 													<div className="flex items-center justify-between text-xs text-default-500">
 														<div className="flex items-center gap-1">
 															<Star className="w-3 h-3 text-yellow-500 fill-current" />
-															<span>{material.calificacion.toFixed(1)}</span>
+															<span>
+																{material.calificacion
+																	? material.calificacion.toFixed(1)
+																	: '0.0'}
+															</span>
 														</div>
 														<div className="flex items-center gap-1">
 															<Eye className="w-3 h-3" />
@@ -448,7 +494,7 @@ export default function TutorMaterials() {
 			{/* Tab de Mis Materiales */}
 			{activeTab === 'mine' && (
 				<MyMaterialsList
-					userId="dev-tutor-1"
+					userId={userId || ''}
 					onView={(material) => {
 						setSelectedMaterialId(material.id);
 						onDetailOpen();
@@ -475,6 +521,7 @@ export default function TutorMaterials() {
 			{/* Tab de Materiales Populares */}
 			{activeTab === 'popular' && (
 				<PopularMaterials
+					userId={userId}
 					onMaterialClick={(material) => {
 						setSelectedMaterialId(material.id);
 						onDetailOpen();
@@ -482,26 +529,7 @@ export default function TutorMaterials() {
 				/>
 			)}
 
-			{/* Modal de subida */}
-			<Modal
-				isOpen={isOpen}
-				onClose={onClose}
-				size="2xl"
-				scrollBehavior="inside"
-			>
-				<ModalContent>
-					<UploadMaterialForm
-						onClose={onClose}
-						onSuccess={() => {
-							// Refrescar la lista de materiales
-							setPage(1);
-							window.location.reload();
-						}}
-					/>
-				</ModalContent>
-			</Modal>
-
-			{/* Modal de detalle */}
+			{/* Modal de detalle de material */}
 			<Modal
 				isOpen={isDetailOpen}
 				onClose={onDetailClose}
@@ -513,26 +541,12 @@ export default function TutorMaterials() {
 						<MaterialDetailModal
 							materialId={selectedMaterialId}
 							onClose={onDetailClose}
-							onEdit={(material) => {
-								onDetailClose();
-								setSelectedMaterialId(material.id);
-								onEditOpen();
-							}}
-							onDelete={(materialId) => {
-								onDetailClose();
-								const material = materials.find((m) => m.id === materialId);
-								if (material) {
-									setSelectedMaterialId(materialId);
-									setSelectedMaterialName(material.nombre);
-									onDeleteOpen();
-								}
-							}}
 						/>
 					)}
 				</ModalContent>
 			</Modal>
 
-			{/* Modal de edición */}
+			{/* Modal de subir material */}
 			<Modal
 				isOpen={isEditOpen}
 				onClose={onEditClose}

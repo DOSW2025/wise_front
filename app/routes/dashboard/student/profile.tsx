@@ -1,5 +1,7 @@
-import { Card, CardBody, Chip, Input } from '@heroui/react';
+import { Button, Card, CardBody, Chip, Input } from '@heroui/react';
+import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
 import {
 	ProfileConfigurationSection,
@@ -7,15 +9,31 @@ import {
 	ProfileFormFields,
 	ProfileHeader,
 } from '~/components/profile';
+import { DeleteAccount } from '~/components/profile/DeleteAccount';
+import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
-import { getProfile } from '~/lib/services/student.service';
+import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
 
 export default function StudentProfile() {
 	const { user } = useAuth();
+	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
-	const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+	// Fetch tutorías statistics
+	const { data: stats, isLoading: isLoadingStats } = useTutoriaStats(
+		user?.id ?? '',
+		!!user?.id,
+	);
+
+	// Calculate hours display value
+	let hoursValue = '...';
+	if (!isLoadingStats) {
+		hoursValue = stats?.horasDeTutoria
+			? `${stats.horasDeTutoria.toFixed(1)}h`
+			: '0h';
+	}
 
 	// Custom hooks for managing complex state
 	const {
@@ -33,7 +51,7 @@ export default function StudentProfile() {
 		phone: '',
 		role: user?.role || '',
 		description: '',
-		avatar: user?.avatarUrl,
+		avatarUrl: user?.avatarUrl,
 		interests: [],
 		semester: '',
 	});
@@ -52,14 +70,13 @@ export default function StudentProfile() {
 				// Actualizar el estado del perfil con los datos cargados del backend
 				setProfile((prev) => ({
 					...prev,
-					name: user.name, // Mantener nombre del contexto (no editable)
-					email: user.email, // Mantener email del contexto (no editable)
+					name: user.name,
+					email: user.email,
 					avatar: user.avatarUrl,
 					phone: profileData.phone || '',
 					description: profileData.description || '',
 					role: profileData.role || user.role || '',
 					semester: profileData.semester || '',
-					// Nota: los intereses se mantienen localmente para futuro uso y no se persisten en backend
 				}));
 			} catch (err) {
 				console.error('Error cargando perfil:', err);
@@ -81,7 +98,7 @@ export default function StudentProfile() {
 				...prev,
 				name: user.name,
 				email: user.email,
-				avatar: user.avatarUrl,
+				avatarUrl: user.avatarUrl,
 			}));
 		}
 	}, [user, setProfile]);
@@ -108,6 +125,20 @@ export default function StudentProfile() {
 	const handleCancel = () => {
 		if (user) {
 			resetForm(user);
+		}
+	};
+
+	const handleDeleteAccount = async () => {
+		try {
+			// TODO: Integrar eliminación real cuando el backend lo permita
+			navigate('/login');
+		} catch (error) {
+			console.error('Error al eliminar cuenta:', error);
+			const message =
+				error instanceof Error
+					? error.message
+					: 'No se pudo eliminar la cuenta.';
+			setError(message);
 		}
 	};
 
@@ -183,55 +214,25 @@ export default function StudentProfile() {
 						</ProfileFormFields>
 					</div>
 
-					<div className="space-y-2">
-						<span className="text-sm font-medium block">Áreas de Interés</span>
-						<div className="flex flex-wrap gap-2">
-							{profile.interests && profile.interests.length > 0 ? (
-								profile.interests.map((interest) => (
-									<Chip
-										key={interest}
-										onClose={
-											isEditing
-												? () =>
-														setProfile({
-															...profile,
-															interests:
-																profile.interests?.filter(
-																	(i) => i !== interest,
-																) || [],
-														})
-												: undefined
-										}
-										variant="flat"
-										color="primary"
-									>
-										{interest}
-									</Chip>
-								))
-							) : (
-								<p className="text-sm text-default-500">
-									No has agregado áreas de interés
-								</p>
-							)}
-							{isEditing && (
-								<Chip
-									variant="bordered"
-									className="cursor-pointer"
-									onClick={() => {
-										const newInterest = prompt('Ingresa un área de interés:');
-										if (newInterest) {
-											setProfile({
-												...profile,
-												interests: [...(profile.interests || []), newInterest],
-											});
-										}
-									}}
-								>
-									+ Agregar
-								</Chip>
-							)}
-						</div>
-					</div>
+					<InterestsChips
+						title="Áreas de Interés"
+						items={profile.interests || []}
+						isEditing={isEditing}
+						onRemove={(value) =>
+							setProfile({
+								...profile,
+								interests: (profile.interests || []).filter((i) => i !== value),
+							})
+						}
+						onAdd={(value) =>
+							setProfile({
+								...profile,
+								interests: [...(profile.interests || []), value],
+							})
+						}
+						emptyText="No has agregado áreas de interés"
+						addLabel="+ Agregar"
+					/>
 				</CardBody>
 			</Card>
 
@@ -242,14 +243,14 @@ export default function StudentProfile() {
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						<StatsCard
 							title="Tutorías Tomadas"
-							value={0}
+							value={isLoadingStats ? '...' : (stats?.sesionesCompletadas ?? 0)}
 							description="Total"
 							color="primary"
 						/>
 						<StatsCard
 							title="Horas de Estudio"
-							value={0}
-							description="Este mes"
+							value={hoursValue}
+							description="Total"
 							color="success"
 						/>
 						<StatsCard
@@ -279,6 +280,8 @@ export default function StudentProfile() {
 					/>
 				</CardBody>
 			</Card>
+
+			<DeleteAccount onDelete={handleDeleteAccount} />
 		</div>
 	);
 }

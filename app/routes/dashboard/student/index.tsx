@@ -1,8 +1,7 @@
-import { Avatar, Button, Card, CardBody, Chip, Spinner } from '@heroui/react';
+import { Button, Card, CardBody, Spinner } from '@heroui/react';
 import {
 	AlertCircle,
 	BookOpen,
-	Clock,
 	MessageSquare,
 	Star,
 	TrendingUp,
@@ -10,12 +9,21 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { RecommendedTutorsList } from '~/components/recommended-tutors-list';
 import { StatsCard } from '~/components/stats-card';
+import { StudentUpcomingTutoringsCard } from '~/components/student-upcoming-tutorings-card';
 import { TutorProfileModal } from '~/components/tutor-profile-modal';
+import { useAuth } from '~/contexts/auth-context';
 import { useStudentDashboard } from '~/lib/hooks/useStudentDashboard';
+import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 
 export default function StudentDashboard() {
+	const { user } = useAuth();
 	const { data: dashboardData, isLoading, error } = useStudentDashboard();
+	const { data: stats, isLoading: isLoadingStats } = useTutoriaStats(
+		user?.id || '',
+		!!user?.id,
+	);
 	const [selectedTutorId, setSelectedTutorId] = useState<string | null>(null);
 
 	if (isLoading) {
@@ -41,13 +49,7 @@ export default function StudentDashboard() {
 		);
 	}
 
-	const {
-		stats,
-		upcomingTutoring,
-		recommendedTutors,
-		recentMaterials,
-		recentActivity,
-	} = dashboardData || {};
+	const { recentMaterials, recentActivity } = dashboardData || {};
 
 	return (
 		<div className="space-y-6">
@@ -65,7 +67,7 @@ export default function StudentDashboard() {
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatsCard
 					title="Tutorías Completadas"
-					value={stats?.tutoriasCompletadas || 0}
+					value={isLoadingStats ? '...' : (stats?.sesionesCompletadas ?? 0)}
 					description="Este semestre"
 					color="success"
 					icon={
@@ -88,8 +90,8 @@ export default function StudentDashboard() {
 				/>
 				<StatsCard
 					title="Próximas Tutorías"
-					value={stats?.proximasTutorias || 0}
-					description="Esta semana"
+					value={isLoadingStats ? '...' : (stats?.sesionesConfirmadas ?? 0)}
+					description="Confirmadas"
 					color="primary"
 					icon={
 						<svg
@@ -110,16 +112,16 @@ export default function StudentDashboard() {
 					}
 				/>
 				<StatsCard
-					title="Progreso Académico"
-					value={`${stats?.progresoAcademico || 0}%`}
-					description="Objetivos cumplidos"
+					title="Horas de Tutoría"
+					value={isLoadingStats ? '...' : `${stats?.horasDeTutoria || 0}h`}
+					description="Este semestre"
 					color="warning"
 					icon={<TrendingUp className="w-6 h-6" />}
 				/>
 				<StatsCard
-					title="Materiales Guardados"
-					value={stats?.materialesGuardados || 0}
-					description="En tu biblioteca"
+					title="Calificaciones"
+					value={isLoadingStats ? '...' : stats?.totalCalificaciones || 0}
+					description="Total recibidas"
 					color="default"
 					icon={<BookOpen className="w-6 h-6" />}
 				/>
@@ -128,85 +130,7 @@ export default function StudentDashboard() {
 			{/* Main Content Grid */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				{/* Próximas Tutorías */}
-				<Card>
-					<CardBody className="gap-4">
-						<div className="flex items-center justify-between">
-							<h2 className="text-xl font-semibold flex items-center gap-2">
-								<Clock className="w-5 h-5 text-primary" />
-								Próximas Tutorías
-							</h2>
-							<Button
-								as={Link}
-								to="/dashboard/student/tutoring"
-								size="sm"
-								variant="light"
-								color="primary"
-							>
-								Ver todas
-							</Button>
-						</div>
-						<div className="space-y-3">
-							{upcomingTutoring?.length ? (
-								upcomingTutoring.slice(0, 2).map((tutoring) => {
-									const initials = tutoring.tutorName
-										.split(' ')
-										.map((n) => n[0])
-										.join('')
-										.toUpperCase();
-									const isToday =
-										new Date(tutoring.date).toDateString() ===
-										new Date().toDateString();
-									return (
-										<div
-											key={tutoring.id}
-											className="flex items-start justify-between p-3 bg-default-100 rounded-lg"
-										>
-											<div className="flex items-center gap-3">
-												<Avatar
-													src={tutoring.tutorAvatar}
-													name={initials}
-													size="sm"
-													className="bg-primary text-white"
-												/>
-												<div className="flex flex-col gap-1">
-													<p className="font-semibold text-sm">
-														{tutoring.subject}
-													</p>
-													<p className="text-small text-default-500">
-														{tutoring.tutorName}
-													</p>
-													<p className="text-tiny text-default-400">
-														{isToday ? 'Hoy' : 'Mañana'} {tutoring.time} -{' '}
-														{tutoring.modality === 'virtual'
-															? 'Virtual'
-															: 'Presencial'}
-													</p>
-												</div>
-											</div>
-											<Chip
-												size="sm"
-												color={
-													tutoring.status === 'confirmed'
-														? 'success'
-														: 'warning'
-												}
-												variant="flat"
-											>
-												{tutoring.status === 'confirmed'
-													? 'Confirmada'
-													: 'Pendiente'}
-											</Chip>
-										</div>
-									);
-								})
-							) : (
-								<p className="text-center text-default-500 py-4">
-									No hay tutorías próximas
-								</p>
-							)}
-						</div>
-					</CardBody>
-				</Card>
+				<StudentUpcomingTutoringsCard />
 
 				{/* Tutores Recomendados */}
 				<Card>
@@ -226,70 +150,7 @@ export default function StudentDashboard() {
 								Ver más
 							</Button>
 						</div>
-						<div className="space-y-3">
-							{recommendedTutors?.length ? (
-								recommendedTutors.slice(0, 2).map((tutor) => {
-									const initials = tutor.name
-										.split(' ')
-										.map((n) => n[0])
-										.join('')
-										.toUpperCase();
-									const availabilityColor =
-										tutor.availability === 'available'
-											? 'success'
-											: tutor.availability === 'busy'
-												? 'warning'
-												: 'default';
-									const availabilityText =
-										tutor.availability === 'available'
-											? 'Disponible'
-											: tutor.availability === 'busy'
-												? 'Ocupado'
-												: 'Desconectado';
-									return (
-										<div
-											key={tutor.id}
-											className="flex items-center justify-between p-3 bg-default-100 rounded-lg"
-										>
-											<button
-												type="button"
-												className="flex items-center gap-3 cursor-pointer flex-1 bg-transparent border-none p-0 text-left"
-												onClick={() => setSelectedTutorId(tutor.id)}
-											>
-												<Avatar
-													src={tutor.avatar}
-													name={initials}
-													size="sm"
-													className="bg-green-500 text-white"
-												/>
-												<div>
-													<p className="font-semibold text-sm hover:text-primary transition-colors">
-														{tutor.name}
-													</p>
-													<p className="text-small text-default-600">
-														{tutor.subject}
-													</p>
-													<div className="flex items-center gap-1 mt-1">
-														<Star className="w-3 h-3 text-yellow-500 fill-current" />
-														<span className="text-tiny">
-															{tutor.rating.toFixed(1)} ({tutor.reviewCount}{' '}
-															reseñas)
-														</span>
-													</div>
-												</div>
-											</button>
-											<Chip size="sm" color={availabilityColor} variant="flat">
-												{availabilityText}
-											</Chip>
-										</div>
-									);
-								})
-							) : (
-								<p className="text-center text-default-500 py-4">
-									No hay tutores disponibles
-								</p>
-							)}
-						</div>
+						<RecommendedTutorsList />
 					</CardBody>
 				</Card>
 			</div>
@@ -320,12 +181,14 @@ export default function StudentDashboard() {
 									const timeAgo = new Date(
 										Date.now() - new Date(material.downloadedAt).getTime(),
 									).getDate();
-									const timeText =
-										timeAgo > 1
-											? `hace ${timeAgo} días`
-											: timeAgo === 1
-												? 'ayer'
-												: 'hoy';
+
+									let timeText = 'hoy';
+									if (timeAgo > 1) {
+										timeText = `hace ${timeAgo} días`;
+									} else if (timeAgo === 1) {
+										timeText = 'ayer';
+									}
+
 									const actionText =
 										material.type === 'downloaded' ? 'Descargado' : 'Guardado';
 									return (
@@ -391,12 +254,14 @@ export default function StudentDashboard() {
 									const timeAgo = new Date(
 										Date.now() - new Date(activity.createdAt).getTime(),
 									).getHours();
-									const timeText =
-										timeAgo > 24
-											? 'Ayer'
-											: timeAgo > 0
-												? `Hace ${timeAgo} horas`
-												: 'Hace poco';
+
+									let timeText = 'Hace poco';
+									if (timeAgo > 24) {
+										timeText = 'Ayer';
+									} else if (timeAgo > 0) {
+										timeText = `Hace ${timeAgo} horas`;
+									}
+
 									const bgColor =
 										activity.type === 'tutoring_completed'
 											? 'bg-green-50 border border-green-200'

@@ -370,9 +370,9 @@ export class ForumsService {
 	async voteResponse(
 		responseId: string,
 		vote: 1 | -1,
-	): Promise<{ status: string; votes: any }> {
+	): Promise<{ status: string; votes: unknown }> {
 		try {
-			const response = await apiClient.post<{ status: string; votes: any }>(
+			const response = await apiClient.post<{ status: string; votes: unknown }>(
 				`${this.responsesUrl}/${responseId}/vote`,
 				{ vote },
 			);
@@ -385,9 +385,9 @@ export class ForumsService {
 	/**
 	 * Obtener votos de una respuesta
 	 */
-	async getResponseVotes(responseId: string): Promise<any> {
+	async getResponseVotes(responseId: string): Promise<unknown> {
 		try {
-			const response = await apiClient.get<any>(
+			const response = await apiClient.get<unknown>(
 				`${this.responsesUrl}/${responseId}/votes`,
 			);
 			return response.data;
@@ -399,7 +399,7 @@ export class ForumsService {
 	/**
 	 * Manejo de errores
 	 */
-	private handleError(error: any, defaultMessage: string): Error {
+	private handleError(error: unknown, defaultMessage: string): Error {
 		if (error.response?.data?.message) {
 			return new Error(error.response.data.message);
 		}

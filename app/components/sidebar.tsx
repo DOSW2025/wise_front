@@ -171,10 +171,10 @@ export function Sidebar({
 					path: '/dashboard/admin/users',
 				},
 				{
-					key: 'validation',
-					label: 'Validación de Materiales',
+					key: 'materials',
+					label: 'Gestor de Materiales',
 					icon: <FileText className="w-5 h-5" />,
-					path: '/dashboard/admin/validation',
+					path: '/dashboard/admin/materials',
 				},
 				{
 					key: 'gamification',
@@ -219,7 +219,7 @@ export function Sidebar({
 			case 'student':
 				return 'Panel de Estudiante';
 			case 'tutor':
-				return 'Panel de Docente';
+				return 'Panel de Tutor';
 			case 'admin':
 				return 'Panel de Administrador';
 			default:

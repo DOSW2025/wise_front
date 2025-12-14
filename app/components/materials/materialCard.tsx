@@ -39,19 +39,29 @@ export default function MaterialCard({
 						{material.title}
 					</h3>
 
-					<div className="space-y-1 text-sm text-gray-600 mb-4">
+					<div className="space-y-1 text-sm text-gray-600 mb-2">
 						<p>{material.author}</p>
-						<p>
-							{material.subject} • {material.semester}
-						</p>
 						<p>{material.date}</p>
 					</div>
-
+					{material.tags && material.tags.length > 0 && (
+						<div className="flex flex-wrap gap-1 mb-3">
+							{material.tags.map((tag) => (
+								<Chip
+									key={tag}
+									size="sm"
+									variant="flat"
+									color="primary"
+									className="text-xs"
+								>
+									{tag}
+								</Chip>
+							))}
+						</div>
+					)}
 					<div className="flex items-center gap-4 text-sm mb-4">
 						<div className="flex items-center gap-1">
 							<Star size={16} className="text-yellow-500 fill-yellow-500" />
 							<span className="font-medium">{material.rating}</span>
-							<span className="text-gray-500">({material.ratingsCount})</span>
 						</div>
 						<div className="flex items-center gap-1 text-gray-600">
 							<Download size={16} />
@@ -123,21 +133,32 @@ export default function MaterialCard({
 
 					<div className="flex-1 min-w-0">
 						<h3 className="font-semibold text-lg mb-1">{material.title}</h3>
-						<div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+						<div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
 							<span>{material.author}</span>
-							<span>•</span>
-							<span>{material.subject}</span>
-							<span>•</span>
-							<span>{material.semester}</span>
 							<span>•</span>
 							<span>{material.date}</span>
 						</div>
+
+						{material.tags && material.tags.length > 0 && (
+							<div className="flex flex-wrap gap-1 mb-2">
+								{material.tags.map((tag) => (
+									<Chip
+										key={tag}
+										size="sm"
+										variant="flat"
+										color="primary"
+										className="text-xs"
+									>
+										{tag}
+									</Chip>
+								))}
+							</div>
+						)}
 
 						<div className="flex items-center gap-4 text-sm">
 							<div className="flex items-center gap-1">
 								<Star size={16} className="text-yellow-500 fill-yellow-500" />
 								<span className="font-medium">{material.rating}</span>
-								<span className="text-gray-500">({material.ratingsCount})</span>
 							</div>
 							<div className="flex items-center gap-1 text-gray-600">
 								<Download size={16} />

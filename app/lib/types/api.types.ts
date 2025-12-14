@@ -91,13 +91,15 @@ export interface Material {
 	tipo: string;
 	semestre: number;
 	tutor: string;
-	calificacion: number;
+	calificacion?: number;
 	vistas: number;
 	descargas: number;
+	totalComentarios?: number;
 	createdAt: string;
 	updatedAt: string;
 	fileUrl?: string;
 	descripcion?: string;
+	tags?: string[];
 }
 
 export interface Subject {
@@ -120,16 +122,17 @@ export interface MaterialFilters {
 }
 
 export interface MaterialRating {
-	id: string;
-	materialId: string;
-	userId: string;
+	id: number;
+	materialId?: string;
+	userId?: string;
 	calificacion: number;
+	comentario?: string;
 	createdAt: string;
 }
 
 export interface CreateMaterialRequest {
 	nombre: string;
-	materia: string;
+	materia?: string;
 	tipo: string;
 	semestre: number;
 	descripcion?: string;
@@ -225,7 +228,7 @@ export interface NotificationsResponse {
 }
 
 export interface UnreadCountResponse {
-	unreadCount: number;
+	Count: number;
 }
 
 // API Response Types para el mapeo de materiales
@@ -239,6 +242,7 @@ export interface ApiMaterialRawResponse {
 	extension?: string;
 	userName?: string;
 	calificación?: number;
+	calificacionPromedio?: number;
 	vistos?: number;
 	views?: number;
 	descargas?: number;
@@ -252,6 +256,14 @@ export interface ApiMaterialRawResponse {
 	description?: string;
 	metadata?: ApiMaterialRawResponse;
 	userId?: string;
+	totalComentarios?: number;
+}
+
+export interface UserMaterialsResponse {
+	materials: ApiMaterialRawResponse[];
+	totalVistas: number;
+	totalDescargas: number;
+	calificacionPromedio: number;
 }
 
 // Axios Error Response Type

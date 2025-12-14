@@ -8,18 +8,12 @@ import {
 	Card,
 	CardBody,
 	Input,
-	Select,
-	SelectItem,
 	Spinner,
 	Textarea,
 } from '@heroui/react';
-import { X } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import {
-	useMaterial,
-	useSubjects,
-	useUpdateMaterial,
-} from '~/lib/hooks/useMaterials';
+import { Upload, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useMaterial, useUpdateMaterial } from '~/lib/hooks/useMaterials';
 
 interface EditMaterialFormProps {
 	materialId: string;
@@ -34,25 +28,24 @@ export function EditMaterialForm({
 }: EditMaterialFormProps) {
 	const { data: material, isLoading: isLoadingMaterial } =
 		useMaterial(materialId);
-	const { data: subjects = [] } = useSubjects();
 	const updateMaterial = useUpdateMaterial();
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const [formData, setFormData] = useState({
-		nombre: '',
-		materia: '',
-		semestre: '',
-		descripcion: '',
+		title: '',
+		description: '',
+		file: null as File | null,
 	});
+	const [fileName, setFileName] = useState<string>('');
 	const [errors, setErrors] = useState<Record<string, string>>({});
 
 	// Prellenar formulario cuando se carga el material
 	useEffect(() => {
 		if (material) {
 			setFormData({
-				nombre: material.nombre,
-				materia: material.materia,
-				semestre: material.semestre.toString(),
-				descripcion: material.descripcion || '',
+				title: material.nombre || '',
+				description: material.descripcion || '',
+				file: null,
 			});
 		}
 	}, [material]);
@@ -60,15 +53,25 @@ export function EditMaterialForm({
 	const validateForm = () => {
 		const newErrors: Record<string, string> = {};
 
-		if (!formData.nombre.trim()) newErrors.nombre = 'El nombre es requerido';
-		if (!formData.materia) newErrors.materia = 'La materia es requerida';
-		if (!formData.semestre) newErrors.semestre = 'El semestre es requerido';
+		if (!formData.title.trim()) {
+			newErrors.title = 'El título es requerido';
+		}
 
 		return newErrors;
 	};
 
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (file) {
+			setFormData((prev) => ({ ...prev, file }));
+			setFileName(file.name);
+			setErrors((prev) => ({ ...prev, file: '' }));
+		}
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setErrors({});
 
 		const formErrors = validateForm();
 		if (Object.keys(formErrors).length > 0) {
@@ -77,22 +80,28 @@ export function EditMaterialForm({
 		}
 
 		try {
+			const data = new FormData();
+			data.append('title', formData.title);
+			data.append('description', formData.description);
+			if (formData.file) {
+				data.append('file', formData.file);
+			}
+
 			await updateMaterial.mutateAsync({
 				id: materialId,
-				data: {
-					nombre: formData.nombre,
-					materia: formData.materia,
-					tipo: 'PDF',
-					semestre: Number(formData.semestre),
-					descripcion: formData.descripcion,
-				},
+				data,
 			});
 
 			onSuccess?.();
 			onClose();
-		} catch (_error) {
+		} catch (error) {
+			console.error('Error detallado:', error);
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: 'Error al actualizar el material. Intente nuevamente.';
 			setErrors({
-				submit: 'Error al actualizar el material. Intente nuevamente.',
+				submit: errorMessage,
 			});
 		}
 	};
@@ -141,64 +150,61 @@ export function EditMaterialForm({
 				</div>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
+					{/* Archivo */}
+					<div>
+						<label
+							htmlFor="file-input"
+							className="block text-sm font-medium text-foreground mb-2"
+						>
+							Archivo (opcional)
+						</label>
+						<input
+							id="file-input"
+							ref={fileInputRef}
+							type="file"
+							onChange={handleFileChange}
+							className="hidden"
+							accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+						/>
+						<Button
+							type="button"
+							variant="bordered"
+							className="w-full"
+							startContent={<Upload className="w-4 h-4" />}
+							onPress={() => fileInputRef.current?.click()}
+						>
+							{fileName || formData.file?.name || 'Seleccionar archivo'}
+						</Button>
+						{fileName && (
+							<p className="text-sm text-success mt-2">✓ {fileName}</p>
+						)}
+						{errors.file && (
+							<p className="text-sm text-danger mt-2">{errors.file}</p>
+						)}
+					</div>
+
+					{/* Título */}
 					<Input
-						label="Nombre del material"
+						label="Título del material"
 						placeholder="Ej: Introducción a Algoritmos"
-						value={formData.nombre}
+						value={formData.title}
 						onValueChange={(value) =>
-							setFormData((prev) => ({ ...prev, nombre: value }))
+							setFormData((prev) => ({ ...prev, title: value }))
 						}
-						isInvalid={!!errors.nombre}
-						errorMessage={errors.nombre}
+						isInvalid={!!errors.title}
+						errorMessage={errors.title}
 						isRequired
 					/>
 
-					<Select
-						label="Materia"
-						placeholder="Seleccionar materia"
-						selectedKeys={formData.materia ? [formData.materia] : []}
-						onSelectionChange={(keys) => {
-							const value = Array.from(keys)[0] as string;
-							setFormData((prev) => ({ ...prev, materia: value }));
-						}}
-						isInvalid={!!errors.materia}
-						errorMessage={errors.materia}
-						isRequired
-					>
-						{subjects.map((subject) => (
-							<SelectItem key={subject.nombre} textValue={subject.nombre}>
-								{subject.nombre}
-							</SelectItem>
-						))}
-					</Select>
-
-					<Select
-						label="Semestre"
-						placeholder="Seleccionar semestre"
-						selectedKeys={formData.semestre ? [formData.semestre] : []}
-						onSelectionChange={(keys) => {
-							const value = Array.from(keys)[0] as string;
-							setFormData((prev) => ({ ...prev, semestre: value }));
-						}}
-						isInvalid={!!errors.semestre}
-						errorMessage={errors.semestre}
-						isRequired
-					>
-						{[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((semester) => (
-							<SelectItem key={semester} textValue={`Semestre ${semester}`}>
-								Semestre {semester}
-							</SelectItem>
-						))}
-					</Select>
-
+					{/* Descripción */}
 					<Textarea
 						label="Descripción (opcional)"
 						placeholder="Descripción del material..."
-						value={formData.descripcion}
+						value={formData.description}
 						onValueChange={(value) =>
-							setFormData((prev) => ({ ...prev, descripcion: value }))
+							setFormData((prev) => ({ ...prev, description: value }))
 						}
-						maxRows={3}
+						maxRows={4}
 					/>
 
 					{errors.submit && (

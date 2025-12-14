@@ -28,7 +28,6 @@ export function UploadMaterialForm({
 }: UploadMaterialFormProps) {
 	const [formData, setFormData] = useState({
 		nombre: '',
-		materia: '',
 		descripcion: '',
 	});
 	const [file, setFile] = useState<File | null>(null);
@@ -41,7 +40,7 @@ export function UploadMaterialForm({
 	const createMaterial = useCreateMaterial();
 
 	const allowedTypes = ['application/pdf'];
-	const maxSize = 10 * 1024 * 1024; // 10MB
+	const maxSize = 100 * 1024 * 1024; // 100MB
 
 	const validateFile = (selectedFile: File) => {
 		const newErrors: Record<string, string> = {};
@@ -56,7 +55,7 @@ export function UploadMaterialForm({
 		}
 
 		if (selectedFile.size > maxSize) {
-			newErrors.file = 'El archivo es demasiado grande. Máximo 10MB';
+			newErrors.file = 'El archivo es demasiado grande. Máximo 100MB';
 		}
 
 		if (selectedFile.size === 0) {
@@ -112,10 +111,6 @@ export function UploadMaterialForm({
 			newErrors.nombre = 'El título debe tener al menos 3 caracteres';
 		}
 
-		if (!formData.materia) {
-			newErrors.materia = 'La materia es requerida';
-		}
-
 		if (formData.descripcion.length > 300) {
 			newErrors.descripcion =
 				'La descripción no puede superar los 300 caracteres';
@@ -154,11 +149,12 @@ export function UploadMaterialForm({
 
 			await createMaterial.mutateAsync({
 				nombre: formData.nombre,
-				materia: formData.materia,
 				tipo: 'PDF',
 				semestre: 1,
 				descripcion: formData.descripcion,
 				file,
+				userId: user.id,
+				materia: undefined,
 			});
 
 			clearInterval(interval);
@@ -173,13 +169,9 @@ export function UploadMaterialForm({
 			let errorMessage = 'Error al subir el material. Intente nuevamente.';
 
 			if (error instanceof Error) {
-				if (error.message.includes('network')) {
-					errorMessage = 'Error de conexión. Verifique su internet.';
-				} else if (error.message.includes('size')) {
-					errorMessage = 'El archivo es demasiado grande.';
-				} else if (error.message.includes('format')) {
-					errorMessage = 'Formato de archivo no válido.';
-				}
+				console.error('Mensaje de error:', error.message);
+				// Usar el mensaje mapeado del servicio directamente
+				errorMessage = error.message;
 			}
 
 			setErrors({ submit: errorMessage });
@@ -213,25 +205,6 @@ export function UploadMaterialForm({
 						errorMessage={errors.nombre}
 						isRequired
 					/>
-
-					<Select
-						label="Materia"
-						placeholder="Seleccionar materia"
-						selectedKeys={formData.materia ? [formData.materia] : []}
-						onSelectionChange={(keys) => {
-							const value = Array.from(keys)[0] as string;
-							setFormData((prev) => ({ ...prev, materia: value }));
-						}}
-						isInvalid={!!errors.materia}
-						errorMessage={errors.materia}
-						isRequired
-					>
-						{subjects.map((subject) => (
-							<SelectItem key={subject.nombre} textValue={subject.nombre}>
-								{subject.nombre}
-							</SelectItem>
-						))}
-					</Select>
 
 					<Textarea
 						label="Descripción (opcional)"

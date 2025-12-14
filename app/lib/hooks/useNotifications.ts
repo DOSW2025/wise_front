@@ -15,29 +15,6 @@ const QUERY_KEYS = {
 export function useNotifications() {
 	const queryClient = useQueryClient();
 
-	// Datos mock para desarrollo
-	const mockNotifications: NotificationDto[] = [
-		{
-			id: '1',
-			asunto: 'Nueva tutoría programada',
-			resumen:
-				'Tu tutoría de Cálculo con Dr. María García está programada para mañana a las 15:00',
-			type: 'info',
-			fechaCreacion: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-			visto: false,
-			userId: 'dev-user',
-		},
-		{
-			id: '2',
-			asunto: 'Material disponible',
-			resumen: 'Nuevo material de Programación Orientada a Objetos disponible',
-			type: 'success',
-			fechaCreacion: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-			visto: false,
-			userId: 'dev-user',
-		},
-	];
-
 	// Query para obtener notificaciones
 	const {
 		data: notifications = [],
@@ -67,13 +44,9 @@ export function useNotifications() {
 		retryDelay: 1000,
 	});
 
-	// Usar datos mock si hay error de conexión
-	const finalNotifications = notificationsError
-		? mockNotifications
-		: notifications;
-	const finalUnreadCount = notificationsError
-		? mockNotifications.filter((n) => !n.visto).length
-		: unreadCount;
+	// Usar datos reales solo de la API
+	const finalNotifications = notifications;
+	const finalUnreadCount = unreadCount;
 
 	// Mutation para marcar como leída individual
 	const markAsReadMutation = useMutation({
@@ -84,13 +57,11 @@ export function useNotifications() {
 				(old: NotificationDto[]) => {
 					if (!old) return old;
 					return old.map((n) =>
-						n.id === notificationId ? { ...n, visto: true } : n,
+						String(n.id) === String(notificationId) ? { ...n, visto: true } : n,
 					);
 				},
 			);
-			queryClient.setQueryData(QUERY_KEYS.unreadCount, (oldCount: number) =>
-				Math.max(0, oldCount - 1),
-			);
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.unreadCount });
 		},
 		onError: () => {
 			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notifications });
@@ -126,20 +97,10 @@ export function useNotifications() {
 				QUERY_KEYS.notifications,
 				(old: NotificationDto[]) => {
 					if (!old) return old;
-					const deletedNotification = old.find((n) => n.id === notificationId);
-					const newNotifications = old.filter((n) => n.id !== notificationId);
-
-					// Actualizar contador si la notificación eliminada no estaba leída
-					if (!deletedNotification?.visto) {
-						queryClient.setQueryData(
-							QUERY_KEYS.unreadCount,
-							(oldCount: number) => Math.max(0, oldCount - 1),
-						);
-					}
-
-					return newNotifications;
+					return old.filter((n) => String(n.id) !== String(notificationId));
 				},
 			);
+			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.unreadCount });
 		},
 		onError: () => {
 			queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notifications });

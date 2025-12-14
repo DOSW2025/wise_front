@@ -47,17 +47,154 @@ export function NotificationsDropdown() {
 		isDeleting,
 	} = useNotifications();
 
-	const formatTime = (dateString: string) => {
-		const date = new Date(dateString);
-		const now = new Date();
-		const diff = now.getTime() - date.getTime();
-		const minutes = Math.floor(diff / 60000);
-		const hours = Math.floor(minutes / 60);
+	const formatTime = (dateString: string): string => {
+		try {
+			if (!dateString || typeof dateString !== 'string') {
+				return 'fecha inválida';
+			}
+			const date = new Date(dateString);
+			if (Number.isNaN(date.getTime())) {
+				return 'fecha inválida';
+			}
+			const now = new Date();
+			const diff = now.getTime() - date.getTime();
+			const minutes = Math.floor(diff / 60000);
+			const hours = Math.floor(minutes / 60);
 
-		if (minutes < 60) return `hace ${minutes}m`;
-		if (hours < 24) return `hace ${hours}h`;
-		return date.toLocaleDateString();
+			if (minutes < 60) return `hace ${minutes}m`;
+			if (hours < 24) return `hace ${hours}h`;
+			return date.toLocaleDateString('es-ES');
+		} catch {
+			return 'fecha inválida';
+		}
 	};
+
+	const handleMarkAsRead = (
+		notificationId: string | number,
+		e: React.MouseEvent,
+	): void => {
+		e.preventDefault();
+		e.stopPropagation();
+		const id = String(notificationId);
+		if (!id || id === 'undefined') {
+			return;
+		}
+		markAsRead(id);
+	};
+
+	const handleDeleteNotification = (
+		notificationId: string | number,
+		e: React.MouseEvent,
+	): void => {
+		e.preventDefault();
+		e.stopPropagation();
+		const id = String(notificationId);
+		if (!id || id === 'undefined') {
+			return;
+		}
+		deleteNotification(id);
+	};
+
+	// Crear items del dropdown
+	const dropdownItems = [
+		{
+			key: 'header',
+			content: (
+				<div className="flex justify-between items-center w-full">
+					<div>
+						<p className="font-semibold">Notificaciones</p>
+						<p className="text-tiny text-default-500">{unreadCount} sin leer</p>
+					</div>
+					{unreadCount > 0 && (
+						<Button
+							size="sm"
+							variant="light"
+							onPress={() => markAllAsRead()}
+							className="text-primary"
+							isLoading={isMarkingAllAsRead}
+						>
+							Marcar todas como leídas
+						</Button>
+					)}
+				</div>
+			),
+		},
+		...(notifications.length === 0
+			? [
+					{
+						key: 'empty',
+						content: (
+							<p className="text-center text-default-500 py-4">
+								No hay notificaciones
+							</p>
+						),
+					},
+				]
+			: []),
+		...notifications.map((notification) => {
+			const truncatedResumen = truncateText(notification.resumen ?? '');
+			const notificationId = notification.id ?? '';
+
+			return {
+				key: notificationId || 'unknown',
+				textValue: notificationId,
+				content: (
+					<div className="flex gap-3 w-full">
+						<div className="flex-shrink-0 mt-0.5">
+							{getNotificationIcon(notification.type ?? 'info')}
+						</div>
+						<div className="flex-1 min-w-0">
+							<div className="flex justify-between items-start gap-2">
+								<p
+									className={`text-sm truncate ${notification.visto ? 'font-medium' : 'font-semibold'}`}
+									title={notification.asunto ?? ''}
+								>
+									{notification.asunto ?? 'Sin asunto'}
+								</p>
+								{!notification.visto && (
+									<span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1.5"></span>
+								)}
+							</div>
+							<p
+								className="text-tiny text-default-600 mt-1 line-clamp-2"
+								title={notification.resumen ?? ''}
+							>
+								{truncatedResumen}
+							</p>
+							<div className="flex justify-between items-center mt-2">
+								<p className="text-tiny text-default-400">
+									{formatTime(notification.fechaCreacion ?? '')}
+								</p>
+								<div className="flex gap-2">
+									{!notification.visto && (
+										<button
+											type="button"
+											onClick={(e) => handleMarkAsRead(notificationId, e)}
+											className="text-sm text-primary hover:underline disabled:opacity-50 cursor-pointer px-3 py-1.5 rounded hover:bg-default-200"
+											disabled={isMarkingAsRead}
+											aria-label="Marcar como leída"
+										>
+											{isMarkingAsRead ? 'Marcando...' : 'Marcar como leída'}
+										</button>
+									)}
+									<button
+										type="button"
+										onClick={(e) => handleDeleteNotification(notificationId, e)}
+										className="text-sm text-primary hover:underline flex items-center gap-1.5 disabled:opacity-50 cursor-pointer px-3 py-1.5 rounded hover:bg-default-200"
+										disabled={isDeleting}
+										title="Eliminar notificación"
+										aria-label="Eliminar notificación"
+									>
+										<Trash2 className="w-4 h-4" />
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				),
+			};
+		}),
+	];
 
 	if (isLoading) {
 		return (
@@ -68,7 +205,7 @@ export function NotificationsDropdown() {
 	}
 
 	return (
-		<Dropdown placement="bottom-end">
+		<Dropdown placement="bottom-end" closeOnSelect={false}>
 			<DropdownTrigger>
 				<Button isIconOnly variant="light" size="md" className="relative">
 					<Bell className="w-6 h-6" />
@@ -117,9 +254,14 @@ export function NotificationsDropdown() {
 				) : null}
 				{notifications.map((notification) => (
 					<DropdownItem
-						key={notification.id}
-						className="h-auto py-3 data-[hover=true]:bg-default-100"
-						textValue={notification.asunto}
+						key={item.key}
+						textValue={item.key === 'header' ? 'header' : item.key}
+						className={
+							item.key === 'header'
+								? 'h-14 gap-2 data-[hover=true]:bg-transparent cursor-default'
+								: 'h-auto py-3 data-[hover=true]:bg-default-100 cursor-default'
+						}
+						isReadOnly
 					>
 						<div className="flex gap-3 w-full relative">
 							<div className="flex-shrink-0 mt-0.5">
