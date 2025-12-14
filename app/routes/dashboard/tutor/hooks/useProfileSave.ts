@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useFormMessage } from '~/lib/hooks/useFormMessage';
 import { updateProfile } from '~/lib/services/tutor.service';
 
 interface ProfileSaveData {
@@ -11,20 +12,18 @@ interface ProfileSaveData {
 
 export function useProfileSave() {
 	const [isSaving, setIsSaving] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [success, setSuccess] = useState<string | null>(null);
+	const { error, success, clearMessages, showError, showSuccess } =
+		useFormMessage();
 
 	const saveProfile = async (
 		profileData: ProfileSaveData,
 	): Promise<boolean> => {
-		setError(null);
-		setSuccess(null);
+		clearMessages();
 		setIsSaving(true);
 
 		try {
 			await updateProfile(profileData);
-			setSuccess('Perfil actualizado exitosamente');
-			setTimeout(() => setSuccess(null), 3000);
+			showSuccess('Perfil actualizado exitosamente');
 			return true;
 		} catch (err) {
 			let errorMessage = 'Error al guardar el perfil';
@@ -43,7 +42,7 @@ export function useProfileSave() {
 				}
 			}
 
-			setError(errorMessage);
+			showError(errorMessage);
 			return false;
 		} finally {
 			setIsSaving(false);
@@ -54,11 +53,10 @@ export function useProfileSave() {
 		try {
 			// Simular llamada a API
 			await new Promise((resolve) => setTimeout(resolve, 1000));
-			setSuccess('Contraseña actualizada exitosamente');
-			setTimeout(() => setSuccess(null), 3000);
+			showSuccess('Contraseña actualizada exitosamente');
 			return true;
 		} catch {
-			setError('Error al cambiar la contraseña');
+			showError('Error al cambiar la contraseña');
 			return false;
 		}
 	};
@@ -67,7 +65,6 @@ export function useProfileSave() {
 		isSaving,
 		error,
 		success,
-		setError,
 		saveProfile,
 		changePassword,
 	};
