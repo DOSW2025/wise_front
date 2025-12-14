@@ -511,8 +511,16 @@ export function CommunityForums() {
 		if (!isEditTitleValid || !editingTopicIdModal) return;
 
 		try {
+			const user = getStorageJSON<{ id: string }>(STORAGE_KEYS.USER);
+			const userId = user?.id;
+			if (!userId) {
+				console.error('User ID not found');
+				alert('No se pudo obtener tu ID de usuario');
+				return;
+			}
 			await forumsService.editForum(editingTopicIdModal, {
 				title: editTopicTitle,
+				editorId: userId,
 			});
 			setEditedById((prev) => ({ ...prev, [editingTopicIdModal]: true }));
 			await loadForums();
