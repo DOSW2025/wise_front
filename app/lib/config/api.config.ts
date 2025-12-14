@@ -116,6 +116,7 @@ export const API_ENDPOINTS = {
 		DELETE: '/wise/notificaciones/:id',
 	},
 	IA: {
+		RECOMMENDATIONS: '/wise/ia/chat/recommendations',
 		NAVIGATION_CHAT: '/wise/ia/chat/nav',
 	},
 } as const;

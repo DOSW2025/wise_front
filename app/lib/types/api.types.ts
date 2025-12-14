@@ -227,3 +227,53 @@ export interface NotificationsResponse {
 export interface UnreadCountResponse {
 	unreadCount: number;
 }
+
+// API Response Types para el mapeo de materiales
+export interface ApiMaterialRawResponse {
+	id: string;
+	nombre?: string;
+	title?: string;
+	materia?: string;
+	subject?: string;
+	tags?: string[];
+	extension?: string;
+	userName?: string;
+	calificación?: number;
+	vistos?: number;
+	views?: number;
+	descargas?: number;
+	downloads?: number;
+	createdAt: string;
+	updatedAt?: string;
+	previewURL?: string;
+	url?: string;
+	fileUrl?: string;
+	descripcion?: string;
+	description?: string;
+	metadata?: ApiMaterialRawResponse;
+	userId?: string;
+}
+
+// Axios Error Response Type
+export interface AxiosErrorResponse {
+	status?: number;
+	statusText?: string;
+	data?: {
+		message?: string;
+		[key: string]: unknown;
+	};
+}
+
+// IA Recommendations Types
+export interface RecommendationItem {
+	docId?: string;
+	fileName: string;
+	materia: string;
+	tema: string;
+	summary: string;
+}
+
+export interface AssistantResponse {
+	message?: string;
+	recommendations?: RecommendationItem[];
+}
