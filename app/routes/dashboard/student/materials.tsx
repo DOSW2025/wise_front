@@ -30,6 +30,7 @@ import type {
 } from '~/components/materials/types';
 import { sortOptions } from '~/components/materials/types';
 import { recommendationsService } from '~/lib/api/recommendations';
+import { useIaFeature } from '~/lib/hooks/useIaFeature';
 import { useDownloadMaterial, useMaterials } from '~/lib/hooks/useMaterials';
 import type {
 	AssistantResponse,
@@ -171,6 +172,7 @@ function adaptMaterialForCard(apiMaterial: Material): MaterialCardType {
 
 export default function StudentMaterials() {
 	// Estados
+	const iaEnabledState = useIaFeature(5000);
 	const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 	const [searchQuery, setSearchQuery] = useState('');
@@ -217,6 +219,7 @@ export default function StudentMaterials() {
 		? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
 		: 'space-y-4';
 	const gridButtonVariant = isGridView ? 'solid' : 'flat';
+
 	const gridButtonClass = isGridView ? 'bg-[#8B1A1A] text-white' : '';
 	const listButtonVariant = isGridView ? 'flat' : 'solid';
 	const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
@@ -519,17 +522,19 @@ export default function StudentMaterials() {
 					onValueChange={setSearchQuery}
 					className="flex-1"
 					endContent={
-						<Button
-							isIconOnly
-							variant="light"
-							className="min-w-10 h-10 rounded-full bg-[#8B1A1A] text-white shadow-sm flex items-center justify-center px-2 mr-2"
-							title="Busqueda inteligente"
-							aria-label="Busqueda inteligente"
-							onClick={() => setIsAssistOpen((prev) => !prev)}
-							type="button"
-						>
-							<Stars size={18} className="w-5 h-5" />
-						</Button>
+						iaEnabledState ? (
+							<Button
+								isIconOnly
+								variant="light"
+								className="min-w-10 h-10 rounded-full bg-[#8B1A1A] text-white shadow-sm flex items-center justify-center px-2 mr-2"
+								title="Busqueda inteligente"
+								aria-label="Busqueda inteligente"
+								onClick={() => setIsAssistOpen((prev) => !prev)}
+								type="button"
+							>
+								<Stars size={18} className="w-5 h-5" />
+							</Button>
+						) : null
 					}
 				/>
 
@@ -543,7 +548,7 @@ export default function StudentMaterials() {
 				</Button>
 			</div>
 
-			{isAssistOpen && (
+			{iaEnabledState && isAssistOpen && (
 				<div className="border rounded-lg p-4 shadow-sm bg-white/60 backdrop-blur-sm space-y-4">
 					<div className="flex items-center justify-between gap-3">
 						<div>

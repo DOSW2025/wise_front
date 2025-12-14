@@ -411,7 +411,9 @@ export function CommunityForums() {
 				title: forum.title,
 				excerpt: forum.description || '',
 				author: forum.creator?.nombre || 'Anónimo',
-				timeAgo: formatTimeAgo(forum.created_at),
+				timeAgo: forum.created_at
+					? formatTimeAgo(forum.created_at)
+					: 'Recientemente',
 				subject: forum.materia?.nombre || 'General',
 				pinned: pinnedById[forum.id] || false,
 				resolved: forum.closed,
@@ -1212,6 +1214,7 @@ export function CommunityForums() {
  */
 function formatTimeAgo(dateString: string): string {
 	const date = new Date(dateString);
+	if (isNaN(date.getTime())) return 'Recientemente';
 	const now = new Date();
 	const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
