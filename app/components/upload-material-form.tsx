@@ -39,7 +39,7 @@ export function UploadMaterialForm({
 	const createMaterial = useCreateMaterial();
 
 	const allowedTypes = ['application/pdf'];
-	const maxSize = 10 * 1024 * 1024; // 10MB
+	const maxSize = 100 * 1024 * 1024; // 100MB
 
 	const validateFile = (selectedFile: File) => {
 		const newErrors: Record<string, string> = {};
@@ -54,7 +54,7 @@ export function UploadMaterialForm({
 		}
 
 		if (selectedFile.size > maxSize) {
-			newErrors.file = 'El archivo es demasiado grande. Máximo 10MB';
+			newErrors.file = 'El archivo es demasiado grande. Máximo 100MB';
 		}
 
 		if (selectedFile.size === 0) {
