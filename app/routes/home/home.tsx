@@ -233,21 +233,21 @@ export default function Home() {
 									<div className="flex items-center gap-2 mb-1">
 										<Users className="text-primary" size={20} />
 										<p className="text-2xl font-bold text-foreground font-heading">
-											100+
+											+500
 										</p>
 									</div>
-									<p className="text-xs text-default-500 font-sans">
-										Estudiantes activos
+									<p className="text-xs text-default-700 font-sans">
+										Estudiantes esperados
 									</p>
 								</div>
 								<div className="bg-content1/80 backdrop-blur-sm rounded-2xl p-4 border border-divider/50 shadow-md">
 									<div className="flex items-center gap-2 mb-1">
 										<BookOpen className="text-secondary" size={20} />
 										<p className="text-2xl font-bold text-foreground font-heading">
-											500+
+											+1K
 										</p>
 									</div>
-									<p className="text-xs text-default-500 font-sans">
+									<p className="text-xs text-default-700 font-sans">
 										Materiales compartidos
 									</p>
 								</div>
@@ -255,11 +255,11 @@ export default function Home() {
 									<div className="flex items-center gap-2 mb-1">
 										<GraduationCap className="text-success" size={20} />
 										<p className="text-2xl font-bold text-foreground font-heading">
-											50+
+											+200
 										</p>
 									</div>
-									<p className="text-xs text-default-500 font-sans">
-										Tutores disponibles
+									<p className="text-xs text-default-700 font-sans">
+										Tutores esperados
 									</p>
 								</div>
 							</div>
