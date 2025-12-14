@@ -250,11 +250,11 @@ export default function AdminUsers() {
 
 	// Table columns
 	const columns = [
-		{ key: 'user', label: 'USUARIO' },
-		{ key: 'role', label: 'ROL' },
-		{ key: 'status', label: 'ESTADO' },
-		{ key: 'createdAt', label: 'REGISTRO' },
-		{ key: 'actions', label: 'ACCIONES' },
+		{ key: 'user', label: 'USUARIO', width: '40%' },
+		{ key: 'role', label: 'ROL', width: '15%' },
+		{ key: 'status', label: 'ESTADO', width: '15%' },
+		{ key: 'createdAt', label: 'REGISTRO', width: '20%' },
+		{ key: 'actions', label: 'ACCIONES', width: '10%' },
 	];
 
 	// Render cell content
@@ -426,6 +426,7 @@ export default function AdminUsers() {
 							onValueChange={handleSearch}
 							isClearable
 							onClear={() => handleSearch('')}
+							size="lg"
 						/>
 						<Select
 							label="Filtrar por rol"
@@ -435,6 +436,7 @@ export default function AdminUsers() {
 								setRoleFilter(e.target.value);
 								setPage(1);
 							}}
+							size="sm"
 						>
 							<SelectItem key="">Todos los roles</SelectItem>
 							<SelectItem key="estudiante">Estudiante</SelectItem>
@@ -449,6 +451,7 @@ export default function AdminUsers() {
 								setStatusFilter(e.target.value);
 								setPage(1);
 							}}
+							size="sm"
 						>
 							<SelectItem key="">Todos los estados</SelectItem>
 							<SelectItem key="active">Activos</SelectItem>
@@ -464,6 +467,7 @@ export default function AdminUsers() {
 				bottomContent={bottomContent}
 				classNames={{
 					wrapper: 'min-h-[400px]',
+					table: 'table-fixed',
 				}}
 			>
 				<TableHeader columns={columns}>
@@ -471,6 +475,8 @@ export default function AdminUsers() {
 						<TableColumn
 							key={column.key}
 							align={column.key === 'actions' ? 'center' : 'start'}
+							className="whitespace-nowrap"
+							style={{ width: column.width }}
 						>
 							{column.label}
 						</TableColumn>
@@ -492,9 +498,17 @@ export default function AdminUsers() {
 				>
 					{(user) => (
 						<TableRow key={user.id}>
-							{(columnKey) => (
-								<TableCell>{renderCell(user, columnKey as string)}</TableCell>
-							)}
+							{(columnKey) => {
+								const column = columns.find((c) => c.key === columnKey);
+								return (
+									<TableCell
+										className="whitespace-nowrap"
+										style={{ width: column?.width }}
+									>
+										{renderCell(user, columnKey as string)}
+									</TableCell>
+								);
+							}}
 						</TableRow>
 					)}
 				</TableBody>

@@ -19,15 +19,15 @@ import type {
 
 /**
  * Mapeo de roles: nombre → ID
- * Según el backend: 1=estudiante, 2=admin, 3=tutor
+ * Según el backend: 1=estudiante, 2=tutor, 3=admin
  */
 const ROLE_ID_MAP: Record<string, number> = {
 	estudiante: 1,
 	student: 1,
-	admin: 2,
-	administrador: 2,
-	tutor: 3,
-	teacher: 3,
+	tutor: 2,
+	teacher: 2,
+	admin: 3,
+	administrador: 3,
 };
 
 /**
