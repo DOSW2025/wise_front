@@ -1,0 +1,8 @@
+{
+	"rewrites": [
+		{
+			"source": "/api/:path*",
+			"destination": "https://wise-api-gateway-e2gqa8djcmd2dzgk.canadacentral-01.azurewebsites.net/:path*"
+		}
+	]
+}

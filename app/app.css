@@ -5,16 +5,37 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+	/* Fuente para el cuerpo general */
 	--font-sans:
-		"Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+		"DM Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
 		"Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+	/* Fuente para logos y branding */
+	--font-logo: "Poppins", ui-sans-serif, system-ui, sans-serif;
+
+	/* Fuente para títulos */
+	--font-heading: "Nunito", ui-sans-serif, system-ui, sans-serif;
+
+	/* Fuente para navegación */
+	--font-nav: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 html,
 body {
 	@apply bg-background;
+	font-family: var(--font-sans);
 
 	@media (prefers-color-scheme: dark) {
 		color-scheme: dark;
 	}
+}
+
+/* Ocultar scrollbar manteniendo funcionalidad */
+.scrollbar-hide {
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+	display: none; /* Chrome, Safari and Opera */
 }
