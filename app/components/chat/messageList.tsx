@@ -28,12 +28,13 @@ export default function MessageList({
 }: MessageListProps) {
 	const bottomRef = useRef<HTMLDivElement>(null);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: Need to scroll when messages change
 	useEffect(() => {
 		bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-	}, []);
+	}, [messages]);
 
 	return (
-		<div className="p-4 flex flex-col gap-3">
+		<div className="py-4 px-2 flex flex-col gap-4 max-w-4xl mx-auto">
 			{isLoading ? (
 				// Skeleton loader mientras carga
 				[1, 2, 3].map((i) => (
@@ -69,7 +70,7 @@ export default function MessageList({
 						/>
 					))}
 					{typingUsers.length > 0 && (
-						<div className="flex gap-2 items-center text-sm text-gray-500 italic">
+						<div className="flex gap-2 items-center text-sm text-gray-500 italic px-2">
 							<div className="flex gap-1">
 								<span
 									className="animate-bounce"

@@ -87,7 +87,7 @@ export function DashboardLayout({
 			/>
 
 			{/* Chatbot Widget */}
-			<ChatbotWidget />
+			<ChatbotWidget isChatOpen={!!selectedTutor} />
 		</div>
 	);
 }

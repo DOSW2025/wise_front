@@ -69,8 +69,8 @@ export default function MessageInput({
 	}
 
 	return (
-		<div className="p-4 border-t bg-gray-50">
-			<div className="flex gap-2 items-end">
+		<div className="p-4 bg-gradient-to-r from-primary/5 to-secondary/5">
+			<div className="flex gap-2 items-end max-w-4xl mx-auto">
 				<input
 					type="file"
 					id="file-input"
@@ -93,13 +93,13 @@ export default function MessageInput({
 					value={text}
 					onChange={handleTextChange}
 					onKeyDown={handleKey}
-					className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+					className="flex-1 border-2 border-primary/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
 					placeholder="Escribe un mensaje…"
 				/>
 
 				<Button
 					isIconOnly
-					color="danger"
+					color="primary"
 					aria-label="Enviar"
 					onPress={handleSend}
 					isDisabled={!text.trim()}
