@@ -1,4 +1,4 @@
-import { useSaveProfileAction } from '~/lib/hooks/useSaveProfileAction';
+import { useState } from 'react';
 import { updateProfile } from '~/lib/services/tutor.service';
 
 interface ProfileSaveData {
@@ -9,19 +9,66 @@ interface ProfileSaveData {
 	description: string;
 }
 
-const handleTutorError = (message: string): string => {
-	if (
-		message.includes('Cannot PUT') ||
-		message.includes('404') ||
-		message.includes('Not Found')
-	) {
-		return 'El servicio no está disponible temporalmente. Por favor, intenta más tarde';
-	}
-	return message;
-};
-
 export function useProfileSave() {
-	return useSaveProfileAction<ProfileSaveData>(updateProfile, {
-		onSaveError: handleTutorError,
-	});
+	const [isSaving, setIsSaving] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [success, setSuccess] = useState<string | null>(null);
+
+	const saveProfile = async (
+		profileData: ProfileSaveData,
+	): Promise<boolean> => {
+		setError(null);
+		setSuccess(null);
+		setIsSaving(true);
+
+		try {
+			await updateProfile(profileData);
+			setSuccess('Perfil actualizado exitosamente');
+			setTimeout(() => setSuccess(null), 3000);
+			return true;
+		} catch (err) {
+			let errorMessage = 'Error al guardar el perfil';
+
+			if (err instanceof Error) {
+				errorMessage = err.message;
+
+				// Detectar error de endpoint no disponible
+				if (
+					errorMessage.includes('Cannot PUT') ||
+					errorMessage.includes('404') ||
+					errorMessage.includes('Not Found')
+				) {
+					errorMessage =
+						'El servicio no está disponible temporalmente. Por favor, intenta más tarde';
+				}
+			}
+
+			setError(errorMessage);
+			return false;
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	const changePassword = async (): Promise<boolean> => {
+		try {
+			// Simular llamada a API
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+			setSuccess('Contraseña actualizada exitosamente');
+			setTimeout(() => setSuccess(null), 3000);
+			return true;
+		} catch {
+			setError('Error al cambiar la contraseña');
+			return false;
+		}
+	};
+
+	return {
+		isSaving,
+		error,
+		success,
+		setError,
+		saveProfile,
+		changePassword,
+	};
 }
