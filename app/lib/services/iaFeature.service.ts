@@ -1,7 +1,7 @@
 // Fuente del API Gateway usada para consultar el estado del flag de IA.
 // Este servicio comprueba si la funcionalidad de IA está habilitada
-// a través del API Gateway (endpoint de feature flags), y expone un
-// booleano para que el cliente oculte/muestre la UI y evite llamadas de IA.
+// a través del API Gateway (endpoint genérico de feature flags con key 'enable_ia_chat'),
+// y expone un booleano para que el cliente oculte/muestre la UI y evite llamadas de IA.
 const API_BASE = import.meta.env.VITE_API_GATEWAY_URL;
 
 let cachedIaEnabled: boolean | null = null;
@@ -22,8 +22,8 @@ export async function isIaEnabled(): Promise<boolean> {
 	}
 
 	try {
-		// Endpoint del API Gateway de feature flags que devuelve { enabled: boolean }
-		const res = await fetch(`${API_BASE}/wise/feature-flags/ia`, {
+		// Endpoint genérico del API Gateway de feature flags que devuelve { key: string, enabled: boolean }
+		const res = await fetch(`${API_BASE}/wise/feature-flags/enable_ia_chat`, {
 			method: 'GET',
 			headers: { Accept: 'application/json' },
 		});
