@@ -6,6 +6,14 @@
  */
 
 /**
+ * Validation constraints for profile fields
+ */
+export const VALIDATION_LIMITS = {
+	PHONE_MAX_LENGTH: 20,
+	BIO_MAX_LENGTH: 500,
+} as const;
+
+/**
  * Email validation regex with bounded repetition
  * - Local part (before @): 1-64 characters
  * - Domain part (after @): 1-255 characters

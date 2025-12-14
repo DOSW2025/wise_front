@@ -38,10 +38,7 @@ export default function StudentProfile() {
 		setFormErrors,
 		isEditing,
 		setIsEditing,
-		avatarPreview,
-		setAvatarPreview,
 		validateForm,
-		handleImageUpload,
 		resetForm,
 	} = useProfileForm({
 		name: user?.name || '',
@@ -55,6 +52,40 @@ export default function StudentProfile() {
 	});
 
 	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
+
+	// Cargar el perfil completo cuando el componente se monta
+	useEffect(() => {
+		const loadProfile = async () => {
+			if (!user) return;
+
+			try {
+				setIsLoadingProfile(true);
+				const profileData = await getProfile();
+
+				// Actualizar el estado del perfil con los datos cargados del backend
+				setProfile((prev) => ({
+					...prev,
+					name: user.name, // Mantener nombre del contexto (no editable)
+					email: user.email, // Mantener email del contexto (no editable)
+					avatar: user.avatarUrl,
+					phone: profileData.phone || '',
+					description: profileData.description || '',
+					role: profileData.role || user.role || '',
+					semester: profileData.semester || '',
+					// Nota: los intereses se mantienen localmente para futuro uso y no se persisten en backend
+				}));
+			} catch (err) {
+				console.error('Error cargando perfil:', err);
+				const errorMessage =
+					err instanceof Error ? err.message : 'Error al cargar tu perfil';
+				setError(errorMessage);
+			} finally {
+				setIsLoadingProfile(false);
+			}
+		};
+
+		loadProfile();
+	}, [user, setProfile, setError]);
 
 	// Actualizar datos básicos del usuario desde el contexto
 	useEffect(() => {
@@ -84,14 +115,6 @@ export default function StudentProfile() {
 
 		if (saved) {
 			setIsEditing(false);
-			setAvatarPreview(null);
-		}
-	};
-
-	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const result = handleImageUpload(event);
-		if (result?.error) {
-			setError(result.error);
 		}
 	};
 
@@ -127,13 +150,7 @@ export default function StudentProfile() {
 					</div>
 
 					<div className="flex flex-col md:flex-row gap-6">
-						<ProfileAvatar
-							src={profile.avatarUrl}
-							name={profile.name}
-							isEditing={isEditing}
-							onImageChange={handleImageChange}
-							preview={avatarPreview}
-						/>
+						<ProfileAvatar src={profile.avatar} name={profile.name} />
 						<ProfileFormFields
 							profile={profile}
 							isEditing={isEditing}

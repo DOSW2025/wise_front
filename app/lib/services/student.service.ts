@@ -6,12 +6,13 @@
 import apiClient from '../api/client';
 import { API_ENDPOINTS } from '../config/api.config';
 import type { ApiResponse } from '../types/api.types';
+import { VALIDATION_LIMITS } from '../utils/validation';
 
 export interface StudentProfile {
 	name: string;
 	email: string;
 	phone: string;
-	role?: string;
+	role: string;
 	description: string;
 	semester?: string;
 	interests?: string[];
@@ -86,7 +87,13 @@ function extractErrorMessage(error: unknown, defaultMessage: string): string {
 			unknown
 		>;
 
-		// Detectar error 404 o método no permitido
+		// Mensajes específicos por código
+		if (response.status === 400) {
+			return 'Datos inválidos. Verifica teléfono (máx 20) y biografía (máx 500).';
+		}
+		if (response.status === 401) {
+			return 'Tu sesión expiró. Inicia sesión nuevamente.';
+		}
 		if (response.status === 404 || response.status === 405) {
 			return 'El endpoint no está disponible en el backend';
 		}
@@ -118,15 +125,38 @@ function extractErrorMessage(error: unknown, defaultMessage: string): string {
 /**
  * Actualizar información personal del estudiante
  * Solo actualiza teléfono y biografía
+ *
+ * Campos read-only (no se envían al backend):
+ * - name: Controlado por el contexto de autenticación
+ * - email: Controlado por el contexto de autenticación
+ * - role: Asignado por el backend
+ * - semester: Asignado por el backend (campo académico, no editable)
  */
 export async function updateProfile(
 	profile: StudentProfile,
 ): Promise<StudentProfile> {
 	try {
-		// Mapear los campos del frontend al DTO del backend
+		// Mapear los campos del frontend al DTO del backend con sanitización
+		const telefono = profile.phone?.trim();
+		const biografia = profile.description?.trim();
+
+		// Validar límites antes de enviar al backend
+		// Nota: valores vacíos o solo espacios después del trim se convierten en undefined
+		// (comportamiento intencional - estos campos son opcionales)
+		if (telefono && telefono.length > VALIDATION_LIMITS.PHONE_MAX_LENGTH) {
+			throw new Error(
+				`Teléfono excede el límite de ${VALIDATION_LIMITS.PHONE_MAX_LENGTH} caracteres`,
+			);
+		}
+		if (biografia && biografia.length > VALIDATION_LIMITS.BIO_MAX_LENGTH) {
+			throw new Error(
+				`Biografía excede el límite de ${VALIDATION_LIMITS.BIO_MAX_LENGTH} caracteres`,
+			);
+		}
+
 		const updateDto: UpdatePersonalInfoDto = {
-			telefono: profile.phone || undefined,
-			biografia: profile.description || undefined,
+			telefono: telefono || undefined,
+			biografia: biografia || undefined,
 		};
 
 		const response = await apiClient.patch<ApiResponse<unknown>>(
@@ -134,18 +164,17 @@ export async function updateProfile(
 			updateDto,
 		);
 
-		// El backend devuelve el usuario completo
-		const backendData = extractResponseData<Record<string, unknown>>(
-			response.data,
-		);
+		// El backend devuelve { message, user } o directamente el usuario
+		const payload = extractResponseData<Record<string, unknown>>(response.data);
+		const backendData = (payload.user as Record<string, unknown>) || payload;
 
 		// Retornar el perfil actualizado en el formato del frontend
 		return {
-			name: (backendData.nombre as string) || profile.name,
-			email: (backendData.email as string) || profile.email,
-			phone: (backendData.telefono as string) || '',
-			role: (backendData.role as string) || profile.role,
-			description: (backendData.biografia as string) || '',
+			name: (backendData.nombre as string) ?? profile.name,
+			email: (backendData.email as string) ?? profile.email,
+			phone: (backendData.telefono as string) ?? '',
+			role: (backendData.rol as string) ?? profile.role,
+			description: (backendData.biografia as string) ?? '',
 			semester: profile.semester,
 			interests: profile.interests,
 		};
@@ -158,28 +187,33 @@ export async function updateProfile(
 
 /**
  * Obtener perfil completo del estudiante
+ * Endpoint: GET /wise/gestion-usuarios/me
+ * Retorna: { id, nombre, email, rol, estado, telefono, biografia }
  */
 export async function getProfile(): Promise<StudentProfile> {
 	try {
-		const response = await apiClient.get<ApiResponse<unknown>>(
-			API_ENDPOINTS.STUDENT.GET_PROFILE, // Necesitamos agregar esta ruta
+		const response = await apiClient.get<Record<string, unknown>>(
+			API_ENDPOINTS.STUDENT.GET_PROFILE,
 		);
 
-		const backendData = extractResponseData<Record<string, unknown>>(
-			response.data,
-		);
+		// El backend retorna directamente el objeto del usuario
+		const backendData = response.data as Record<string, unknown>;
 
 		// Mapear del formato backend al formato frontend
-		return {
-			name: `${(backendData.nombre as string) || ''} ${(backendData.apellido as string) || ''}`.trim(),
-			email: (backendData.email as string) || '',
-			phone: (backendData.telefono as string) || '',
-			role: (backendData.role as string) || 'estudiante', // Este campo no existe en el backend aún
-			description: (backendData.biografia as string) || '',
-			semester: (backendData.semestre as string) || '',
-			interests: (backendData.intereses as string[]) || [],
-		};
+		const name =
+			`${(backendData.nombre as string) ?? ''} ${(backendData.apellido as string) ?? ''}`.trim();
+		const email = (backendData.email as string) ?? '';
+		const phone = (backendData.telefono as string) ?? '';
+		const description = (backendData.biografia as string) ?? '';
+		const semester = (backendData.semestre as string) ?? '';
+		// rol puede ser un string o un objeto con propiedad 'nombre'
+		const role =
+			typeof backendData.rol === 'string'
+				? backendData.rol
+				: ((backendData.rol as { nombre?: string })?.nombre ?? '');
+
+		return { name, email, phone, description, role, semester };
 	} catch (error: unknown) {
-		throw new Error(extractErrorMessage(error, 'Error al obtener el perfil'));
+		throw new Error(extractErrorMessage(error, 'No se pudo cargar el perfil.'));
 	}
 }
