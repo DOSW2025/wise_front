@@ -1,21 +1,30 @@
 import { useState } from 'react';
 import { updateProfile } from '~/lib/services/tutor.service';
 
-interface ProfileSaveData {
+interface TutorProfileSaveData {
 	name: string;
 	email: string;
 	phone: string;
-	location: string;
+	role: string;
 	description: string;
+	availability: {
+		monday: boolean;
+		tuesday: boolean;
+		wednesday: boolean;
+		thursday: boolean;
+		friday: boolean;
+		saturday: boolean;
+		sunday: boolean;
+	};
 }
 
-export function useProfileSave() {
+export function useTutorProfileSave() {
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState<string | null>(null);
 
 	const saveProfile = async (
-		profileData: ProfileSaveData,
+		profileData: TutorProfileSaveData,
 	): Promise<boolean> => {
 		setError(null);
 		setSuccess(null);
@@ -34,9 +43,11 @@ export function useProfileSave() {
 
 				// Detectar error de endpoint no disponible
 				if (
+					errorMessage.includes('Cannot PATCH') ||
 					errorMessage.includes('Cannot PUT') ||
 					errorMessage.includes('404') ||
-					errorMessage.includes('Not Found')
+					errorMessage.includes('Not Found') ||
+					errorMessage.includes('no está disponible')
 				) {
 					errorMessage =
 						'El endpoint de actualización de perfil no está disponible en el backend. Por favor, contacta al equipo de desarrollo.';
@@ -52,7 +63,7 @@ export function useProfileSave() {
 
 	const changePassword = async (): Promise<boolean> => {
 		try {
-			// Simular llamada a API
+			// TODO: Implementar cambio de contraseña cuando esté disponible en el backend
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 			setSuccess('Contraseña actualizada exitosamente');
 			setTimeout(() => setSuccess(null), 3000);

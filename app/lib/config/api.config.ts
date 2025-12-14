@@ -43,8 +43,9 @@ export const API_ENDPOINTS = {
 		ME: '/wise/auth/me',
 	},
 	TUTOR: {
-		BASE: '/wise/tutor',
-		PROFILE: '/wise/tutor/profile',
+		PROFILE: '/wise/gestion-usuarios/me/info-personal', // Para PATCH (actualizar)
+		GET_PROFILE: '/wise/gestion-usuarios/me',
+
 		STATS: '/wise/tutor/stats',
 		SESSIONS: {
 			UPCOMING: '/wise/tutor/sessions/upcoming',
