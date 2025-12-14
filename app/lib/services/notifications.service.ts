@@ -20,10 +20,7 @@ export const notificationsService = {
 	getNotifications: async (): Promise<NotificationDto[]> => {
 		try {
 			const user = JSON.parse(getStorageItem(STORAGE_KEYS.USER) || '{}');
-			const endpoint = API_ENDPOINTS.NOTIFICATIONS.LIST.replace(
-				':userId',
-				user.id,
-			);
+			const endpoint = API_ENDPOINTS.NOTIFICATIONS.LIST(user.id);
 			console.log('[Notifications Service] GET:', endpoint);
 			const response =
 				await apiClient.get<ApiResponse<NotificationDto[]>>(endpoint);
@@ -44,10 +41,7 @@ export const notificationsService = {
 	getUnreadCount: async (): Promise<number> => {
 		try {
 			const user = JSON.parse(getStorageItem(STORAGE_KEYS.USER) || '{}');
-			const endpoint = API_ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT.replace(
-				':userId',
-				user.id,
-			);
+			const endpoint = API_ENDPOINTS.NOTIFICATIONS.UNREAD_COUNT(user.id);
 			console.log('[Notifications Service] GET:', endpoint);
 			const response =
 				await apiClient.get<ApiResponse<UnreadCountResponse>>(endpoint);
@@ -70,7 +64,7 @@ export const notificationsService = {
 	 */
 	markAsRead: async (id: string): Promise<void> => {
 		try {
-			const endpoint = API_ENDPOINTS.NOTIFICATIONS.MARK_READ.replace(':id', id);
+			const endpoint = API_ENDPOINTS.NOTIFICATIONS.MARK_READ(id);
 			console.log('[Notifications Service] PATCH:', endpoint);
 			const response = await apiClient.patch(endpoint);
 			console.log(
@@ -89,10 +83,7 @@ export const notificationsService = {
 	markAllAsRead: async (): Promise<void> => {
 		try {
 			const user = JSON.parse(getStorageItem(STORAGE_KEYS.USER) || '{}');
-			const endpoint = API_ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ.replace(
-				':userId',
-				user.id,
-			);
+			const endpoint = API_ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ(user.id);
 			console.log('[Notifications Service] PATCH:', endpoint);
 			const response = await apiClient.patch(endpoint);
 			console.log(
@@ -113,7 +104,7 @@ export const notificationsService = {
 	 */
 	deleteNotification: async (id: string): Promise<void> => {
 		try {
-			const endpoint = API_ENDPOINTS.NOTIFICATIONS.DELETE.replace(':id', id);
+			const endpoint = API_ENDPOINTS.NOTIFICATIONS.DELETE(id);
 			console.log('[Notifications Service] DELETE:', endpoint);
 			const response = await apiClient.delete(endpoint);
 			console.log('[Notifications Service] Delete response:', response.data);

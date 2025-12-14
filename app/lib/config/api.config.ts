@@ -123,10 +123,12 @@ export const API_ENDPOINTS = {
 		RESPONSES: '/responses',
 	},
 	NOTIFICATIONS: {
-		LIST: '/wise/notificaciones/:userId',
-		UNREAD_COUNT: '/wise/notificaciones/unread-count/:userId',
-		MARK_READ: '/wise/notificaciones/read/:id',
-		MARK_ALL_READ: '/wise/notificaciones/read-all/:userId',
-		DELETE: '/wise/notificaciones/:id',
+		LIST: (userId: string) => `/wise/notificaciones/${userId}`,
+		UNREAD_COUNT: (userId: string) =>
+			`/wise/notificaciones/unread-count/${userId}`,
+		MARK_READ: (id: string) => `/wise/notificaciones/read/${id}`,
+		MARK_ALL_READ: (userId: string) =>
+			`/wise/notificaciones/read-all/${userId}`,
+		DELETE: (id: string) => `/wise/notificaciones/${id}`,
 	},
 } as const;

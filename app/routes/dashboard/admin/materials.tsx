@@ -407,14 +407,13 @@ export default function AdminMaterials() {
 												<Button
 													isIconOnly
 													variant="light"
-													color="danger"
 													onClick={(e) => {
 														e.stopPropagation();
 														handleOpenDelete(material);
 													}}
 													title="Eliminar"
 												>
-													<Trash2 className="w-4 h-4" />
+													<Trash2 className="w-4 h-4 text-danger" />
 												</Button>
 											</div>
 										</div>
@@ -500,14 +499,13 @@ export default function AdminMaterials() {
 													isIconOnly
 													size="sm"
 													variant="light"
-													color="danger"
 													onClick={(e) => {
 														e.stopPropagation();
 														handleOpenDelete(material);
 													}}
 													title="Eliminar"
 												>
-													<Trash2 className="w-4 h-4" />
+													<Trash2 className="w-4 h-4 text-danger" />
 												</Button>
 											</div>
 										</div>

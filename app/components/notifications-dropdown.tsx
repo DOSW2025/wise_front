@@ -86,31 +86,29 @@ export function NotificationsDropdown() {
 	};
 
 	const handleMarkAsRead = (
-		notificationId: string,
+		notificationId: string | number,
 		e: React.MouseEvent,
 	): void => {
 		e.preventDefault();
 		e.stopPropagation();
-		if (!notificationId || typeof notificationId !== 'string') {
-			console.error('Invalid notification ID:', notificationId);
+		const id = String(notificationId);
+		if (!id || id === 'undefined') {
 			return;
 		}
-		console.log('Marcando como leída:', notificationId);
-		markAsRead(notificationId);
+		markAsRead(id);
 	};
 
 	const handleDeleteNotification = (
-		notificationId: string,
+		notificationId: string | number,
 		e: React.MouseEvent,
 	): void => {
 		e.preventDefault();
 		e.stopPropagation();
-		if (!notificationId || typeof notificationId !== 'string') {
-			console.error('Invalid notification ID:', notificationId);
+		const id = String(notificationId);
+		if (!id || id === 'undefined') {
 			return;
 		}
-		console.log('Eliminando notificación:', notificationId);
-		deleteNotification(notificationId);
+		deleteNotification(id);
 	};
 
 	// Crear items del dropdown
@@ -157,16 +155,7 @@ export function NotificationsDropdown() {
 				key: notificationId || 'unknown',
 				textValue: notificationId,
 				content: (
-					<div
-						className="flex gap-3 w-full"
-						onClickCapture={(e) => {
-							const target = e.target as HTMLElement;
-							if (!target.closest('button')) {
-								e.preventDefault();
-								e.stopPropagation();
-							}
-						}}
-					>
+					<div className="flex gap-3 w-full">
 						<div className="flex-shrink-0 mt-0.5">
 							{getNotificationIcon(notification.type ?? 'info')}
 						</div>
@@ -192,12 +181,12 @@ export function NotificationsDropdown() {
 								<p className="text-tiny text-default-400">
 									{formatTime(notification.fechaCreacion ?? '')}
 								</p>
-								<div className="flex gap-1">
+								<div className="flex gap-2">
 									{!notification.visto && (
 										<button
 											type="button"
 											onClick={(e) => handleMarkAsRead(notificationId, e)}
-											className="text-xs text-primary hover:underline disabled:opacity-50 cursor-pointer"
+											className="text-sm text-primary hover:underline disabled:opacity-50 cursor-pointer px-3 py-1.5 rounded hover:bg-default-200"
 											disabled={isMarkingAsRead}
 											aria-label="Marcar como leída"
 										>
@@ -207,12 +196,12 @@ export function NotificationsDropdown() {
 									<button
 										type="button"
 										onClick={(e) => handleDeleteNotification(notificationId, e)}
-										className="text-xs text-primary hover:underline flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+										className="text-sm text-primary hover:underline flex items-center gap-1.5 disabled:opacity-50 cursor-pointer px-3 py-1.5 rounded hover:bg-default-200"
 										disabled={isDeleting}
 										title="Eliminar notificación"
 										aria-label="Eliminar notificación"
 									>
-										<Trash2 className="w-3 h-3" />
+										<Trash2 className="w-4 h-4" />
 									</button>
 								</div>
 							</div>
