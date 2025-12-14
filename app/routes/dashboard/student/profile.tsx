@@ -13,6 +13,7 @@ import { DeleteAccount } from '~/components/profile/DeleteAccount';
 import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
 import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
+import { getProfile } from '~/lib/services/student.service';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
 
@@ -20,6 +21,7 @@ export default function StudentProfile() {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
+	const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
 	// Fetch tutorías statistics
 	const { data: stats, isLoading: isLoadingStats } = useTutoriaStats(
@@ -56,7 +58,7 @@ export default function StudentProfile() {
 		semester: '',
 	});
 
-	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
+	const { isSaving, error, success, saveProfile } = useProfileSave();
 
 	// Cargar el perfil completo cuando el componente se monta
 	useEffect(() => {
@@ -80,16 +82,13 @@ export default function StudentProfile() {
 				}));
 			} catch (err) {
 				console.error('Error cargando perfil:', err);
-				const errorMessage =
-					err instanceof Error ? err.message : 'Error al cargar tu perfil';
-				setError(errorMessage);
 			} finally {
 				setIsLoadingProfile(false);
 			}
 		};
 
 		loadProfile();
-	}, [user, setProfile, setError]);
+	}, [user, setProfile]);
 
 	// Actualizar datos básicos del usuario desde el contexto
 	useEffect(() => {
@@ -105,7 +104,6 @@ export default function StudentProfile() {
 
 	const handleSave = async () => {
 		if (!validateForm()) {
-			setError('Por favor corrige los errores en el formulario');
 			return;
 		}
 
@@ -134,11 +132,6 @@ export default function StudentProfile() {
 			navigate('/login');
 		} catch (error) {
 			console.error('Error al eliminar cuenta:', error);
-			const message =
-				error instanceof Error
-					? error.message
-					: 'No se pudo eliminar la cuenta.';
-			setError(message);
 		}
 	};
 
@@ -180,7 +173,7 @@ export default function StudentProfile() {
 					</div>
 
 					<div className="flex flex-col md:flex-row gap-6">
-						<ProfileAvatar src={profile.avatar} name={profile.name} />
+						<ProfileAvatar src={profile.avatarUrl} name={profile.name} />
 						<ProfileFormFields
 							profile={profile}
 							isEditing={isEditing}

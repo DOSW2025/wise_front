@@ -335,6 +335,7 @@ const SessionCardItem: React.FC<{
 								color="primary"
 								variant="flat"
 								onPress={() => onViewDetails(session)}
+								className="font-nav"
 							>
 								Ver detalles
 							</Button>
@@ -345,6 +346,7 @@ const SessionCardItem: React.FC<{
 									color="danger"
 									onPress={() => onCancel(session)}
 									startContent={<X className="w-4 h-4" />}
+									className="font-nav"
 								>
 									Cancelar
 								</Button>
@@ -356,6 +358,7 @@ const SessionCardItem: React.FC<{
 									color="warning"
 									onPress={() => onRate(session)}
 									startContent={<Star className="w-4 h-4" />}
+									className="font-nav"
 								>
 									Calificar
 								</Button>
@@ -436,7 +439,7 @@ const SessionDetailsModal: React.FC<{
 					return (
 						<>
 							<ModalHeader className="flex flex-col gap-1">
-								<span>Detalle de tutoria</span>
+								<span className="font-heading">Detalle de tutoria</span>
 								{view && (
 									<span className="text-sm text-default-500">
 										{view.subject} - {view.codigoMateria}
@@ -467,7 +470,11 @@ const SessionDetailsModal: React.FC<{
 								)}
 							</ModalBody>
 							<ModalFooter>
-								<Button variant="light" onPress={handleClose}>
+								<Button
+									variant="light"
+									onPress={handleClose}
+									className="font-nav"
+								>
 									Cerrar
 								</Button>
 								{session && canCancelSession(session.status) && (
@@ -476,6 +483,7 @@ const SessionDetailsModal: React.FC<{
 										variant="flat"
 										onPress={() => onRequestCancel(session)}
 										startContent={<X className="w-4 h-4" />}
+										className="font-nav"
 									>
 										Cancelar tutoría
 									</Button>
@@ -523,7 +531,7 @@ const CancelSessionModal: React.FC<{
 				{(onCloseModal) => (
 					<>
 						<ModalHeader className="flex flex-col gap-1">
-							Cancelar Tutoría
+							<span className="font-heading">Cancelar Tutoría</span>
 						</ModalHeader>
 						<ModalBody className="gap-4">
 							<p className="text-default-600">
@@ -551,6 +559,7 @@ const CancelSessionModal: React.FC<{
 									onCloseModal();
 								}}
 								isDisabled={isPending}
+								className="font-nav"
 							>
 								Volver
 							</Button>
@@ -560,6 +569,7 @@ const CancelSessionModal: React.FC<{
 								onPress={handleConfirm}
 								isDisabled={!razon.trim() || isPending}
 								isLoading={isPending}
+								className="font-nav"
 							>
 								{isPending ? 'Cancelando...' : 'Confirmar Cancelación'}
 							</Button>
@@ -1045,6 +1055,7 @@ const StudentTutoringPage: React.FC = () => {
 					variant={activeTab === 'search' ? 'solid' : 'light'}
 					color="primary"
 					onPress={() => setActiveTab('search')}
+					className="font-nav"
 				>
 					Agendar tutoria
 				</Button>
@@ -1052,6 +1063,7 @@ const StudentTutoringPage: React.FC = () => {
 					variant={activeTab === 'my-sessions' ? 'solid' : 'light'}
 					color="primary"
 					onPress={() => setActiveTab('my-sessions')}
+					className="font-nav"
 				>
 					Mis tutorias
 				</Button>
@@ -1124,7 +1136,9 @@ const StudentTutoringPage: React.FC = () => {
 			{activeTab === 'my-sessions' && (
 				<div className="space-y-4">
 					<div className="flex items-center justify-between">
-						<h2 className="text-xl font-semibold">Sesiones programadas</h2>
+						<h2 className="text-xl font-semibold font-heading">
+							Sesiones programadas
+						</h2>
 					</div>
 					{/* Loading state */}
 					{isLoadingSessions && (

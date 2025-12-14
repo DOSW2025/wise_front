@@ -184,7 +184,7 @@ export function UploadMaterialForm({
 		<Card className="w-full max-w-2xl">
 			<CardBody className="p-6">
 				<div className="flex items-center justify-between mb-6">
-					<h3 className="text-xl font-semibold">Subir Material</h3>
+					<h3 className="font-heading text-xl font-semibold">Subir Material</h3>
 					<Button isIconOnly variant="light" onPress={onClose}>
 						<X className="w-4 h-4" />
 					</Button>
@@ -228,9 +228,9 @@ export function UploadMaterialForm({
 							type="button"
 							className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors w-full ${
 								file
-									? 'border-[#8B1A1A] bg-red-50'
+									? 'border-danger bg-danger-50'
 									: isDragOver
-										? 'border-[#8B1A1A] bg-red-50'
+										? 'border-danger bg-danger-50'
 										: 'border-default-300 hover:border-default-400'
 							}`}
 							onDragOver={handleDragOver}
@@ -252,7 +252,7 @@ export function UploadMaterialForm({
 										<p className="text-sm text-[#8B1A1A] font-medium">
 											{file.name}
 										</p>
-										<p className="text-xs text-gray-500 mt-1">
+										<p className="text-xs text-default-500 mt-1">
 											Archivo seleccionado correctamente
 										</p>
 									</div>
@@ -289,9 +289,9 @@ export function UploadMaterialForm({
 					)}
 
 					{showSuccess && (
-						<div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-							<CheckCircle className="w-5 h-5 text-green-600" />
-							<p className="text-sm text-green-700 font-medium">
+						<div className="flex items-center gap-2 p-3 bg-success-50 border border-success-200 rounded-lg">
+							<CheckCircle className="w-5 h-5 text-success" />
+							<p className="text-sm text-success font-medium">
 								Material cargado exitosamente
 							</p>
 						</div>
@@ -303,7 +303,7 @@ export function UploadMaterialForm({
 
 					<div className="flex gap-3 pt-4">
 						<Button
-							className="bg-[#8B1A1A] text-white"
+							className="font-nav bg-[#8B1A1A] text-white"
 							type="submit"
 							isLoading={createMaterial.isPending}
 							isDisabled={uploadProgress > 0 && uploadProgress < 100}
@@ -311,6 +311,7 @@ export function UploadMaterialForm({
 							Subir Material
 						</Button>
 						<Button
+							className="font-nav"
 							variant="bordered"
 							onPress={onClose}
 							isDisabled={createMaterial.isPending}

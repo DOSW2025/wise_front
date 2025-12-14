@@ -494,13 +494,13 @@ export default function StudentMaterials() {
 			{/* Header SIN botón Subir material */}
 			<div className="flex items-start justify-between">
 				<div className="flex flex-col gap-2">
-					<h1 className="text-3xl font-bold text-foreground">
+					<h1 className="text-3xl font-bold text-foreground font-heading">
 						Repositorio de Materiales
 					</h1>
 					<p className="text-default-500">
 						{filteredMaterials.length} materiales disponibles
 						{filteredMaterials.length > itemsPerPage && (
-							<span className="text-sm text-gray-500 ml-2">
+							<span className="text-sm text-default-500 ml-2">
 								(Mostrando {(currentPage - 1) * itemsPerPage + 1}-
 								{Math.min(currentPage * itemsPerPage, filteredMaterials.length)}
 								)
@@ -537,6 +537,7 @@ export default function StudentMaterials() {
 					variant="bordered"
 					startContent={<Filter size={20} />}
 					onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+					className="font-nav"
 				>
 					Filtros
 				</Button>
@@ -558,6 +559,7 @@ export default function StudentMaterials() {
 							variant="light"
 							onClick={() => setIsAssistOpen(false)}
 							type="button"
+							className="font-nav"
 						>
 							Cerrar
 						</Button>
@@ -609,7 +611,7 @@ export default function StudentMaterials() {
 						<Button
 							color="primary"
 							onClick={handleAssistSubmit}
-							className="sm:ml-auto"
+							className="sm:ml-auto font-nav"
 							isLoading={isAssistLoading}
 						>
 							Enviar
@@ -702,7 +704,9 @@ export default function StudentMaterials() {
 			<div className="flex items-center justify-between">
 				<Dropdown>
 					<DropdownTrigger>
-						<Button variant="flat">Ordenar por: {sortBy}</Button>
+						<Button variant="flat" className="font-nav">
+							Ordenar por: {sortBy}
+						</Button>
 					</DropdownTrigger>
 					<DropdownMenu
 						aria-label="Ordenar por"
@@ -784,7 +788,7 @@ export default function StudentMaterials() {
 			{totalPages > 1 && (
 				<div className="flex flex-col sm:flex-row justify-center items-center gap-4 py-6 border-t">
 					{/* Información de página */}
-					<div className="text-sm text-gray-600">
+					<div className="text-sm text-default-600">
 						Página {currentPage} de {totalPages}
 					</div>
 
@@ -829,7 +833,7 @@ export default function StudentMaterials() {
 							{totalPages > 5 &&
 								currentPage > 3 &&
 								currentPage < totalPages - 2 && (
-									<span className="flex items-center px-2 text-gray-500">
+									<span className="flex items-center px-2 text-default-500">
 										...
 									</span>
 								)}
@@ -888,7 +892,7 @@ export default function StudentMaterials() {
 					</div>
 
 					{/* Información de rango */}
-					<div className="text-sm text-gray-500">
+					<div className="text-sm text-default-500">
 						{(currentPage - 1) * itemsPerPage + 1} -{' '}
 						{Math.min(currentPage * itemsPerPage, filteredMaterials.length)} de{' '}
 						{filteredMaterials.length}

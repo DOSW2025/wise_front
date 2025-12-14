@@ -55,7 +55,7 @@ export default function StudentDashboard() {
 		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex flex-col gap-2">
-				<h1 className="text-3xl font-bold text-foreground">
+				<h1 className="text-3xl font-bold text-foreground font-heading">
 					Panel de Estudiante
 				</h1>
 				<p className="text-default-500">
@@ -136,7 +136,7 @@ export default function StudentDashboard() {
 				<Card>
 					<CardBody className="gap-4">
 						<div className="flex items-center justify-between">
-							<h2 className="text-xl font-semibold flex items-center gap-2">
+							<h2 className="text-xl font-semibold flex items-center gap-2 font-heading">
 								<Users className="w-5 h-5 text-primary" />
 								Tutores Recomendados
 							</h2>
@@ -146,6 +146,7 @@ export default function StudentDashboard() {
 								size="sm"
 								variant="light"
 								color="primary"
+								className="font-nav"
 							>
 								Ver más
 							</Button>
@@ -161,7 +162,7 @@ export default function StudentDashboard() {
 				<Card>
 					<CardBody className="gap-4">
 						<div className="flex items-center justify-between">
-							<h2 className="text-xl font-semibold flex items-center gap-2">
+							<h2 className="text-xl font-semibold flex items-center gap-2 font-heading">
 								<BookOpen className="w-5 h-5 text-primary" />
 								Materiales Recientes
 							</h2>
@@ -171,6 +172,7 @@ export default function StudentDashboard() {
 								size="sm"
 								variant="light"
 								color="primary"
+								className="font-nav"
 							>
 								Ver todos
 							</Button>
@@ -197,7 +199,7 @@ export default function StudentDashboard() {
 											className="flex items-center justify-between p-3 bg-default-100 rounded-lg"
 										>
 											<div className="flex items-center gap-3">
-												<div className="p-2 bg-primary-50 text-primary rounded-lg">
+												<div className="p-2 bg-secondary-50 text-primary rounded-lg">
 													<BookOpen className="w-4 h-4" />
 												</div>
 												<div>
@@ -234,7 +236,7 @@ export default function StudentDashboard() {
 				<Card>
 					<CardBody className="gap-4">
 						<div className="flex items-center justify-between">
-							<h2 className="text-xl font-semibold flex items-center gap-2">
+							<h2 className="text-xl font-semibold flex items-center gap-2 font-heading">
 								<MessageSquare className="w-5 h-5 text-primary" />
 								Actividad Reciente
 							</h2>
@@ -244,6 +246,7 @@ export default function StudentDashboard() {
 								size="sm"
 								variant="light"
 								color="primary"
+								className="font-nav"
 							>
 								Ver progreso
 							</Button>

@@ -175,7 +175,7 @@ export default function Home() {
 					<p className="text-2xl md:text-3xl text-primary font-logo font-semibold mb-4">
 						Aprender, conectar y compartir sin limites
 					</p>
-					<p className="text-lg text-default-600 max-w-3xl mx-auto mb-8">
+					<p className="text-lg text-default-600 max-w-3xl mx-auto mb-8 font-sans">
 						Plataforma digital de aprendizaje colaborativo inteligente que
 						conecta a estudiantes, tutores y docentes para compartir
 						conocimiento de forma estructurada, segura y accesible.
@@ -187,6 +187,7 @@ export default function Home() {
 							endContent={<ArrowRight size={20} />}
 							as={Link}
 							href="/login"
+							className="font-nav"
 						>
 							Comenzar Ahora
 						</Button>
@@ -195,6 +196,7 @@ export default function Home() {
 							variant="bordered"
 							size="lg"
 							startContent={<Target size={20} />}
+							className="font-nav"
 						>
 							Conoce Mas
 						</Button>
@@ -209,7 +211,7 @@ export default function Home() {
 						<h2 className="text-4xl font-heading font-bold text-foreground mb-4">
 							Caracteristicas Principales
 						</h2>
-						<p className="text-lg text-default-600 max-w-2xl mx-auto">
+						<p className="text-lg text-default-600 max-w-2xl mx-auto font-sans">
 							Descubre todas las herramientas que ECIWISE+ ofrece para potenciar
 							tu experiencia de aprendizaje
 						</p>
@@ -234,7 +236,9 @@ export default function Home() {
 										</div>
 									</CardHeader>
 									<CardBody>
-										<p className="text-default-600">{feature.description}</p>
+										<p className="text-default-600 font-sans">
+											{feature.description}
+										</p>
 									</CardBody>
 								</Card>
 							);
@@ -252,7 +256,7 @@ export default function Home() {
 						<h2 className="text-4xl font-heading font-bold text-foreground mb-4">
 							Objetivos y Beneficios
 						</h2>
-						<p className="text-lg text-default-600 max-w-2xl mx-auto">
+						<p className="text-lg text-default-600 max-w-2xl mx-auto font-sans">
 							ECIWISE+ transforma la experiencia educativa a traves de la
 							colaboracion y la tecnologia
 						</p>
@@ -264,7 +268,7 @@ export default function Home() {
 									className="text-success mt-1 flex-shrink-0"
 									size={20}
 								/>
-								<p className="text-default-700">{benefit}</p>
+								<p className="text-default-700 font-sans">{benefit}</p>
 							</div>
 						))}
 					</div>
@@ -280,7 +284,7 @@ export default function Home() {
 						<h2 className="text-4xl font-heading font-bold text-foreground mb-4">
 							Perfiles de Usuario
 						</h2>
-						<p className="text-lg text-default-600 max-w-2xl mx-auto">
+						<p className="text-lg text-default-600 max-w-2xl mx-auto font-sans">
 							ECIWISE+ esta diseñado para diferentes tipos de usuarios en la
 							comunidad educativa
 						</p>
@@ -295,7 +299,9 @@ export default function Home() {
 								</CardHeader>
 								<Divider />
 								<CardBody>
-									<p className="text-default-600">{profile.description}</p>
+									<p className="text-default-600 font-sans">
+										{profile.description}
+									</p>
 								</CardBody>
 								<CardFooter>
 									<Chip color={profile.color} variant="flat" size="sm">
@@ -314,7 +320,7 @@ export default function Home() {
 					<h2 className="text-4xl font-heading font-bold text-foreground mb-4">
 						El conocimiento no se guarda, se comparte
 					</h2>
-					<p className="text-lg text-default-600 mb-8">
+					<p className="text-lg text-default-600 mb-8 font-sans">
 						Unete a ECIWISE+ y forma parte de una comunidad academica mas
 						conectada, solidaria y eficiente
 					</p>
@@ -338,10 +344,10 @@ export default function Home() {
 						<GraduationCap className="text-primary" size={24} />
 						<p className="font-bold text-lg text-primary font-logo">ECIWISE+</p>
 					</div>
-					<p className="text-sm text-default-600">
+					<p className="text-sm text-default-600 font-sans">
 						Desarrollo de Operaciones de Software - 2025-2
 					</p>
-					<p className="text-sm text-default-500 mt-2">
+					<p className="text-sm text-default-500 mt-2 font-sans">
 						Escuela Colombiana de Ingenieria
 					</p>
 				</div>

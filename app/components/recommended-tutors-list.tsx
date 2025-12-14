@@ -60,7 +60,7 @@ function TutorCard({ tutor }: TutorCardProps) {
 					{/* Información del tutor */}
 					<div className="flex-1 min-w-0 space-y-2">
 						{/* Nombre completo */}
-						<h4 className="font-semibold text-default-900 truncate">
+						<h4 className="font-heading font-semibold text-default-900 truncate">
 							{tutor.nombre} {tutor.apellido}
 						</h4>
 
@@ -108,7 +108,7 @@ function TutorCard({ tutor }: TutorCardProps) {
 									<span className="text-sm font-medium text-red-700">
 										{rating.toFixed(1)}
 									</span>
-									<span className="text-xs text-gray-400 ml-1">
+									<span className="text-xs text-default-400 ml-1">
 										({reviews} {reviews === 1 ? 'reseña' : 'reseñas'})
 									</span>
 								</>

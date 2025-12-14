@@ -92,10 +92,10 @@ export function PopularMaterials({
 						<div className="flex items-center justify-center mb-2">
 							<FileText className="w-6 h-6 text-blue-600" />
 						</div>
-						<p className="text-2xl font-bold text-gray-900">
+						<p className="text-2xl font-bold text-default-900">
 							{generalStats.totalMateriales.toLocaleString()}
 						</p>
-						<p className="text-sm text-gray-600">Total Materiales</p>
+						<p className="text-sm text-default-600">Total Materiales</p>
 					</CardBody>
 				</Card>
 
@@ -104,10 +104,10 @@ export function PopularMaterials({
 						<div className="flex items-center justify-center mb-2">
 							<Download className="w-6 h-6 text-green-600" />
 						</div>
-						<p className="text-2xl font-bold text-gray-900">
+						<p className="text-2xl font-bold text-default-900">
 							{generalStats.totalDescargas.toLocaleString()}
 						</p>
-						<p className="text-sm text-gray-600">Total Descargas</p>
+						<p className="text-sm text-default-600">Total Descargas</p>
 					</CardBody>
 				</Card>
 
@@ -116,22 +116,22 @@ export function PopularMaterials({
 						<div className="flex items-center justify-center mb-2">
 							<Eye className="w-6 h-6 text-purple-600" />
 						</div>
-						<p className="text-2xl font-bold text-gray-900">
+						<p className="text-2xl font-bold text-default-900">
 							{generalStats.totalVistas.toLocaleString()}
 						</p>
-						<p className="text-sm text-gray-600">Total Vistas</p>
+						<p className="text-sm text-default-600">Total Vistas</p>
 					</CardBody>
 				</Card>
 
 				<Card className="shadow-sm">
 					<CardBody className="p-4 text-center">
 						<div className="flex items-center justify-center mb-2">
-							<Star className="w-6 h-6 text-yellow-500" />
+							<Star className="w-6 h-6 text-warning" />
 						</div>
-						<p className="text-2xl font-bold text-gray-900">
+						<p className="text-2xl font-bold text-default-900">
 							{generalStats.calificacionPromedio}
 						</p>
-						<p className="text-sm text-gray-600">Calificación Promedio</p>
+						<p className="text-sm text-default-600">Calificación Promedio</p>
 					</CardBody>
 				</Card>
 			</div>
@@ -144,7 +144,9 @@ export function PopularMaterials({
 						<CardHeader className="pb-3">
 							<div className="flex items-center gap-2">
 								<TrendingUp className="w-5 h-5 text-[#8B1A1A]" />
-								<h3 className="text-lg font-semibold">Top Materiales</h3>
+								<h3 className="text-lg font-semibold font-heading">
+									Top Materiales
+								</h3>
 							</div>
 						</CardHeader>
 						<CardBody className="pt-0">
@@ -153,7 +155,7 @@ export function PopularMaterials({
 								<div>
 									<div className="flex items-center gap-2 mb-4">
 										<Eye className="w-4 h-4 text-blue-600" />
-										<h4 className="font-medium text-gray-700">Más Vistos</h4>
+										<h4 className="font-medium text-default-700">Más Vistos</h4>
 									</div>
 									{isLoadingTopViewed ? (
 										<div className="flex justify-center py-4">
@@ -228,7 +230,7 @@ export function PopularMaterials({
 								<div>
 									<div className="flex items-center gap-2 mb-4">
 										<Download className="w-4 h-4 text-green-600" />
-										<h4 className="font-medium text-gray-700">
+										<h4 className="font-medium text-default-700">
 											Más Descargados
 										</h4>
 									</div>
@@ -311,7 +313,9 @@ export function PopularMaterials({
 						<CardHeader className="pb-3">
 							<div className="flex items-center gap-2">
 								<BarChart3 className="w-5 h-5 text-[#8B1A1A]" />
-								<h3 className="text-lg font-semibold">Materias Populares</h3>
+								<h3 className="text-lg font-semibold font-heading">
+									Materias Populares
+								</h3>
 							</div>
 						</CardHeader>
 						<CardBody className="pt-0 pr-0">
@@ -324,10 +328,10 @@ export function PopularMaterials({
 									tagsPercentage.map((materia) => (
 										<div key={materia.tag} className="space-y-2">
 											<div className="flex justify-between items-center">
-												<span className="text-sm font-medium text-gray-700">
+												<span className="text-sm font-medium text-default-700">
 													{materia.tag}
 												</span>
-												<span className="text-sm text-gray-500">
+												<span className="text-sm text-default-500">
 													{materia.porcentaje.toFixed(2)}%
 												</span>
 											</div>
