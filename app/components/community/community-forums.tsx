@@ -27,11 +27,11 @@ import {
 	ChevronDown,
 	Eye,
 	MessageCircle,
+	PartyPopper,
 	Pencil,
 	Pin,
 	Plus,
 	RotateCcw,
-	ThumbsUp,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { type ChatGroup, chatsService } from '~/lib/services/chats.service';
@@ -239,7 +239,7 @@ function TopicCard({
 						}}
 						aria-label="Dar like"
 					>
-						<ThumbsUp size={16} />
+						<PartyPopper size={16} />
 						<span>{topic.counts.likes}</span>
 					</button>
 					<div className="flex items-center gap-1 text-default-600 text-sm">
@@ -908,7 +908,7 @@ export function CommunityForums() {
 																	className="flex items-center gap-1 text-default-500 text-xs hover:text-primary transition-colors cursor-pointer"
 																	onClick={() => likeThread(thread.id, t.id)}
 																>
-																	<ThumbsUp size={14} />
+																	<PartyPopper size={14} />
 																	<span>{thread.likes_count || 0}</span>
 																</button>
 																<button
