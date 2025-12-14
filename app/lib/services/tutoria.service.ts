@@ -12,11 +12,13 @@ import type {
 	CreateSessionRequest,
 	CreateSessionResponse,
 	MateriaResponse,
+	Rating,
 	StudentSession,
 	TutoriaStats,
 	TutorMateriasResponse,
 	TutorNameResponse,
 	TutorProfile,
+	TutorProfileResponse,
 	TutorReputacion,
 	UpcomingSessionsResponse,
 } from '../types/tutoria.types';
@@ -73,6 +75,38 @@ export async function getTutorName(tutorId: string): Promise<string> {
 	} catch (error) {
 		console.error('Error al obtener nombre del tutor:', error);
 		return 'Tutor no disponible';
+	}
+}
+
+/**
+ * Obtiene el nombre de un usuario (estudiante o tutor) por su ID
+ * Esta función lanza una excepción si falla para que el componente maneje el error
+ */
+export async function getUserName(userId: string): Promise<string> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.TUTOR_NAME.replace('{id}', userId);
+		console.log('🔍 Fetching user name:', { userId, url });
+		const response = await apiClient.get<TutorNameResponse>(url);
+		console.log('✅ User name received:', response.data);
+
+		if (!response.data || !response.data.nombreCompleto) {
+			console.error('❌ Invalid response structure:', response.data);
+			throw new Error('Respuesta inválida del servidor');
+		}
+
+		return response.data.nombreCompleto;
+	} catch (error: any) {
+		console.error('❌ Error al obtener nombre del usuario:', error);
+		console.error('❌ Error details:', {
+			message: error.message,
+			status: error.response?.status,
+			data: error.response?.data,
+			userId: userId,
+		});
+		if (error instanceof Error) {
+			throw error;
+		}
+		throw new Error('No se pudo obtener el nombre del usuario');
 	}
 }
 
@@ -568,12 +602,34 @@ export async function getTutorReputacion(
 	}
 }
 
+/**
+ * Obtiene el perfil del tutor con sus ratings/comentarios
+ */
+export async function getTutorProfile(
+	tutorId: string,
+): Promise<TutorProfileResponse> {
+	try {
+		const url = API_ENDPOINTS.TUTOR.REVIEWS.RATINGS(tutorId);
+		console.log('Fetching tutor profile:', { tutorId, url });
+		const response = await apiClient.get<TutorProfileResponse>(url);
+		console.log('Tutor profile received:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al obtener perfil del tutor:', error);
+		if (error instanceof Error) {
+			throw error;
+		}
+		throw new Error('No se pudo obtener el perfil del tutor');
+	}
+}
+
 // Exportar todas las funciones como un objeto de servicio
 export const tutoriaService = {
 	getTutores,
 	getStudentSessions,
 	createSession,
 	getTutorName,
+	getUserName,
 	getUpcomingSessions,
 	getTutorMaterias,
 	getTutoriaStats,
@@ -586,4 +642,5 @@ export const tutoriaService = {
 	getAvailability,
 	updateAvailability,
 	getTutorReputacion,
+	getTutorProfile,
 };

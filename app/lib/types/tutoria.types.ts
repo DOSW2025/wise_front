@@ -296,3 +296,36 @@ export interface TutorReputacion {
 	reputacion: number; // Calificación promedio (1-5)
 	totalRatings: number; // Cantidad total de calificaciones
 }
+
+/**
+ * Calificación/Rating de una sesión
+ */
+export interface Rating {
+	id: number;
+	sessionId?: string;
+	raterId?: string; // UUID del estudiante (legacy)
+	rater?: {
+		id: string;
+		nombre: string;
+	};
+	session?: {
+		id: string;
+		codigoMateria: string;
+		materia: string;
+		scheduledAt: string;
+	};
+	score: number; // 1-5
+	comment: string;
+	createdAt: string; // ISO 8601
+}
+
+/**
+ * Respuesta del perfil del tutor con ratings
+ */
+export interface TutorProfileResponse {
+	usuarioId: string;
+	bio: string;
+	reputacion: number;
+	ratings: Rating[];
+	tutorMaterias: TutorMateria[];
+}

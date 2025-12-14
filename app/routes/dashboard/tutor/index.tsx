@@ -9,11 +9,13 @@ import {
 	Users,
 } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router';
+import { RecentComments } from '~/components/recent-comments';
 import { StatsCard } from '~/components/stats-card';
 import { useAuth } from '~/contexts/auth-context';
 import { useTutorDashboard } from '~/lib/hooks/useTutorDashboard';
 import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 import { usePendingSessions } from './hooks/usePendingSessions';
+import { useTutorProfile } from './hooks/useTutorProfile';
 import { useTutorReputacion } from './hooks/useTutorReputacion';
 import { useUpcomingSessions } from './hooks/useUpcomingSessions';
 
@@ -32,6 +34,13 @@ export default function TutorDashboard() {
 	// Obtener reputación del tutor desde el backend
 	const { data: reputacionData, isLoading: isLoadingReputacion } =
 		useTutorReputacion(user?.id || '', !!user?.id);
+
+	// Obtener perfil del tutor con ratings/comentarios
+	const {
+		data: tutorProfile,
+		isLoading: isLoadingProfile,
+		isError: isErrorProfile,
+	} = useTutorProfile(user?.id || '', !!user?.id);
 	const {
 		data: upcomingSessions,
 		isLoading: isLoadingSessions,
@@ -378,77 +387,11 @@ export default function TutorDashboard() {
 				</Card>
 
 				{/* Comentarios Recientes */}
-				<Card>
-					<CardBody className="gap-4">
-						<div className="flex items-center justify-between">
-							<h2 className="text-xl font-semibold flex items-center gap-2">
-								<MessageSquare className="w-5 h-5 text-primary" />
-								Comentarios Recientes
-							</h2>
-							<Button
-								as={Link}
-								to="/dashboard/tutor/reports"
-								size="sm"
-								variant="light"
-								color="primary"
-							>
-								Ver todos
-							</Button>
-						</div>
-						<div className="space-y-3">
-							{recentReviews?.length ? (
-								recentReviews.slice(0, 2).map((review) => {
-									const initials = review.studentName
-										.split(' ')
-										.map((n) => n[0])
-										.join('')
-										.toUpperCase();
-									const timeAgo = new Date(
-										Date.now() - new Date(review.createdAt).getTime(),
-									).getHours();
-									const stars = '⭐'.repeat(review.rating);
-									return (
-										<div
-											key={review.id}
-											className="p-3 bg-default-100 rounded-lg"
-										>
-											<div className="flex items-center justify-between mb-2">
-												<div className="flex items-center gap-2">
-													<Avatar
-														src={review.studentAvatar}
-														name={initials}
-														size="sm"
-														className="bg-blue-500 text-white"
-													/>
-													<span className="font-semibold text-sm">
-														{review.studentName}
-													</span>
-												</div>
-												<div className="flex items-center gap-1">
-													<span className="text-yellow-500">{stars}</span>
-												</div>
-											</div>
-											<p className="text-sm text-default-600 mb-1">
-												"{review.comment}"
-											</p>
-											<p className="text-tiny text-default-400">
-												{timeAgo > 24
-													? 'Ayer'
-													: timeAgo > 0
-														? `Hace ${timeAgo} horas`
-														: 'Hace poco'}
-											</p>
-										</div>
-									);
-								})
-							) : (
-								<p className="text-center text-default-500 py-4">
-									No hay comentarios recientes
-								</p>
-							)}
-						</div>
-					</CardBody>
-				</Card>
+				<RecentComments
+					ratings={tutorProfile?.ratings ?? []}
+					isLoading={isLoadingProfile}
+					isError={isErrorProfile}
+				/>
 			</div>
 		</div>
 	);
