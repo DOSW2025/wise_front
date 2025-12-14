@@ -67,12 +67,12 @@ interface SessionViewModel extends StudentSession {
 // Funciones auxiliares del modal de tutoring.tsx
 const getAvatarBg = (avatarColor?: string): string => {
 	const colorMap: Record<string, string> = {
-		'#b81d24': 'bg-red-500',
+		'#b81d24': 'bg-danger',
 		'#ff9900': 'bg-orange-500',
 		'#8a2be2': 'bg-purple-500',
-		'#008000': 'bg-green-500',
+		'#008000': 'bg-success',
 	};
-	return colorMap[avatarColor ?? ''] || 'bg-red-500';
+	return colorMap[avatarColor ?? ''] || 'bg-danger';
 };
 
 const getInitials = (name: string | undefined, fallback?: string): string => {
@@ -170,7 +170,7 @@ const SessionHeader: React.FC<{
 					{session.initials}
 				</div>
 				<div>
-					<h3 className="font-semibold">{session.tutorName}</h3>
+					<h3 className="font-heading font-semibold">{session.tutorName}</h3>
 					<div className="flex gap-2 mt-1 flex-wrap">
 						<Chip size="sm" color="primary" variant="flat">
 							{session.subject}
@@ -310,7 +310,7 @@ const SessionDetailsModal: React.FC<{
 					return (
 						<>
 							<ModalHeader className="flex flex-col gap-1">
-								<span>Detalle de tutoria</span>
+								<span className="font-heading">Detalle de tutoria</span>
 								{view && (
 									<span className="text-sm text-default-500">
 										{view.subject} - {view.codigoMateria}
@@ -433,10 +433,18 @@ const SessionItemHeader: React.FC<{
 }> = ({ subjectName, tutorName, onViewDetails }) => (
 	<div className="flex items-start justify-between gap-2">
 		<div className="flex-1">
-			<h4 className="font-semibold text-default-900 mb-1">{subjectName}</h4>
-			<p className="text-sm text-default-600">con {tutorName}</p>
+			<h4 className="font-heading font-semibold text-default-900 mb-1">
+				{subjectName}
+			</h4>
+			<p className="font-sans text-sm text-default-600">con {tutorName}</p>
 		</div>
-		<Button size="sm" color="primary" variant="flat" onPress={onViewDetails}>
+		<Button
+			className="font-nav"
+			size="sm"
+			color="primary"
+			variant="flat"
+			onPress={onViewDetails}
+		>
 			Ver detalles
 		</Button>
 	</div>
@@ -583,10 +591,10 @@ export function UpcomingTutoringsCard(): React.ReactNode {
 		<>
 			<Card className="w-full">
 				<CardHeader className="flex flex-col items-start gap-1 pb-4">
-					<h3 className="text-xl font-bold text-default-900">
+					<h3 className="font-heading text-xl font-bold text-default-900">
 						Próximas Tutorías
 					</h3>
-					<p className="text-sm text-default-500">
+					<p className="font-sans text-sm text-default-500">
 						Tus sesiones de tutoría agendadas
 					</p>
 				</CardHeader>
