@@ -12,6 +12,7 @@ import {
 	Switch,
 	useDisclosure,
 } from '@heroui/react';
+import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
@@ -29,6 +30,11 @@ export default function TutorProfile() {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
+	const {
+		isOpen: isDeleteOpen,
+		onOpen: onDeleteOpen,
+		onClose: onDeleteClose,
+	} = useDisclosure();
 
 	// Custom hooks for managing complex state
 	const {
@@ -100,6 +106,18 @@ export default function TutorProfile() {
 	const handleCancel = () => {
 		if (user) {
 			resetForm(user);
+		}
+	};
+
+	const handleDeleteAccount = async () => {
+		try {
+			// TODO: Implementar API call para eliminar cuenta
+			// await deleteAccount();
+			onDeleteClose();
+			// Redirigir al login después de eliminar
+			navigate('/login');
+		} catch (error) {
+			console.error('Error al eliminar cuenta:', error);
 		}
 	};
 
@@ -292,6 +310,49 @@ export default function TutorProfile() {
 						</Button>
 						<Button color="primary" onPress={onAvailabilityModalClose}>
 							Guardar
+						</Button>
+					</ModalFooter>
+				</ModalContent>
+			</Modal>
+
+			{/* Eliminar Cuenta */}
+			<Card>
+				<CardBody className="gap-4">
+					<div className="flex justify-end">
+						<Button
+							color="primary"
+							variant="flat"
+							startContent={<Trash2 className="w-4 h-4" />}
+							onPress={onDeleteOpen}
+						>
+							Eliminar mi Cuenta
+						</Button>
+					</div>
+				</CardBody>
+			</Card>
+
+			{/* Modal de Confirmación */}
+			<Modal isOpen={isDeleteOpen} onClose={onDeleteClose} backdrop="opaque">
+				<ModalContent>
+					<ModalHeader className="flex flex-col gap-1">
+						<span>Eliminar Cuenta</span>
+					</ModalHeader>
+					<ModalBody>
+						<p className="text-default-600">
+							¿Estás seguro de que deseas eliminar tu cuenta? Esta acción es
+							irreversible.
+						</p>
+					</ModalBody>
+					<ModalFooter>
+						<Button variant="light" onPress={onDeleteClose}>
+							Cancelar
+						</Button>
+						<Button
+							color="primary"
+							onPress={handleDeleteAccount}
+							startContent={<Trash2 className="w-4 h-4" />}
+						>
+							Eliminar
 						</Button>
 					</ModalFooter>
 				</ModalContent>
