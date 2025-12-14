@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { isIaEnabled } from '~/lib/services/iaFeature.service';
 
 /**
- * Hook que consulta el estado de la IA y lo refresca periódicamente.
+ * Hook que consulta el estado de la IA vía API Gateway y lo refresca periódicamente.
  * - Primer consulta al montar
- * - Refresca cada 5s
+ * - Intervalo de refresco configurable mediante `refreshMs` (por defecto 5000 ms)
  */
 export function useIaFeature(refreshMs: number = 5000) {
 	const [enabled, setEnabled] = useState<boolean>(false);

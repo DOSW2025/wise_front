@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Outlet } from 'react-router';
 import { useIaFeature } from '~/lib/hooks/useIaFeature';
 import ChatOverlay from './chat/chatOverlay';

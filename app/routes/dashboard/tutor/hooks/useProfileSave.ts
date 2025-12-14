@@ -39,7 +39,7 @@ export function useProfileSave() {
 					errorMessage.includes('Not Found')
 				) {
 					errorMessage =
-						'El servicio no está disponible temporalmente. Por favor, intenta más tarde';
+						'El servicio no está disponible temporalmente. Por favor, intenta más tarde.';
 				}
 			}
 
@@ -52,12 +52,14 @@ export function useProfileSave() {
 
 	const changePassword = async (): Promise<boolean> => {
 		try {
+			// TODO: Implementar el cambio de contraseña cuando el endpoint de backend esté disponible
 			// Simular llamada a API
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 			setSuccess('Contraseña actualizada exitosamente');
 			setTimeout(() => setSuccess(null), 3000);
 			return true;
-		} catch {
+		} catch (err) {
+			// En este mock no usamos el error específico, pero mantenemos consistencia con saveProfile
 			setError('Error al cambiar la contraseña');
 			return false;
 		}
