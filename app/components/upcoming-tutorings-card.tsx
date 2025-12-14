@@ -144,7 +144,10 @@ const buildSessionViewModel = (session: StudentSession): SessionViewModel => {
 	};
 };
 
-// Componentes del modal de tutoring.tsx
+// Componentes del modal de tutoring.tsx - Versión consolidada
+const getAvatarSizeClass = (size?: 'sm' | 'lg'): string =>
+	size === 'lg' ? 'w-12 h-12' : 'w-10 h-10';
+
 const SessionHeader: React.FC<{
 	session: SessionViewModel;
 	avatarSize?: 'sm' | 'lg';
@@ -157,39 +160,59 @@ const SessionHeader: React.FC<{
 	subtitle,
 	actionArea,
 	showTopic = true,
-}) => {
-	const sizeClass = avatarSize === 'lg' ? 'w-12 h-12' : 'w-10 h-10';
-
-	return (
-		<div className="flex items-start justify-between ">
-			<div className="space-y-2">
-				<div className="flex items-center gap-3">
-					<div
-						className={`${session.avatarBg} ${sizeClass} rounded-full flex items-center justify-center text-white font-semibold`}
-					>
-						{session.initials}
-					</div>
-					<div>
-						<h3 className="font-semibold">{session.tutorName}</h3>
-						<div className="flex gap-2 mt-1 flex-wrap">
-							<Chip size="sm" color="primary" variant="flat">
-								{session.subject}
-							</Chip>
-							<Chip size="sm" color={session.statusColor} variant="flat">
-								{session.status}
-							</Chip>
-						</div>
-						{subtitle && (
-							<p className="text-sm text-default-700 mt-1">{subtitle}</p>
-						)}
-					</div>
+}) => (
+	<div className="flex items-start justify-between ">
+		<div className="space-y-2">
+			<div className="flex items-center gap-3">
+				<div
+					className={`${session.avatarBg} ${getAvatarSizeClass(avatarSize)} rounded-full flex items-center justify-center text-white font-semibold`}
+				>
+					{session.initials}
 				</div>
-				{showTopic && <p className="text-default-600 ml-11">{session.topic}</p>}
+				<div>
+					<h3 className="font-semibold">{session.tutorName}</h3>
+					<div className="flex gap-2 mt-1 flex-wrap">
+						<Chip size="sm" color="primary" variant="flat">
+							{session.subject}
+						</Chip>
+						<Chip size="sm" color={session.statusColor} variant="flat">
+							{session.status}
+						</Chip>
+					</div>
+					{subtitle && (
+						<p className="text-sm text-default-700 mt-1">{subtitle}</p>
+					)}
+				</div>
 			</div>
-			{actionArea}
+			{showTopic && <p className="text-default-600 ml-11">{session.topic}</p>}
 		</div>
+		{actionArea}
+	</div>
+);
+
+const getModalityIcon = (modality: string) =>
+	modality === 'virtual' ? (
+		<Video className="w-4 h-4" />
+	) : (
+		<MapPin className="w-4 h-4" />
 	);
-};
+
+const LocationContent: React.FC<{ location: string; modality: string }> = ({
+	location,
+	modality,
+}) =>
+	modality === 'virtual' && location.startsWith('http') ? (
+		<a
+			href={location}
+			target="_blank"
+			rel="noopener noreferrer"
+			className="text-primary hover:underline"
+		>
+			{location}
+		</a>
+	) : (
+		<span>{location}</span>
+	);
 
 const SessionMeta: React.FC<{
 	session: SessionViewModel;
@@ -210,28 +233,15 @@ const SessionMeta: React.FC<{
 			{session.timeLabel} ({session.durationMinutes} min)
 		</div>
 		<div className="flex items-center gap-1">
-			{session.modalityLabel === 'virtual' ? (
-				<Video className="w-4 h-4" />
-			) : (
-				<MapPin className="w-4 h-4" />
-			)}
+			{getModalityIcon(session.modalityLabel)}
 			<span className="capitalize">{session.modalityLabel}</span>
 			{session.location && (
 				<>
 					<span> - </span>
-					{session.modalityLabel === 'virtual' &&
-					session.location.startsWith('http') ? (
-						<a
-							href={session.location}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="text-primary hover:underline"
-						>
-							{session.location}
-						</a>
-					) : (
-						<span>{session.location}</span>
-					)}
+					<LocationContent
+						location={session.location}
+						modality={session.modalityLabel}
+					/>
 				</>
 			)}
 		</div>
@@ -372,51 +382,66 @@ const convertUpcomingToStudentSession = (
 /**
  * Formatea la fecha y hora de una sesión
  */
-function formatSessionDateTime(date: string, startTime: string): string {
-	const sessionDate = new Date(date);
+const WEEK_DAYS = [
+	'Domingo',
+	'Lunes',
+	'Martes',
+	'Miércoles',
+	'Jueves',
+	'Viernes',
+	'Sábado',
+];
 
-	// Días de la semana en español
-	const weekDays = [
-		'Domingo',
-		'Lunes',
-		'Martes',
-		'Miércoles',
-		'Jueves',
-		'Viernes',
-		'Sábado',
-	];
+const MONTHS = [
+	'Ene',
+	'Feb',
+	'Mar',
+	'Abr',
+	'May',
+	'Jun',
+	'Jul',
+	'Ago',
+	'Sep',
+	'Oct',
+	'Nov',
+	'Dic',
+];
 
-	// Meses en español
-	const months = [
-		'Ene',
-		'Feb',
-		'Mar',
-		'Abr',
-		'May',
-		'Jun',
-		'Jul',
-		'Ago',
-		'Sep',
-		'Oct',
-		'Nov',
-		'Dic',
-	];
-
-	const dayName = weekDays[sessionDate.getDay()];
-	const day = sessionDate.getDate();
-	const month = months[sessionDate.getMonth()];
-
-	// Convertir hora de 24h a 12h
-	const [hours, minutes] = startTime.split(':').map(Number);
+const formatTimeAsAmPm = (time: string): string => {
+	const [hours, minutes] = time.split(':').map(Number);
 	const period = hours >= 12 ? 'PM' : 'AM';
 	const displayHours = hours % 12 || 12;
+	return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+};
 
-	return `${dayName}, ${day} ${month} - ${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+function formatSessionDateTime(date: string, startTime: string): string {
+	const sessionDate = new Date(date);
+	const dayName = WEEK_DAYS[sessionDate.getDay()];
+	const day = sessionDate.getDate();
+	const month = MONTHS[sessionDate.getMonth()];
+	const timeFormatted = formatTimeAsAmPm(startTime);
+	return `${dayName}, ${day} ${month} - ${timeFormatted}`;
 }
 
 /**
- * Item de sesión individual
+ * Item de sesión individual - Versión consolidada
  */
+const SessionItemHeader: React.FC<{
+	subjectName: string;
+	tutorName: string;
+	onViewDetails: () => void;
+}> = ({ subjectName, tutorName, onViewDetails }) => (
+	<div className="flex items-start justify-between gap-2">
+		<div className="flex-1">
+			<h4 className="font-semibold text-default-900 mb-1">{subjectName}</h4>
+			<p className="text-sm text-default-600">con {tutorName}</p>
+		</div>
+		<Button size="sm" color="primary" variant="flat" onPress={onViewDetails}>
+			Ver detalles
+		</Button>
+	</div>
+);
+
 function SessionItem({
 	session,
 	onViewDetails,
@@ -424,27 +449,16 @@ function SessionItem({
 	session: UpcomingSession;
 	onViewDetails: (session: StudentSession) => void;
 }) {
+	const handleViewDetails = () =>
+		onViewDetails(convertUpcomingToStudentSession(session));
+
 	return (
 		<div className="flex flex-col gap-2 p-4 rounded-lg bg-default-50 hover:bg-default-100 transition-colors">
-			<div className="flex items-start justify-between gap-2">
-				<div className="flex-1">
-					<h4 className="font-semibold text-default-900 mb-1">
-						{session.subjectName}
-					</h4>
-					<p className="text-sm text-default-600">con {session.tutorName}</p>
-				</div>
-				<Button
-					size="sm"
-					color="primary"
-					variant="flat"
-					onPress={() =>
-						onViewDetails(convertUpcomingToStudentSession(session))
-					}
-				>
-					Ver detalles
-				</Button>
-			</div>
-
+			<SessionItemHeader
+				subjectName={session.subjectName}
+				tutorName={session.tutorName}
+				onViewDetails={handleViewDetails}
+			/>
 			<div className="flex items-center gap-3 mt-2">
 				<Chip
 					variant="flat"
@@ -460,27 +474,28 @@ function SessionItem({
 }
 
 /**
- * Skeleton de carga
+ * Skeleton de carga - Versión consolidada
  */
+const SkeletonItemRow: React.FC = () => (
+	<div className="flex flex-col gap-2 p-4 rounded-lg bg-default-50">
+		<div className="flex items-start justify-between gap-2">
+			<div className="flex-1 space-y-2">
+				<Skeleton className="h-5 w-3/4 rounded-lg" />
+				<Skeleton className="h-4 w-1/2 rounded-lg" />
+			</div>
+		</div>
+		<div className="flex items-center gap-3 mt-2">
+			<Skeleton className="h-6 w-40 rounded-full" />
+			<Skeleton className="h-6 w-20 rounded-full" />
+		</div>
+	</div>
+);
+
 function UpcomingSessionsSkeleton() {
 	return (
 		<div className="space-y-3">
 			{[1, 2, 3].map((i) => (
-				<div
-					key={i}
-					className="flex flex-col gap-2 p-4 rounded-lg bg-default-50"
-				>
-					<div className="flex items-start justify-between gap-2">
-						<div className="flex-1 space-y-2">
-							<Skeleton className="h-5 w-3/4 rounded-lg" />
-							<Skeleton className="h-4 w-1/2 rounded-lg" />
-						</div>
-					</div>
-					<div className="flex items-center gap-3 mt-2">
-						<Skeleton className="h-6 w-40 rounded-full" />
-						<Skeleton className="h-6 w-20 rounded-full" />
-					</div>
-				</div>
+				<SkeletonItemRow key={i} />
 			))}
 		</div>
 	);
@@ -506,10 +521,49 @@ function EmptyState() {
 }
 
 /**
- * Componente principal
+ * Componente principal - Versión consolidada
  */
-export function UpcomingTutoringsCard({ userId }: UpcomingTutoringsCardProps) {
-	const { data: sessions, isLoading, isError } = useUpcomingSessions(userId);
+interface ContentRendererProps {
+	isLoading: boolean;
+	isError: boolean;
+	sessions: UpcomingSession[] | undefined;
+	onViewDetails: (session: StudentSession) => void;
+}
+
+const ContentRenderer: React.FC<ContentRendererProps> = ({
+	isLoading,
+	isError,
+	sessions,
+	onViewDetails,
+}) => {
+	if (isLoading) return <UpcomingSessionsSkeleton />;
+
+	if (isError) {
+		return (
+			<div className="text-center py-8 text-danger">
+				<p className="font-medium">Error al cargar las tutorías</p>
+				<p className="text-sm mt-1">Intenta recargar la página</p>
+			</div>
+		);
+	}
+
+	if (!sessions || sessions.length === 0) return <EmptyState />;
+
+	return (
+		<div className="space-y-3">
+			{sessions.map((session, index) => (
+				<SessionItem
+					key={`${session.date}-${session.startTime}-${index}`}
+					session={session}
+					onViewDetails={onViewDetails}
+				/>
+			))}
+		</div>
+	);
+};
+
+export function UpcomingTutoringsCard(): React.ReactNode {
+	const { data: sessions, isLoading, isError } = useUpcomingSessions();
 	const [selectedSession, setSelectedSession] = useState<StudentSession | null>(
 		null,
 	);
@@ -537,28 +591,12 @@ export function UpcomingTutoringsCard({ userId }: UpcomingTutoringsCardProps) {
 					</p>
 				</CardHeader>
 				<CardBody className="pt-0">
-					{isLoading && <UpcomingSessionsSkeleton />}
-
-					{isError && (
-						<div className="text-center py-8 text-danger">
-							<p className="font-medium">Error al cargar las tutorías</p>
-							<p className="text-sm mt-1">Intenta recargar la página</p>
-						</div>
-					)}
-
-					{!isLoading && !isError && sessions?.length === 0 && <EmptyState />}
-
-					{!isLoading && !isError && sessions && sessions.length > 0 && (
-						<div className="space-y-3">
-							{sessions.map((session, index) => (
-								<SessionItem
-									key={`${session.date}-${session.startTime}-${index}`}
-									session={session}
-									onViewDetails={handleViewDetails}
-								/>
-							))}
-						</div>
-					)}
+					<ContentRenderer
+						isLoading={isLoading}
+						isError={isError}
+						sessions={sessions}
+						onViewDetails={handleViewDetails}
+					/>
 				</CardBody>
 			</Card>
 

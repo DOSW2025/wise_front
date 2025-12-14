@@ -689,7 +689,7 @@ const transformTutorProfileToTutor = (profile: TutorProfile): Tutor => {
 	return {
 		id:
 			Number.parseInt(profile.id.replaceAll(/\D/g, '').slice(0, 8), 10) ||
-			Math.floor(Math.random() * 100000),
+			crypto.getRandomValues(new Uint32Array(1))[0] % 100000,
 		tutorId: profile.id, // Agregar el ID del tutor del backend
 		name: `${profile.nombre} ${profile.apellido}`,
 		title: `Tutor - Semestre ${profile.semestre}`,
