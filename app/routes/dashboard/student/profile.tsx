@@ -3,7 +3,6 @@ import {
 	Card,
 	CardBody,
 	Chip,
-	Divider,
 	Input,
 	Modal,
 	ModalBody,
@@ -23,7 +22,7 @@ import {
 	ProfileHeader,
 } from '~/components/profile';
 import { useAuth } from '~/contexts/auth-context';
-import { getProfile } from '~/lib/services/student.service';
+import { deleteAccount, getProfile } from '~/lib/services/student.service';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
 
@@ -133,13 +132,17 @@ export default function StudentProfile() {
 
 	const handleDeleteAccount = async () => {
 		try {
-			// TODO: Implementar API call para eliminar cuenta
-			// await deleteAccount();
+			await deleteAccount();
 			onDeleteClose();
 			// Redirigir al login después de eliminar
 			navigate('/login');
 		} catch (error) {
 			console.error('Error al eliminar cuenta:', error);
+			const message =
+				error instanceof Error
+					? error.message
+					: 'No se pudo eliminar la cuenta.';
+			setError(message);
 		}
 	};
 
