@@ -171,10 +171,10 @@ export function Sidebar({
 					path: '/dashboard/admin/users',
 				},
 				{
-					key: 'validation',
-					label: 'Validación de Materiales',
+					key: 'materials',
+					label: 'Gestor de Materiales',
 					icon: <FileText className="w-5 h-5" />,
-					path: '/dashboard/admin/validation',
+					path: '/dashboard/admin/materials',
 				},
 				{
 					key: 'gamification',
@@ -219,7 +219,7 @@ export function Sidebar({
 			case 'student':
 				return 'Panel de Estudiante';
 			case 'tutor':
-				return 'Panel de Docente';
+				return 'Panel de Tutor';
 			case 'admin':
 				return 'Panel de Administrador';
 			default:
@@ -280,13 +280,23 @@ export function Sidebar({
 				<div className="p-6 border-b border-divider bg-gradient-to-b from-primary-50 to-transparent">
 					<Link
 						to="/dashboard"
-						className="flex flex-col items-start gap-1"
+						className="flex items-center gap-2"
 						onClick={() => setIsMobileMenuOpen(false)}
 					>
-						<h1 className="text-2xl font-bold text-primary">ECIWISE+</h1>
-						<p className="text-sm text-default-600 font-medium">
-							{getRoleLabel()}
-						</p>
+						<img
+							src="/logo/logo.png"
+							onError={(e) => {
+								e.currentTarget.src = '/logo/logo.png';
+							}}
+							alt="ECIWISE+ logo"
+							className="w-11 h-11"
+						/>
+						<div className="flex flex-col items-start gap-1 pl-2">
+							<h1 className="text-2xl font-bold text-primary">ECIWISE+</h1>
+							<p className="text-sm text-default-600 font-medium">
+								{getRoleLabel()}
+							</p>
+						</div>
 					</Link>
 				</div>
 
@@ -344,7 +354,7 @@ export function Sidebar({
 								to={item.path}
 								onClick={() => setIsMobileMenuOpen(false)}
 								className={`
-									flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+									flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors font-nav
 									${
 										isActive
 											? 'bg-primary text-primary-foreground'

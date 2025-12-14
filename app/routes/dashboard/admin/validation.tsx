@@ -274,7 +274,7 @@ export default function AdminValidation() {
 						<div className="flex flex-wrap gap-3">
 							<Input
 								className="max-w-md"
-								placeholder="Buscar por título, autor o código..."
+								placeholder="Buscar por nombre de material"
 								startContent={<Search className="w-4 h-4 text-default-400" />}
 								value={search}
 								onValueChange={setSearch}

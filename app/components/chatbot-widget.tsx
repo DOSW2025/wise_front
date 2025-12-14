@@ -1,6 +1,7 @@
 import { Button, Card, CardBody, CardHeader, Input } from '@heroui/react';
 import { MessageCircle, Send, X } from 'lucide-react';
-import { useState } from 'react';
+import { type KeyboardEvent, useState } from 'react';
+import { navigationChatService } from '../lib/api/navigation-chat';
 
 interface Message {
 	id: string;
@@ -9,21 +10,27 @@ interface Message {
 	timestamp: Date;
 }
 
-export function ChatbotWidget() {
+interface ChatbotWidgetProps {
+	isChatOpen?: boolean;
+}
+
+export function ChatbotWidget({ isChatOpen = false }: ChatbotWidgetProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [messages, setMessages] = useState<Message[]>([
 		{
 			id: '1',
-			text: '¡Hola! Soy tu asistente virtual de ECIWISE+. ¿En qué puedo ayudarte hoy?',
+			text: 'Hola! Soy tu asistente virtual de ECIWISE+. ¿En qué puedo ayudarte hoy?',
 			isUser: false,
 			timestamp: new Date(),
 		},
 	]);
 	const [inputValue, setInputValue] = useState('');
+	const [isSending, setIsSending] = useState(false);
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-	const handleSendMessage = () => {
-		const textToSend = inputValue;
-		if (!textToSend.trim()) return;
+	const handleSendMessage = async () => {
+		const textToSend = inputValue.trim();
+		if (!textToSend || isSending) return;
 
 		const userMessage: Message = {
 			id: Date.now().toString(),
@@ -34,27 +41,48 @@ export function ChatbotWidget() {
 
 		setMessages((prev) => [...prev, userMessage]);
 		setInputValue('');
+		setIsSending(true);
+		setErrorMessage(null);
 
-		// Simulate bot response
-		setTimeout(() => {
+		try {
+			const reply = await navigationChatService.sendMessage(textToSend);
 			const botMessage: Message = {
-				id: (Date.now() + 1).toString(),
-				text: 'Gracias por tu mensaje. Estoy aquí para ayudarte con tutorías, materiales de estudio y cualquier pregunta sobre la plataforma.',
+				id: `${Date.now()}-bot`,
+				text: reply,
 				isUser: false,
 				timestamp: new Date(),
 			};
 			setMessages((prev) => [...prev, botMessage]);
-		}, 1000);
+		} catch (error) {
+			const friendlyMessage =
+				error instanceof Error
+					? error.message
+					: 'No pudimos obtener respuesta del asistente.';
+			setErrorMessage(friendlyMessage);
+			const fallbackMessage: Message = {
+				id: `${Date.now()}-error`,
+				text: 'Hubo un problema al conectar con el asistente. Intenta nuevamente en unos segundos.',
+				isUser: false,
+				timestamp: new Date(),
+			};
+			setMessages((prev) => [...prev, fallbackMessage]);
+		} finally {
+			setIsSending(false);
+		}
 	};
 
-	const handleKeyPress = (e: React.KeyboardEvent) => {
+	const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === 'Enter') {
 			handleSendMessage();
 		}
 	};
 
 	return (
-		<div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
+		<div
+			className={`fixed bottom-4 z-50 flex flex-col items-end transition-all duration-300 ${
+				isChatOpen ? 'right-[560px]' : 'right-4'
+			}`}
+		>
 			{isOpen && (
 				<Card className="w-80 h-[28rem] shadow-xl mb-4 animate-in slide-in-from-bottom-4 zoom-in-95 fade-in duration-500 ease-out">
 					<CardHeader className="flex justify-between items-center bg-primary text-white rounded-t-lg">
@@ -90,16 +118,22 @@ export function ChatbotWidget() {
 									onChange={(e) => setInputValue(e.target.value)}
 									onKeyPress={handleKeyPress}
 									size="sm"
+									isDisabled={isSending}
 								/>
 								<Button
 									isIconOnly
 									color="primary"
 									size="sm"
 									onClick={handleSendMessage}
+									isLoading={isSending}
+									isDisabled={isSending || !inputValue.trim()}
 								>
 									<Send size={16} />
 								</Button>
 							</div>
+							{errorMessage && (
+								<p className="text-xs text-danger-500 mt-2">{errorMessage}</p>
+							)}
 						</div>
 					</CardBody>
 				</Card>

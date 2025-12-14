@@ -64,10 +64,14 @@ export function PageHeader({
 			)}
 
 			<div className="flex items-start justify-between gap-4">
-				<div className="flex flex-col gap-1">
-					<h1 className="text-3xl font-bold text-foreground">{title}</h1>
+				<div className="flex-col gap-1">
+					<h1 className="text-3xl font-bold text-foreground font-heading">
+						{title}
+					</h1>
 					{description && (
-						<p className="text-default-500 text-base">{description}</p>
+						<p className="text-default-500 text-base font-sans">
+							{description}
+						</p>
 					)}
 				</div>
 
@@ -79,6 +83,7 @@ export function PageHeader({
 								to={action.to}
 								color={action.color || 'primary'}
 								variant={action.variant || 'solid'}
+								className="font-nav"
 							>
 								{action.label}
 							</Button>
@@ -87,6 +92,7 @@ export function PageHeader({
 								onClick={action.onClick}
 								color={action.color || 'primary'}
 								variant={action.variant || 'solid'}
+								className="font-nav"
 							>
 								{action.label}
 							</Button>

@@ -42,8 +42,8 @@ export default function Register() {
 					<h1 className="text-2xl font-bold text-foreground font-heading mb-2">
 						Crea Tu Cuenta
 					</h1>
-					<p className="text-base text-default-600 text-center">
-						Únete a la comunidad de aprendizaje colaborativo
+					<p className="text-base text-default-600 text-center font-sans">
+						Usa tu cuenta institucional de Google
 					</p>
 				</CardHeader>
 
@@ -88,10 +88,10 @@ export default function Register() {
 
 					{/* Beneficios */}
 					<div className="space-y-3">
-						<h3 className="text-sm font-semibold text-foreground text-center">
+						<h3 className="text-sm font-semibold text-foreground text-center font-heading">
 							Al registrarte tendrás acceso a:
 						</h3>
-						<ul className="space-y-2 text-sm text-default-600">
+						<ul className="space-y-2 text-sm text-default-600 font-sans">
 							<li className="flex items-start gap-2">
 								<span className="text-primary mt-0.5">✓</span>
 								<span>Foros de discusión y resolución de dudas</span>
@@ -112,24 +112,24 @@ export default function Register() {
 					</div>
 
 					{/* Términos */}
-					<p className="text-xs text-default-500 text-center">
+					<p className="text-xs text-default-500 text-center font-sans">
 						Al continuar, aceptas nuestros{' '}
-						<Link href="#" className="text-primary" size="sm">
+						<Link href="#" className="text-primary font-nav" size="sm">
 							términos y condiciones
 						</Link>{' '}
 						y{' '}
-						<Link href="#" className="text-primary" size="sm">
+						<Link href="#" className="text-primary font-nav" size="sm">
 							política de privacidad
 						</Link>
 					</p>
 				</CardBody>
 
 				<CardFooter className="flex justify-center py-4 px-6">
-					<p className="text-sm text-default-600 text-center">
+					<p className="text-sm text-default-600 text-center font-sans">
 						¿Ya tienes cuenta?{' '}
 						<Link
 							href="/login"
-							className="text-primary font-semibold hover:text-primary-600"
+							className="text-primary font-semibold hover:text-primary-600 font-nav"
 						>
 							Inicia sesión aquí
 						</Link>

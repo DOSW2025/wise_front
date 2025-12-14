@@ -64,7 +64,7 @@ export default [
 	// Admin dashboard
 	createDashboardRoutes('admin', [
 		'users',
-		'validation',
+		'materials',
 		'gamification',
 		'reports',
 		'settings',

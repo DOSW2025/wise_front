@@ -35,7 +35,6 @@ export default function PreviewModal({
 	onShare,
 	onReport,
 	onRate,
-	onComment,
 	onRatingChange,
 	onAddComment,
 }: PreviewModalProps) {
@@ -66,6 +65,17 @@ export default function PreviewModal({
 				</ModalHeader>
 
 				<ModalBody className="p-6">
+					{/* Tags del material */}
+					{material.tags && material.tags.length > 0 && (
+						<div className="flex flex-wrap gap-2 mb-4">
+							{material.tags.map((tag) => (
+								<Chip key={tag} size="sm" variant="flat" color="primary">
+									{tag}
+								</Chip>
+							))}
+						</div>
+					)}
+
 					{/* Información del archivo */}
 					<div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-lg">
 						<div className="flex items-center gap-4">
@@ -120,25 +130,48 @@ export default function PreviewModal({
 					</div>
 
 					{/* Área de vista previa */}
-					<div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6">
-						<FileText size={64} className="mx-auto mb-4 text-gray-400" />
-						<h3 className="text-lg font-semibold mb-2">
-							{material.fileType} • {material.title}
-						</h3>
-						<p className="text-gray-600 mb-4">
-							La vista previa completa del documento se mostrará aquí. Por
-							ahora, puedes descargar el archivo para verlo.
-						</p>
-						<Button
-							className="bg-[#8B1A1A] text-white"
-							startContent={<Download size={16} />}
-							onClick={() => onDownload(material.id)}
-							type="button"
-						>
-							Descargar {material.fileType}
-						</Button>
-					</div>
-
+					{material && (
+						<div className="border rounded-lg overflow-hidden mb-6 bg-gray-50">
+							{material.fileType === 'PDF' && (
+								<div className="space-y-2">
+									{/* Viewer alternativo con Google Docs */}
+									<div className="relative w-full bg-white">
+										<iframe
+											src={`https://docs.google.com/gview?url=${encodeURIComponent(material.fileUrl || '')}&embedded=true`}
+											className="w-full h-96 border-0"
+											title={`Vista previa de ${material.title}`}
+											sandbox="allow-same-origin allow-scripts allow-popups"
+										/>
+									</div>
+									<div className="p-4 text-center text-sm text-gray-600">
+										<p className="mb-2">
+											Vista previa del documento. Descarga para ver en mejor
+											calidad.
+										</p>
+									</div>
+								</div>
+							)}
+							{material.fileType !== 'PDF' && (
+								<div className="p-8 text-center">
+									<FileText size={64} className="mx-auto mb-4 text-gray-400" />
+									<h3 className="text-lg font-semibold mb-2">
+										{material.fileType} • {material.title}
+									</h3>
+									<p className="text-gray-600 mb-4">
+										Vista previa no disponible para este tipo de archivo.
+									</p>
+									<Button
+										className="bg-[#8B1A1A] text-white"
+										startContent={<Download size={16} />}
+										onClick={() => onDownload(material.id)}
+										type="button"
+									>
+										Descargar {material.fileType}
+									</Button>
+								</div>
+							)}
+						</div>
+					)}
 					{/* Descripción */}
 					<div className="mb-6">
 						<h3 className="text-lg font-semibold mb-3">Descripción</h3>
