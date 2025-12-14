@@ -41,7 +41,7 @@ export function useProfileSave() {
 					errorMessage.includes('no está disponible')
 				) {
 					errorMessage =
-						'El endpoint de actualización de perfil no está disponible en el backend. Por favor, contacta al equipo de desarrollo.';
+						'El servicio no está disponible temporalmente. Por favor, intenta más tarde';
 				}
 			}
 

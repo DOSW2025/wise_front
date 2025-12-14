@@ -88,7 +88,7 @@ function extractErrorMessage(error: unknown, defaultMessage: string): string {
 
 		// Detectar error 404 o método no permitido
 		if (response.status === 404 || response.status === 405) {
-			return 'El endpoint no está disponible en el backend';
+			return 'El servicio no está disponible temporalmente. Por favor, intenta más tarde';
 		}
 
 		if ('data' in response) {

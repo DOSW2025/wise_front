@@ -222,49 +222,45 @@ export default function StudentMaterials() {
 	const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
 
 	// Handler for clicking on AI recommendations
-	const handleRecommendationClick = async (rec: RecommendationItem) => {
-		try {
-			setIsLoadingRecommendation(true);
+	const handleRecommendationClick = (rec: RecommendationItem) => {
+		setIsLoadingRecommendation(true);
 
-			// Intentar buscar en los materiales actuales
-			const foundMaterial = allMaterials.find((m) => {
-				// Buscar por coincidencia exacta de título
-				if (m.title === rec.fileName) return true;
+		// Intentar buscar en los materiales actuales
+		const foundMaterial = allMaterials.find((m) => {
+			// Buscar por coincidencia exacta de título
+			if (m.title === rec.fileName) return true;
 
-				// Buscar por coincidencia parcial (el título contiene el fileName o viceversa)
-				if (m.title.toLowerCase().includes(rec.fileName.toLowerCase()))
-					return true;
-				if (rec.fileName.toLowerCase().includes(m.title.toLowerCase()))
-					return true;
+			// Buscar por coincidencia parcial (el título contiene el fileName o viceversa)
+			if (m.title.toLowerCase().includes(rec.fileName.toLowerCase()))
+				return true;
+			if (rec.fileName.toLowerCase().includes(m.title.toLowerCase()))
+				return true;
 
-				// Buscar por docId si está disponible
-				if (rec.docId && m.id === rec.docId) return true;
+			// Buscar por docId si está disponible
+			if (rec.docId && m.id === rec.docId) return true;
 
-				return false;
-			});
+			return false;
+		});
 
-			if (foundMaterial) {
-				// Si está en la lista actual, abrir directamente
-				setPreviewMaterial(foundMaterial);
-			} else {
-				// Si no está, actualizar la búsqueda con el nombre del archivo
-				// Extraer el nombre limpio del archivo (sin UUID si existe)
-				const cleanFileName = rec.fileName
-					.replace(/^[a-f0-9-]{36}-/i, '')
-					.replace(/\.[^.]+$/, '');
-				setSearchQuery(cleanFileName || rec.fileName);
-				setSelectedSubject('Todos');
-				setSelectedSemester('Todos');
-				setCurrentSkip(0);
-			}
-		} catch (error) {
-			console.error('Error en handleRecommendationClick:', error);
-			alert(
-				'Ocurrió un error al procesar la recomendación. Por favor, inténtalo de nuevo.',
-			);
-		} finally {
-			setIsLoadingRecommendation(false);
+		if (foundMaterial) {
+			// Si está en la lista actual, abrir directamente
+			setPreviewMaterial(foundMaterial);
+		} else {
+			// Si no está, actualizar la búsqueda con el nombre del archivo
+			// Extraer el nombre limpio del archivo (sin UUID si existe)
+			const cleanFileName = rec.fileName
+				.replace(
+					/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}-/,
+					'',
+				)
+				.replace(/\.[^.]+$/, '');
+			setSearchQuery(cleanFileName || rec.fileName);
+			setSelectedSubject('Todos');
+			setSelectedSemester('Todos');
+			setCurrentSkip(0);
 		}
+
+		setIsLoadingRecommendation(false);
 	};
 
 	// Filtrar y ordenar materiales
