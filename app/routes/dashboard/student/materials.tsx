@@ -31,7 +31,6 @@ import type {
 import { sortOptions } from '~/components/materials/types';
 import { recommendationsService } from '~/lib/api/recommendations';
 import { useDownloadMaterial, useMaterials } from '~/lib/hooks/useMaterials';
-import { materialsService } from '~/lib/services/materials.service';
 import type {
 	AssistantResponse,
 	Material,
@@ -239,8 +238,7 @@ export default function StudentMaterials() {
 					return true;
 
 				// Buscar por docId si está disponible
-				if (rec.docId && (m.id === rec.docId || m.docId === rec.docId))
-					return true;
+				if (rec.docId && m.id === rec.docId) return true;
 
 				return false;
 			});
@@ -261,6 +259,9 @@ export default function StudentMaterials() {
 			}
 		} catch (error) {
 			console.error('Error en handleRecommendationClick:', error);
+			alert(
+				'Ocurrió un error al procesar la recomendación. Por favor, inténtalo de nuevo.',
+			);
 		} finally {
 			setIsLoadingRecommendation(false);
 		}
