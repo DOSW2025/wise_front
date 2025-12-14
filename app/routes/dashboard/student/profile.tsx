@@ -1,5 +1,4 @@
-import { Button, Card, CardBody, Chip, Input } from '@heroui/react';
-import { Trash2 } from 'lucide-react';
+import { Card, CardBody, Input } from '@heroui/react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
@@ -21,6 +20,7 @@ export default function StudentProfile() {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
+	const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
 	// Fetch tutorías statistics
 	const { data: stats, isLoading: isLoadingStats } = useTutoriaStats(
@@ -36,7 +36,6 @@ export default function StudentProfile() {
 			: '0h';
 	}
 
-	// Custom hooks for managing complex state
 	const {
 		profile,
 		setProfile,
@@ -46,7 +45,7 @@ export default function StudentProfile() {
 		setIsEditing,
 		validateForm,
 		resetForm,
-	} = useProfileForm({
+	} = useStudentProfileForm({
 		name: user?.name || '',
 		email: user?.email || '',
 		phone: '',
@@ -57,7 +56,7 @@ export default function StudentProfile() {
 		semester: '',
 	});
 
-	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
+	const { isSaving, error, success, saveProfile } = useStudentProfileSave();
 
 	// Cargar el perfil completo cuando el componente se monta
 	useEffect(() => {
@@ -73,24 +72,22 @@ export default function StudentProfile() {
 					...prev,
 					name: user.name,
 					email: user.email,
-					avatar: user.avatarUrl,
+					avatarUrl: user.avatarUrl,
 					phone: profileData.phone || '',
 					description: profileData.description || '',
 					role: profileData.role || user.role || '',
 					semester: profileData.semester || '',
+					interests: profileData.interests || prev.interests || [],
 				}));
 			} catch (err) {
 				console.error('Error cargando perfil:', err);
-				const errorMessage =
-					err instanceof Error ? err.message : 'Error al cargar tu perfil';
-				setError(errorMessage);
 			} finally {
 				setIsLoadingProfile(false);
 			}
 		};
 
 		loadProfile();
-	}, [user, setProfile, setError]);
+	}, [user, setProfile]);
 
 	// Actualizar datos básicos del usuario desde el contexto
 	useEffect(() => {
@@ -106,7 +103,6 @@ export default function StudentProfile() {
 
 	const handleSave = async () => {
 		if (!validateForm()) {
-			setError('Por favor corrige los errores en el formulario');
 			return;
 		}
 
@@ -114,8 +110,10 @@ export default function StudentProfile() {
 			name: profile.name,
 			email: profile.email,
 			phone: profile.phone,
-			role: profile.role,
+			role: profile.role || '',
 			description: profile.description,
+			interests: profile.interests || [],
+			semester: profile.semester || '',
 		});
 
 		if (saved) {
@@ -157,11 +155,9 @@ export default function StudentProfile() {
 				description="Gestiona tu información personal y configuración"
 			/>
 
-			{/* Mensajes de error y éxito */}
 			{error && <AlertMessage message={error} type="error" />}
 			{success && <AlertMessage message={success} type="success" />}
 
-			{/* Información Personal */}
 			<Card>
 				<CardBody className="gap-6">
 					<div className="flex justify-between items-center">
@@ -176,7 +172,7 @@ export default function StudentProfile() {
 					</div>
 
 					<div className="flex flex-col md:flex-row gap-6">
-						<ProfileAvatar src={profile.avatar} name={profile.name} />
+						<ProfileAvatar src={profile.avatarUrl} name={profile.name} />
 						<ProfileFormFields
 							profile={profile}
 							isEditing={isEditing}
@@ -232,7 +228,6 @@ export default function StudentProfile() {
 				</CardBody>
 			</Card>
 
-			{/* Estadísticas */}
 			<Card>
 				<CardBody className="gap-4">
 					<h2 className="text-xl font-semibold">Mis Estadísticas</h2>
@@ -265,7 +260,6 @@ export default function StudentProfile() {
 				</CardBody>
 			</Card>
 
-			{/* Configuración */}
 			<Card>
 				<CardBody className="gap-4">
 					<h2 className="text-xl font-semibold">Configuración de Cuenta</h2>

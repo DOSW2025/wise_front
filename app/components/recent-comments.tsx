@@ -64,7 +64,10 @@ function RatingStars({ score }: { readonly score: number }) {
 				/>
 			))}
 			{Array.from({ length: emptyStars }).map((_, i) => (
-				<Star key={`empty-${score}-${i}`} className="w-4 h-4 text-gray-300" />
+				<Star
+					key={`empty-${score}-${i}`}
+					className="w-4 h-4 text-default-300"
+				/>
 			))}
 		</div>
 	);
@@ -99,13 +102,13 @@ function CommentCard({ rating }: { readonly rating: Rating }) {
 				/>
 				<div className="flex-1 min-w-0">
 					<div className="flex items-center justify-between gap-2 mb-1">
-						<h4 className="font-semibold text-sm text-default-900 truncate">
+						<h4 className="font-heading font-semibold text-sm text-default-900 truncate">
 							{studentName}
 						</h4>
 						<RatingStars score={rating.score} />
 					</div>
 					{/* Comentario */}
-					<p className="text-sm text-default-600 italic leading-relaxed">
+					<p className="font-sans text-sm text-default-600 italic leading-relaxed">
 						"{displayComment}"
 					</p>
 					{/* Fecha */}
@@ -193,7 +196,9 @@ export function RecentComments({
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-2">
 						<MessageSquare className="w-5 h-5 text-primary" />
-						<h2 className="text-xl font-semibold">Comentarios Recientes</h2>
+						<h2 className="font-heading text-xl font-semibold">
+							Comentarios Recientes
+						</h2>
 					</div>
 					<Button
 						as={Link}

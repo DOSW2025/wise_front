@@ -50,7 +50,7 @@ const TutorCard: React.FC<TutorCardProps> = ({
 	};
 
 	return (
-		<div className="bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow">
+		<div className="bg-content1 border border-default-200 rounded-lg hover:shadow-lg transition-shadow">
 			<div className="p-4 flex flex-col">
 				{/* Info principal (click to open) */}
 				<button
@@ -66,11 +66,10 @@ const TutorCard: React.FC<TutorCardProps> = ({
 					</div>
 
 					<div className="ml-4 flex-grow">
-						<h3 className="text-lg font-semibold text-gray-800">
+						<h3 className="text-lg font-semibold text-default-800 font-heading">
 							{tutor.name}
 						</h3>
-						<p className="text-sm text-gray-600">{tutor.title}</p>
-
+						<p className="text-sm text-default-600">{tutor.title}</p>
 						{/* Calificación y reseñas */}
 						{tutor.rating > 0 && tutor.reviews > 0 ? (
 							<div className="flex items-center mt-1">
@@ -78,7 +77,7 @@ const TutorCard: React.FC<TutorCardProps> = ({
 								<span className="text-sm font-medium text-red-700">
 									{tutor.rating.toFixed(1)}
 								</span>
-								<span className="text-xs text-gray-400 ml-1">
+								<span className="text-xs text-default-400 ml-1">
 									({tutor.reviews} {tutor.reviews === 1 ? 'reseña' : 'reseñas'})
 								</span>
 							</div>
@@ -105,13 +104,13 @@ const TutorCard: React.FC<TutorCardProps> = ({
 				</div>
 
 				{/* Disponibilidad */}
-				<p className="text-sm font-medium text-gray-600 mb-4 flex items-center">
-					<Calendar className="w-4 h-4 mr-2 text-gray-500" />
+				<p className="text-sm font-medium text-default-600 mb-4 flex items-center">
+					<Calendar className="w-4 h-4 mr-2 text-default-500" />
 					{tutor.availability}
 				</p>
 
 				{/* Acciones */}
-				<div className="flex gap-2 mt-auto pt-2 border-t border-gray-200">
+				<div className="flex gap-2 mt-auto pt-2 border-t border-default-200">
 					<button
 						type="button"
 						onClick={() => onViewProfile?.(tutor.id.toString())}
@@ -123,7 +122,7 @@ const TutorCard: React.FC<TutorCardProps> = ({
 					<button
 						type="button"
 						onClick={() => onOpenChat?.(tutor)}
-						className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+						className="w-10 h-10 border border-default-300 rounded-lg flex items-center justify-center hover:bg-default-100 transition-colors"
 						aria-label="Enviar Mensaje"
 					>
 						<MessageCircle className="w-5 h-5" />

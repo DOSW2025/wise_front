@@ -30,6 +30,7 @@ import type {
 } from '~/components/materials/types';
 import { sortOptions } from '~/components/materials/types';
 import { recommendationsService } from '~/lib/api/recommendations';
+import { useIaFeature } from '~/lib/hooks/useIaFeature';
 import { useDownloadMaterial, useMaterials } from '~/lib/hooks/useMaterials';
 import type {
 	AssistantResponse,
@@ -171,6 +172,7 @@ function adaptMaterialForCard(apiMaterial: Material): MaterialCardType {
 
 export default function StudentMaterials() {
 	// Estados
+	const iaEnabledState = useIaFeature(5000);
 	const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 	const [searchQuery, setSearchQuery] = useState('');
@@ -217,6 +219,7 @@ export default function StudentMaterials() {
 		? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
 		: 'space-y-4';
 	const gridButtonVariant = isGridView ? 'solid' : 'flat';
+
 	const gridButtonClass = isGridView ? 'bg-[#8B1A1A] text-white' : '';
 	const listButtonVariant = isGridView ? 'flat' : 'solid';
 	const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
@@ -494,13 +497,13 @@ export default function StudentMaterials() {
 			{/* Header SIN botón Subir material */}
 			<div className="flex items-start justify-between">
 				<div className="flex flex-col gap-2">
-					<h1 className="text-3xl font-bold text-foreground">
+					<h1 className="text-3xl font-bold text-foreground font-heading">
 						Repositorio de Materiales
 					</h1>
 					<p className="text-default-500">
 						{filteredMaterials.length} materiales disponibles
 						{filteredMaterials.length > itemsPerPage && (
-							<span className="text-sm text-gray-500 ml-2">
+							<span className="text-sm text-default-500 ml-2">
 								(Mostrando {(currentPage - 1) * itemsPerPage + 1}-
 								{Math.min(currentPage * itemsPerPage, filteredMaterials.length)}
 								)
@@ -519,17 +522,19 @@ export default function StudentMaterials() {
 					onValueChange={setSearchQuery}
 					className="flex-1"
 					endContent={
-						<Button
-							isIconOnly
-							variant="light"
-							className="min-w-10 h-10 rounded-full bg-[#8B1A1A] text-white shadow-sm flex items-center justify-center px-2 mr-2"
-							title="Busqueda inteligente"
-							aria-label="Busqueda inteligente"
-							onClick={() => setIsAssistOpen((prev) => !prev)}
-							type="button"
-						>
-							<Stars size={18} className="w-5 h-5" />
-						</Button>
+						iaEnabledState ? (
+							<Button
+								isIconOnly
+								variant="light"
+								className="min-w-10 h-10 rounded-full bg-[#8B1A1A] text-white shadow-sm flex items-center justify-center px-2 mr-2"
+								title="Busqueda inteligente"
+								aria-label="Busqueda inteligente"
+								onClick={() => setIsAssistOpen((prev) => !prev)}
+								type="button"
+							>
+								<Stars size={18} className="w-5 h-5" />
+							</Button>
+						) : null
 					}
 				/>
 
@@ -537,12 +542,13 @@ export default function StudentMaterials() {
 					variant="bordered"
 					startContent={<Filter size={20} />}
 					onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+					className="font-nav"
 				>
 					Filtros
 				</Button>
 			</div>
 
-			{isAssistOpen && (
+			{iaEnabledState && isAssistOpen && (
 				<div className="border rounded-lg p-4 shadow-sm bg-white/60 backdrop-blur-sm space-y-4">
 					<div className="flex items-center justify-between gap-3">
 						<div>
@@ -558,6 +564,7 @@ export default function StudentMaterials() {
 							variant="light"
 							onClick={() => setIsAssistOpen(false)}
 							type="button"
+							className="font-nav"
 						>
 							Cerrar
 						</Button>
@@ -609,7 +616,7 @@ export default function StudentMaterials() {
 						<Button
 							color="primary"
 							onClick={handleAssistSubmit}
-							className="sm:ml-auto"
+							className="sm:ml-auto font-nav"
 							isLoading={isAssistLoading}
 						>
 							Enviar
@@ -702,7 +709,9 @@ export default function StudentMaterials() {
 			<div className="flex items-center justify-between">
 				<Dropdown>
 					<DropdownTrigger>
-						<Button variant="flat">Ordenar por: {sortBy}</Button>
+						<Button variant="flat" className="font-nav">
+							Ordenar por: {sortBy}
+						</Button>
 					</DropdownTrigger>
 					<DropdownMenu
 						aria-label="Ordenar por"
@@ -784,7 +793,7 @@ export default function StudentMaterials() {
 			{totalPages > 1 && (
 				<div className="flex flex-col sm:flex-row justify-center items-center gap-4 py-6 border-t">
 					{/* Información de página */}
-					<div className="text-sm text-gray-600">
+					<div className="text-sm text-default-600">
 						Página {currentPage} de {totalPages}
 					</div>
 
@@ -829,7 +838,7 @@ export default function StudentMaterials() {
 							{totalPages > 5 &&
 								currentPage > 3 &&
 								currentPage < totalPages - 2 && (
-									<span className="flex items-center px-2 text-gray-500">
+									<span className="flex items-center px-2 text-default-500">
 										...
 									</span>
 								)}
@@ -888,7 +897,7 @@ export default function StudentMaterials() {
 					</div>
 
 					{/* Información de rango */}
-					<div className="text-sm text-gray-500">
+					<div className="text-sm text-default-500">
 						{(currentPage - 1) * itemsPerPage + 1} -{' '}
 						{Math.min(currentPage * itemsPerPage, filteredMaterials.length)} de{' '}
 						{filteredMaterials.length}

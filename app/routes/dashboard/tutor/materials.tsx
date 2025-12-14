@@ -164,7 +164,7 @@ export default function TutorMaterials() {
 		<div className="space-y-6">
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<h1 className="text-3xl font-bold text-foreground">
+					<h1 className="font-heading text-3xl font-bold text-foreground">
 						Banco de Materiales
 					</h1>
 					<p className="text-default-500">
@@ -172,6 +172,7 @@ export default function TutorMaterials() {
 					</p>
 				</div>
 				<Button
+					className="font-nav"
 					color="primary"
 					startContent={<Plus className="w-4 h-4" />}
 					onPress={onOpen}
@@ -210,6 +211,7 @@ export default function TutorMaterials() {
 					</div>
 					<div className="flex gap-2">
 						<Button
+							className="font-nav"
 							isIconOnly
 							variant={viewMode === 'list' ? 'solid' : 'bordered'}
 							color={viewMode === 'list' ? 'primary' : 'default'}
@@ -219,6 +221,7 @@ export default function TutorMaterials() {
 							<List className="w-4 h-4" />
 						</Button>
 						<Button
+							className="font-nav"
 							isIconOnly
 							variant={viewMode === 'grid' ? 'solid' : 'bordered'}
 							color={viewMode === 'grid' ? 'primary' : 'default'}
@@ -236,6 +239,7 @@ export default function TutorMaterials() {
 				<div className="space-y-4">
 					<div className="flex items-center gap-4">
 						<Button
+							className="font-nav"
 							variant="bordered"
 							startContent={<Filter className="w-4 h-4" />}
 							endContent={
@@ -275,9 +279,12 @@ export default function TutorMaterials() {
 							<CardBody className="p-6">
 								<div className="space-y-4">
 									<div className="flex items-center justify-between">
-										<h4 className="font-semibold">Filtrar por Tags</h4>
+										<h4 className="font-heading font-semibold">
+											Filtrar por Tags
+										</h4>
 										{hasActiveFilters && (
 											<Button
+												className="font-nav"
 												size="sm"
 												variant="light"
 												startContent={<X className="w-3 h-3" />}
@@ -291,7 +298,7 @@ export default function TutorMaterials() {
 									<div>
 										<label
 											htmlFor="add-tags-input"
-											className="block text-sm font-medium text-gray-700 mb-2"
+											className="block text-sm font-medium text-default-700 mb-2"
 										>
 											Agregar Tags
 										</label>
@@ -306,6 +313,7 @@ export default function TutorMaterials() {
 												className="flex-1"
 											/>
 											<Button
+												className="font-nav"
 												color="primary"
 												size="sm"
 												onClick={handleAddTag}
@@ -341,7 +349,9 @@ export default function TutorMaterials() {
 							<CardBody>
 								<div className="text-center py-12">
 									<div className="text-6xl mb-4">📚</div>
-									<h3 className="text-xl font-semibold mb-2">Sin resultados</h3>
+									<h3 className="font-heading text-xl font-semibold mb-2">
+										Sin resultados
+									</h3>
 									<p className="text-default-500">
 										No se encontraron materiales.
 									</p>
@@ -376,7 +386,7 @@ export default function TutorMaterials() {
 													<div className="flex-1">
 														<div className="flex items-start justify-between mb-3">
 															<div>
-																<h3 className="text-lg font-semibold mb-1">
+																<h3 className="font-heading text-lg font-semibold mb-1">
 																	{material.nombre}
 																</h3>
 																<p className="text-sm text-default-600">
@@ -384,7 +394,7 @@ export default function TutorMaterials() {
 																</p>
 															</div>
 															<div className="flex items-center gap-1">
-																<Star className="w-4 h-4 text-yellow-500 fill-current" />
+																<Star className="w-4 h-4 text-warning fill-current" />
 																<span className="text-sm font-medium">
 																	{material.calificacion
 																		? material.calificacion.toFixed(1)
@@ -425,7 +435,7 @@ export default function TutorMaterials() {
 											) : (
 												<div className="text-center">
 													<FileText className="w-12 h-12 text-[#8B1A1A] mx-auto mb-3" />
-													<h3 className="font-semibold text-sm mb-1 line-clamp-2">
+													<h3 className="font-heading font-semibold text-sm mb-1 line-clamp-2">
 														{material.nombre}
 													</h3>
 													<p className="text-xs text-default-600 mb-2">
@@ -457,7 +467,7 @@ export default function TutorMaterials() {
 													</div>
 													<div className="flex items-center justify-between text-xs text-default-500">
 														<div className="flex items-center gap-1">
-															<Star className="w-3 h-3 text-yellow-500 fill-current" />
+															<Star className="w-3 h-3 text-warning fill-current" />
 															<span>
 																{material.calificacion
 																	? material.calificacion.toFixed(1)

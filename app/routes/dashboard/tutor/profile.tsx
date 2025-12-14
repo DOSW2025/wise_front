@@ -12,7 +12,6 @@ import {
 	Switch,
 	useDisclosure,
 } from '@heroui/react';
-import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { AlertMessage, ProfileAvatar } from '~/components';
@@ -33,11 +32,9 @@ export default function TutorProfile() {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
-	const {
-		isOpen: isDeleteOpen,
-		onOpen: onDeleteOpen,
-		onClose: onDeleteClose,
-	} = useDisclosure();
+	const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+	const [localError, setLocalError] = useState<string | null>(null);
+	const { onClose: onDeleteClose } = useDisclosure();
 
 	// Custom hooks for managing complex state
 	const {
@@ -47,9 +44,7 @@ export default function TutorProfile() {
 		setFormErrors,
 		isEditing,
 		setIsEditing,
-		avatarPreview,
 		validateForm,
-		handleImageUpload,
 		toggleDay,
 		resetForm,
 	} = useProfileForm({
@@ -58,7 +53,8 @@ export default function TutorProfile() {
 		phone: '',
 		location: '',
 		description: '',
-		avatar: user?.avatarUrl,
+		role: user?.role || 'TUTOR',
+		avatarUrl: user?.avatarUrl,
 		availability: {
 			monday: false,
 			tuesday: false,
@@ -71,7 +67,7 @@ export default function TutorProfile() {
 		subjects: [],
 	});
 
-	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
+	const { isSaving, error, success, saveProfile } = useProfileSave();
 
 	const { isOpen: isAvailabilityModalOpen, onClose: onAvailabilityModalClose } =
 		useDisclosure();
@@ -83,13 +79,41 @@ export default function TutorProfile() {
 				name: user.name,
 				email: user.email,
 				avatarUrl: user.avatarUrl,
+				role: user.role || prev.role,
 			}));
 		}
 	}, [user, setProfile]);
 
+	useEffect(() => {
+		const loadProfile = async () => {
+			if (!user) return;
+			setIsLoadingProfile(true);
+			try {
+				const profileData = await getProfile();
+				setProfile((prev) => ({
+					...prev,
+					name: user.name,
+					email: user.email,
+					avatarUrl: user.avatarUrl,
+					role: user.role || prev.role,
+					phone: profileData.phone || '',
+					description: profileData.description || '',
+				}));
+			} catch (err) {
+				console.error('Error cargando perfil de tutor:', err);
+				setLocalError('No se pudo cargar tu perfil');
+			} finally {
+				setIsLoadingProfile(false);
+			}
+		};
+
+		loadProfile();
+	}, [user, setProfile]);
+
 	const handleSave = async () => {
+		setLocalError(null);
 		if (!validateForm()) {
-			setError('Por favor corrige los errores en el formulario');
+			setLocalError('Por favor corrige los errores en el formulario');
 			return;
 		}
 
@@ -108,9 +132,24 @@ export default function TutorProfile() {
 
 	const handleCancel = () => {
 		if (user) {
-			resetForm(user);
+			resetForm({
+				name: user.name,
+				email: user.email,
+				avatarUrl: user.avatarUrl,
+			});
 		}
 	};
+
+	if (isLoadingProfile) {
+		return (
+			<div className="flex items-center justify-center min-h-screen">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+					<p className="text-lg">Cargando perfil...</p>
+				</div>
+			</div>
+		);
+	}
 
 	const handleDeleteAccount = async () => {
 		try {
@@ -124,13 +163,6 @@ export default function TutorProfile() {
 		}
 	};
 
-	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const result = handleImageUpload(event);
-		if (result?.error) {
-			setError(result.error);
-		}
-	};
-
 	const daysOfWeek = [
 		{ key: 'monday', label: 'Lunes' },
 		{ key: 'tuesday', label: 'Martes' },
@@ -141,6 +173,8 @@ export default function TutorProfile() {
 		{ key: 'sunday', label: 'Domingo' },
 	] as const;
 
+	const displayError = localError || error;
+
 	return (
 		<div className="space-y-6">
 			<ProfileHeader
@@ -149,7 +183,7 @@ export default function TutorProfile() {
 			/>
 
 			{/* Mensajes de error y éxito */}
-			{error && <AlertMessage message={error} type="error" />}
+			{displayError && <AlertMessage message={displayError} type="error" />}
 			{success && <AlertMessage message={success} type="success" />}
 
 			{/* Información Personal */}
@@ -167,13 +201,7 @@ export default function TutorProfile() {
 					</div>
 
 					<div className="flex flex-col md:flex-row gap-6">
-						<ProfileAvatar
-							src={profile.avatar}
-							name={profile.name}
-							isEditing={isEditing}
-							onImageChange={handleImageChange}
-							preview={avatarPreview}
-						/>{' '}
+						<ProfileAvatar src={profile.avatarUrl} name={profile.name} />{' '}
 						<ProfileFormFields
 							profile={profile}
 							isEditing={isEditing}

@@ -122,8 +122,8 @@ export function Navbar({
 							to={item.path}
 							className={
 								location.pathname === item.path
-									? 'text-primary font-semibold'
-									: 'text-foreground'
+									? 'text-primary font-semibold font-nav'
+									: 'text-foreground font-nav'
 							}
 						>
 							{item.name}
@@ -209,7 +209,7 @@ export function Navbar({
 				{menuItems.map((item, index) => (
 					<NavbarMenuItem key={`${item.path}-${index}`}>
 						<Link
-							className={`w-full ${
+							className={`w-full font-nav ${
 								location.pathname === item.path
 									? 'text-primary font-semibold'
 									: 'text-foreground'

@@ -284,7 +284,10 @@ export function Sidebar({
 						onClick={() => setIsMobileMenuOpen(false)}
 					>
 						<img
-							src="/logo/logoeciwise.svg"
+							src="/logo/logo.png"
+							onError={(e) => {
+								e.currentTarget.src = '/logo/logo.png';
+							}}
 							alt="ECIWISE+ logo"
 							className="w-11 h-11"
 						/>
@@ -351,7 +354,7 @@ export function Sidebar({
 								to={item.path}
 								onClick={() => setIsMobileMenuOpen(false)}
 								className={`
-									flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+									flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors font-nav
 									${
 										isActive
 											? 'bg-primary text-primary-foreground'
