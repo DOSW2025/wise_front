@@ -265,57 +265,6 @@ function TopicCard({
 	);
 }
 
-function GroupChatCard() {
-	const [chats, setChats] = useState<ChatGroup[]>([]);
-	const [isLoading, setIsLoading] = useState(false);
-
-	const loadChats = async () => {
-		setIsLoading(true);
-		try {
-			const data = await chatsService.getAllGroups();
-			setChats(data);
-		} catch (error) {
-			console.error('Error loading chats:', error);
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: loadChats should only run once on mount
-	useEffect(() => {
-		loadChats();
-	}, []);
-
-	return (
-		<Card className="border-1 border-default-200" shadow="sm">
-			<CardBody className="gap-3">
-				<div className="flex items-center justify-between">
-					<h3 className="text-medium font-semibold">Chat Grupal</h3>
-					<Badge
-						color="primary"
-						content={chats.length}
-						shape="circle"
-						size="sm"
-					>
-						<div />
-					</Badge>
-				</div>
-				<p className="text-sm text-default-500">
-					Conecta en tiempo real con otros estudiantes y tutores.
-				</p>
-				<Button
-					color="primary"
-					variant="flat"
-					isLoading={isLoading}
-					onPress={loadChats}
-				>
-					{isLoading ? 'Cargando...' : 'Abrir chat'}
-				</Button>
-			</CardBody>
-		</Card>
-	);
-}
-
 export function CommunityForums() {
 	const [search, setSearch] = useState('');
 	const [subject, setSubject] = useState('Todos');
@@ -324,8 +273,8 @@ export function CommunityForums() {
 	const [description, setDescription] = useState('');
 	const [selectedMateriaForCreate, setSelectedMateriaForCreate] =
 		useState<string>('');
-	const MIN_LEN = 15;
-	const MAX_LEN = 50;
+	const MIN_LEN = 10;
+	const MAX_LEN = 150;
 
 	// State para materias
 	const [materias, setMaterias] = useState<Materia[]>([]);
@@ -1083,13 +1032,8 @@ export function CommunityForums() {
 						</div>
 					)}
 				</div>
-
-				<div className="xl:col-span-1">
-					<GroupChatCard />
-				</div>
 			</div>
 
-			{/* Modal para crear nuevo foro */}
 			<Modal isOpen={isOpen} onOpenChange={setIsOpen} size="lg">
 				<ModalContent>
 					{(onClose) => (
