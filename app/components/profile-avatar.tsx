@@ -1,12 +1,8 @@
 import { Avatar } from '@heroui/react';
-import { Camera } from 'lucide-react';
 
 interface ProfileAvatarProps {
 	src?: string;
 	name: string;
-	isEditing: boolean;
-	onImageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-	preview?: string | null;
 }
 
 // Helper function to fix Google avatar URLs
@@ -23,18 +19,11 @@ function fixGoogleAvatarUrl(url: string | undefined): string | undefined {
 	return url;
 }
 
-export function ProfileAvatar({
-	src,
-	name,
-	isEditing,
-	onImageChange,
-	preview,
-}: ProfileAvatarProps) {
+export function ProfileAvatar({ src, name }: ProfileAvatarProps) {
 	console.log('ProfileAvatar - src:', src);
-	console.log('ProfileAvatar - preview:', preview);
 	console.log('ProfileAvatar - name:', name);
 
-	const avatarSrc = fixGoogleAvatarUrl(preview || src);
+	const avatarSrc = fixGoogleAvatarUrl(src);
 	console.log('Final avatar source (fixed):', avatarSrc);
 
 	return (
@@ -69,28 +58,7 @@ export function ProfileAvatar({
 						img: 'object-cover',
 					}}
 				/>
-				{isEditing && (
-					<label
-						htmlFor="avatar-upload"
-						className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-600 transition-colors"
-					>
-						<Camera className="w-4 h-4" />
-						<input
-							id="avatar-upload"
-							type="file"
-							accept="image/*"
-							onChange={onImageChange}
-							className="hidden"
-						/>
-					</label>
-				)}
 			</div>
-			{isEditing && (
-				<div className="text-center">
-					<p className="text-xs text-default-500">Tamaño máximo: 2MB</p>
-					<p className="text-xs text-default-500">Formatos: JPG, PNG, GIF</p>
-				</div>
-			)}
 		</div>
 	);
 }
