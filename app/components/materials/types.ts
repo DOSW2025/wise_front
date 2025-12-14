@@ -20,7 +20,6 @@ export interface Material {
 	comments: number;
 	description: string;
 	commentsList: Comment[];
-	fileUrl?: string; // URL del archivo para vista previa
 }
 
 // Configuraciones

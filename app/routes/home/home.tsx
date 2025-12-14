@@ -117,11 +117,7 @@ export default function Home() {
 			{/* Navbar */}
 			<Navbar isBordered maxWidth="xl">
 				<NavbarBrand>
-					<img
-						src="/logo/logoeciwise.svg"
-						alt="ECIWISE+ logo"
-						className="w-8 h-8"
-					/>
+					<GraduationCap className="text-primary" size={32} />
 					<p className="font-logo font-bold text-xl text-primary ml-2">
 						ECIWISE+
 					</p>
