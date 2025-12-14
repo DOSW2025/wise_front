@@ -17,64 +17,77 @@ import {
 	TipoContenido,
 } from '~/lib/services/reportes.services';
 
-interface ReportChatModalProps {
+interface ReportContentModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	tutorName: string;
-	messageId: string;
-	onSubmitReport: (reason: string, details: string) => void;
-	isMessageReport?: boolean;
+	contenidoId: string;
+	tipoContenido: TipoContenido;
+	nombreContenido?: string; // Ej: "este thread", "esta respuesta"
 }
 
-export default function ReportChatModal({
+const reportReasons = [
+	{ value: 'harassment', label: 'Acoso o intimidación' },
+	{ value: 'inappropriate', label: 'Contenido inapropiado' },
+	{ value: 'spam', label: 'Spam o publicidad' },
+	{ value: 'offensive', label: 'Lenguaje ofensivo' },
+	{ value: 'scam', label: 'Estafa o fraude' },
+	{ value: 'impersonation', label: 'Suplantación de identidad' },
+	{ value: 'other', label: 'Otro motivo' },
+];
+
+export default function ReportContentModal({
 	isOpen,
 	onClose,
-	tutorName,
-	messageId,
-	onSubmitReport,
-	isMessageReport = false,
-}: Readonly<ReportChatModalProps>) {
+	contenidoId,
+	tipoContenido,
+	nombreContenido = 'este contenido',
+}: Readonly<ReportContentModalProps>) {
 	const [selectedReason, setSelectedReason] = useState('');
 	const [details, setDetails] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
-	const reportReasons = [
-		{ value: 'harassment', label: 'Acoso o intimidación' },
-		{ value: 'inappropriate', label: 'Contenido inapropiado' },
-		{ value: 'spam', label: 'Spam o publicidad' },
-		{ value: 'offensive', label: 'Lenguaje ofensivo' },
-		{ value: 'scam', label: 'Estafa o fraude' },
-		{ value: 'impersonation', label: 'Suplantación de identidad' },
-		{ value: 'other', label: 'Otro motivo' },
-	];
+	const getTipoTexto = () => {
+		switch (tipoContenido) {
+			case TipoContenido.THREAD:
+				return 'thread';
+			case TipoContenido.RESPONSE:
+				return 'respuesta';
+			case TipoContenido.MENSAJE_CHAT:
+				return 'mensaje';
+			default:
+				return 'contenido';
+		}
+	};
 
 	const handleSubmit = async () => {
 		if (!selectedReason) return;
 
 		setIsSubmitting(true);
+		setError(null);
 
 		try {
-			// ← REEMPLAZAR la simulación por llamada real
 			const motivo = mapFrontendReasonToBackend(selectedReason);
 
 			await reportesService.createReport({
-				contenido_id: messageId, // ← Necesitarás agregar messageId como prop
-				tipo_contenido: TipoContenido.MENSAJE_CHAT,
+				contenido_id: contenidoId,
+				tipo_contenido: tipoContenido,
 				motivo,
 				descripcion: details || undefined,
 			});
-
-			onSubmitReport(selectedReason, details);
 
 			// Resetear formulario
 			setSelectedReason('');
 			setDetails('');
 			onClose();
 
+			// Mostrar mensaje de éxito (opcional)
 			alert('Reporte enviado exitosamente. Será revisado por nuestro equipo.');
-		} catch (error) {
-			console.error('Error al crear reporte:', error);
-			alert('Error al enviar el reporte. Por favor, intenta nuevamente.');
+		} catch (err) {
+			console.error('Error al crear reporte:', err);
+			setError(
+				err instanceof Error ? err.message : 'Error al enviar el reporte',
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -83,6 +96,7 @@ export default function ReportChatModal({
 	const handleClose = () => {
 		setSelectedReason('');
 		setDetails('');
+		setError(null);
 		onClose();
 	};
 
@@ -99,23 +113,19 @@ export default function ReportChatModal({
 			<ModalContent>
 				<ModalHeader className="flex gap-2 items-center text-danger">
 					<AlertTriangle className="w-5 h-5" />
-					{isMessageReport ? 'Reportar mensaje' : 'Reportar conversación'}
+					Reportar {getTipoTexto()}
 				</ModalHeader>
 				<ModalBody>
 					<p className="text-sm text-gray-600 mb-4">
-						{isMessageReport ? (
-							<>
-								Estás reportando un mensaje de <strong>{tutorName}</strong>.
-								Esta acción será revisada por nuestro equipo de moderación.
-							</>
-						) : (
-							<>
-								Estás reportando tu conversación completa con{' '}
-								<strong>{tutorName}</strong>. Esta acción será revisada por
-								nuestro equipo de moderación.
-							</>
-						)}
+						Estás reportando {nombreContenido}. Esta acción será revisada por
+						nuestro equipo de moderación.
 					</p>
+
+					{error && (
+						<div className="bg-danger-50 border border-danger-200 rounded-lg p-3 mb-4">
+							<p className="text-sm text-danger-800">{error}</p>
+						</div>
+					)}
 
 					<RadioGroup
 						label="Motivo del reporte"
@@ -137,6 +147,7 @@ export default function ReportChatModal({
 						onValueChange={setDetails}
 						minRows={3}
 						maxRows={6}
+						maxLength={500}
 						className="mt-4"
 					/>
 

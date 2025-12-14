@@ -26,6 +26,7 @@ import {
 	CheckCircle2,
 	ChevronDown,
 	Eye,
+	Flag,
 	MessageCircle,
 	Pencil,
 	Pin,
@@ -42,7 +43,9 @@ import {
 	type Response,
 	type Thread,
 } from '~/lib/services/forums.service';
+import { TipoContenido } from '~/lib/services/reportes.services';
 import { getStorageJSON, STORAGE_KEYS } from '~/lib/utils/storage';
+import ReportContentModal from './reportContentModal';
 
 type LocalTopic = {
 	id: string;
@@ -83,6 +86,7 @@ function TopicCard({
 	onLike,
 	edited,
 	isLoading,
+	onReport,
 }: {
 	topic: LocalTopic;
 	onReply: (id: string) => void;
@@ -94,6 +98,7 @@ function TopicCard({
 	onLike: (id: string) => void;
 	edited?: boolean;
 	isLoading?: boolean;
+	onReport: (contentId: string, contentType: TipoContenido) => void;
 }) {
 	return (
 		<Card
@@ -242,6 +247,16 @@ function TopicCard({
 						<ThumbsUp size={16} />
 						<span>{topic.counts.likes}</span>
 					</button>
+					<Button
+						size="sm"
+						variant="light"
+						color="danger"
+						startContent={<Flag size={16} />}
+						onPress={() => onReport(topic.id, TipoContenido.THREAD)}
+					>
+						Reportar
+					</Button>
+
 					<div className="flex items-center gap-1 text-default-600 text-sm">
 						<Eye size={16} />
 						<span>{topic.counts.views}</span>
@@ -430,6 +445,25 @@ export function CommunityForums() {
 		} finally {
 			setIsLoadingForums(false);
 		}
+	};
+
+	// Estados para reportar
+	const [reportModalOpen, setReportModalOpen] = useState(false);
+	const [reportingContentId, setReportingContentId] = useState<string | null>(
+		null,
+	);
+	const [reportingContentType, setReportingContentType] =
+		useState<TipoContenido>(TipoContenido.THREAD);
+
+	const openReportModal = (contentId: string, contentType: TipoContenido) => {
+		setReportingContentId(contentId);
+		setReportingContentType(contentType);
+		setReportModalOpen(true);
+	};
+
+	const closeReportModal = () => {
+		setReportingContentId(null);
+		setReportModalOpen(false);
 	};
 
 	// Cargar foros y materias al montar el componente
@@ -818,6 +852,7 @@ export function CommunityForums() {
 											threadsByForumId[t.id]?.length || t.counts.replies
 										}
 										edited={!!editedById[t.id]}
+										onReport={openReportModal}
 									/>
 									{replyingTo === t.id && (
 										<Card
@@ -1080,6 +1115,20 @@ export function CommunityForums() {
 					<GroupChatCard />
 				</div>
 			</div>
+			{/* Modal de reporte */}
+			{reportingContentId && (
+				<ReportContentModal
+					isOpen={reportModalOpen}
+					onClose={closeReportModal}
+					contenidoId={reportingContentId}
+					tipoContenido={reportingContentType}
+					nombreContenido={
+						reportingContentType === TipoContenido.THREAD
+							? 'este thread'
+							: 'esta respuesta'
+					}
+				/>
+			)}
 
 			{/* Modal para crear nuevo foro */}
 			<Modal isOpen={isOpen} onOpenChange={setIsOpen} size="lg">
