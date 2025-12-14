@@ -1,129 +1,87 @@
-# ECIWISE+ Frontend
+# Welcome to React Router!
 
-Plataforma de aprendizaje colaborativo para la Escuela Colombiana de Ingeniería Julio Garavito. Facilita tutorías, materiales de estudio, grupos de trabajo y gestión del progreso académico.
+A modern, production-ready template for building full-stack React applications using React Router.
 
-## Stack Tecnológico
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
 
-- React Router v7.9.2 (SSR, HMR)
-- TypeScript 5.9.2
-- Tailwind CSS v4.1.13
-- Hero UI v2.8.5
-- React Query v5.90.8
-- Vite 7.1.7
-- Biome v2.3.5 (linting/formatting)
-- Framer Motion
-- Lucide React v0.553.0
+## Features
 
-## Características
+- 🚀 Server-side rendering
+- ⚡️ Hot Module Replacement (HMR)
+- 📦 Asset bundling and optimization
+- 🔄 Data loading and mutations
+- 🔒 TypeScript by default
+- 🎉 TailwindCSS for styling
+- 📖 [React Router docs](https://reactrouter.com/)
 
-- Dashboards personalizados por rol: Estudiante, Tutor y Administrador
-- Validación automática de código pre-commit con Husky y Biome
-- Sistema de temas con colores institucionales
-- Tipografía: Poppins, Nunito, IBM Plex Sans, DM Sans
+## Getting Started
 
-## Estructura del Proyecto
+### Installation
 
-```
-app/
-  components/       # Componentes reutilizables
-  contexts/         # Context providers (auth-context.tsx)
-  lib/              # API client, servicios, tipos, utils
-  routes/
-    dashboard/      # student/, tutor/, admin/
-    home/           # Landing page
-    login/          # Autenticación
-    register/       # Registro de usuarios
-  root.tsx          # Layout raíz
-  providers.tsx     # React Query, temas
-  hero.ts           # Configuración Hero UI
-  routes.ts         # Definición de rutas
-```
-
-## Requisitos
-
-- Node.js 18+
-- pnpm 10+
-
-## Instalación y Desarrollo
+Install the dependencies:
 
 ```bash
-# Instalar dependencias
-pnpm install
-
-# Iniciar servidor de desarrollo (http://localhost:5173)
-pnpm run dev
-
-# Construir para producción
-pnpm run build
-
-# Iniciar servidor de producción
-pnpm run start
+npm install
 ```
 
-## Scripts Disponibles
+### Development
+
+Start the development server with HMR:
 
 ```bash
-pnpm run dev         # Servidor de desarrollo
-pnpm run build       # Build de producción
-pnpm run start       # Servidor de producción
-pnpm run typecheck   # Verificar tipos TypeScript
-pnpm run lint        # Linter con auto-fix
-pnpm run lint:ci     # Linter sin modificaciones (CI/CD)
+npm run dev
 ```
 
-## Despliegue
+Your application will be available at `http://localhost:5173`.
 
-### Docker
+## Building for Production
+
+Create a production build:
 
 ```bash
-# Construir imagen
-docker build -t eciwise-front .
-
-# Ejecutar contenedor
-docker run -p 3000:3000 eciwise-front
+npm run build
 ```
 
-Plataformas compatibles: AWS ECS, Google Cloud Run, Azure Container Apps, Digital Ocean, Fly.io, Railway
+## Deployment
 
-### Manual
+### Docker Deployment
 
-El servidor está listo para producción. Despliega el output de `build/`:
-- `build/client/` - Activos estáticos
-- `build/server/` - Código del servidor
-
-## Convenciones de Código
-
-- Componentes: PascalCase
-- Archivos y carpetas: kebab-case
-- Color primario institucional: #990000
-- Pre-commit hooks validan código automáticamente
+To build and run using Docker:
 
 ```bash
-git add .
-git commit -m "mensaje"  # Validación automática
+docker build -t my-app .
+
+# Run the container
+docker run -p 3000:3000 my-app
 ```
 
-## Rutas de la Aplicación
+The containerized application can be deployed to any platform that supports Docker, including:
 
-Públicas:
-- `/` - Landing page
-- `/login` - Inicio de sesión
-- `/register` - Registro
+- AWS ECS
+- Google Cloud Run
+- Azure Container Apps
+- Digital Ocean App Platform
+- Fly.io
+- Railway
 
-Protegidas (requieren autenticación):
-- `/dashboard` - Redirige según rol del usuario
-- `/dashboard/student` - Dashboard de estudiante
-- `/dashboard/tutor` - Dashboard de tutor
-- `/dashboard/admin` - Dashboard de administrador
+### DIY Deployment
 
-## Convenciones de Código
+If you're familiar with deploying Node applications, the built-in app server is production-ready.
 
-- Componentes: PascalCase
-- Archivos y carpetas: kebab-case
-- Color primario institucional: #990000
-- Pre-commit hooks validan código automáticamente
+Make sure to deploy the output of `npm run build`
 
-```bash
-git add .
-git commit -m "mensaje"  # Validación automática
 ```
+├── package.json
+├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
+├── build/
+│   ├── client/    # Static assets
+│   └── server/    # Server-side code
+```
+
+## Styling
+
+This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+
+---
+
+Built with ❤️ using React Router.
