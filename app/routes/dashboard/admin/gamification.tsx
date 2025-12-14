@@ -1,110 +1,89 @@
-import { Card, CardBody, Tab, Tabs } from '@heroui/react';
-import { useState } from 'react';
-import {
-	AchievementsManagement,
-	BadgesManagement,
-	ChallengesManagement,
-	RewardsManagement,
-} from '~/components/admin/gamification';
-import {
-	mockChallenges,
-	mockUserGamification,
-} from '~/lib/mocks/gamification.mock';
-import {
-	mockTutorAchievementsBase,
-	mockTutorRewardsBase,
-} from '~/lib/mocks/tutor-gamification.mock';
-import type {
-	Achievement,
-	Challenge,
-	Reward,
-} from '~/lib/types/gamification.types';
+import { Card, CardBody } from '@heroui/react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { MateriaForm, MateriasManagement } from '~/components/admin/materias';
+import { materiasApi } from '~/lib/api/materias';
+import type { CreateSubjectDto, Subject } from '~/lib/types/materias.types';
 
-export default function AdminGamification() {
-	const [challenges, setChallenges] = useState(mockChallenges);
-	const [badges, setBadges] = useState(mockUserGamification.badges);
-	const [achievements, setAchievements] = useState<Achievement[]>(
-		mockTutorAchievementsBase,
-	);
-	const [rewards, setRewards] = useState<Reward[]>(mockTutorRewardsBase);
+export default function AdminMaterias() {
+	const [materias, setMaterias] = useState<Subject[]>([]);
+	const [isFormOpen, setIsFormOpen] = useState(false);
+	const [editingMateria, setEditingMateria] = useState<Subject | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
 
-	const handleAddChallenge = (
-		challenge: Omit<Challenge, 'id' | 'estadoUsuario' | 'progreso'>,
+	// Cargar materias al montar el componente
+	useEffect(() => {
+		loadMaterias();
+	}, []);
+
+	const loadMaterias = async () => {
+		try {
+			setIsLoading(true);
+			const data = await materiasApi.getAll();
+			setMaterias(data);
+		} catch (error) {
+			console.error('Error al cargar materias:', error);
+			toast.error('Error al cargar las materias');
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const handleAddMateria = async (data: CreateSubjectDto) => {
+		try {
+			const newMateria = await materiasApi.create(data);
+			setMaterias([...materias, newMateria]);
+			toast.success(`Materia ${data.codigo} creada exitosamente`);
+			setIsFormOpen(false);
+		} catch (error: any) {
+			console.error('Error al crear materia:', error);
+			const errorMessage =
+				error.response?.data?.message || 'Error al crear la materia';
+			toast.error(errorMessage);
+		}
+	};
+
+	const handleUpdateMateria = async (
+		codigo: string,
+		data: { nombre: string },
 	) => {
-		const newChallenge: Challenge = {
-			id: `challenge-${Date.now()}`,
-			...challenge,
-			estadoUsuario: 'no_iniciado',
-			progreso: 0,
-		};
-		setChallenges([...challenges, newChallenge]);
+		try {
+			const updatedMateria = await materiasApi.update(codigo, data);
+			setMaterias(
+				materias.map((m) => (m.codigo === codigo ? updatedMateria : m)),
+			);
+			toast.success(`Materia ${codigo} actualizada exitosamente`);
+			setEditingMateria(null);
+			setIsFormOpen(false);
+		} catch (error: any) {
+			console.error('Error al actualizar materia:', error);
+			const errorMessage =
+				error.response?.data?.message || 'Error al actualizar la materia';
+			toast.error(errorMessage);
+		}
 	};
 
-	const handleUpdateChallenge = (
-		id: string,
-		challenge: Omit<Challenge, 'id' | 'estadoUsuario' | 'progreso'>,
-	) => {
-		setChallenges(
-			challenges.map((c) => (c.id === id ? { ...c, ...challenge } : c)),
-		);
+	const handleDeleteMateria = async (codigo: string) => {
+		try {
+			await materiasApi.delete(codigo);
+			setMaterias(materias.filter((m) => m.codigo !== codigo));
+			toast.success(`Materia ${codigo} eliminada exitosamente`);
+		} catch (error: any) {
+			console.error('Error al eliminar materia:', error);
+			const errorMessage =
+				error.response?.data?.message || 'Error al eliminar la materia';
+			toast.error(errorMessage);
+		}
 	};
 
-	const handleDeleteChallenge = (id: string) => {
-		setChallenges(challenges.filter((c) => c.id !== id));
+	const handleOpenForm = () => {
+		setEditingMateria(null);
+		setIsFormOpen(true);
 	};
 
-	const handleAddBadge = (badge: any) => {
-		const newBadge = {
-			id: `badge-${Date.now()}`,
-			...badge,
-			earnedAt: new Date().toISOString(),
-		};
-		setBadges([...badges, newBadge]);
-	};
-
-	const handleUpdateBadge = (id: string, badge: any) => {
-		setBadges(badges.map((b) => (b.id === id ? { ...b, ...badge } : b)));
-	};
-
-	const handleDeleteBadge = (id: string) => {
-		setBadges(badges.filter((b) => b.id !== id));
-	};
-
-	const handleAddAchievement = (achievement: Omit<Achievement, 'id'>) => {
-		const newAchievement: Achievement = {
-			id: `achievement-${Date.now()}`,
-			...achievement,
-		};
-		setAchievements([...achievements, newAchievement]);
-	};
-
-	const handleUpdateAchievement = (
-		id: string,
-		achievement: Omit<Achievement, 'id'>,
-	) => {
-		setAchievements(
-			achievements.map((a) => (a.id === id ? { ...a, ...achievement } : a)),
-		);
-	};
-
-	const handleDeleteAchievement = (id: string) => {
-		setAchievements(achievements.filter((a) => a.id !== id));
-	};
-
-	const handleAddReward = (reward: Omit<Reward, 'id'>) => {
-		const newReward: Reward = {
-			id: `reward-${Date.now()}`,
-			...reward,
-		};
-		setRewards([...rewards, newReward]);
-	};
-
-	const handleUpdateReward = (id: string, reward: Omit<Reward, 'id'>) => {
-		setRewards(rewards.map((r) => (r.id === id ? { ...r, ...reward } : r)));
-	};
-
-	const handleDeleteReward = (id: string) => {
-		setRewards(rewards.filter((r) => r.id !== id));
+	const handleEditMateria = (materia: Subject) => {
+		setEditingMateria(materia);
+		setIsFormOpen(true);
 	};
 
 	return (
@@ -112,11 +91,10 @@ export default function AdminGamification() {
 			{/* Header */}
 			<div className="flex flex-col gap-2">
 				<h1 className="text-3xl font-bold text-foreground">
-					Gestión de Gamificación
+					Gestión de Materias
 				</h1>
 				<p className="text-default-500">
-					Administra desafíos, insignias, objetivos y beneficios para
-					estudiantes y tutores
+					Administra las materias disponibles en la plataforma
 				</p>
 			</div>
 
@@ -124,54 +102,50 @@ export default function AdminGamification() {
 			<Card className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
 				<CardBody className="p-4">
 					<h4 className="font-semibold text-primary mb-2">
-						📋 Gestión de Gamificación
+						Gestión de Materias
 					</h4>
 					<p className="text-sm text-default-600">
-						Desde esta sección puedes crear, editar y eliminar todos los
-						elementos de gamificación del sistema. Los cambios se aplicarán
-						automáticamente a estudiantes y tutores.
+						Desde esta sección puedes crear, editar y eliminar las materias
+						disponibles en el sistema. Las materias son utilizadas por los
+						tutores para ofrecer sus servicios.
 					</p>
 				</CardBody>
 			</Card>
 
-			{/* Tabs */}
-			<Tabs color="primary" variant="underlined" size="lg">
-				<Tab key="challenges" title="Desafíos">
-					<ChallengesManagement
-						challenges={challenges}
-						onAdd={handleAddChallenge}
-						onUpdate={handleUpdateChallenge}
-						onDelete={handleDeleteChallenge}
-					/>
-				</Tab>
+			{/* Materias Management */}
+			{isLoading ? (
+				<Card>
+					<CardBody>
+						<div className="text-center py-8">
+							<p className="text-default-500">Cargando materias...</p>
+						</div>
+					</CardBody>
+				</Card>
+			) : (
+				<MateriasManagement
+					materias={materias}
+					onDelete={handleDeleteMateria}
+					onEdit={handleEditMateria}
+					onOpenForm={handleOpenForm}
+				/>
+			)}
 
-				<Tab key="badges" title="Insignias">
-					<BadgesManagement
-						badges={badges}
-						onAdd={handleAddBadge}
-						onUpdate={handleUpdateBadge}
-						onDelete={handleDeleteBadge}
-					/>
-				</Tab>
-
-				<Tab key="achievements" title="Objetivos de Tutores">
-					<AchievementsManagement
-						achievements={achievements}
-						onAdd={handleAddAchievement}
-						onUpdate={handleUpdateAchievement}
-						onDelete={handleDeleteAchievement}
-					/>
-				</Tab>
-
-				<Tab key="rewards" title="Beneficios para Tutores">
-					<RewardsManagement
-						rewards={rewards}
-						onAdd={handleAddReward}
-						onUpdate={handleUpdateReward}
-						onDelete={handleDeleteReward}
-					/>
-				</Tab>
-			</Tabs>
+			{/* Form Modal */}
+			<MateriaForm
+				isOpen={isFormOpen}
+				onClose={() => {
+					setIsFormOpen(false);
+					setEditingMateria(null);
+				}}
+				onSubmit={(data) => {
+					if (editingMateria) {
+						handleUpdateMateria(editingMateria.codigo, { nombre: data.nombre });
+					} else {
+						handleAddMateria(data);
+					}
+				}}
+				editingMateria={editingMateria}
+			/>
 		</div>
 	);
 }

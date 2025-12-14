@@ -23,12 +23,9 @@ import {
 	TableColumn,
 	TableHeader,
 	TableRow,
-	Textarea,
 	useDisclosure,
 } from '@heroui/react';
 import {
-	BookOpen,
-	CheckCircle,
 	Edit,
 	Eye,
 	MoreVertical,
@@ -47,10 +44,6 @@ import {
 	updateUserRole,
 } from '~/lib/services/user.service';
 import type { AdminUserDto, PaginationParams } from '~/lib/types/api.types';
-import apiClient from '~/lib/api/client';
-import { toast } from 'sonner';
-import { materiasApi } from '~/lib/api/materias';
-import type { Subject } from '~/lib/types/materias.types';
 
 type RoleChangeModalData = {
 	user: AdminUserDto;
@@ -59,12 +52,6 @@ type RoleChangeModalData = {
 
 type SuspendModalData = {
 	user: AdminUserDto;
-};
-
-type CreateTutorData = {
-	usuarioId: string;
-	bio?: string;
-	materiaCodigos?: string[];
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -104,21 +91,11 @@ export default function AdminUsers() {
 	const roleModal = useDisclosure();
 	const suspendModal = useDisclosure();
 	const activateModal = useDisclosure();
-	const tutorProfileModal = useDisclosure();
 
 	const [roleChangeData, setRoleChangeData] =
 		useState<RoleChangeModalData | null>(null);
 	const [suspendData, setSuspendData] = useState<SuspendModalData | null>(null);
 	const [activateData, setActivateData] = useState<AdminUserDto | null>(null);
-
-	// Tutor profile form state
-	const [tutorFormData, setTutorFormData] = useState<CreateTutorData>({
-		usuarioId: '',
-		bio: '',
-		materiaCodigos: [],
-	});
-	const [availableMaterias, setAvailableMaterias] = useState<Subject[]>([]);
-	const [selectedMaterias, setSelectedMaterias] = useState<Set<string>>(new Set());
 
 	// Action loading states
 	const [actionLoading, setActionLoading] = useState(false);
@@ -210,19 +187,6 @@ export default function AdminUsers() {
 		fetchUsers();
 	}, [fetchUsers]);
 
-	// Load available materias for tutor creation
-	useEffect(() => {
-		const loadMaterias = async () => {
-			try {
-				const materias = await materiasApi.getAll();
-				setAvailableMaterias(materias);
-			} catch (error) {
-				console.error('Error loading materias:', error);
-			}
-		};
-		loadMaterias();
-	}, []);
-
 	// Handle search
 	const handleSearch = useCallback((value: string) => {
 		setSearchTerm(value);
@@ -248,18 +212,6 @@ export default function AdminUsers() {
 			await updateUserRole(roleChangeData.user.id, roleChangeData.newRole);
 			await fetchUsers();
 			roleModal.onClose();
-
-			// If changing to tutor, open tutor profile creation modal
-			if (roleChangeData.newRole === 'tutor') {
-				setTutorFormData({
-					usuarioId: roleChangeData.user.id,
-					bio: '',
-					materiaCodigos: [],
-				});
-				setSelectedMaterias(new Set());
-				tutorProfileModal.onOpen();
-			}
-
 			setRoleChangeData(null);
 		} catch (error) {
 			console.error('Error updating role:', error);
@@ -267,7 +219,7 @@ export default function AdminUsers() {
 		} finally {
 			setActionLoading(false);
 		}
-	}, [roleChangeData, fetchUsers, roleModal, tutorProfileModal]);
+	}, [roleChangeData, fetchUsers, roleModal]);
 
 	// Handle suspend
 	const openSuspendModal = useCallback(
@@ -325,64 +277,6 @@ export default function AdminUsers() {
 		}
 	}, [activateData, fetchUsers, activateModal]);
 
-	// Handle create tutor profile
-	const handleCreateTutorProfile = useCallback(async () => {
-		if (!tutorFormData.usuarioId || selectedMaterias.size === 0) {
-			toast.error('Debe seleccionar al menos una materia');
-			return;
-		}
-
-		setActionLoading(true);
-		try {
-			const data = {
-				...tutorFormData,
-				materiaCodigos: Array.from(selectedMaterias),
-			};
-
-			await apiClient.post('/wise/tutorias/create-tutor', data);
-			toast.success('Perfil de tutor creado exitosamente');
-			tutorProfileModal.onClose();
-			setTutorFormData({ usuarioId: '', bio: '', materiaCodigos: [] });
-			setSelectedMaterias(new Set());
-			await fetchUsers();
-		} catch (error: any) {
-			console.error('Error creating tutor profile:', error);
-			const errorMessage =
-				error.response?.data?.message || 'Error al crear el perfil de tutor';
-			toast.error(errorMessage);
-		} finally {
-			setActionLoading(false);
-		}
-	}, [tutorFormData, selectedMaterias, tutorProfileModal, fetchUsers]);
-
-	// Handle materia selection toggle
-	const toggleMateriaSelection = useCallback((codigo: string) => {
-		setSelectedMaterias((prev) => {
-			const newSet = new Set(prev);
-			if (newSet.has(codigo)) {
-				newSet.delete(codigo);
-			} else {
-				newSet.add(codigo);
-			}
-			return newSet;
-		});
-	}, []);
-
-	// Get color for materia card
-	const getMateriaColor = useCallback((codigo: string) => {
-		const colors = [
-			'bg-primary',
-			'bg-secondary',
-			'bg-success',
-			'bg-warning',
-			'bg-danger',
-		];
-		const index = codigo
-			.split('')
-			.reduce((acc, char) => acc + char.charCodeAt(0), 0);
-		return colors[index % colors.length];
-	}, []);
-
 	// Table columns
 	const columns = [
 		{ key: 'user', label: 'USUARIO' },
@@ -400,20 +294,13 @@ export default function AdminUsers() {
 				case 'user':
 					return (
 						<div className="flex flex-col">
-							<p className="text-base font-semibold">{`${user.nombre} ${user.apellido}`}</p>
+							<p className="text-sm font-semibold">{`${user.nombre} ${user.apellido}`}</p>
 							<p className="text-tiny text-default-400">{user.email}</p>
 						</div>
 					);
 				case 'role':
 					return (
-						<Chip
-							size="md"
-							color={roleColors[user.rol.nombre]}
-							variant="bordered"
-							classNames={{
-								base: 'border-1 border-black',
-							}}
-						>
+						<Chip size="sm" color={roleColors[user.rol.nombre]} variant="flat">
 							{roleLabels[user.rol.nombre]}
 						</Chip>
 					);
@@ -769,105 +656,6 @@ export default function AdminUsers() {
 							isLoading={actionLoading}
 						>
 							Activar Usuario
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
-
-			{/* Tutor Profile Creation Modal */}
-			<Modal
-				isOpen={tutorProfileModal.isOpen}
-				onClose={tutorProfileModal.onClose}
-				size="3xl"
-				isDismissable={false}
-				hideCloseButton
-			>
-				<ModalContent>
-					<ModalHeader className="flex flex-col gap-1">
-						<h3 className="text-xl font-bold">Crear Perfil de Tutor</h3>
-						<p className="text-sm text-default-500 font-normal">
-							Complete la información del perfil de tutor. Debe seleccionar al
-							menos una materia.
-						</p>
-					</ModalHeader>
-					<ModalBody>
-						<div className="space-y-4">
-							{/* Bio */}
-							<Textarea
-								label="Biografía (opcional)"
-								placeholder="Describe la experiencia y habilidades del tutor..."
-								value={tutorFormData.bio}
-								onChange={(e) =>
-									setTutorFormData({ ...tutorFormData, bio: e.target.value })
-								}
-								maxLength={500}
-								description={`${tutorFormData.bio?.length || 0}/500 caracteres`}
-							/>
-
-							{/* Materias Selection */}
-							<div>
-								<p className="text-sm font-semibold mb-2">
-									Materias que puede impartir *
-								</p>
-								{availableMaterias.length === 0 ? (
-									<p className="text-sm text-default-400">
-										Cargando materias disponibles...
-									</p>
-								) : (
-									<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-										{availableMaterias.map((materia) => {
-											const isSelected = selectedMaterias.has(materia.codigo);
-											const colorGradient = getMateriaColor(materia.codigo);
-											return (
-												<div
-													key={materia.codigo}
-													onClick={() => toggleMateriaSelection(materia.codigo)}
-													className={`relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 ${
-														isSelected
-															? 'ring-2 ring-primary shadow-lg'
-															: 'hover:shadow-md'
-													}`}
-												>
-													{/* Color Header */}
-													<div
-														className={`${colorGradient} p-4 flex items-center justify-between`}
-													>
-														<BookOpen className="w-8 h-8 text-white" />
-														{isSelected && (
-															<CheckCircle className="w-6 h-6 text-white" />
-														)}
-													</div>
-
-													{/* Content */}
-													<div className="bg-white dark:bg-gray-800 p-4">
-														<h3 className="font-bold text-base mb-1">
-															{materia.codigo}
-														</h3>
-														<p className="text-sm text-default-600 line-clamp-2">
-															{materia.nombre}
-														</p>
-													</div>
-												</div>
-											);
-										})}
-									</div>
-								)}
-								{selectedMaterias.size === 0 && (
-									<p className="text-xs text-danger mt-2">
-										Debe seleccionar al menos una materia
-									</p>
-								)}
-							</div>
-						</div>
-					</ModalBody>
-					<ModalFooter>
-						<Button
-							color="primary"
-							onPress={handleCreateTutorProfile}
-							isLoading={actionLoading}
-							isDisabled={selectedMaterias.size === 0}
-						>
-							Crear Perfil de Tutor
 						</Button>
 					</ModalFooter>
 				</ModalContent>

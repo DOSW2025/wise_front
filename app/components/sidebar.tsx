@@ -1,6 +1,7 @@
 import { Avatar, Button } from '@heroui/react';
 import {
 	BarChart3,
+	BookMarked,
 	BookOpen,
 	Calendar,
 	CheckSquare,
@@ -13,7 +14,6 @@ import {
 	Menu,
 	MessageSquare,
 	Settings,
-	Sparkles,
 	TrendingUp,
 	UserCheck,
 	Users,
@@ -177,9 +177,9 @@ export function Sidebar({
 					path: '/dashboard/admin/materials',
 				},
 				{
-					key: 'gamification',
-					label: 'Gamificación',
-					icon: <Sparkles className="w-5 h-5" />,
+					key: 'materias',
+					label: 'Gestión de Materias',
+					icon: <BookMarked className="w-5 h-5" />,
 					path: '/dashboard/admin/gamification',
 				},
 				{
