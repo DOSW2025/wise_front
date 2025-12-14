@@ -31,6 +31,7 @@ import type {
 import { sortOptions } from '~/components/materials/types';
 import { recommendationsService } from '~/lib/api/recommendations';
 import { useDownloadMaterial, useMaterials } from '~/lib/hooks/useMaterials';
+import { materialsService } from '~/lib/services/materials.service';
 import type {
 	AssistantResponse,
 	Material,
@@ -191,6 +192,7 @@ export default function StudentMaterials() {
 	const [assistError, setAssistError] = useState<string | null>(null);
 	const [isAssistLoading, setIsAssistLoading] = useState(false);
 	const [currentSkip, setCurrentSkip] = useState(0);
+	const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
 
 	// Calcular items por página - ambos modos usan 15
 	const itemsPerPage = 15;
@@ -219,6 +221,50 @@ export default function StudentMaterials() {
 	const gridButtonClass = isGridView ? 'bg-[#8B1A1A] text-white' : '';
 	const listButtonVariant = isGridView ? 'flat' : 'solid';
 	const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
+
+	// Handler for clicking on AI recommendations
+	const handleRecommendationClick = async (rec: RecommendationItem) => {
+		try {
+			setIsLoadingRecommendation(true);
+
+			// Intentar buscar en los materiales actuales
+			const foundMaterial = allMaterials.find((m) => {
+				// Buscar por coincidencia exacta de título
+				if (m.title === rec.fileName) return true;
+
+				// Buscar por coincidencia parcial (el título contiene el fileName o viceversa)
+				if (m.title.toLowerCase().includes(rec.fileName.toLowerCase()))
+					return true;
+				if (rec.fileName.toLowerCase().includes(m.title.toLowerCase()))
+					return true;
+
+				// Buscar por docId si está disponible
+				if (rec.docId && (m.id === rec.docId || m.docId === rec.docId))
+					return true;
+
+				return false;
+			});
+
+			if (foundMaterial) {
+				// Si está en la lista actual, abrir directamente
+				setPreviewMaterial(foundMaterial);
+			} else {
+				// Si no está, actualizar la búsqueda con el nombre del archivo
+				// Extraer el nombre limpio del archivo (sin UUID si existe)
+				const cleanFileName = rec.fileName
+					.replace(/^[a-f0-9-]{36}-/i, '')
+					.replace(/\.[^.]+$/, '');
+				setSearchQuery(cleanFileName || rec.fileName);
+				setSelectedSubject('Todos');
+				setSelectedSemester('Todos');
+				setCurrentSkip(0);
+			}
+		} catch (error) {
+			console.error('Error en handleRecommendationClick:', error);
+		} finally {
+			setIsLoadingRecommendation(false);
+		}
+	};
 
 	// Filtrar y ordenar materiales
 	const filteredMaterials = useMemo(() => {
@@ -606,41 +652,17 @@ export default function StudentMaterials() {
 													<button
 														key={rec.docId || idx}
 														type="button"
-														onClick={() => {
-															// Buscar el material completo en allMaterials
-															const fullMaterial = allMaterials.find(
-																(m) =>
-																	m.id === rec.docId ||
-																	m.title === rec.fileName,
-															);
-															if (fullMaterial) {
-																setPreviewMaterial(fullMaterial);
-															} else {
-																// Si no está en la página actual, actualizar la búsqueda
-																setSearchQuery(rec.fileName);
-																setCurrentSkip(0); // Resetear a la primera página
-															}
-														}}
+														onClick={() => handleRecommendationClick(rec)}
 														onKeyDown={(e) => {
 															// Permitir Enter y Space para activar el botón
 															if (e.key === 'Enter' || e.key === ' ') {
 																e.preventDefault();
-																const fullMaterial = allMaterials.find(
-																	(m) =>
-																		m.id === rec.docId ||
-																		m.title === rec.fileName,
-																);
-																if (fullMaterial) {
-																	setPreviewMaterial(fullMaterial);
-																} else {
-																	// Si no está en la página actual, actualizar la búsqueda
-																	setSearchQuery(rec.fileName);
-																	setCurrentSkip(0); // Resetear a la primera página
-																}
+																handleRecommendationClick(rec);
 															}
 														}}
 														className="bg-default-50 border border-default-200 rounded-lg p-3 space-y-2 hover:bg-default-100 transition text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary w-full"
 														aria-label={`Ver material recomendado: ${rec.fileName}`}
+														disabled={isLoadingRecommendation}
 													>
 														<div className="flex justify-between items-start gap-2">
 															<h4 className="text-sm font-semibold text-foreground">
