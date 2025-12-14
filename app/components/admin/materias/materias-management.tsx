@@ -5,18 +5,18 @@ import {
 	TrashIcon,
 } from '@heroicons/react/24/outline';
 import {
+	AcademicCapIcon,
+	BeakerIcon,
 	BookOpenIcon,
 	CalculatorIcon,
-	BeakerIcon,
+	ChartBarIcon,
 	CodeBracketIcon,
 	CpuChipIcon,
-	ChartBarIcon,
-	LanguageIcon,
-	PaintBrushIcon,
-	AcademicCapIcon,
-	LightBulbIcon,
-	RocketLaunchIcon,
 	CubeIcon,
+	LanguageIcon,
+	LightBulbIcon,
+	PaintBrushIcon,
+	RocketLaunchIcon,
 } from '@heroicons/react/24/solid';
 import {
 	Button,
@@ -130,10 +130,7 @@ const getMateriaIcon = (codigo: string, nombre: string) => {
 	}
 
 	// Investigación
-	if (
-		codigoLower.includes('inv') ||
-		nombreLower.includes('investigación')
-	) {
+	if (codigoLower.includes('inv') || nombreLower.includes('investigación')) {
 		return <LightBulbIcon className="w-12 h-12" />;
 	}
 

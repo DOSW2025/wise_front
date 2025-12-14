@@ -116,6 +116,7 @@ export const API_ENDPOINTS = {
 		UPDATE_ROLE: '/wise/gestion-usuarios/:id/rol',
 		SUSPEND: '/wise/gestion-usuarios/:id/estado',
 		ACTIVATE: '/wise/gestion-usuarios/:id/estado',
+		DELETE_MY_ACCOUNT: '/wise/gestion-usuarios/me/cuenta',
 		STATISTICS: '/wise/gestion-usuarios/estadisticas/usuarios',
 		ROLE_STATISTICS: '/wise/gestion-usuarios/estadisticas/roles',
 		GROWTH_STATISTICS: '/wise/gestion-usuarios/estadisticas/crecimiento',

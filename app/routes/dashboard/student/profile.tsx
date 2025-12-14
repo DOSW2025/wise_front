@@ -13,6 +13,7 @@ import { DeleteAccount } from '~/components/profile/DeleteAccount';
 import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
 import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
+import { deleteMyAccount } from '~/lib/services/user.service';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
 
@@ -130,15 +131,10 @@ export default function StudentProfile() {
 
 	const handleDeleteAccount = async () => {
 		try {
-			// TODO: Integrar eliminación real cuando el backend lo permita
+			await deleteMyAccount();
 			navigate('/login');
 		} catch (error) {
 			console.error('Error al eliminar cuenta:', error);
-			const message =
-				error instanceof Error
-					? error.message
-					: 'No se pudo eliminar la cuenta.';
-			setError(message);
 		}
 	};
 

@@ -142,15 +142,26 @@ export function MaterialCard({
 		| 'secondary'
 		| 'success'
 		| 'default';
-	const bgColor = `bg-${typeData.color}-50`;
-	const textColor = `text-${typeData.color}`;
+
+	// Mapeo de colores para el círculo
+	const circleColorMap: Record<string, string> = {
+		danger: 'bg-danger',
+		primary: 'bg-primary',
+		secondary: 'bg-secondary',
+		success: 'bg-success',
+		default: 'bg-default',
+	};
+
+	const circleColor = circleColorMap[typeData.color] || 'bg-default';
 
 	return (
-		<Card className="w-full hover:shadow-lg transition-shadow">
+		<Card className="w-full hover:shadow-lg transition-shadow border border-default-200">
 			<CardBody className="gap-3">
 				<div className="flex items-start gap-3">
-					<div className={`p-3 rounded-lg ${bgColor} ${textColor}`}>
-						{typeData.svg}
+					<div
+						className={`p-3 rounded-full ${circleColor} flex items-center justify-center`}
+					>
+						<div className="text-white">{typeData.svg}</div>
 					</div>
 					<div className="flex-1">
 						<p className="font-semibold text-sm line-clamp-1">{title}</p>
@@ -206,7 +217,7 @@ export function MaterialCard({
 						variant="bordered"
 						color="primary"
 						className="flex-1"
-						onClick={onView}
+						onPress={onView}
 					>
 						Ver
 					</Button>
@@ -216,7 +227,7 @@ export function MaterialCard({
 						size="sm"
 						color="primary"
 						className="flex-1"
-						onClick={onDownload}
+						onPress={onDownload}
 						startContent={
 							<svg
 								className="w-4 h-4"

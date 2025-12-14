@@ -39,7 +39,10 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { toast } from 'sonner';
 import { PageHeader } from '~/components/page-header';
+import apiClient from '~/lib/api/client';
+import { materiasApi } from '~/lib/api/materias';
 import {
 	activateUser,
 	getUsers,
@@ -47,9 +50,6 @@ import {
 	updateUserRole,
 } from '~/lib/services/user.service';
 import type { AdminUserDto, PaginationParams } from '~/lib/types/api.types';
-import apiClient from '~/lib/api/client';
-import { toast } from 'sonner';
-import { materiasApi } from '~/lib/api/materias';
 import type { Subject } from '~/lib/types/materias.types';
 
 type RoleChangeModalData = {
@@ -118,7 +118,10 @@ export default function AdminUsers() {
 		materiaCodigos: [],
 	});
 	const [availableMaterias, setAvailableMaterias] = useState<Subject[]>([]);
-	const [selectedMaterias, setSelectedMaterias] = useState<Set<string>>(new Set());
+	const [selectedMaterias, setSelectedMaterias] = useState<Set<string>>(
+		new Set(),
+	);
+	const [materiaSearchQuery, setMateriaSearchQuery] = useState('');
 
 	// Action loading states
 	const [actionLoading, setActionLoading] = useState(false);
@@ -257,6 +260,7 @@ export default function AdminUsers() {
 					materiaCodigos: [],
 				});
 				setSelectedMaterias(new Set());
+				setMateriaSearchQuery('');
 				tutorProfileModal.onOpen();
 			}
 
@@ -382,6 +386,18 @@ export default function AdminUsers() {
 			.reduce((acc, char) => acc + char.charCodeAt(0), 0);
 		return colors[index % colors.length];
 	}, []);
+
+	// Filter materias based on search query
+	const filteredMaterias = useMemo(() => {
+		if (!materiaSearchQuery.trim()) return availableMaterias;
+
+		const query = materiaSearchQuery.toLowerCase();
+		return availableMaterias.filter(
+			(materia) =>
+				materia.nombre.toLowerCase().includes(query) ||
+				materia.codigo.toLowerCase().includes(query),
+		);
+	}, [availableMaterias, materiaSearchQuery]);
 
 	// Table columns
 	const columns = [
@@ -781,16 +797,17 @@ export default function AdminUsers() {
 				size="3xl"
 				isDismissable={false}
 				hideCloseButton
+				scrollBehavior="inside"
 			>
-				<ModalContent>
-					<ModalHeader className="flex flex-col gap-1">
+				<ModalContent className="max-h-[90vh]">
+					<ModalHeader className="flex flex-col gap-1 sticky top-0 bg-content1 z-10 pb-4">
 						<h3 className="text-xl font-bold">Crear Perfil de Tutor</h3>
 						<p className="text-sm text-default-500 font-normal">
 							Complete la información del perfil de tutor. Debe seleccionar al
 							menos una materia.
 						</p>
 					</ModalHeader>
-					<ModalBody>
+					<ModalBody className="overflow-y-auto">
 						<div className="space-y-4">
 							{/* Bio */}
 							<Textarea
@@ -809,49 +826,84 @@ export default function AdminUsers() {
 								<p className="text-sm font-semibold mb-2">
 									Materias que puede impartir *
 								</p>
+
+								{/* Search Bar */}
+								<Input
+									placeholder="Buscar materias..."
+									value={materiaSearchQuery}
+									onValueChange={setMateriaSearchQuery}
+									startContent={<Search className="w-4 h-4 text-default-400" />}
+									isClearable
+									onClear={() => setMateriaSearchQuery('')}
+									className="mb-4"
+								/>
+
 								{availableMaterias.length === 0 ? (
 									<p className="text-sm text-default-400">
 										Cargando materias disponibles...
 									</p>
+								) : filteredMaterias.length === 0 ? (
+									<p className="text-sm text-default-400 text-center py-8">
+										No se encontraron materias que coincidan con tu búsqueda
+									</p>
 								) : (
-									<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-										{availableMaterias.map((materia) => {
-											const isSelected = selectedMaterias.has(materia.codigo);
-											const colorGradient = getMateriaColor(materia.codigo);
-											return (
-												<div
-													key={materia.codigo}
-													onClick={() => toggleMateriaSelection(materia.codigo)}
-													className={`relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 ${
-														isSelected
-															? 'ring-2 ring-primary shadow-lg'
-															: 'hover:shadow-md'
-													}`}
-												>
-													{/* Color Header */}
+									<div className="max-h-96 overflow-y-auto pr-2">
+										<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+											{filteredMaterias.map((materia) => {
+												const isSelected = selectedMaterias.has(materia.codigo);
+												const colorGradient = getMateriaColor(materia.codigo);
+												return (
 													<div
-														className={`${colorGradient} p-4 flex items-center justify-between`}
+														key={materia.codigo}
+														onClick={() =>
+															toggleMateriaSelection(materia.codigo)
+														}
+														onKeyDown={(e) => {
+															if (e.key === 'Enter' || e.key === ' ') {
+																toggleMateriaSelection(materia.codigo);
+															}
+														}}
+														className={`relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 ${
+															isSelected
+																? 'ring-2 ring-primary shadow-lg'
+																: 'hover:shadow-md'
+														}`}
 													>
-														<BookOpen className="w-8 h-8 text-white" />
-														{isSelected && (
-															<CheckCircle className="w-6 h-6 text-white" />
-														)}
-													</div>
+														{/* Color Header */}
+														<div
+															className={`${colorGradient} p-4 flex items-center justify-between`}
+														>
+															<BookOpen className="w-8 h-8 text-white" />
+															{isSelected && (
+																<CheckCircle className="w-6 h-6 text-white" />
+															)}
+														</div>
 
-													{/* Content */}
-													<div className="bg-white dark:bg-gray-800 p-4">
-														<h3 className="font-bold text-base mb-1">
-															{materia.codigo}
-														</h3>
-														<p className="text-sm text-default-600 line-clamp-2">
-															{materia.nombre}
-														</p>
+														{/* Content */}
+														<div className="bg-white dark:bg-gray-800 p-4">
+															<h3 className="font-bold text-base mb-1">
+																{materia.codigo}
+															</h3>
+															<p className="text-sm text-default-600 line-clamp-2">
+																{materia.nombre}
+															</p>
+														</div>
 													</div>
-												</div>
-											);
-										})}
+												);
+											})}
+										</div>
 									</div>
 								)}
+
+								{/* Selected count */}
+								{selectedMaterias.size > 0 && (
+									<p className="text-sm text-success mt-2">
+										{selectedMaterias.size} materia
+										{selectedMaterias.size !== 1 ? 's' : ''} seleccionada
+										{selectedMaterias.size !== 1 ? 's' : ''}
+									</p>
+								)}
+
 								{selectedMaterias.size === 0 && (
 									<p className="text-xs text-danger mt-2">
 										Debe seleccionar al menos una materia
@@ -860,7 +912,7 @@ export default function AdminUsers() {
 							</div>
 						</div>
 					</ModalBody>
-					<ModalFooter>
+					<ModalFooter className="sticky bottom-0 bg-content1 z-10 pt-4">
 						<Button
 							color="primary"
 							onPress={handleCreateTutorProfile}
