@@ -95,7 +95,7 @@ function extractErrorMessage(error: unknown, defaultMessage: string): string {
 			return 'Tu sesión expiró. Inicia sesión nuevamente.';
 		}
 		if (response.status === 404 || response.status === 405) {
-			return 'El endpoint no está disponible en el backend';
+			return 'El servicio no está disponible temporalmente. Por favor, intenta más tarde';
 		}
 
 		if ('data' in response) {
