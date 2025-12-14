@@ -15,7 +15,7 @@ import {
 import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
+import { AlertMessage, ProfileAvatar } from '~/components';
 import {
 	ProfileConfigurationSection,
 	ProfileEditButtons,

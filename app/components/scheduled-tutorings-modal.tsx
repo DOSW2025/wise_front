@@ -217,8 +217,7 @@ export default function ScheduledTutoringsModal({
 					</ModalHeader>
 					<ModalBody>
 						<p className="text-default-600">
-							¿Estás seguro de que deseas cancelar esta tutoría? Esta acción no
-							se puede deshacer.
+							¿Estás seguro de que deseas cancelar esta tutoría?
 						</p>
 					</ModalBody>
 					<ModalFooter>

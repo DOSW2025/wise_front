@@ -1,5 +1,5 @@
 import { Input, Textarea } from '@heroui/react';
-import { Mail, MapPin, Phone } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import type { FormErrors } from '~/lib/hooks/useProfileFormBase';
 
 interface BaseProfileData {

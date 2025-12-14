@@ -9,20 +9,33 @@ import {
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
+	Textarea,
 	useDisclosure,
 } from '@heroui/react';
-import { Calendar, Clock, MapPin, Search, Video } from 'lucide-react';
-import type React from 'react';
-import { useCallback, useMemo, useState } from 'react';
+import { Calendar, Clock, MapPin, Search, Star, Video, X } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router';
+import { FeedbackModal } from '~/components';
 import { PageHeader } from '~/components/page-header';
-import type { ScheduledTutoring } from '~/components/scheduled-tutorings-modal';
+import { RatingModal } from '~/components/rating-modal';
+import ScheduledTutoringsModal, {
+	type ScheduledTutoring,
+} from '~/components/scheduled-tutorings-modal';
 import TutorCard from '~/components/tutor-card';
 import TutorFilter from '~/components/tutor-filter';
-import { TutorProfileModal } from '~/components/tutor-profile-modal';
+import TutorScheduleModal from '~/components/tutor-schedule-modal';
+import { useAuth } from '~/contexts/auth-context';
+import { useCancelSession } from '~/lib/hooks/useCancelSession';
+import { useStudentSessions } from '~/lib/hooks/useStudentSessions';
+import { useTutores } from '~/lib/hooks/useTutores';
+import type {
+	StudentSession as BackendStudentSession,
+	TutorProfile,
+} from '~/lib/types/tutoria.types';
 
 interface Tutor {
 	id: number;
+	tutorId: string;
 	name: string;
 	title: string;
 	department: string;
@@ -34,6 +47,7 @@ interface Tutor {
 	availability: string;
 	isAvailableToday: boolean;
 	timeSlots?: string[];
+	disponibilidad?: TutorProfile['disponibilidad'];
 }
 
 interface TutorFilters {
@@ -63,7 +77,8 @@ interface StudentSession {
 	date?: string;
 	time?: string;
 	duration?: number;
-	status: 'confirmada' | 'pendiente' | 'cancelada';
+	status: 'PENDIENTE' | 'CONFIRMADA' | 'CANCELADA' | 'COMPLETADA' | 'RECHAZADA';
+	rated?: boolean; // Indica si el estudiante ya calificó la sesión
 }
 
 const getAvatarBg = (avatarColor?: string): string => {
@@ -77,11 +92,12 @@ const getAvatarBg = (avatarColor?: string): string => {
 	return colorMap[avatarColor ?? ''] || 'bg-red-500';
 };
 
-const getInitials = (name: string, fallback?: string): string => {
+const getInitials = (name: string | undefined, fallback?: string): string => {
 	if (fallback) return fallback;
+	if (!name) return 'T';
 	const parts = name.split(' ').filter(Boolean);
 	const first = parts[0]?.[0] ?? '';
-	const last = parts.slice(-1)[0]?.[0] ?? '';
+	const last = parts.at(-1)?.[0] ?? '';
 	const initials = `${first}${last || parts[0]?.[1] || ''}`.toUpperCase();
 	return initials || 'T';
 };
@@ -113,15 +129,40 @@ const getDurationMinutes = (start: string, end: string): number => {
 	return Math.max(toMinutes(end) - toMinutes(start), 0);
 };
 
-const getStatusChipColor = (status: StudentSession['status']) => {
-	if (status === 'confirmada') return 'success';
-	if (status === 'pendiente') return 'warning';
-	return 'danger';
+const getStatusChipColor = (
+	status: StudentSession['status'],
+): 'success' | 'warning' | 'danger' | 'default' => {
+	const colorMap: Record<
+		StudentSession['status'],
+		'success' | 'warning' | 'danger' | 'default'
+	> = {
+		CONFIRMADA: 'success',
+		PENDIENTE: 'warning',
+		CANCELADA: 'danger',
+		COMPLETADA: 'success',
+		RECHAZADA: 'danger',
+	};
+	return colorMap[status] || 'default';
+};
+
+const getStatusLabel = (status: StudentSession['status']): string => {
+	const labelMap: Record<StudentSession['status'], string> = {
+		PENDIENTE: 'Pendiente',
+		CONFIRMADA: 'Confirmada',
+		CANCELADA: 'Cancelada',
+		COMPLETADA: 'Completada',
+		RECHAZADA: 'Rechazada',
+	};
+	return labelMap[status] || status;
+};
+
+const canCancelSession = (status: StudentSession['status']): boolean => {
+	return status === 'PENDIENTE' || status === 'CONFIRMADA';
 };
 
 type SessionModalityLabel = 'presencial' | 'virtual';
 
-type SessionStatusColor = 'success' | 'warning' | 'danger';
+type SessionStatusColor = 'success' | 'warning' | 'danger' | 'default';
 
 interface SessionViewModel extends StudentSession {
 	modalityLabel: SessionModalityLabel;
@@ -190,11 +231,11 @@ const SessionHeader: React.FC<{
 								{session.subject}
 							</Chip>
 							<Chip size="sm" color={session.statusColor} variant="flat">
-								{session.status}
+								{getStatusLabel(session.status)}
 							</Chip>
 						</div>
 						{subtitle && (
-							<p className="text-sm text-default-500 mt-1">{subtitle}</p>
+							<p className="text-sm text-default-700 mt-1">{subtitle}</p>
 						)}
 					</div>
 				</div>
@@ -211,7 +252,7 @@ const SessionMeta: React.FC<{
 	className?: string;
 }> = ({ session, includeDay = false, className }) => (
 	<div
-		className={`flex flex-wrap gap-4 text-sm text-default-500 ${className ?? ''}`}
+		className={`flex flex-wrap gap-4 text-sm text-default-700 ${className ?? ''}`}
 	>
 		<div className="flex items-center gap-1">
 			<Calendar className="w-4 h-4" />
@@ -230,7 +271,24 @@ const SessionMeta: React.FC<{
 				<MapPin className="w-4 h-4" />
 			)}
 			<span className="capitalize">{session.modalityLabel}</span>
-			{session.location && <span> - {session.location}</span>}
+			{session.location && (
+				<>
+					<span> - </span>
+					{session.modalityLabel === 'virtual' &&
+					session.location.startsWith('http') ? (
+						<a
+							href={session.location}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="text-primary hover:underline"
+						>
+							{session.location}
+						</a>
+					) : (
+						<span>{session.location}</span>
+					)}
+				</>
+			)}
 		</div>
 	</div>
 );
@@ -239,14 +297,37 @@ const SessionCardItem: React.FC<{
 	session: StudentSession;
 	onViewDetails: (session: StudentSession) => void;
 	onCancel: (session: StudentSession) => void;
-}> = ({ session, onViewDetails, onCancel }) => {
+	onRate?: (session: StudentSession) => void;
+}> = ({ session, onViewDetails, onCancel, onRate }) => {
+	const [tutorName, setTutorName] = React.useState<string>('Cargando...');
 	const view = buildSessionViewModel(session);
+
+	React.useEffect(() => {
+		const fetchTutorName = async () => {
+			try {
+				const { getTutorName } = await import('~/lib/services/tutoria.service');
+				const name = await getTutorName(session.tutorId);
+				setTutorName(name);
+			} catch (error) {
+				console.error('Error fetching tutor name:', error);
+				setTutorName('Tutor no disponible');
+			}
+		};
+
+		fetchTutorName();
+	}, [session.tutorId]);
+
+	// Actualizar el tutorName en la vista
+	const viewWithTutorName = { ...view, tutorName };
+
+	const showRatingButton = view.status === 'COMPLETADA' && !session.rated;
+	const alreadyRated = view.status === 'COMPLETADA' && session.rated;
 
 	return (
 		<Card>
 			<CardBody>
 				<SessionHeader
-					session={view}
+					session={viewWithTutorName}
 					actionArea={
 						<div className="flex gap-2">
 							<Button
@@ -257,15 +338,33 @@ const SessionCardItem: React.FC<{
 							>
 								Ver detalles
 							</Button>
-							<Button
-								size="sm"
-								variant="light"
-								color="danger"
-								isDisabled={view.status === 'cancelada'}
-								onPress={() => onCancel(session)}
-							>
-								{view.status === 'cancelada' ? 'Cancelada' : 'Cancelar'}
-							</Button>
+							{canCancelSession(view.status) && (
+								<Button
+									size="sm"
+									variant="flat"
+									color="danger"
+									onPress={() => onCancel(session)}
+									startContent={<X className="w-4 h-4" />}
+								>
+									Cancelar
+								</Button>
+							)}
+							{showRatingButton && onRate && (
+								<Button
+									size="sm"
+									variant="flat"
+									color="warning"
+									onPress={() => onRate(session)}
+									startContent={<Star className="w-4 h-4" />}
+								>
+									Calificar
+								</Button>
+							)}
+							{alreadyRated && (
+								<Chip size="sm" color="success" variant="flat">
+									Calificada
+								</Chip>
+							)}
 						</div>
 					}
 				/>
@@ -281,7 +380,43 @@ const SessionDetailsModal: React.FC<{
 	onClose: () => void;
 	onRequestCancel: (session: StudentSession) => void;
 }> = ({ session, isOpen, onClose, onRequestCancel }) => {
-	const view = session ? buildSessionViewModel(session) : null;
+	const [tutorName, setTutorName] = React.useState<string>('Cargando...');
+	const [materiaName, setMateriaName] = React.useState<string>('');
+
+	React.useEffect(() => {
+		if (!session) return;
+
+		const fetchData = async () => {
+			const { getTutorName, getMateria } = await import(
+				'~/lib/services/tutoria.service'
+			);
+
+			try {
+				const name = await getTutorName(session.tutorId);
+				setTutorName(name);
+			} catch (error) {
+				console.error('Error fetching tutor name:', error);
+				setTutorName('Tutor no disponible');
+			}
+
+			try {
+				const materia = await getMateria(session.codigoMateria);
+				setMateriaName(materia ? materia.nombre : session.codigoMateria);
+			} catch (error) {
+				console.error('Error fetching materia:', error);
+				setMateriaName(session.codigoMateria);
+			}
+		};
+
+		fetchData();
+	}, [session]);
+
+	const sessionWithUpdatedData = session
+		? { ...session, tutorName, subject: materiaName || session.subject }
+		: null;
+	const view = sessionWithUpdatedData
+		? buildSessionViewModel(sessionWithUpdatedData)
+		: null;
 
 	return (
 		<Modal
@@ -320,15 +455,6 @@ const SessionDetailsModal: React.FC<{
 
 										<SessionMeta session={view} includeDay className="ml-11" />
 
-										<div className="flex items-center gap-2 text-sm text-default-600">
-											<span className="font-semibold text-default-700">
-												Tutor ID:
-											</span>
-											<span className="font-mono text-xs text-default-500">
-												{view.tutorId}
-											</span>
-										</div>
-
 										<div className="rounded-medium border border-default-200 bg-default-50 p-3 text-sm text-default-600">
 											<p className="font-semibold text-default-700 mb-1">
 												Comentarios
@@ -344,16 +470,14 @@ const SessionDetailsModal: React.FC<{
 								<Button variant="light" onPress={handleClose}>
 									Cerrar
 								</Button>
-								{session && (
+								{session && canCancelSession(session.status) && (
 									<Button
 										color="danger"
 										variant="flat"
-										isDisabled={session.status === 'cancelada'}
 										onPress={() => onRequestCancel(session)}
+										startContent={<X className="w-4 h-4" />}
 									>
-										{session.status === 'cancelada'
-											? 'Cancelada'
-											: 'Cancelar tutoria'}
+										Cancelar tutoría
 									</Button>
 								)}
 							</ModalFooter>
@@ -369,99 +493,220 @@ const CancelSessionModal: React.FC<{
 	session: StudentSession | null;
 	isOpen: boolean;
 	onClose: () => void;
-	onConfirm: (session: StudentSession) => void;
-}> = ({ session, isOpen, onClose, onConfirm }) => {
-	const view = session ? buildSessionViewModel(session) : null;
+	onConfirm: (session: StudentSession, razon: string) => void;
+	isPending?: boolean;
+}> = ({ session, isOpen, onClose, onConfirm, isPending = false }) => {
+	const [razon, setRazon] = React.useState('');
+
+	const handleClose = () => {
+		setRazon('');
+		onClose();
+	};
+
+	const handleConfirm = () => {
+		if (session && razon.trim()) {
+			onConfirm(session, razon);
+			setRazon('');
+		}
+	};
 
 	return (
 		<Modal
 			isOpen={isOpen}
 			onOpenChange={(open) => {
-				if (!open) onClose();
+				if (!open && !isPending) handleClose();
 			}}
 			size="md"
+			isDismissable={!isPending}
 		>
 			<ModalContent>
-				{(onCloseConfirmModal) => {
-					const handleClose = () => {
-						onClose();
-						onCloseConfirmModal();
-					};
+				{(onCloseModal) => (
+					<>
+						<ModalHeader className="flex flex-col gap-1">
+							Cancelar Tutoría
+						</ModalHeader>
+						<ModalBody className="gap-4">
+							<p className="text-default-600">
+								¿Estás seguro de que deseas cancelar esta tutoría?
+							</p>
 
-					return (
-						<>
-							<ModalHeader className="flex flex-col gap-1">
-								Confirmar cancelacion
-							</ModalHeader>
-							<ModalBody>
-								<p className="text-default-600">
-									?Estas seguro de que deseas cancelar esta tutoria
-									{view && (
-										<>
-											{' con '}
-											<span className="font-semibold">{view.tutorName}</span>
-											{' el '}
-											{view.dateLabel}?
-										</>
-									)}
-								</p>
-							</ModalBody>
-							<ModalFooter>
-								<Button variant="light" onPress={handleClose}>
-									Mantener tutoria
-								</Button>
-								<Button
-									color="danger"
-									variant="solid"
-									onPress={() => {
-										if (session) {
-											onConfirm(session);
-										}
-										handleClose();
-									}}
-								>
-									Cancelar tutoria
-								</Button>
-							</ModalFooter>
-						</>
-					);
-				}}
+							<Textarea
+								label="Razón de cancelación"
+								placeholder="Explica el motivo de la cancelación..."
+								value={razon}
+								onValueChange={setRazon}
+								isRequired
+								variant="bordered"
+								minRows={3}
+								maxRows={6}
+								description="Este campo es obligatorio"
+								isDisabled={isPending}
+							/>
+						</ModalBody>
+						<ModalFooter>
+							<Button
+								variant="light"
+								onPress={() => {
+									handleClose();
+									onCloseModal();
+								}}
+								isDisabled={isPending}
+							>
+								Volver
+							</Button>
+							<Button
+								color="danger"
+								variant="solid"
+								onPress={handleConfirm}
+								isDisabled={!razon.trim() || isPending}
+								isLoading={isPending}
+							>
+								{isPending ? 'Cancelando...' : 'Confirmar Cancelación'}
+							</Button>
+						</ModalFooter>
+					</>
+				)}
 			</ModalContent>
 		</Modal>
 	);
 };
 
-// Conectar con API - Ejemplo con valores negativos para referencia
-const mockTutors: Tutor[] = [
-	{
-		id: 1,
-		name: 'Dr. Maria Garcia',
-		title: 'Profesora de Matematicas',
-		department: 'Ciencias Exactas',
-		avatarInitials: 'MG',
-		avatarColor: '#b81d24',
-		rating: 4.9,
-		reviews: 127,
-		tags: ['Calculo', 'Algebra', 'Geometria'],
-		availability: 'Lun-Vie 9:00-17:00',
-		isAvailableToday: true,
-		timeSlots: ['Lun 09:00', 'Lun 10:00', 'Mar 11:00', 'Mie 14:00'],
-	},
-	{
-		id: 2,
-		name: 'Ing. Carlos Rodriguez',
-		title: 'Tutor de Programacion',
-		department: 'Ingenieria',
-		avatarInitials: 'CR',
-		avatarColor: '#008000',
-		rating: 4.8,
-		reviews: 89,
-		tags: ['React', 'TypeScript', 'Node.js'],
-		availability: 'Mar-Sab 14:00-20:00',
-		isAvailableToday: false,
-		timeSlots: ['Mar 14:00', 'Jue 16:00', 'Sab 10:00'],
-	},
-];
+/**
+ * Transforma una sesión del backend al formato StudentSession del componente
+ */
+const transformBackendSessionToComponentSession = (
+	backendSession: BackendStudentSession,
+): StudentSession => {
+	// Mapear el status del backend al formato del componente
+	const statusMap: Record<string, StudentSession['status']> = {
+		PENDIENTE: 'PENDIENTE',
+		CONFIRMADA: 'CONFIRMADA',
+		CANCELADA: 'CANCELADA',
+		COMPLETADA: 'COMPLETADA',
+		RECHAZADA: 'RECHAZADA',
+	};
+
+	return {
+		id: backendSession.id,
+		tutorId: backendSession.tutorId,
+		studentId: backendSession.studentId,
+		tutorName: '', // Se llenará con datos del tutor si es necesario
+		codigoMateria: backendSession.codigoMateria,
+		subject: backendSession.codigoMateria, // Usar código como subject por defecto
+		topic: backendSession.comentarios || 'Sin tema especificado',
+		scheduledAt: backendSession.scheduledAt,
+		day: backendSession.day,
+		startTime: backendSession.startTime,
+		endTime: backendSession.endTime,
+		mode: backendSession.mode,
+		status: statusMap[backendSession.status] || 'PENDIENTE',
+		location: backendSession.lugar || backendSession.linkConexion || undefined,
+		comentarios: backendSession.comentarios || undefined,
+		rated: backendSession.rated || false,
+	};
+};
+
+/**
+ * Transforma un TutorProfile del backend al formato Tutor del componente
+ */
+const transformTutorProfileToTutor = (profile: TutorProfile): Tutor => {
+	// Validar que disponibilidad exista
+	const disponibilidad = profile.disponibilidad || {
+		monday: [],
+		tuesday: [],
+		wednesday: [],
+		thursday: [],
+		friday: [],
+		saturday: [],
+		sunday: [],
+	};
+
+	// Obtener los slots de disponibilidad de todos los días con tipado explícito
+	const allSlots = Object.entries(disponibilidad).flatMap(([day, slots]) =>
+		slots.map(
+			(slot: {
+				start: string;
+				end: string;
+				modalidad: string;
+				lugar: string;
+			}) => ({
+				day,
+				...slot,
+			}),
+		),
+	);
+
+	// Calcular disponibilidad en formato legible
+	const daysWithAvailability = Object.entries(disponibilidad)
+		.filter(([_, slots]) => slots.length > 0)
+		.map(([day]) => day);
+
+	const availability =
+		daysWithAvailability.length > 0
+			? `Disponible: ${daysWithAvailability.join(', ')}`
+			: 'Sin disponibilidad';
+
+	// Verificar si está disponible hoy
+	const today = new Date()
+		.toLocaleDateString('en-US', { weekday: 'long' })
+		.toLowerCase();
+	const isAvailableToday =
+		(disponibilidad[today as keyof typeof disponibilidad] || []).length > 0;
+
+	// Generar timeSlots en formato legible
+	const timeSlots = allSlots.map(
+		(slot) => `${slot.day} ${slot.start} - ${slot.end}`,
+	);
+
+	// Generar iniciales
+	const avatarInitials =
+		`${profile.nombre.charAt(0)}${profile.apellido.charAt(0)}`.toUpperCase();
+
+	// Colores aleatorios para avatar (basado en el ID)
+	const colors = ['#b81d24', '#008000', '#0073e6', '#f59e0b', '#8b5cf6'];
+	const avatarColor =
+		colors[Number.parseInt(profile.id.slice(-1), 16) % colors.length];
+
+	// Usar calificación y comentarios reales del backend
+	// Buscar primero en tutorProfile (anidado), luego en el nivel superior
+	const rating =
+		profile.tutorProfile?.calificacion ?? profile.calificacion ?? 0;
+	const reviews = profile.tutorProfile?.comentarios ?? profile.comentarios ?? 0;
+
+	// 🔍 DEBUG: Ver qué datos llegan del backend
+	console.log('📊 Tutor Profile Data:', {
+		tutorId: profile.id,
+		nombre: `${profile.nombre} ${profile.apellido}`,
+		'tutorProfile.calificacion': profile.tutorProfile?.calificacion,
+		'tutorProfile.comentarios': profile.tutorProfile?.comentarios,
+		'profile.calificacion': profile.calificacion,
+		'profile.comentarios': profile.comentarios,
+		'rating (final)': rating,
+		'reviews (final)': reviews,
+		fullProfile: profile,
+	});
+
+	return {
+		id:
+			Number.parseInt(profile.id.replaceAll(/\D/g, '').slice(0, 8), 10) ||
+			crypto.getRandomValues(new Uint32Array(1))[0] % 100000,
+		tutorId: profile.id, // Agregar el ID del tutor del backend
+		name: `${profile.nombre} ${profile.apellido}`,
+		title: `Tutor - Semestre ${profile.semestre}`,
+		department: profile.rol.nombre,
+		avatarInitials,
+		avatarColor,
+		rating,
+		reviews,
+		tags: allSlots
+			.map((slot) => slot.modalidad)
+			.filter((v, i, a) => a.indexOf(v) === i),
+		availability,
+		isAvailableToday,
+		timeSlots,
+		disponibilidad, // Agregar disponibilidad completa para el modal
+	};
+};
 
 // Mock de tutorías agendadas (simulación de datos desde API)
 const mockScheduledTutorings: ScheduledTutoring[] = [
@@ -521,7 +766,7 @@ const buildScheduledAtFromNow = (daysFromNow: number, startTime: string) => {
 };
 
 // Reemplazar estas sesiones mock con datos reales de backend cuando haya conexion.
-const mockSessions: StudentSession[] = [
+const _mockSessions: StudentSession[] = [
 	(() => {
 		const { scheduledAt, day } = buildScheduledAtFromNow(2, '14:00');
 		return {
@@ -540,7 +785,7 @@ const mockSessions: StudentSession[] = [
 			endTime: '16:00',
 			mode: 'VIRTUAL',
 			comentarios: 'Necesito ayuda con el proyecto final de la materia',
-			status: 'pendiente',
+			status: 'PENDIENTE',
 		};
 	})(),
 	(() => {
@@ -561,7 +806,7 @@ const mockSessions: StudentSession[] = [
 			endTime: '11:00',
 			mode: 'VIRTUAL',
 			comentarios: 'Resolver dudas del temario y ejercicios clave',
-			status: 'confirmada',
+			status: 'CONFIRMADA',
 		};
 	})(),
 	(() => {
@@ -583,7 +828,7 @@ const mockSessions: StudentSession[] = [
 			mode: 'PRESENCIAL',
 			location: 'Aula 204 - Ciencias',
 			comentarios: 'Revisar ejercicios del laboratorio previo',
-			status: 'confirmada',
+			status: 'CONFIRMADA',
 		};
 	})(),
 	(() => {
@@ -604,31 +849,71 @@ const mockSessions: StudentSession[] = [
 			endTime: '19:50',
 			mode: 'VIRTUAL',
 			comentarios: 'Practicar introduccion y conclusiones',
-			status: 'cancelada',
+			status: 'CANCELADA',
 		};
 	})(),
 ];
 
 const StudentTutoringPage: React.FC = () => {
-	const [tutors] = useState<Tutor[]>(mockTutors);
-	// Inicializar tutors con datos del backend
+	// Obtener usuario autenticado
+	const { user } = useAuth();
+
+	// Obtener tutores desde el backend
+	const {
+		data: tutoresData,
+		isLoading: isLoadingTutors,
+		error: tutorsError,
+	} = useTutores();
+
+	// Obtener sesiones del estudiante desde el backend
+	const {
+		data: sessionsData,
+		isLoading: isLoadingSessions,
+		error: sessionsError,
+	} = useStudentSessions(user?.id || '', !!user?.id);
+
+	// Hook para cancelar sesiones
+	const { mutate: cancelSessionMutation, isPending: isCanceling } =
+		useCancelSession();
+
+	// Transformar los datos del backend al formato del componente
+	const tutors = tutoresData
+		? tutoresData.map(transformTutorProfileToTutor)
+		: [];
+
+	// Transformar las sesiones del backend
+	const sessions = sessionsData
+		? sessionsData.map(transformBackendSessionToComponentSession)
+		: [];
+
 	const [searchValue, setSearchValue] = useState('');
 	const [activeTab, setActiveTab] = useState<'search' | 'my-sessions'>(
 		'search',
 	);
-	const [sessions, setSessions] = useState<StudentSession[]>(mockSessions);
-	// Inicializar sessions con datos del backend
 	const [selectedSession, setSelectedSession] = useState<StudentSession | null>(
 		null,
 	);
 	const [sessionToCancel, setSessionToCancel] = useState<StudentSession | null>(
 		null,
 	);
-	const [selectedTutor, _setSelectedTutor] = useState<Tutor | null>(null);
-	const [selectedTutorId, setSelectedTutorId] = useState<string | null>(null);
+	const [sessionToRate, setSessionToRate] = useState<StudentSession | null>(
+		null,
+	);
+	const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
 	const [scheduledTutorings, setScheduledTutorings] = useState<
 		ScheduledTutoring[]
 	>(mockScheduledTutorings);
+	const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+	const [feedback, setFeedback] = useState<{
+		isOpen: boolean;
+		type: 'success' | 'error';
+		title?: string;
+		message: string;
+	}>({
+		isOpen: false,
+		type: 'success',
+		message: '',
+	});
 
 	const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -636,6 +921,12 @@ const StudentTutoringPage: React.FC = () => {
 		isOpen: isConfirmOpen,
 		onOpen: onOpenConfirm,
 		onClose: onCloseConfirm,
+	} = useDisclosure();
+
+	const {
+		isOpen: isRatingOpen,
+		onOpen: onOpenRating,
+		onClose: onCloseRating,
 	} = useDisclosure();
 
 	const { onOpenChat } = useOutletContext<{
@@ -665,10 +956,33 @@ const StudentTutoringPage: React.FC = () => {
 
 	const handleSearch = (_filters: TutorFilters) => {};
 
-	// Llamar al backend para cancelar la tutoria
-	const handleCancelSession = (id: string) => {
-		setSessions((prev) =>
-			prev.map((s) => (s.id === id ? { ...s, status: 'cancelada' } : s)),
+	const handleCancelSession = (session: StudentSession, razon: string) => {
+		if (!user?.id) {
+			console.error('Usuario no autenticado');
+			return;
+		}
+
+		cancelSessionMutation(
+			{
+				sessionId: session.id,
+				data: {
+					userId: user.id,
+					razon,
+				},
+			},
+			{
+				onSuccess: () => {
+					console.log('✅ Sesión cancelada exitosamente');
+					setSessionToCancel(null);
+					onCloseConfirm();
+					if (selectedSession?.id === session.id) {
+						onClose();
+					}
+				},
+				onError: (error) => {
+					console.error('❌ Error al cancelar sesión:', error);
+				},
+			},
 		);
 	};
 
@@ -682,39 +996,50 @@ const StudentTutoringPage: React.FC = () => {
 		onClose();
 	};
 
-	const _handleScheduleTutoring = (data: {
-		tutorId: number;
-		name: string;
-		email: string;
-		slot: string;
-		notes?: string;
-	}) => {
-		console.log('Nueva tutoría agendada:', data);
-		// En producción: guardar en API y actualizar lista
-		const newTutoring: ScheduledTutoring = {
-			id: `sched-${Date.now()}`,
-			tutorId: data.tutorId,
-			tutorName: selectedTutor?.name || 'Tutor',
-			subject: selectedTutor?.tags[0] || 'Sin tema',
-			date: data.slot,
-			time: data.slot.split(' ').slice(1).join(' ') || '00:00',
-			modality: 'virtual',
-			studentNotes: data.notes,
-		};
-		setScheduledTutorings([...scheduledTutorings, newTutoring]);
+	const handleScheduleSuccess = (message: string) => {
+		setIsScheduleOpen(false);
+		setSelectedTutor(null);
+		setFeedback({
+			isOpen: true,
+			type: 'success',
+			message,
+		});
+		setActiveTab('my-sessions');
 	};
 
-	const _handleCancelTutoring = (id: string) => {
+	const handleScheduleError = (message: string) => {
+		setFeedback({
+			isOpen: true,
+			type: 'error',
+			message,
+		});
+	};
+
+	const handleCancelTutoring = (id: string) => {
 		console.log('Cancelando tutoría:', id);
 		setScheduledTutorings(
 			scheduledTutorings.filter((t: ScheduledTutoring) => t.id !== id),
 		);
 	};
 
+	const handleOpenRating = (session: StudentSession) => {
+		setSessionToRate(session);
+		onOpenRating();
+	};
+
+	const handleRatingSuccess = () => {
+		setFeedback({
+			isOpen: true,
+			type: 'success',
+			title: '¡Sesión Calificada!',
+			message: 'Calificación enviada exitosamente. ¡Gracias por tu feedback!',
+		});
+		setSessionToRate(null);
+	};
+
 	return (
 		<div className="">
 			<PageHeader title="Tutorias" description="Panel de Estudiante" />
-
 			<div className="flex gap-2">
 				<Button
 					variant={activeTab === 'search' ? 'solid' : 'light'}
@@ -731,7 +1056,6 @@ const StudentTutoringPage: React.FC = () => {
 					Mis tutorias
 				</Button>
 			</div>
-
 			{activeTab === 'search' && (
 				<>
 					<Card>
@@ -753,71 +1077,117 @@ const StudentTutoringPage: React.FC = () => {
 						</CardBody>
 					</Card>
 
-					<div className="flex justify-between items-center pt-2 border-t border-default-200">
-						<p className="text-default-600">
-							{tutors.length} tutores encontrados
-						</p>
-						<Button
-							variant="light"
-							color="danger"
-							startContent={<Calendar className="w-5 h-5" />}
-						>
-							Ver calendario
-						</Button>
-					</div>
+					{isLoadingTutors && (
+						<Card>
+							<CardBody className="p-6 text-center">
+								<p className="text-default-500">
+									Cargando tutores disponibles...
+								</p>
+							</CardBody>
+						</Card>
+					)}
 
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-						{tutors.map((tutor) => (
-							<TutorCard
-								key={tutor.id}
-								tutor={tutor}
-								onOpenChat={onOpenChat}
-								onViewProfile={setSelectedTutorId}
-							/>
-						))}
-					</div>
+					{tutorsError && (
+						<Card>
+							<CardBody className="p-6 text-center">
+								<p className="text-danger text-lg">Error al cargar tutores</p>
+								<p className="text-default-500 mt-2">{tutorsError.message}</p>
+							</CardBody>
+						</Card>
+					)}
+
+					{!isLoadingTutors && !tutorsError && (
+						<>
+							<div className="flex justify-between items-center pt-2 border-t border-default-200">
+								<p className="text-default-600">
+									{tutors.length} tutores encontrados
+								</p>
+							</div>
+
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+								{tutors.map((tutor) => (
+									<TutorCard
+										key={tutor.id}
+										tutor={tutor}
+										onOpenChat={onOpenChat}
+										onOpen={(t) => {
+											setSelectedTutor(t);
+											setIsScheduleOpen(true);
+										}}
+									/>
+								))}
+							</div>
+						</>
+					)}
 				</>
-			)}
-
+			)}{' '}
 			{activeTab === 'my-sessions' && (
 				<div className="space-y-4">
 					<div className="flex items-center justify-between">
 						<h2 className="text-xl font-semibold">Sesiones programadas</h2>
 					</div>
-
-					{futureSessions.length === 0 ? (
-						<Card>
-							<CardBody className="text-center py-12">
-								<Calendar className="w-12 h-12 text-default-300 mx-auto mb-4" />
-								<h3 className="text-lg font-semibold mb-2">
-									No tienes tutorias programadas
-								</h3>
-								<p className="text-default-500 mb-4">
-									Cuando confirmes una tutoria aparecera aqui.
-								</p>
-								<Button color="primary" onPress={() => setActiveTab('search')}>
-									Agendar tutoria
-								</Button>
-							</CardBody>
-						</Card>
-					) : (
+					{/* Loading state */}
+					{isLoadingSessions && (
 						<div className="grid gap-4">
-							{futureSessions.map((session) => (
-								<SessionCardItem
-									key={session.id}
-									session={session}
-									onViewDetails={openSessionDetails}
-									onCancel={(currentSession) => {
-										setSessionToCancel(currentSession);
-										onOpenConfirm();
-									}}
-								/>
+							{Array.from({ length: 3 }, (_, i) => (
+								<Card key={`skeleton-loading-card-${i}`}>
+									<CardBody className="h-32 bg-default-100 animate-pulse" />
+								</Card>
 							))}
 						</div>
+					)}{' '}
+					{/* Error state */}
+					{sessionsError && (
+						<Card>
+							<CardBody className="text-center py-12">
+								<p className="text-danger">
+									Error al cargar las tutorías:{' '}
+									{sessionsError instanceof Error
+										? sessionsError.message
+										: 'Error desconocido'}
+								</p>
+							</CardBody>
+						</Card>
 					)}
+					{/* Content */}
+					{!isLoadingSessions &&
+						!sessionsError &&
+						(futureSessions.length === 0 ? (
+							<Card>
+								<CardBody className="text-center py-12">
+									<Calendar className="w-12 h-12 text-default-300 mx-auto mb-4" />
+									<h3 className="text-lg font-semibold mb-2">
+										No tienes tutorias programadas
+									</h3>
+									<p className="text-default-500 mb-4">
+										Cuando confirmes una tutoria aparecera aqui.
+									</p>
+									<Button
+										color="primary"
+										onPress={() => setActiveTab('search')}
+									>
+										Agendar tutoria
+									</Button>
+								</CardBody>
+							</Card>
+						) : (
+							<div className="grid gap-4">
+								{futureSessions.map((session) => (
+									<SessionCardItem
+										key={session.id}
+										session={session}
+										onViewDetails={openSessionDetails}
+										onCancel={(currentSession) => {
+											setSessionToCancel(currentSession);
+											onOpenConfirm();
+										}}
+										onRate={handleOpenRating}
+									/>
+								))}
+							</div>
+						))}
 				</div>
 			)}
-
 			<SessionDetailsModal
 				session={selectedSession}
 				isOpen={isOpen}
@@ -827,24 +1197,53 @@ const StudentTutoringPage: React.FC = () => {
 					onOpenConfirm();
 				}}
 			/>
-
 			<CancelSessionModal
 				session={sessionToCancel}
 				isOpen={isConfirmOpen}
 				onClose={() => {
-					setSessionToCancel(null);
-					onCloseConfirm();
+					if (!isCanceling) {
+						setSessionToCancel(null);
+						onCloseConfirm();
+					}
 				}}
-				onConfirm={(session) => {
-					handleCancelSession(session.id);
-				}}
+				onConfirm={handleCancelSession}
+				isPending={isCanceling}
 			/>
-
-			{/* Modal del perfil del tutor */}
-			<TutorProfileModal
-				isOpen={!!selectedTutorId}
-				onClose={() => setSelectedTutorId(null)}
-				tutorId={selectedTutorId}
+			{/* Modal de Calificación */}
+			{sessionToRate && (
+				<RatingModal
+					isOpen={isRatingOpen}
+					onClose={onCloseRating}
+					sessionId={sessionToRate.id}
+					raterId={user?.id || ''}
+					tutorName={sessionToRate.tutorName}
+					subjectName={sessionToRate.subject}
+					onSuccess={handleRatingSuccess}
+				/>
+			)}
+			{/* Modal de agendar tutoría */}
+			<TutorScheduleModal
+				tutor={selectedTutor}
+				isOpen={isScheduleOpen}
+				onClose={() => setIsScheduleOpen(false)}
+				studentId={user?.id || ''}
+				onSuccess={handleScheduleSuccess}
+				onError={handleScheduleError}
+			/>
+			{/* Modal de mis tutorías agendadas */}
+			<ScheduledTutoringsModal
+				tutorings={scheduledTutorings}
+				isOpen={false}
+				onClose={() => {}}
+				onCancel={handleCancelTutoring}
+			/>
+			{/* Modal de Feedback */}
+			<FeedbackModal
+				isOpen={feedback.isOpen}
+				onClose={() => setFeedback({ ...feedback, isOpen: false })}
+				type={feedback.type}
+				title={feedback.title}
+				message={feedback.message}
 			/>
 		</div>
 	);

@@ -12,7 +12,7 @@ import {
 import { DeleteAccount } from '~/components/profile/DeleteAccount';
 import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
-import { getProfile } from '~/lib/services/student.service';
+import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
 
@@ -20,7 +20,20 @@ export default function StudentProfile() {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
-	const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+	// Fetch tutorías statistics
+	const { data: stats, isLoading: isLoadingStats } = useTutoriaStats(
+		user?.id ?? '',
+		!!user?.id,
+	);
+
+	// Calculate hours display value
+	let hoursValue = '...';
+	if (!isLoadingStats) {
+		hoursValue = stats?.horasDeTutoria
+			? `${stats.horasDeTutoria.toFixed(1)}h`
+			: '0h';
+	}
 
 	// Custom hooks for managing complex state
 	const {
@@ -38,7 +51,7 @@ export default function StudentProfile() {
 		phone: '',
 		role: user?.role || '',
 		description: '',
-		avatar: user?.avatarUrl,
+		avatarUrl: user?.avatarUrl,
 		interests: [],
 		semester: '',
 	});
@@ -85,7 +98,7 @@ export default function StudentProfile() {
 				...prev,
 				name: user.name,
 				email: user.email,
-				avatar: user.avatarUrl,
+				avatarUrl: user.avatarUrl,
 			}));
 		}
 	}, [user, setProfile]);
@@ -230,14 +243,14 @@ export default function StudentProfile() {
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						<StatsCard
 							title="Tutorías Tomadas"
-							value={0}
+							value={isLoadingStats ? '...' : (stats?.sesionesCompletadas ?? 0)}
 							description="Total"
 							color="primary"
 						/>
 						<StatsCard
 							title="Horas de Estudio"
-							value={0}
-							description="Este mes"
+							value={hoursValue}
+							description="Total"
 							color="success"
 						/>
 						<StatsCard

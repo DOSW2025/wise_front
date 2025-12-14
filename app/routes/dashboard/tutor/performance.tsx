@@ -8,15 +8,7 @@ import {
 	Tab,
 	Tabs,
 } from '@heroui/react';
-import {
-	Award,
-	Gift,
-	Star,
-	Target,
-	TrendingUp,
-	Users,
-	Zap,
-} from 'lucide-react';
+import { Award, Gift, Target, Zap } from 'lucide-react';
 import { useState } from 'react';
 import {
 	TutorAchievementsList,
