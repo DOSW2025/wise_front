@@ -87,6 +87,10 @@ export const API_ENDPOINTS = {
 			RECENT: '/wise/student/activity/recent',
 		},
 	},
+	ADMIN: {
+		PROFILE: '/wise/gestion-usuarios/me/info-personal',
+		GET_PROFILE: '/wise/gestion-usuarios/me',
+	},
 
 	MATERIALS: {
 		BASE: '/wise/materiales',
