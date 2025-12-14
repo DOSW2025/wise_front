@@ -1,16 +1,4 @@
-import {
-	Button,
-	Card,
-	CardBody,
-	Chip,
-	Input,
-	Modal,
-	ModalBody,
-	ModalContent,
-	ModalFooter,
-	ModalHeader,
-	useDisclosure,
-} from '@heroui/react';
+import { Button, Card, CardBody, Chip, Input } from '@heroui/react';
 import { Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -21,8 +9,10 @@ import {
 	ProfileFormFields,
 	ProfileHeader,
 } from '~/components/profile';
+import { DeleteAccount } from '~/components/profile/DeleteAccount';
+import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
-import { deleteAccount, getProfile } from '~/lib/services/student.service';
+import { getProfile } from '~/lib/services/student.service';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
 
@@ -31,11 +21,6 @@ export default function StudentProfile() {
 	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
 	const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-	const {
-		isOpen: isDeleteOpen,
-		onOpen: onDeleteOpen,
-		onClose: onDeleteClose,
-	} = useDisclosure();
 
 	// Custom hooks for managing complex state
 	const {
@@ -132,9 +117,7 @@ export default function StudentProfile() {
 
 	const handleDeleteAccount = async () => {
 		try {
-			await deleteAccount();
-			onDeleteClose();
-			// Redirigir al login después de eliminar
+			// TODO: Integrar eliminación real cuando el backend lo permita
 			navigate('/login');
 		} catch (error) {
 			console.error('Error al eliminar cuenta:', error);
@@ -218,55 +201,25 @@ export default function StudentProfile() {
 						</ProfileFormFields>
 					</div>
 
-					<div className="space-y-2">
-						<span className="text-sm font-medium block">Áreas de Interés</span>
-						<div className="flex flex-wrap gap-2">
-							{profile.interests && profile.interests.length > 0 ? (
-								profile.interests.map((interest) => (
-									<Chip
-										key={interest}
-										onClose={
-											isEditing
-												? () =>
-														setProfile({
-															...profile,
-															interests:
-																profile.interests?.filter(
-																	(i) => i !== interest,
-																) || [],
-														})
-												: undefined
-										}
-										variant="flat"
-										color="primary"
-									>
-										{interest}
-									</Chip>
-								))
-							) : (
-								<p className="text-sm text-default-500">
-									No has agregado áreas de interés
-								</p>
-							)}
-							{isEditing && (
-								<Chip
-									variant="bordered"
-									className="cursor-pointer"
-									onClick={() => {
-										const newInterest = prompt('Ingresa un área de interés:');
-										if (newInterest) {
-											setProfile({
-												...profile,
-												interests: [...(profile.interests || []), newInterest],
-											});
-										}
-									}}
-								>
-									+ Agregar
-								</Chip>
-							)}
-						</div>
-					</div>
+					<InterestsChips
+						title="Áreas de Interés"
+						items={profile.interests || []}
+						isEditing={isEditing}
+						onRemove={(value) =>
+							setProfile({
+								...profile,
+								interests: (profile.interests || []).filter((i) => i !== value),
+							})
+						}
+						onAdd={(value) =>
+							setProfile({
+								...profile,
+								interests: [...(profile.interests || []), value],
+							})
+						}
+						emptyText="No has agregado áreas de interés"
+						addLabel="+ Agregar"
+					/>
 				</CardBody>
 			</Card>
 
@@ -315,48 +268,7 @@ export default function StudentProfile() {
 				</CardBody>
 			</Card>
 
-			{/* Eliminar Cuenta */}
-			<Card>
-				<CardBody className="gap-4">
-					<div className="flex justify-end">
-						<Button
-							color="primary"
-							variant="flat"
-							startContent={<Trash2 className="w-4 h-4" />}
-							onPress={onDeleteOpen}
-						>
-							Eliminar mi Cuenta
-						</Button>
-					</div>
-				</CardBody>
-			</Card>
-
-			{/* Modal de Confirmación */}
-			<Modal isOpen={isDeleteOpen} onClose={onDeleteClose} backdrop="opaque">
-				<ModalContent>
-					<ModalHeader className="flex flex-col gap-1">
-						<span>Eliminar Cuenta</span>
-					</ModalHeader>
-					<ModalBody>
-						<p className="text-default-600">
-							¿Estás seguro de que deseas eliminar tu cuenta? Esta acción es
-							irreversible.
-						</p>
-					</ModalBody>
-					<ModalFooter>
-						<Button variant="light" onPress={onDeleteClose}>
-							Cancelar
-						</Button>
-						<Button
-							color="primary"
-							onPress={handleDeleteAccount}
-							startContent={<Trash2 className="w-4 h-4" />}
-						>
-							Eliminar
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
+			<DeleteAccount onDelete={handleDeleteAccount} />
 		</div>
 	);
 }

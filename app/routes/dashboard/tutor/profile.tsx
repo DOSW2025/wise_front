@@ -22,6 +22,8 @@ import {
 	ProfileFormFields,
 	ProfileHeader,
 } from '~/components/profile';
+import { DeleteAccount } from '~/components/profile/DeleteAccount';
+import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
@@ -187,43 +189,25 @@ export default function TutorProfile() {
 					</div>
 
 					{isEditing && (
-						<div className="space-y-2">
-							<span className="text-sm font-medium block">
-								Materias que enseñas
-							</span>
-							<div className="flex flex-wrap gap-2">
-								{profile.subjects.map((subject) => (
-									<Chip
-										key={subject}
-										onClose={() =>
-											setProfile({
-												...profile,
-												subjects: profile.subjects.filter((s) => s !== subject),
-											})
-										}
-										variant="flat"
-										color="primary"
-									>
-										{subject}
-									</Chip>
-								))}
-								<Chip
-									variant="bordered"
-									className="cursor-pointer"
-									onClick={() => {
-										const newSubject = prompt('Ingresa una nueva materia:');
-										if (newSubject) {
-											setProfile({
-												...profile,
-												subjects: [...profile.subjects, newSubject],
-											});
-										}
-									}}
-								>
-									+ Agregar
-								</Chip>
-							</div>
-						</div>
+						<InterestsChips
+							title="Materias que enseñas"
+							items={profile.subjects}
+							isEditing={isEditing}
+							onRemove={(value) =>
+								setProfile({
+									...profile,
+									subjects: profile.subjects.filter((s) => s !== value),
+								})
+							}
+							onAdd={(value) =>
+								setProfile({
+									...profile,
+									subjects: [...profile.subjects, value],
+								})
+							}
+							emptyText="No has agregado materias"
+							addLabel="+ Agregar"
+						/>
 					)}
 				</CardBody>
 			</Card>
@@ -315,48 +299,7 @@ export default function TutorProfile() {
 				</ModalContent>
 			</Modal>
 
-			{/* Eliminar Cuenta */}
-			<Card>
-				<CardBody className="gap-4">
-					<div className="flex justify-end">
-						<Button
-							color="primary"
-							variant="flat"
-							startContent={<Trash2 className="w-4 h-4" />}
-							onPress={onDeleteOpen}
-						>
-							Eliminar mi Cuenta
-						</Button>
-					</div>
-				</CardBody>
-			</Card>
-
-			{/* Modal de Confirmación */}
-			<Modal isOpen={isDeleteOpen} onClose={onDeleteClose} backdrop="opaque">
-				<ModalContent>
-					<ModalHeader className="flex flex-col gap-1">
-						<span>Eliminar Cuenta</span>
-					</ModalHeader>
-					<ModalBody>
-						<p className="text-default-600">
-							¿Estás seguro de que deseas eliminar tu cuenta? Esta acción es
-							irreversible.
-						</p>
-					</ModalBody>
-					<ModalFooter>
-						<Button variant="light" onPress={onDeleteClose}>
-							Cancelar
-						</Button>
-						<Button
-							color="primary"
-							onPress={handleDeleteAccount}
-							startContent={<Trash2 className="w-4 h-4" />}
-						>
-							Eliminar
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
+			<DeleteAccount onDelete={handleDeleteAccount} />
 		</div>
 	);
 }
