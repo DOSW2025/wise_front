@@ -1,12 +1,10 @@
 import { Card, CardBody } from '@heroui/react';
 import { AlertMessage, ProfileAvatar } from '~/components';
-import {
-	ProfileConfigurationSection,
-	ProfileEditButtons,
-	ProfileFormFields,
-	ProfileHeader,
-} from '~/components/profile';
 import type { BaseProfileData } from '~/lib/hooks/useProfileFormBase';
+import { ProfileConfigurationSection } from './profile-configuration-section';
+import { ProfileEditButtons } from './profile-edit-buttons';
+import { ProfileFormFields } from './profile-form-fields';
+import { ProfileHeader } from './profile-header';
 
 interface ProfileContainerProps<T extends BaseProfileData> {
 	title: string;

@@ -1,9 +1,9 @@
 import { Button, Chip } from '@heroui/react';
+import { useTutorProfileForm } from 'app/routes/dashboard/tutor/hooks/useTutorProfileForm';
 import { useTutorProfileSave } from 'app/routes/dashboard/tutor/hooks/useTutorProfileSave';
-import { useTutorProfileForm } from 'app/routes/dashboard/tutor/hooks/usetutorprofileForm';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ProfileContainer } from '~/components/profile';
+import { ProfileContainer } from '~/components/profile/ProfileContainer';
 import { useProfileManager } from '~/lib/hooks/useProfileManager';
 import { getProfile } from '~/lib/services/tutor.service';
 

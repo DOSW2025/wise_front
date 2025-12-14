@@ -1,7 +1,7 @@
 import { Card, CardBody, Chip, Input } from '@heroui/react';
 import { useState } from 'react';
 import { StatsCard } from '~/components';
-import { ProfileContainer } from '~/components/profile';
+import { ProfileContainer } from '~/components/profile/ProfileContainer';
 import { useProfileManager } from '~/lib/hooks/useProfileManager';
 import { getProfile } from '~/lib/services/student.service';
 import { useStudentProfileForm } from './hooks/useStudentProfileForm';

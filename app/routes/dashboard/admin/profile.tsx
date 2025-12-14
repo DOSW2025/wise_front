@@ -1,23 +1,15 @@
 import { Card, CardBody } from '@heroui/react';
-import { useEffect, useState } from 'react';
-import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
-import {
-	ProfileConfigurationSection,
-	ProfileEditButtons,
-	ProfileFormFields,
-	ProfileHeader,
-} from '~/components/profile';
-import { useAuth } from '~/contexts/auth-context';
+import { useState } from 'react';
+import { StatsCard } from '~/components';
+import { ProfileContainer } from '~/components/profile/ProfileContainer';
+import { useProfileManager } from '~/lib/hooks/useProfileManager';
 import { getAdminProfile } from '~/lib/services/admin.service';
 import { useAdminProfileForm } from './hooks/useAdminProfileForm';
 import { useAdminProfileSave } from './hooks/useProfileSave';
 
 export default function AdminProfile() {
-	const { user } = useAuth();
 	const [emailNotifications, setEmailNotifications] = useState(true);
-	const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
-	// Custom hooks para manejar el estado complejo del perfil
 	const {
 		profile,
 		setProfile,
@@ -26,159 +18,53 @@ export default function AdminProfile() {
 		isEditing,
 		setIsEditing,
 		avatarPreview,
-		setAvatarPreview,
-		validateForm,
-		handleImageUpload,
-		resetForm,
-	} = useAdminProfileForm({
-		name: user?.name || '',
-		email: user?.email || '',
-		phone: '',
-		role: user?.role || 'administrador',
-		description: '',
-		avatarUrl: user?.avatarUrl,
+		isSaving,
+		error,
+		success,
+		isLoadingProfile,
+		handleSave,
+		handleImageChange,
+		handleCancel,
+	} = useProfileManager({
+		initialProfile: {
+			name: '',
+			email: '',
+			phone: '',
+			role: '',
+			description: '',
+			avatarUrl: undefined,
+		},
+		getProfileFn: getAdminProfile,
+		saveProfileFn: async (data) => data,
+		useFormHook: useAdminProfileForm,
+		useSaveHook: useAdminProfileSave,
 	});
 
-	const { isSaving, error, success, setError, saveProfile } =
-		useAdminProfileSave();
-
-	// Cargar el perfil completo cuando el componente se monta
-	useEffect(() => {
-		const loadProfile = async () => {
-			if (!user) return;
-
-			try {
-				setIsLoadingProfile(true);
-				const profileData = await getAdminProfile();
-
-				// Actualizar el estado del perfil con los datos cargados
-				setProfile({
-					...profileData,
-					avatarUrl: user.avatarUrl, // Mantener el avatar del contexto
-					name: user.name, // Mantener nombre del contexto
-					email: user.email,
-					role: profileData.role || user.role || 'administrador',
-				});
-			} catch (err) {
-				console.error('Error cargando perfil:', err);
-				setError('Error al cargar tu perfil');
-			} finally {
-				setIsLoadingProfile(false);
-			}
-		};
-
-		loadProfile();
-	}, [user, setProfile, setError]);
-
-	// Actualizar datos básicos del usuario desde el contexto
-	useEffect(() => {
-		if (user) {
-			setProfile((prev) => ({
-				...prev,
-				name: user.name,
-				email: user.email,
-				avatarUrl: user.avatarUrl,
-			}));
-		}
-	}, [user, setProfile]);
-
-	const handleSave = async () => {
-		if (!validateForm()) {
-			setError('Por favor corrige los errores en el formulario');
-			return;
-		}
-
-		const saved = await saveProfile({
-			name: profile.name,
-			email: profile.email,
-			phone: profile.phone,
-			role: profile.role,
-			description: profile.description,
-		});
-
-		if (saved) {
-			setIsEditing(false);
-			setAvatarPreview(null);
-		}
-	};
-
-	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const result = handleImageUpload(event);
-		if (result?.error) {
-			setError(result.error);
-		}
-	};
-
-	const handleCancel = () => {
-		if (user) {
-			resetForm(user);
-		}
-	};
-
-	// Mostrar loading mientras carga el perfil
-	if (isLoadingProfile) {
-		return (
-			<div className="flex items-center justify-center min-h-screen">
-				<div className="text-center">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-					<p className="text-lg">Cargando perfil...</p>
-				</div>
-			</div>
-		);
-	}
-
 	return (
-		<div className="space-y-6">
-			<ProfileHeader
+		<>
+			<ProfileContainer
 				title="Mi Perfil de Administrador"
 				description="Gestiona tu información personal y configuración de administrador"
+				profile={profile}
+				setProfile={setProfile}
+				formErrors={formErrors}
+				setFormErrors={setFormErrors}
+				isEditing={isEditing}
+				isSaving={isSaving}
+				error={error}
+				success={success}
+				avatarPreview={avatarPreview}
+				isLoadingProfile={isLoadingProfile}
+				onEdit={() => setIsEditing(true)}
+				onSave={handleSave}
+				onCancel={handleCancel}
+				onImageChange={handleImageChange}
+				descriptionLabel="Biografía"
+				descriptionPlaceholder="Describe tu rol y responsabilidades como administrador..."
+				showRoleField={true}
+				emailNotifications={emailNotifications}
+				onEmailNotificationsChange={setEmailNotifications}
 			/>
-
-			{/* Mensajes de error y éxito */}
-			{error && <AlertMessage message={error} type="error" />}
-			{success && <AlertMessage message={success} type="success" />}
-
-			{/* Información Personal */}
-			<Card>
-				<CardBody className="gap-6">
-					<div className="flex justify-between items-center">
-						<h2 className="text-xl font-semibold">Información Personal</h2>
-						<ProfileEditButtons
-							isEditing={isEditing}
-							isSaving={isSaving}
-							onEdit={() => setIsEditing(true)}
-							onSave={handleSave}
-							onCancel={handleCancel}
-						/>
-					</div>
-
-					<div className="flex flex-col md:flex-row gap-6">
-						<ProfileAvatar
-							src={profile.avatarUrl}
-							name={profile.name}
-							isEditing={isEditing}
-							onImageChange={handleImageChange}
-							preview={avatarPreview}
-						/>
-						<ProfileFormFields
-							profile={profile}
-							isEditing={isEditing}
-							formErrors={formErrors}
-							onProfileChange={setProfile}
-							onErrorClear={(field) =>
-								setFormErrors({ ...formErrors, [field]: undefined })
-							}
-							nameReadOnly={true}
-							emailReadOnly={true}
-							showRoleField={true}
-							roleReadOnly={true}
-							roleDescription="No se puede modificar"
-							descriptionLabel="Biografía"
-							descriptionPlaceholder="Describe tu rol y responsabilidades como administrador..."
-						/>
-					</div>
-				</CardBody>
-			</Card>
 
 			{/* Estadísticas del Sistema */}
 			<Card>
@@ -212,18 +98,6 @@ export default function AdminProfile() {
 					</div>
 				</CardBody>
 			</Card>
-
-			{/* Configuración */}
-			<Card>
-				<CardBody className="gap-4">
-					<h2 className="text-xl font-semibold">Configuración de Cuenta</h2>
-					<ProfileConfigurationSection
-						emailNotifications={emailNotifications}
-						onEmailNotificationsChange={setEmailNotifications}
-						emailNotificationsDescription="Recibe notificaciones importantes del sistema"
-					/>
-				</CardBody>
-			</Card>
-		</div>
+		</>
 	);
 }

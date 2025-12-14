@@ -1,30 +1,30 @@
 import { Input, Textarea } from '@heroui/react';
 import { Mail, Phone, Shield } from 'lucide-react';
-import type { FormErrors } from '~/lib/hooks/useProfileFormBase';
+import type {
+	BaseProfileData,
+	FormErrors,
+} from '~/lib/hooks/useProfileFormBase';
 
-interface BaseProfileData {
-	name: string;
-	email: string;
-	phone: string;
-	role?: string;
-	description: string;
-}
-
-interface ProfileFormFieldsProps<T extends BaseProfileData> {
+export interface ProfileFormFieldsProps<T extends BaseProfileData> {
 	profile: T;
 	isEditing: boolean;
 	formErrors: FormErrors;
 	onProfileChange: (profile: T) => void;
 	onErrorClear: (field: keyof FormErrors) => void;
+
+	// Configuración de campos
 	nameReadOnly?: boolean;
 	emailReadOnly?: boolean;
 	roleReadOnly?: boolean;
+
 	nameDescription?: string;
 	emailDescription?: string;
 	roleDescription?: string;
+
 	descriptionLabel?: string;
 	descriptionPlaceholder?: string;
 	showRoleField?: boolean;
+
 	children?: React.ReactNode;
 }
 
@@ -34,15 +34,19 @@ export function ProfileFormFields<T extends BaseProfileData>({
 	formErrors,
 	onProfileChange,
 	onErrorClear,
+
 	nameReadOnly = true,
 	emailReadOnly = true,
 	roleReadOnly = true,
+
 	nameDescription = 'No se puede modificar',
 	emailDescription = 'No se puede modificar',
 	roleDescription = 'No se puede modificar',
+
 	descriptionLabel = 'Sobre Mí',
 	descriptionPlaceholder = 'Cuéntanos sobre tus intereses y objetivos...',
 	showRoleField = false,
+
 	children,
 }: ProfileFormFieldsProps<T>) {
 	return (
@@ -63,6 +67,7 @@ export function ProfileFormFields<T extends BaseProfileData>({
 					isRequired
 					description={nameReadOnly ? nameDescription : undefined}
 				/>
+
 				<Input
 					label="Correo Electrónico"
 					placeholder="tu@email.com"
@@ -80,6 +85,7 @@ export function ProfileFormFields<T extends BaseProfileData>({
 					isRequired
 					description={emailReadOnly ? emailDescription : undefined}
 				/>
+
 				<Input
 					label="Teléfono"
 					placeholder="+57 300 123 4567"
@@ -100,7 +106,7 @@ export function ProfileFormFields<T extends BaseProfileData>({
 					<Input
 						label="Rol"
 						placeholder="Tu rol en la plataforma"
-						value={profile.role}
+						value={profile.role ?? ''}
 						onValueChange={(value) => {
 							onProfileChange({ ...profile, role: value });
 							onErrorClear('role');
