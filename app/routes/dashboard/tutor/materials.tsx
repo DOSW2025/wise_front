@@ -71,6 +71,7 @@ export default function TutorMaterials() {
 		onOpen: onStatsOpen,
 		onClose: onStatsClose,
 	} = useDisclosure();
+	const { onOpen } = useDisclosure();
 	const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(
 		null,
 	);

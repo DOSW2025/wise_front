@@ -232,7 +232,7 @@ export interface NotificationsResponse {
 }
 
 export interface UnreadCountResponse {
-	unreadCount: number;
+	Count: number;
 }
 
 // API Response Types para el mapeo de materiales
