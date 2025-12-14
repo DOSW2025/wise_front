@@ -62,9 +62,9 @@ export default function Home() {
 		},
 		{
 			icon: Award,
-			title: 'Sistema de Reputacion',
+			title: 'Colaboracion Confiable',
 			description:
-				'Acumula reputacion y reconocimientos por tu participacion activa.',
+				'Perfiles verificados y comunidad respaldada para aprender con confianza.',
 			color: 'warning' as const,
 		},
 		{
@@ -113,32 +113,48 @@ export default function Home() {
 	];
 
 	return (
-		<div className="min-h-screen bg-background">
-			{/* Navbar */}
-			<Navbar isBordered maxWidth="xl">
+		<div className="min-h-screen bg-gradient-to-br from-white via-content1 to-default-100">
+			{/* Navbar - Clean & Minimalist */}
+			<Navbar
+				isBordered={false}
+				maxWidth="xl"
+				className="bg-background/60 backdrop-blur-md border-b border-divider/50"
+			>
 				<NavbarBrand>
 					<img
 						src="/logo/logoeciwise.svg"
 						alt="ECIWISE+ logo"
-						className="w-8 h-8"
+						className="w-10 h-10"
 					/>
-					<p className="font-logo font-bold text-xl text-primary ml-2">
+					<p className="font-logo font-bold text-2xl text-primary ml-3">
 						ECIWISE+
 					</p>
 				</NavbarBrand>
-				<NavbarContent className="hidden sm:flex gap-4" justify="center">
+				<NavbarContent className="hidden sm:flex gap-8" justify="center">
 					<NavbarItem>
-						<Link color="foreground" href="#features" className="font-nav">
-							Caracteristicas
+						<Link
+							color="foreground"
+							href="#features"
+							className="font-nav text-medium hover:text-primary transition-colors"
+						>
+							Características
 						</Link>
 					</NavbarItem>
 					<NavbarItem>
-						<Link color="foreground" href="#benefits" className="font-nav">
+						<Link
+							color="foreground"
+							href="#benefits"
+							className="font-nav text-medium hover:text-primary transition-colors"
+						>
 							Beneficios
 						</Link>
 					</NavbarItem>
 					<NavbarItem>
-						<Link color="foreground" href="#profiles" className="font-nav">
+						<Link
+							color="foreground"
+							href="#profiles"
+							className="font-nav text-medium hover:text-primary transition-colors"
+						>
 							Perfiles
 						</Link>
 					</NavbarItem>
@@ -149,94 +165,227 @@ export default function Home() {
 							as={Link}
 							color="primary"
 							href="/login"
-							variant="flat"
-							className="font-nav"
+							size="lg"
+							className="font-nav font-semibold px-8 shadow-lg shadow-primary/30"
+							endContent={<ArrowRight size={18} />}
 						>
-							Iniciar Sesion
+							Iniciar Sesión
 						</Button>
 					</NavbarItem>
 				</NavbarContent>
 			</Navbar>
 
-			{/* Hero Section */}
-			<section className="w-full py-20 px-6 bg-gradient-to-b from-content1 to-background">
-				<div className="max-w-7xl mx-auto text-center">
-					<Chip
-						color="primary"
-						variant="flat"
-						startContent={<Sparkles size={16} />}
-						className="mb-6 font-nav"
-					>
-						Plataforma de Aprendizaje Colaborativo
-					</Chip>
-					<h1 className="text-5xl md:text-6xl font-logo font-bold text-foreground mb-6">
-						ECIWISE+
-					</h1>
-					<p className="text-2xl md:text-3xl text-primary font-logo font-semibold mb-4">
-						Aprender, conectar y compartir sin limites
-					</p>
-					<p className="text-lg text-default-600 max-w-3xl mx-auto mb-8 font-sans">
-						Plataforma digital de aprendizaje colaborativo inteligente que
-						conecta a estudiantes, tutores y docentes para compartir
-						conocimiento de forma estructurada, segura y accesible.
-					</p>
-					<div className="flex gap-4 justify-center flex-wrap">
-						<Button
-							color="primary"
-							size="lg"
-							endContent={<ArrowRight size={20} />}
-							as={Link}
-							href="/login"
-							className="font-nav"
-						>
-							Comenzar Ahora
-						</Button>
-						<Button
-							color="default"
-							variant="bordered"
-							size="lg"
-							startContent={<Target size={20} />}
-							className="font-nav"
-						>
-							Conoce Mas
-						</Button>
+			{/* Hero Section - Two Column Layout */}
+			<section className="w-full py-16 md:py-24 px-6 overflow-hidden">
+				<div className="max-w-7xl mx-auto">
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+						{/* Left Column - Content */}
+						<div className="space-y-8">
+							<div>
+								<Chip
+									color="primary"
+									variant="flat"
+									startContent={<Sparkles size={16} className="ml-1" />}
+									className="mb-6 font-nav"
+								>
+									Más que una plataforma
+								</Chip>
+								<h1 className="text-5xl md:text-6xl lg:text-7xl font-logo font-bold text-foreground mb-6 leading-tight">
+									Aprender, Conectar y{' '}
+									<span className="text-primary">Compartir</span>
+								</h1>
+								<h2 className="text-2xl md:text-3xl text-default-700 font-heading mb-6">
+									Sin Límites con ECIWISE+
+								</h2>
+								<p className="text-lg md:text-xl text-default-600 leading-relaxed font-sans max-w-xl">
+									Plataforma digital de aprendizaje colaborativo inteligente que
+									conecta a estudiantes, tutores y docentes para compartir
+									conocimiento de forma estructurada, segura y accesible.
+								</p>
+							</div>
+							<div className="flex gap-4 flex-wrap">
+								<Button
+									color="primary"
+									size="lg"
+									endContent={<ArrowRight size={20} />}
+									as={Link}
+									href="/login"
+									className="font-nav font-semibold px-8 shadow-xl shadow-primary/40 hover:shadow-2xl hover:shadow-primary/50 transition-all"
+								>
+									Comenzar Ahora
+								</Button>
+								<Button
+									color="default"
+									variant="bordered"
+									size="lg"
+									startContent={<Target size={20} />}
+									className="font-nav font-semibold px-8 border-2"
+									as={Link}
+									href="#features"
+								>
+									Conoce Más
+								</Button>
+							</div>
+
+							{/* Quick Stats Cards */}
+							<div className="grid grid-cols-3 gap-4 pt-8">
+								<div className="bg-content1/80 backdrop-blur-sm rounded-2xl p-4 border border-divider/50 shadow-md">
+									<div className="flex items-center gap-2 mb-1">
+										<Users className="text-primary" size={20} />
+										<p className="text-2xl font-bold text-foreground font-heading">
+											100+
+										</p>
+									</div>
+									<p className="text-xs text-default-500 font-sans">
+										Estudiantes activos
+									</p>
+								</div>
+								<div className="bg-content1/80 backdrop-blur-sm rounded-2xl p-4 border border-divider/50 shadow-md">
+									<div className="flex items-center gap-2 mb-1">
+										<BookOpen className="text-secondary" size={20} />
+										<p className="text-2xl font-bold text-foreground font-heading">
+											500+
+										</p>
+									</div>
+									<p className="text-xs text-default-500 font-sans">
+										Materiales compartidos
+									</p>
+								</div>
+								<div className="bg-content1/80 backdrop-blur-sm rounded-2xl p-4 border border-divider/50 shadow-md">
+									<div className="flex items-center gap-2 mb-1">
+										<GraduationCap className="text-success" size={20} />
+										<p className="text-2xl font-bold text-foreground font-heading">
+											50+
+										</p>
+									</div>
+									<p className="text-xs text-default-500 font-sans">
+										Tutores disponibles
+									</p>
+								</div>
+							</div>
+						</div>
+
+						{/* Right Column - Illustration/Visual with subtle institutional image */}
+						<div className="relative ">
+							<div className="relative rounded-3xl bg-gradient-to-br from-primary/15 via-danger/10 to-white p-8 md:p-12 backdrop-blur-sm border border-divider/30 shadow-2xl overflow-hidden min-h-[400px] md:min-h-[450px] lg:min-h-[500px] max-w-[900px] mx-auto">
+								<div className="absolute inset-0">
+									<img
+										src="/photos/eci-image-2.jpg"
+										alt="Comunidad académica ECIWISE+"
+										className="w-full h-full object-cover"
+									/>
+									<div className="absolute inset-0 bg-gradient-to-br from-white/30 via-content1/50 to-white/90"></div>
+								</div>
+
+								{/* Floating Cards */}
+								<div className="relative space-y-6">
+									{/* Card 1 */}
+									<div className="bg-content1/95 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-divider/50 transform hover:scale-105 transition-transform">
+										<div className="flex items-center gap-4">
+											<div className="p-3 rounded-xl bg-primary/10">
+												<BookOpen className="text-primary" size={32} />
+											</div>
+											<div>
+												<p className="font-heading font-semibold text-lg text-foreground">
+													Recursos Académicos
+												</p>
+												<p className="text-sm text-default-600 font-sans">
+													Accede a materiales de calidad
+												</p>
+											</div>
+										</div>
+									</div>
+
+									{/* Card 2 */}
+									<div className="bg-content1/95 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-divider/50 transform hover:scale-105 transition-transform ml-8">
+										<div className="flex items-center gap-4">
+											<div className="p-3 rounded-xl bg-secondary/10">
+												<Users className="text-secondary" size={32} />
+											</div>
+											<div>
+												<p className="font-heading font-semibold text-lg text-foreground">
+													Tutorías Personalizadas
+												</p>
+												<p className="text-sm text-default-600 font-sans">
+													Aprende con expertos
+												</p>
+											</div>
+										</div>
+									</div>
+
+									{/* Card 3 */}
+									<div className="bg-content1/95 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-divider/50 transform hover:scale-105 transition-transform">
+										<div className="flex items-center gap-4">
+											<div className="p-3 rounded-xl bg-success/10">
+												<MessageCircle className="text-success" size={32} />
+											</div>
+											<div>
+												<p className="font-heading font-semibold text-lg text-foreground">
+													Comunidad Colaborativa
+												</p>
+												<p className="text-sm text-default-600 font-sans">
+													Conecta con tu comunidad
+												</p>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								{/* Decorative Elements */}
+								<div className="absolute -top-6 -right-6 w-32 h-32 bg-primary/15 rounded-full blur-3xl"></div>
+								<div className="absolute -bottom-6 -left-6 w-32 h-32 bg-danger/15 rounded-full blur-3xl"></div>
+							</div>
+
+							{/* Additional floating badge */}
+							<div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 bg-content1 rounded-full px-6 py-3 shadow-xl border border-divider/50">
+								<div className="flex items-center gap-2">
+									<GraduationCap className="text-primary" size={20} />
+									<p className="font-semibold text-sm font-heading">
+										Alianza Académica
+									</p>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</section>
 
-			{/* Features Section */}
-			<section id="features" className="w-full py-20 px-6">
+			{/* Features Section - Modern Card Design */}
+			<section id="features" className="w-full py-24 px-6 bg-background">
 				<div className="max-w-7xl mx-auto">
-					<div className="text-center mb-12">
-						<h2 className="text-4xl font-heading font-bold text-foreground mb-4">
-							Caracteristicas Principales
+					<div className="text-center mb-16 space-y-4">
+						<Chip color="primary" variant="flat" className="font-nav">
+							Características
+						</Chip>
+						<h2 className="text-4xl md:text-5xl font-heading font-bold text-foreground">
+							Todo lo que Necesitas
 						</h2>
-						<p className="text-lg text-default-600 max-w-2xl mx-auto font-sans">
+						<p className="text-lg md:text-xl text-default-600 max-w-3xl mx-auto font-sans leading-relaxed">
 							Descubre todas las herramientas que ECIWISE+ ofrece para potenciar
-							tu experiencia de aprendizaje
+							tu experiencia de aprendizaje colaborativo
 						</p>
 					</div>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 						{features.map((feature, index) => {
 							const Icon = feature.icon;
 							return (
 								<Card
 									key={index}
-									className="border-none bg-content1"
-									shadow="sm"
+									className="border border-divider/50 bg-content1 hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer"
+									shadow="lg"
 								>
-									<CardHeader className="flex gap-3">
-										<div className="p-2 rounded-lg bg-primary/10">
-											<Icon className="text-primary" size={24} />
+									<CardHeader className="flex gap-4 pb-4">
+										<div className="p-3 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20">
+											<Icon className="text-primary" size={28} />
 										</div>
-										<div className="flex flex-col">
-											<p className="text-lg font-semibold font-heading">
+										<div className="flex flex-col justify-center">
+											<p className="text-xl font-bold font-heading text-foreground">
 												{feature.title}
 											</p>
 										</div>
 									</CardHeader>
-									<CardBody>
-										<p className="text-default-600 font-sans">
+									<CardBody className="pt-0">
+										<p className="text-default-600 font-sans text-base leading-relaxed">
 											{feature.description}
 										</p>
 									</CardBody>
@@ -247,66 +396,116 @@ export default function Home() {
 				</div>
 			</section>
 
-			<Divider className="max-w-7xl mx-auto" />
-
-			{/* Benefits Section */}
-			<section id="benefits" className="w-full py-20 px-6 bg-content1">
-				<div className="max-w-7xl mx-auto">
-					<div className="text-center mb-12">
-						<h2 className="text-4xl font-heading font-bold text-foreground mb-4">
-							Objetivos y Beneficios
+			{/* Benefits Section - Modern Grid Cards */}
+			<section
+				id="benefits"
+				className="w-full py-24 px-6 bg-gradient-to-b from-content1 to-background"
+			>
+				<div className="max-w-7xl mx-auto relative">
+					<div className="text-center mb-16 space-y-4">
+						<Chip color="success" variant="flat" className="font-nav">
+							Beneficios
+						</Chip>
+						<h2 className="text-4xl md:text-5xl font-heading font-bold text-foreground">
+							Transformando la Educación
 						</h2>
-						<p className="text-lg text-default-600 max-w-2xl mx-auto font-sans">
-							ECIWISE+ transforma la experiencia educativa a traves de la
-							colaboracion y la tecnologia
+						<p className="text-lg md:text-xl text-default-600 max-w-3xl mx-auto font-sans leading-relaxed">
+							ECIWISE+ revoluciona la experiencia educativa a través de la
+							colaboración y la tecnología inteligente
 						</p>
 					</div>
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+
+					{/* Subtle institutional photo */}
+					<div className="hidden lg:block absolute right-[-12rem] top-16 w-64 h-64 rounded-3xl overflow-hidden shadow-2xl border border-divider/50">
+						<img
+							src="/photos/eci-image-1.jpg"
+							alt="Campus ECIWISE+"
+							className="w-full h-full object-cover"
+						/>
+						<div className="absolute inset-0 bg-gradient-to-br from-white/65 via-content1/70 to-white/85"></div>
+					</div>
+					<div className="hidden lg:block absolute left-[-10rem] bottom-[-10rem] w-64 h-64 rounded-3xl overflow-hidden shadow-2xl border border-divider/50">
+						<img
+							src="/photos/eci-people.jpg"
+							alt="Campus ECIWISE+"
+							className="w-full h-full object-cover"
+						/>
+						<div className="absolute inset-0 bg-gradient-to-br from-white/65 via-content1/70 to-white/85"></div>
+					</div>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
 						{benefits.map((benefit, index) => (
-							<div key={index} className="flex items-start gap-3">
-								<CheckCircle
-									className="text-success mt-1 flex-shrink-0"
-									size={20}
-								/>
-								<p className="text-default-700 font-sans">{benefit}</p>
+							<div
+								key={index}
+								className="bg-content1 rounded-2xl p-6 border border-divider/50 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 flex items-start gap-4"
+							>
+								<div className="p-2 rounded-xl bg-success/10 flex-shrink-0">
+									<CheckCircle className="text-success" size={24} />
+								</div>
+								<p className="text-default-700 font-sans text-base leading-relaxed">
+									{benefit}
+								</p>
 							</div>
 						))}
 					</div>
 				</div>
 			</section>
 
-			<Divider className="max-w-7xl mx-auto" />
-
-			{/* User Profiles Section */}
-			<section id="profiles" className="w-full py-20 px-6">
+			{/* User Profiles Section - Floating Cards */}
+			<section id="profiles" className="w-full py-24 px-6 bg-background">
 				<div className="max-w-7xl mx-auto">
-					<div className="text-center mb-12">
-						<h2 className="text-4xl font-heading font-bold text-foreground mb-4">
-							Perfiles de Usuario
+					<div className="text-center mb-16 space-y-4">
+						<Chip color="secondary" variant="flat" className="font-nav">
+							Perfiles
+						</Chip>
+						<h2 className="text-4xl md:text-5xl font-heading font-bold text-foreground">
+							Diseñado Para Ti
 						</h2>
-						<p className="text-lg text-default-600 max-w-2xl mx-auto font-sans">
-							ECIWISE+ esta diseñado para diferentes tipos de usuarios en la
+						<p className="text-lg md:text-xl text-default-600 max-w-3xl mx-auto font-sans leading-relaxed">
+							ECIWISE+ está diseñado para diferentes tipos de usuarios en la
 							comunidad educativa
 						</p>
 					</div>
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 						{userProfiles.map((profile, index) => (
-							<Card key={index} className="border-none" shadow="md" isPressable>
-								<CardHeader>
-									<h3 className="text-xl font-bold text-foreground font-heading">
-										{profile.title}
-									</h3>
+							<Card
+								key={index}
+								className="border border-divider/50 bg-gradient-to-br from-content1 to-content2 hover:shadow-2xl hover:scale-105 transition-all duration-300"
+								shadow="lg"
+								isPressable
+							>
+								<CardHeader className="pb-4">
+									<div className="flex flex-col gap-2 w-full">
+										<div className="flex items-center justify-between">
+											<h3 className="text-2xl font-bold text-foreground font-heading">
+												{profile.title}
+											</h3>
+											<GraduationCap className="text-primary" size={32} />
+										</div>
+										<Chip
+											color={profile.color}
+											variant="flat"
+											size="sm"
+											className="w-fit"
+										>
+											Rol principal
+										</Chip>
+									</div>
 								</CardHeader>
-								<Divider />
-								<CardBody>
-									<p className="text-default-600 font-sans">
+								<CardBody className="pt-0 pb-6">
+									<p className="text-default-600 font-sans text-base leading-relaxed">
 										{profile.description}
 									</p>
 								</CardBody>
-								<CardFooter>
-									<Chip color={profile.color} variant="flat" size="sm">
-										Mas informacion
-									</Chip>
+								<CardFooter className="pt-0">
+									<Button
+										color={profile.color}
+										variant="flat"
+										size="sm"
+										className="font-nav"
+										endContent={<ArrowRight size={16} />}
+									>
+										Más información
+									</Button>
 								</CardFooter>
 							</Card>
 						))}
@@ -314,42 +513,134 @@ export default function Home() {
 				</div>
 			</section>
 
-			{/* CTA Section */}
-			<section className="w-full py-20 px-6 bg-gradient-to-b from-content1 to-content2">
-				<div className="max-w-4xl mx-auto text-center">
-					<h2 className="text-4xl font-heading font-bold text-foreground mb-4">
-						El conocimiento no se guarda, se comparte
-					</h2>
-					<p className="text-lg text-default-600 mb-8 font-sans">
-						Unete a ECIWISE+ y forma parte de una comunidad academica mas
-						conectada, solidaria y eficiente
-					</p>
-					<Button
-						color="primary"
-						size="lg"
-						className="font-nav"
-						endContent={<ArrowRight size={20} />}
-						as={Link}
-						href="/login"
-					>
-						Comenzar tu Experiencia
-					</Button>
+			{/* CTA Section - Modern & Spacious */}
+			<section className="w-full py-32 px-6 bg-gradient-to-br from-primary/15 via-danger/10 to-white relative overflow-hidden">
+				{/* Background decorations */}
+				<div className="absolute inset-0 overflow-hidden">
+					<div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl"></div>
+					<div className="absolute -bottom-24 -left-24 w-96 h-96 bg-secondary/20 rounded-full blur-3xl"></div>
+				</div>
+
+				<div className="max-w-5xl mx-auto text-center relative z-10 space-y-8">
+					<div className="space-y-6">
+						<h2 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-foreground leading-tight">
+							El conocimiento no se guarda,{' '}
+							<span className="text-primary">se comparte</span>
+						</h2>
+						<p className="text-lg md:text-xl text-default-600 max-w-3xl mx-auto font-sans leading-relaxed">
+							Únete a ECIWISE+ y forma parte de una comunidad académica más
+							conectada, solidaria y eficiente. Comienza hoy tu viaje de
+							aprendizaje colaborativo.
+						</p>
+					</div>
+
+					<div className="flex gap-4 justify-center flex-wrap">
+						<Button
+							color="primary"
+							size="lg"
+							className="font-nav font-semibold px-10 py-6 text-lg shadow-2xl shadow-primary/50 hover:shadow-3xl hover:shadow-primary/60 transition-all"
+							endContent={<ArrowRight size={22} />}
+							as={Link}
+							href="/login"
+						>
+							Comenzar tu Experiencia
+						</Button>
+						<Button
+							color="default"
+							variant="bordered"
+							size="lg"
+							className="font-nav font-semibold px-10 py-6 text-lg border-2"
+							as={Link}
+							href="/register"
+						>
+							Crear Cuenta Gratis
+						</Button>
+					</div>
+
+					{/* Trust badges */}
+					<div className="flex items-center justify-center gap-8 flex-wrap pt-8">
+						<div className="flex items-center gap-2 text-default-600">
+							<CheckCircle className="text-success" size={20} />
+							<span className="font-sans">100% Gratis</span>
+						</div>
+						<div className="flex items-center gap-2 text-default-600">
+							<CheckCircle className="text-success" size={20} />
+							<span className="font-sans">Sin publicidad</span>
+						</div>
+						<div className="flex items-center gap-2 text-default-600">
+							<CheckCircle className="text-success" size={20} />
+							<span className="font-sans">Comunidad activa</span>
+						</div>
+					</div>
 				</div>
 			</section>
 
-			{/* Footer */}
-			<footer className="w-full py-8 px-6 border-t border-divider">
-				<div className="max-w-7xl mx-auto text-center">
-					<div className="flex items-center justify-center gap-2 mb-4">
-						<GraduationCap className="text-primary" size={24} />
-						<p className="font-bold text-lg text-primary font-logo">ECIWISE+</p>
+			{/* Footer - Clean & Modern */}
+			<footer className="w-full py-12 px-6 border-t border-divider/50 bg-content1">
+				<div className="max-w-7xl mx-auto">
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+						{/* Brand */}
+						<div className="flex flex-col items-center md:items-start gap-3">
+							<div className="flex items-center gap-2">
+								<img
+									src="/logo/logoeciwise.svg"
+									alt="ECIWISE+ logo"
+									className="w-8 h-8"
+								/>
+								<p className="font-bold text-xl text-primary font-logo">
+									ECIWISE+
+								</p>
+							</div>
+							<p className="text-sm text-default-600 font-sans text-center md:text-left">
+								Plataforma de aprendizaje colaborativo
+							</p>
+						</div>
+
+						{/* Quick Links */}
+						<div className="flex flex-col items-center gap-3">
+							<h4 className="font-semibold text-foreground font-heading">
+								Enlaces Rápidos
+							</h4>
+							<div className="flex flex-col gap-2 items-center">
+								<Link
+									href="#features"
+									className="text-sm text-default-600 hover:text-primary transition-colors font-sans"
+								>
+									Características
+								</Link>
+								<Link
+									href="#benefits"
+									className="text-sm text-default-600 hover:text-primary transition-colors font-sans"
+								>
+									Beneficios
+								</Link>
+								<Link
+									href="#profiles"
+									className="text-sm text-default-600 hover:text-primary transition-colors font-sans"
+								>
+									Perfiles
+								</Link>
+							</div>
+						</div>
+
+						{/* Info */}
+						<div className="flex flex-col items-center md:items-end gap-3">
+							<h4 className="font-semibold text-foreground font-heading">
+								Información
+							</h4>
+							<div className="flex flex-col gap-1 items-center md:items-end">
+								<p className="text-sm text-default-600 font-sans">
+									Desarrollo de Operaciones de Software
+								</p>
+								<p className="text-sm text-default-500 font-sans">
+									Escuela Colombiana de Ingeniería
+								</p>
+								<p className="text-xs text-default-400 font-sans mt-1">
+									© 2025 ECIWISE+ - Todos los derechos reservados
+								</p>
+							</div>
+						</div>
 					</div>
-					<p className="text-sm text-default-600 font-sans">
-						Desarrollo de Operaciones de Software - 2025-2
-					</p>
-					<p className="text-sm text-default-500 mt-2 font-sans">
-						Escuela Colombiana de Ingenieria
-					</p>
 				</div>
 			</footer>
 		</div>
