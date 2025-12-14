@@ -29,6 +29,7 @@ import {
 import { useEffect, useState } from 'react';
 import { DeleteConfirmationModal } from '~/components/delete-confirmation-modal';
 import { EditMaterialForm } from '~/components/edit-material-form';
+import { MaterialDetailModal } from '~/components/material-detail-modal';
 import { MaterialStatsModal } from '~/components/material-stats-modal';
 import { MyMaterialsList } from '~/components/my-materials-list';
 import { PopularMaterials } from '~/components/popular-materials';
@@ -523,7 +524,33 @@ export default function TutorMaterials() {
 			)}
 
 			{/* Tab de Materiales Populares */}
-			{activeTab === 'popular' && <PopularMaterials userId={userId} />}
+			{activeTab === 'popular' && (
+				<PopularMaterials
+					userId={userId}
+					onMaterialClick={(material) => {
+						setSelectedMaterialId(material.id);
+						onDetailOpen();
+					}}
+				/>
+			)}
+
+			{/* Modal de detalle de material */}
+			<Modal
+				isOpen={isDetailOpen}
+				onClose={onDetailClose}
+				size="2xl"
+				scrollBehavior="inside"
+			>
+				<ModalContent>
+					{selectedMaterialId && (
+						<MaterialDetailModal
+							materialId={selectedMaterialId}
+							onClose={onDetailClose}
+						/>
+					)}
+				</ModalContent>
+			</Modal>
+
 			{/* Modal de subir material */}
 			<Modal
 				isOpen={isEditOpen}
