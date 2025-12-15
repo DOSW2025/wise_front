@@ -93,6 +93,7 @@ export const API_ENDPOINTS = {
 	},
 	TUTORIAS: {
 		TUTORES: '/wise/tutorias/tutores',
+		TUTOR_PROFILE: '/wise/tutorias/{id}/tutor',
 		STUDENT_SESSIONS: '/wise/tutorias/sessions/student/:studentId',
 		TUTOR_SESSIONS: '/wise/tutorias/sessions/tutor/{tutorId}',
 		UPCOMING_SESSIONS: '/wise/tutorias/upcoming/{userId}',
