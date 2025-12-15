@@ -1,7 +1,7 @@
 import { Card, CardBody, Input } from '@heroui/react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
+import { AlertMessage, ProfileAvatar } from '~/components';
 import {
 	ProfileConfigurationSection,
 	ProfileEditButtons,
@@ -11,7 +11,6 @@ import {
 import { DeleteAccount } from '~/components/profile/DeleteAccount';
 import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
-import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 import { getProfile } from '~/lib/services/student.service';
 import { deleteMyAccount } from '~/lib/services/user.service';
 import { useProfileForm } from './hooks/useProfileForm';
@@ -22,20 +21,6 @@ export default function StudentProfile() {
 	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
 	const [isLoadingProfile, setIsLoadingProfile] = useState(false);
-
-	// Fetch tutorías statistics
-	const { data: stats, isLoading: isLoadingStats } = useTutoriaStats(
-		user?.id ?? '',
-		!!user?.id,
-	);
-
-	// Calculate hours display value
-	let hoursValue = '...';
-	if (!isLoadingStats) {
-		hoursValue = stats?.horasDeTutoria
-			? `${stats.horasDeTutoria.toFixed(1)}h`
-			: '0h';
-	}
 
 	const {
 		profile,
@@ -205,58 +190,6 @@ export default function StudentProfile() {
 								description="No se puede modificar"
 							/>
 						</ProfileFormFields>
-					</div>
-
-					<InterestsChips
-						title="Áreas de Interés"
-						items={profile.interests || []}
-						isEditing={isEditing}
-						onRemove={(value) =>
-							setProfile({
-								...profile,
-								interests: (profile.interests || []).filter((i) => i !== value),
-							})
-						}
-						onAdd={(value) =>
-							setProfile({
-								...profile,
-								interests: [...(profile.interests || []), value],
-							})
-						}
-						emptyText="No has agregado áreas de interés"
-						addLabel="+ Agregar"
-					/>
-				</CardBody>
-			</Card>
-
-			<Card>
-				<CardBody className="gap-4">
-					<h2 className="text-xl font-semibold">Mis Estadísticas</h2>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-						<StatsCard
-							title="Tutorías Tomadas"
-							value={isLoadingStats ? '...' : (stats?.sesionesCompletadas ?? 0)}
-							description="Total"
-							color="primary"
-						/>
-						<StatsCard
-							title="Horas de Estudio"
-							value={hoursValue}
-							description="Total"
-							color="success"
-						/>
-						<StatsCard
-							title="Materias Cursando"
-							value={0}
-							description="Activas"
-							color="warning"
-						/>
-						<StatsCard
-							title="Progreso General"
-							value="0%"
-							description="Avance"
-							color="default"
-						/>
 					</div>
 				</CardBody>
 			</Card>
