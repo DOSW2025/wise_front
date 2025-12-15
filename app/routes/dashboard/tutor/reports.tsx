@@ -14,6 +14,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '@heroui/react';
+import { useQuery } from '@tanstack/react-query';
 import {
 	AlertCircle,
 	Ban,
@@ -30,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '~/contexts/auth-context';
+import { getUserName } from '~/lib/services/tutoria.service';
 import type { TutorSessionWithRating } from '~/lib/types/tutoria.types';
 import { useTutorReputacion } from './hooks/useTutorReputacion';
 import { useTutorSessionHistory } from './hooks/useTutorSessionHistory';
@@ -120,6 +122,22 @@ const getStatusConfig = (status: string) => {
 				label: status,
 			};
 	}
+};
+
+// Component: Fetch and display student name
+const StudentName = ({ studentId }: { studentId: string }) => {
+	const { data: studentName, isLoading } = useQuery({
+		queryKey: ['studentName', studentId],
+		queryFn: () => getUserName(studentId),
+		staleTime: 1000 * 60 * 10, // 10 minutos
+		gcTime: 1000 * 60 * 30, // 30 minutos
+	});
+
+	if (isLoading) {
+		return <span className="text-default-400">Cargando...</span>;
+	}
+
+	return <span>{studentName || 'Estudiante'}</span>;
 };
 
 export default function TutorReports() {
@@ -435,7 +453,11 @@ export default function TutorReports() {
 																<TableCell>
 																	<div className="flex items-center gap-2">
 																		<User className="w-4 h-4 text-default-400" />
-																		<span className="text-sm">Estudiante</span>
+																		<span className="text-sm">
+																			<StudentName
+																				studentId={session.studentId}
+																			/>
+																		</span>
 																	</div>
 																</TableCell>
 
@@ -564,7 +586,9 @@ export default function TutorReports() {
 														<div className="flex items-center gap-3">
 															<User className="w-10 h-10 text-default-400 rounded-full bg-default-100 p-2" />
 															<div>
-																<h3 className="font-semibold">Estudiante</h3>
+																<h3 className="font-semibold">
+																	<StudentName studentId={session.studentId} />
+																</h3>
 																<p className="text-sm text-default-500">
 																	{session.codigoMateria} -{' '}
 																	{formatDateToSpanish(session.scheduledAt)}
