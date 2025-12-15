@@ -130,7 +130,8 @@ export default function StudentProfile() {
 
 	const handleDeleteAccount = async () => {
 		try {
-			await deleteMyAccount();
+			if (!user?.id) return;
+			await deleteMyAccount(user.id);
 			navigate('/login');
 		} catch (error) {
 			console.error('Error al eliminar cuenta:', error);

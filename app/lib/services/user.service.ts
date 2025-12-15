@@ -402,9 +402,9 @@ export async function getUserGrowth(
 /**
  * Eliminar mi propia cuenta
  */
-export async function deleteMyAccount(): Promise<void> {
+export async function deleteMyAccount(userId: string): Promise<void> {
 	try {
-		await apiClient.delete(API_ENDPOINTS.USERS.DELETE_MY_ACCOUNT);
+		await apiClient.delete(API_ENDPOINTS.USERS.DELETE_MY_ACCOUNT(userId));
 	} catch (error) {
 		console.error('Error deleting account:', error);
 		throw error;

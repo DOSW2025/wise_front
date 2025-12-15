@@ -90,6 +90,7 @@ export const API_ENDPOINTS = {
 		STATISTICS: '/wise/gestion-usuarios/estadisticas/usuarios',
 		ROLE_STATISTICS: '/wise/gestion-usuarios/estadisticas/roles',
 		GROWTH_STATISTICS: '/wise/gestion-usuarios/estadisticas/crecimiento',
+		DELETE_MY_ACCOUNT: (id: string) => `/wise/gestion-usuarios/me/cuenta/${id}`,
 	},
 	TUTORIAS: {
 		TUTORES: '/wise/tutorias/tutores',
