@@ -12,15 +12,11 @@ const FALLBACK_NAV_PATH = '/api/chat/nav';
 
 export const navigationChatService = {
 	async sendMessage(message: string): Promise<string> {
-		const navPath = API_ENDPOINTS.IA?.NAVIGATION_CHAT;
-		if (!navPath) {
-			throw new Error('El chat IA está deshabilitado en la configuración.');
-		}
-
 		try {
-			const { data } = await apiClient.post<NavigationChatResponse>(navPath, {
-				message,
-			});
+			const { data } = await apiClient.post<NavigationChatResponse>(
+				API_ENDPOINTS.IA.NAVIGATION_CHAT,
+				{ message },
+			);
 
 			const reply = data?.data?.reply ?? data?.reply;
 			if (!reply) {
@@ -31,7 +27,10 @@ export const navigationChatService = {
 			const status = error?.response?.status;
 
 			// Fallback a la ruta sin prefijo si el gateway responde 404
-			if (status === 404 && navPath !== FALLBACK_NAV_PATH) {
+			if (
+				status === 404 &&
+				API_ENDPOINTS.IA.NAVIGATION_CHAT !== FALLBACK_NAV_PATH
+			) {
 				const { data } = await apiClient.post<NavigationChatResponse>(
 					FALLBACK_NAV_PATH,
 					{ message },
