@@ -170,10 +170,11 @@ export async function getUsers(
 	}
 }
 
+// Backend mapping: 1=estudiante, 2=tutor, 3=admin
 const ROLE_IDS = {
 	estudiante: 1,
-	admin: 2,
-	tutor: 3,
+	tutor: 2,
+	admin: 3,
 };
 
 const STATUS_IDS = {
