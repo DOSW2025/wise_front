@@ -131,6 +131,7 @@ export interface MaterialRating {
 	userId?: string;
 	calificacion: number;
 	comentario?: string;
+	usuarioNombre?: string;
 	createdAt: string;
 }
 

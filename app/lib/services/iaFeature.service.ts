@@ -39,7 +39,7 @@ export async function isIaEnabled(): Promise<boolean> {
 		cachedIaEnabled = enabled;
 		lastCheckTs = now;
 		return enabled;
-	} catch (e) {
+	} catch (_e) {
 		// Errores de red → por seguridad se asume deshabilitado
 		cachedIaEnabled = false;
 		lastCheckTs = now;

@@ -39,7 +39,7 @@ const ITEMS_PER_PAGE_LIST = 15;
 const ITEMS_PER_PAGE_GRID = 15;
 
 export default function AdminMaterials() {
-	const queryClient = useQueryClient();
+	const _queryClient = useQueryClient();
 	const [filters, setFilters] = useState<MaterialFilters>({});
 	const [showFilters, setShowFilters] = useState(false);
 	const [selectedTags, setSelectedTags] = useState<string[]>([]);

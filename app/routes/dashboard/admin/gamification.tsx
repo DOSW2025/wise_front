@@ -1,5 +1,5 @@
 import { Card, CardBody } from '@heroui/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { MateriaForm, MateriasManagement } from '~/components/admin/materias';
 import { materiasApi } from '~/lib/api/materias';
@@ -11,12 +11,7 @@ export default function AdminMaterias() {
 	const [editingMateria, setEditingMateria] = useState<Subject | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
-	// Cargar materias al montar el componente
-	useEffect(() => {
-		loadMaterias();
-	}, []);
-
-	const loadMaterias = async () => {
+	const loadMaterias = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			const data = await materiasApi.getAll();
@@ -27,7 +22,12 @@ export default function AdminMaterias() {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, []);
+
+	// Cargar materias al montar el componente
+	useEffect(() => {
+		loadMaterias();
+	}, [loadMaterias]);
 
 	const handleAddMateria = async (data: CreateSubjectDto) => {
 		try {

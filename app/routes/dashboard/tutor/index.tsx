@@ -3,7 +3,6 @@ import {
 	AlertCircle,
 	BookOpen,
 	Clock,
-	MessageSquare,
 	Star,
 	TrendingUp,
 	Users,

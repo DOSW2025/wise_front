@@ -14,7 +14,6 @@ import type {
 	MaterialCountResponse,
 	MaterialFilters,
 	MaterialRating,
-	MaterialStats,
 	PaginatedResponse,
 	UpdateMaterialRequest,
 	UserMaterialsResponse,
@@ -322,6 +321,10 @@ export class MaterialsService {
 	async downloadMaterial(id: string): Promise<void> {
 		try {
 			console.log('Iniciando descarga del material:', id);
+
+			// Primero obtener los datos del material para usar su nombre
+			const material = await this.getMaterialById(id);
+
 			const endpoint = `${API_ENDPOINTS.MATERIALS.BASE}/${id}/download`;
 
 			const response = await apiClient.get<Blob>(endpoint, {
@@ -339,22 +342,8 @@ export class MaterialsService {
 			const link = document.createElement('a');
 			link.href = url;
 
-			// Usar el nombre del archivo de la respuesta o un nombre por defecto
-			const contentDisposition = response.headers[
-				'content-disposition'
-			] as string;
-			let filename = `material-${id}.pdf`;
-
-			if (contentDisposition) {
-				console.log(' Content-Disposition:', contentDisposition);
-				const filenameMatch = contentDisposition.match(
-					/filename="?(.+?)"?(?:;|$)/,
-				);
-				if (filenameMatch) {
-					filename = filenameMatch[1];
-					console.log('📄 Nombre extraído:', filename);
-				}
-			}
+			// Usar el nombre del material y agregar extensión
+			const filename = `${material.nombre || 'material'}.pdf`;
 
 			link.download = filename;
 			document.body.appendChild(link);
@@ -384,11 +373,31 @@ export class MaterialsService {
 		}
 	}
 
-	// Calificar material
-	async rateMaterial(id: string, rating: number): Promise<void> {
-		await apiClient.post(`/api/materials/${id}/ratings`, {
-			calificacion: rating,
-		});
+	// Calificar material con comentario opcional
+	async rateMaterial(
+		id: string,
+		rating: number,
+		userId: string,
+		comentario?: string,
+	): Promise<void> {
+		try {
+			const endpoint = API_ENDPOINTS.MATERIALS.GET_RATINGS(id);
+
+			const payload = {
+				rating,
+				comentario: comentario || '',
+				userId,
+			};
+
+			console.log('Enviando calificación a:', endpoint, payload);
+
+			await apiClient.post(endpoint, payload);
+
+			console.log('Calificación enviada exitosamente');
+		} catch (error) {
+			console.error('Error al calificar material:', error);
+			throw error;
+		}
 	}
 
 	// Obtener calificaciones de material

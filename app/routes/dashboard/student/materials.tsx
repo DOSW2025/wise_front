@@ -23,6 +23,7 @@ import CommentsModal from '~/components/materials/CommentsModal';
 import FiltersPanel from '~/components/materials/filtersPanel';
 import MaterialCard from '~/components/materials/materialCard';
 import PreviewModal from '~/components/materials/PreviewModal';
+import RatingAndCommentsModal from '~/components/materials/RatingAndCommentsModal';
 // Tipos y datos
 import type {
 	Comment,
@@ -182,7 +183,9 @@ export default function StudentMaterials() {
 		useState<MaterialCardType | null>(null);
 	const [commentsMaterial, setCommentsMaterial] =
 		useState<MaterialCardType | null>(null);
-	const [userRating, setUserRating] = useState(0);
+	const [ratingAndCommentsMaterial, setRatingAndCommentsMaterial] =
+		useState<MaterialCardType | null>(null);
+	const [_userRating, setUserRating] = useState(0);
 	const [isAssistOpen, setIsAssistOpen] = useState(false);
 	const [assistDescription, setAssistDescription] = useState('');
 	const [assistSubjects, setAssistSubjects] = useState('');
@@ -369,12 +372,12 @@ export default function StudentMaterials() {
 		}
 	};
 
-	const handleReport = (material: MaterialCardType) => {
+	const _handleReport = (material: MaterialCardType) => {
 		console.log('Reportando material:', material.id);
 		alert(`Reportando material: ${material.title}`);
 	};
 
-	const handleRateMaterial = (material: MaterialCardType, rating: number) => {
+	const _handleRateMaterial = (material: MaterialCardType, rating: number) => {
 		if (rating > 0) {
 			console.log(`Valorando material ${material.id} con ${rating} estrellas`);
 			alert(
@@ -385,13 +388,13 @@ export default function StudentMaterials() {
 	};
 
 	// Abrir modal SOLO de comentarios (desde la tarjeta)
-	const handleOpenCommentsModal = (material: MaterialCardType) => {
+	const _handleOpenCommentsModal = (material: MaterialCardType) => {
 		console.log('Abrir modal de comentarios para:', material.title);
 		setCommentsMaterial(material);
 	};
 
 	// Esta función ahora es para abrir comentarios DENTRO del modal de vista previa
-	const handleOpenCommentsInPreview = (material: MaterialCardType) => {
+	const _handleOpenCommentsInPreview = (material: MaterialCardType) => {
 		console.log(
 			'Abrir sección de comentarios en vista previa:',
 			material.title,
@@ -767,8 +770,7 @@ export default function StudentMaterials() {
 							viewMode={viewMode}
 							onPreview={setPreviewMaterial}
 							onDownload={handleDownload}
-							onRate={setPreviewMaterial}
-							onComment={handleOpenCommentsModal}
+							onInteract={setRatingAndCommentsMaterial}
 						/>
 					))}
 				</div>
@@ -778,15 +780,13 @@ export default function StudentMaterials() {
 			<PreviewModal
 				material={previewMaterial}
 				isOpen={!!previewMaterial}
-				userRating={userRating}
 				onClose={() => setPreviewMaterial(null)}
 				onDownload={handleDownload}
 				onShare={handleShare}
-				onReport={handleReport}
-				onRate={handleRateMaterial}
-				onComment={handleOpenCommentsInPreview}
-				onRatingChange={setUserRating}
-				onAddComment={handleAddComment}
+				onOpenRatingModal={(material) => {
+					setPreviewMaterial(null);
+					setRatingAndCommentsMaterial(material);
+				}}
 			/>
 
 			{/* paginacion */}
@@ -911,6 +911,13 @@ export default function StudentMaterials() {
 				isOpen={!!commentsMaterial}
 				onClose={() => setCommentsMaterial(null)}
 				onAddComment={handleAddComment}
+			/>
+
+			{/* Modal para valorar y comentar */}
+			<RatingAndCommentsModal
+				material={ratingAndCommentsMaterial}
+				isOpen={!!ratingAndCommentsMaterial}
+				onClose={() => setRatingAndCommentsMaterial(null)}
 			/>
 		</div>
 	);
