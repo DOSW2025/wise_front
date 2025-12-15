@@ -215,7 +215,7 @@ export function MaterialStatsModal({
 																	<div className="flex items-start justify-between mb-2">
 																		<div>
 																			<p className="font-medium text-gray-900">
-																				Usuario
+																				{comment.usuarioNombre || 'Usuario'}
 																			</p>
 																			<p className="text-sm text-gray-500">
 																				{new Date(

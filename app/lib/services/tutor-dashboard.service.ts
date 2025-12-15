@@ -209,3 +209,44 @@ export async function getTutorDashboardData(): Promise<TutorDashboardData> {
 		throw new Error('Error al cargar los datos del dashboard');
 	}
 }
+/**
+ * Obtener calificación promedio de materiales del tutor
+ */
+export async function getAverageRating(
+	userId: string,
+): Promise<{ calificacionPromedio: number }> {
+	try {
+		const endpoint = API_ENDPOINTS.MATERIALS.GET_AVERAGE_RATING(userId);
+		console.log('Obteniendo calificación promedio desde:', endpoint);
+
+		const response = await apiClient.get<{
+			calificacionPromedio: number;
+		}>(endpoint);
+
+		console.log('API Average Rating Response:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al obtener calificación promedio:', error);
+		return { calificacionPromedio: 0 };
+	}
+}
+
+/**
+ * Obtener materiales top del tutor
+ */
+export async function getTopMaterials(
+	userId: string,
+): Promise<PopularMaterial[]> {
+	try {
+		const endpoint = API_ENDPOINTS.MATERIALS.GET_TOP(userId);
+		console.log('Obteniendo materiales top desde:', endpoint);
+
+		const response = await apiClient.get<PopularMaterial[]>(endpoint);
+
+		console.log('API Top Materials Response:', response.data);
+		return Array.isArray(response.data) ? response.data : [];
+	} catch (error) {
+		console.error('Error al obtener materiales top:', error);
+		return [];
+	}
+}

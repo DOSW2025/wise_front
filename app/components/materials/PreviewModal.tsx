@@ -6,45 +6,28 @@ import {
 	ModalContent,
 	ModalHeader,
 } from '@heroui/react';
-import { Download, FileText, Flag, MessageSquare, Share2 } from 'lucide-react';
-import { useState } from 'react';
-import CommentsSection from './CommentsSection';
+import { Download, FileText, MessageSquare, Share2, Star } from 'lucide-react';
 import RatingStars from './ratingStars';
 import type { Material } from './types';
 
 interface PreviewModalProps {
 	material: Material | null;
 	isOpen: boolean;
-	userRating: number;
 	onClose: () => void;
 	onDownload: (materialId: string) => void;
 	onShare: (material: Material) => void;
-	onReport: (material: Material) => void;
-	onRate: (material: Material, rating: number) => void;
-	onComment: (material: Material) => void;
-	onRatingChange: (rating: number) => void;
-	onAddComment: (materialId: string, content: string) => void;
+	onOpenRatingModal: (material: Material) => void;
 }
 
 export default function PreviewModal({
 	material,
 	isOpen,
-	userRating,
 	onClose,
 	onDownload,
 	onShare,
-	onReport,
-	onRate,
-	onRatingChange,
-	onAddComment,
+	onOpenRatingModal,
 }: PreviewModalProps) {
-	const [showComments, setShowComments] = useState(false);
-
 	if (!material) return null;
-
-	const handleAddComment = (content: string) => {
-		onAddComment(material.id, content);
-	};
 
 	return (
 		<Modal isOpen={isOpen} onClose={onClose} size="4xl" scrollBehavior="inside">
@@ -179,57 +162,17 @@ export default function PreviewModal({
 					</div>
 
 					{/* Valoración */}
+					{/* Botón para valorar y comentar */}
 					<div className="border-t pt-6">
-						<h3 className="text-lg font-semibold mb-4">
-							Valorar este material
-						</h3>
-						<div className="flex items-center gap-4 mb-4">
-							<RatingStars
-								rating={userRating}
-								onRatingChange={onRatingChange}
-							/>
-							<span className="text-sm text-gray-600">
-								{userRating > 0
-									? `Tu valoración: ${userRating} estrellas`
-									: 'Selecciona tu valoración'}
-							</span>
-						</div>
-
-						<div className="flex gap-2">
-							<Button
-								className="bg-[#8B1A1A] text-white"
-								isDisabled={userRating === 0}
-								onClick={() => onRate(material, userRating)}
-								type="button"
-							>
-								Enviar valoración
-							</Button>
-							<Button
-								variant="flat"
-								startContent={<MessageSquare size={16} />}
-								onClick={() => setShowComments(!showComments)}
-								type="button"
-							>
-								{showComments ? 'Ocultar comentarios' : 'Ver comentarios'}
-							</Button>
-							<Button
-								variant="light"
-								startContent={<Flag size={16} />}
-								onClick={() => onReport(material)}
-								type="button"
-							>
-								Reportar
-							</Button>
-						</div>
+						<Button
+							className="w-full bg-[#8B1A1A] text-white"
+							startContent={<Star size={18} />}
+							onClick={() => onOpenRatingModal(material)}
+							type="button"
+						>
+							Valorar y comentar este material
+						</Button>
 					</div>
-
-					{/*  SECCIÓN: Comentarios */}
-					<CommentsSection
-						comments={material.commentsList}
-						onAddComment={handleAddComment}
-						isOpen={showComments}
-						onClose={() => setShowComments(false)}
-					/>
 				</ModalBody>
 			</ModalContent>
 		</Modal>

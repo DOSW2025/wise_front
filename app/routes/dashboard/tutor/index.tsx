@@ -3,7 +3,6 @@ import {
 	AlertCircle,
 	BookOpen,
 	Clock,
-	MessageSquare,
 	Star,
 	TrendingUp,
 	Users,
@@ -12,11 +11,14 @@ import { Link, Outlet, useLocation } from 'react-router';
 import { RecentComments } from '~/components/recent-comments';
 import { StatsCard } from '~/components/stats-card';
 import { useAuth } from '~/contexts/auth-context';
-import { useTutorDashboard } from '~/lib/hooks/useTutorDashboard';
+import {
+	useAverageRating,
+	useTopMaterials,
+	useTutorDashboard,
+} from '~/lib/hooks/useTutorDashboard';
 import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 import { usePendingSessions } from './hooks/usePendingSessions';
 import { useTutorProfile } from './hooks/useTutorProfile';
-import { useTutorReputacion } from './hooks/useTutorReputacion';
 import { useUpcomingSessions } from './hooks/useUpcomingSessions';
 
 export default function TutorDashboard() {
@@ -31,9 +33,13 @@ export default function TutorDashboard() {
 		!!user?.id,
 	);
 
-	// Obtener reputación del tutor desde el backend
-	const { data: reputacionData, isLoading: isLoadingReputacion } =
-		useTutorReputacion(user?.id || '', !!user?.id);
+	// Obtener calificación promedio del tutor por materiales
+	const { data: averageRatingData, isLoading: isLoadingAverageRating } =
+		useAverageRating(user?.id || '');
+
+	// Obtener materiales top del tutor
+	const { data: topMaterials = [], isLoading: isLoadingTopMaterials } =
+		useTopMaterials(user?.id || '');
 
 	// Obtener perfil del tutor con ratings/comentarios
 	const {
@@ -137,15 +143,15 @@ export default function TutorDashboard() {
 				<StatsCard
 					title="Calificación Promedio"
 					value={
-						isLoadingReputacion
+						isLoadingAverageRating
 							? '...'
-							: reputacionData && reputacionData.totalRatings > 0
-								? reputacionData.reputacion.toFixed(1)
+							: averageRatingData && averageRatingData.calificacionPromedio > 0
+								? averageRatingData.calificacionPromedio.toFixed(1)
 								: 'Sin calificaciones'
 					}
 					description={
-						reputacionData && reputacionData.totalRatings > 0
-							? `${reputacionData.totalRatings} ${reputacionData.totalRatings === 1 ? 'valoración' : 'valoraciones'}`
+						averageRatingData && averageRatingData.calificacionPromedio > 0
+							? 'Calificación de materiales'
 							: 'Aún no ha recibido valoraciones'
 					}
 					color="warning"
@@ -348,9 +354,13 @@ export default function TutorDashboard() {
 								Ver todos
 							</Button>
 						</div>
-						<div className="space-y-3">
-							{popularMaterials?.length ? (
-								popularMaterials.slice(0, 2).map((material) => (
+						{isLoadingTopMaterials ? (
+							<div className="flex justify-center py-8">
+								<Spinner size="sm" />
+							</div>
+						) : topMaterials.length > 0 ? (
+							<div className="space-y-3 max-h-96 overflow-y-auto pr-4 [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent scrollbar-hide">
+								{topMaterials.map((material) => (
 									<div
 										key={material.id}
 										className="flex items-center justify-between p-3 bg-default-100 rounded-lg"
@@ -358,31 +368,32 @@ export default function TutorDashboard() {
 										<div>
 											<p className="font-semibold text-sm">{material.nombre}</p>
 											<p className="text-small text-default-500">
-												{material.materia}
+												{material.tags?.[0] || 'Sin categoría'}
 											</p>
 											<div className="flex items-center gap-4 mt-1">
 												<span className="text-tiny text-default-400">
 													{material.descargas} descargas
 												</span>
 												<span className="text-tiny text-default-400">
-													⭐ {material.calificacion.toFixed(1)}
+													⭐{' '}
+													{material.calificacionPromedio?.toFixed(1) || 'N/A'}
 												</span>
 											</div>
 										</div>
 										<div className="flex items-center gap-1">
 											<TrendingUp className="w-4 h-4 text-success" />
 											<span className="text-tiny text-success">
-												+{material.weeklyGrowth} esta semana
+												{material.vistos || 0} vistas
 											</span>
 										</div>
 									</div>
-								))
-							) : (
-								<p className="text-center text-default-500 py-4">
-									No hay materiales disponibles
-								</p>
-							)}
-						</div>
+								))}
+							</div>
+						) : (
+							<p className="text-center text-default-500 py-4">
+								No hay materiales disponibles
+							</p>
+						)}
 					</CardBody>
 				</Card>
 

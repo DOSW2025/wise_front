@@ -33,10 +33,6 @@ export class WebSocketService {
 	private maxReconnectAttempts = 5;
 	private reconnectDelay = 1000;
 
-	constructor() {
-		// La conexión se hace lazy, no en el constructor
-	}
-
 	private connect() {
 		const token = authService.getToken();
 		if (!token) {

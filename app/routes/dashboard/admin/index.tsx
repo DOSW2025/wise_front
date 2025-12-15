@@ -4,6 +4,10 @@ import { Link } from 'react-router';
 import { RoleStatisticsCard } from '~/components/admin/role-statistics-card';
 import { UserStatisticsCard } from '~/components/admin/user-statistics-card';
 import { StatsCard } from '~/components/stats-card';
+import {
+	useGlobalTagsPercentage,
+	useMaterialsCount,
+} from '~/lib/hooks/useMaterials';
 import { getUsers } from '~/lib/services/user.service';
 import type { AdminUserDto, PaginationParams } from '~/lib/types/api.types';
 
@@ -11,6 +15,10 @@ export default function AdminDashboardIndex() {
 	const [recentUsers, setRecentUsers] = useState<AdminUserDto[]>([]);
 	const [loadingRecent, setLoadingRecent] = useState(true);
 	const [, setRecentError] = useState<string | null>(null);
+	const { data: materialsCount = 0, isLoading: isLoadingMaterials } =
+		useMaterialsCount();
+	const { data: tagsPercentage = [], isLoading: isLoadingTags } =
+		useGlobalTagsPercentage();
 
 	const fetchRecentUsers = useCallback(async () => {
 		setLoadingRecent(true);
@@ -68,7 +76,7 @@ export default function AdminDashboardIndex() {
 				/>
 				<StatsCard
 					title="Materiales Publicados"
-					value={2156}
+					value={materialsCount}
 					description="Total en plataforma"
 					color="warning"
 					icon={
@@ -126,7 +134,7 @@ export default function AdminDashboardIndex() {
 							</Button>
 							<Button
 								as={Link}
-								to="/dashboard/materials-management"
+								to="/dashboard/admin/materials"
 								color="default"
 								variant="bordered"
 								fullWidth
@@ -208,24 +216,29 @@ export default function AdminDashboardIndex() {
 				<Card>
 					<CardBody className="gap-4">
 						<h3 className="text-lg font-semibold">Materias Más Demandadas</h3>
-						<div className="space-y-3">
-							{[
-								{ name: 'Cálculo Diferencial', count: 89 },
-								{ name: 'Programación', count: 76 },
-								{ name: 'Física I', count: 64 },
-								{ name: 'Álgebra Lineal', count: 58 },
-							].map((subject) => (
-								<div
-									key={subject.name}
-									className="flex items-center justify-between"
-								>
-									<span className="text-sm">{subject.name}</span>
-									<Chip size="sm" color="primary" variant="flat">
-										{subject.count}
-									</Chip>
-								</div>
-							))}
-						</div>
+						{isLoadingTags ? (
+							<div className="flex justify-center py-4">
+								<Spinner size="sm" />
+							</div>
+						) : tagsPercentage.length > 0 ? (
+							<div className="space-y-3 max-h-96 overflow-y-auto pr-4 [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent scrollbar-hide">
+								{tagsPercentage.map((subject) => (
+									<div
+										key={subject.tag}
+										className="flex items-center justify-between"
+									>
+										<span className="text-sm">{subject.tag}</span>
+										<Chip size="sm" color="primary" variant="flat">
+											{subject.porcentaje.toFixed(1)}%
+										</Chip>
+									</div>
+								))}
+							</div>
+						) : (
+							<p className="text-sm text-default-500">
+								No hay datos disponibles
+							</p>
+						)}
 					</CardBody>
 				</Card>
 

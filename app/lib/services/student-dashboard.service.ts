@@ -23,7 +23,7 @@ export async function getStudentStats(): Promise<StudentStats> {
 		const response = await apiClient.get<ApiResponse<StudentStats>>(
 			API_ENDPOINTS.STUDENT.STATS,
 		);
-		return response.data.data || response.data;
+		return (response.data.data || response.data) as StudentStats;
 	} catch (error) {
 		console.error('Error fetching student stats:', error);
 		// Datos mock para desarrollo
@@ -44,7 +44,7 @@ export async function getUpcomingTutoring(): Promise<UpcomingTutoring[]> {
 		const response = await apiClient.get<ApiResponse<UpcomingTutoring[]>>(
 			API_ENDPOINTS.STUDENT.TUTORING.UPCOMING,
 		);
-		return response.data.data || response.data;
+		return (response.data.data || response.data) as UpcomingTutoring[];
 	} catch (error) {
 		console.error('Error fetching upcoming tutoring:', error);
 		// Datos mock para desarrollo
@@ -79,7 +79,7 @@ export async function getRecommendedTutors(): Promise<RecommendedTutor[]> {
 		const response = await apiClient.get<ApiResponse<RecommendedTutor[]>>(
 			API_ENDPOINTS.STUDENT.TUTORS.RECOMMENDED,
 		);
-		return response.data.data || response.data;
+		return (response.data.data || response.data) as RecommendedTutor[];
 	} catch (error) {
 		console.error('Error fetching recommended tutors:', error);
 		// Datos mock para desarrollo
@@ -114,28 +114,11 @@ export async function getRecentMaterials(): Promise<RecentMaterial[]> {
 		const response = await apiClient.get<ApiResponse<RecentMaterial[]>>(
 			API_ENDPOINTS.STUDENT.MATERIALS.RECENT,
 		);
-		return response.data.data || response.data;
+		return (response.data.data || response.data) as RecentMaterial[];
 	} catch (error) {
 		console.error('Error fetching recent materials:', error);
 		// Datos mock para desarrollo
-		return [
-			{
-				id: '1',
-				name: 'Guía de Derivadas',
-				subject: 'Cálculo Diferencial',
-				rating: 4.9,
-				downloadedAt: new Date(Date.now() - 172800000).toISOString(), // 2 días
-				type: 'downloaded',
-			},
-			{
-				id: '2',
-				name: 'Ejercicios POO',
-				subject: 'Programación',
-				rating: 4.7,
-				downloadedAt: new Date(Date.now() - 86400000).toISOString(), // 1 día
-				type: 'saved',
-			},
-		];
+		return [];
 	}
 }
 
@@ -147,7 +130,7 @@ export async function getRecentActivity(): Promise<RecentActivity[]> {
 		const response = await apiClient.get<ApiResponse<RecentActivity[]>>(
 			API_ENDPOINTS.STUDENT.ACTIVITY.RECENT,
 		);
-		return response.data.data || response.data;
+		return (response.data.data || response.data) as RecentActivity[];
 	} catch (error) {
 		console.error('Error fetching recent activity:', error);
 		// Datos mock para desarrollo
@@ -199,5 +182,20 @@ export async function getStudentDashboardData(): Promise<StudentDashboardData> {
 	} catch (error) {
 		console.error('Error fetching student dashboard data:', error);
 		throw new Error('Error al cargar los datos del dashboard');
+	}
+}
+/**
+ * Obtener materiales recientes ordenados por fecha
+ */
+export async function getMaterialsByDate(): Promise<RecentMaterial[]> {
+	try {
+		const response = await apiClient.get<ApiResponse<RecentMaterial[]>>(
+			API_ENDPOINTS.MATERIALS.STATS_BY_DATE,
+		);
+		return (response.data.data || response.data) as RecentMaterial[];
+	} catch (error) {
+		console.error('Error fetching materials by date:', error);
+		// Datos mock para desarrollo
+		return [];
 	}
 }
