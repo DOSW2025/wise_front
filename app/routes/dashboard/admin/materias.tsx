@@ -1,5 +1,5 @@
 import { Card, CardBody } from '@heroui/react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { MateriaForm, MateriasManagement } from '~/components/admin/materias';
 import { materiasApi } from '~/lib/api/materias';
@@ -11,12 +11,7 @@ export default function AdminMaterias() {
 	const [editingMateria, setEditingMateria] = useState<Subject | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
-	// Cargar materias al montar el componente
-	useEffect(() => {
-		loadMaterias();
-	}, []);
-
-	const loadMaterias = async () => {
+	const loadMaterias = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			const data = await materiasApi.getAll();
@@ -27,7 +22,12 @@ export default function AdminMaterias() {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, []);
+
+	// Cargar materias al montar el componente
+	useEffect(() => {
+		loadMaterias();
+	}, [loadMaterias]);
 
 	const handleAddMateria = async (data: CreateSubjectDto) => {
 		try {
@@ -35,10 +35,11 @@ export default function AdminMaterias() {
 			setMaterias([...materias, newMateria]);
 			toast.success(`Materia ${data.codigo} creada exitosamente`);
 			setIsFormOpen(false);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error al crear materia:', error);
 			const errorMessage =
-				error.response?.data?.message || 'Error al crear la materia';
+				(error as { response?: { data?: { message?: string } } })?.response
+					?.data?.message || 'Error al crear la materia';
 			toast.error(errorMessage);
 		}
 	};
@@ -55,10 +56,11 @@ export default function AdminMaterias() {
 			toast.success(`Materia ${codigo} actualizada exitosamente`);
 			setEditingMateria(null);
 			setIsFormOpen(false);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error al actualizar materia:', error);
 			const errorMessage =
-				error.response?.data?.message || 'Error al actualizar la materia';
+				(error as { response?: { data?: { message?: string } } })?.response
+					?.data?.message || 'Error al actualizar la materia';
 			toast.error(errorMessage);
 		}
 	};
@@ -68,10 +70,11 @@ export default function AdminMaterias() {
 			await materiasApi.delete(codigo);
 			setMaterias(materias.filter((m) => m.codigo !== codigo));
 			toast.success(`Materia ${codigo} eliminada exitosamente`);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error al eliminar materia:', error);
 			const errorMessage =
-				error.response?.data?.message || 'Error al eliminar la materia';
+				(error as { response?: { data?: { message?: string } } })?.response
+					?.data?.message || 'Error al eliminar la materia';
 			toast.error(errorMessage);
 		}
 	};

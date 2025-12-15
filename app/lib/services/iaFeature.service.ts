@@ -2,7 +2,11 @@
 // Este servicio comprueba si la funcionalidad de IA está habilitada
 // a través del API Gateway (endpoint genérico de feature flags con key 'enable_ia_chat'),
 // y expone un booleano para que el cliente oculte/muestre la UI y evite llamadas de IA.
-const API_BASE = import.meta.env.VITE_API_GATEWAY_URL;
+const API_BASE_RAW = import.meta.env.VITE_API_GATEWAY_URL;
+// Forzar HTTPS para evitar mixed content cuando la app está en HTTPS (e.g., Vercel)
+const API_BASE = API_BASE_RAW?.startsWith('http://')
+	? API_BASE_RAW.replace('http://', 'https://')
+	: API_BASE_RAW;
 
 let cachedIaEnabled: boolean | null = null;
 let lastCheckTs = 0;

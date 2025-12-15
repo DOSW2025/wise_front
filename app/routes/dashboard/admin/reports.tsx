@@ -231,42 +231,6 @@ export default function AdminReports() {
 						/>
 					</div>
 
-					{/* Tutorias por Materia */}
-					<Card>
-						<CardHeader className="flex justify-between items-center">
-							<div className="flex flex-col">
-								<h2 className="text-xl font-semibold">Tutorías por Materia</h2>
-								<p className="text-sm text-default-500">
-									Distribución de sesiones por materia
-								</p>
-							</div>
-							<Button variant="light" color="danger">
-								Ver detalles
-							</Button>
-						</CardHeader>
-						<CardBody>
-							<div className="w-full h-[320px]">
-								<ResponsiveContainer width="100%" height="100%">
-									<BarChart
-										data={subjectsBarData}
-										margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-									>
-										<CartesianGrid {...CHART_GRID_STYLE} />
-										<XAxis dataKey="subject" {...CHART_AXIS_STYLE} />
-										<YAxis {...CHART_AXIS_STYLE} />
-										<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-										<Bar
-											dataKey="sessions"
-											name="Sesiones"
-											fill="hsl(var(--heroui-primary))"
-											radius={[8, 8, 0, 0]}
-										/>
-									</BarChart>
-								</ResponsiveContainer>
-							</div>
-						</CardBody>
-					</Card>
-
 					{/* Role Distribution */}
 					<Card>
 						<CardHeader className="flex items-center justify-between gap-2 pb-0">
@@ -396,6 +360,41 @@ export default function AdminReports() {
 									</p>
 								</div>
 							)}
+						</CardBody>
+					</Card>
+					{/* Tutorias por Materia */}
+					<Card>
+						<CardHeader className="flex justify-between items-center">
+							<div className="flex flex-col">
+								<h2 className="text-xl font-semibold">Tutorías por Materia</h2>
+								<p className="text-sm text-default-500">
+									Distribución de sesiones por materia
+								</p>
+							</div>
+							<Button variant="light" color="danger">
+								Ver detalles
+							</Button>
+						</CardHeader>
+						<CardBody>
+							<div className="w-full h-[320px]">
+								<ResponsiveContainer width="100%" height="100%">
+									<BarChart
+										data={subjectsBarData}
+										margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+									>
+										<CartesianGrid {...CHART_GRID_STYLE} />
+										<XAxis dataKey="subject" {...CHART_AXIS_STYLE} />
+										<YAxis {...CHART_AXIS_STYLE} />
+										<Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+										<Bar
+											dataKey="sessions"
+											name="Sesiones"
+											fill="hsl(var(--heroui-primary))"
+											radius={[8, 8, 0, 0]}
+										/>
+									</BarChart>
+								</ResponsiveContainer>
+							</div>
 						</CardBody>
 					</Card>
 
