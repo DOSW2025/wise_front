@@ -107,6 +107,7 @@ export const API_ENDPOINTS = {
 		SEARCH: '/wise/materiales/search',
 		STATS_COUNT: '/wise/materiales/stats/count',
 		STATS_TAGS_PERCENTAGE: '/wise/materiales/stats/tags-percentage',
+		STATS_BY_DATE: '/wise/materiales/stats/by-date',
 	},
 	PDF_EXPORT: {
 		STATS: (id: string) => `/wise/pdf-export/${id}/stats/export`,

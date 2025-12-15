@@ -14,7 +14,10 @@ import { StatsCard } from '~/components/stats-card';
 import { StudentUpcomingTutoringsCard } from '~/components/student-upcoming-tutorings-card';
 import { TutorProfileModal } from '~/components/tutor-profile-modal';
 import { useAuth } from '~/contexts/auth-context';
-import { useStudentDashboard } from '~/lib/hooks/useStudentDashboard';
+import {
+	useMaterialsByDate,
+	useStudentDashboard,
+} from '~/lib/hooks/useStudentDashboard';
 import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 
 export default function StudentDashboard() {
@@ -24,6 +27,8 @@ export default function StudentDashboard() {
 		user?.id || '',
 		!!user?.id,
 	);
+	const { data: materialsByDate = [], isLoading: isLoadingMaterialsByDate } =
+		useMaterialsByDate();
 	const [selectedTutorId, setSelectedTutorId] = useState<string | null>(null);
 
 	if (isLoading) {
@@ -177,12 +182,22 @@ export default function StudentDashboard() {
 								Ver todos
 							</Button>
 						</div>
-						<div className="space-y-3">
-							{recentMaterials?.length ? (
-								recentMaterials.slice(0, 2).map((material) => {
-									const timeAgo = new Date(
-										Date.now() - new Date(material.downloadedAt).getTime(),
-									).getDate();
+						{isLoadingMaterialsByDate ? (
+							<div className="flex justify-center py-8">
+								<Spinner size="sm" />
+							</div>
+						) : materialsByDate.length > 0 ? (
+							<div className="space-y-3 max-h-96 overflow-y-auto pr-4 [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent scrollbar-hide">
+								{materialsByDate.map((material) => {
+									const timeAgo = Math.floor(
+										(Date.now() -
+											new Date(
+												material.createdAt ||
+													material.downloadedAt ||
+													new Date(),
+											).getTime()) /
+											(1000 * 60 * 60 * 24),
+									);
 
 									let timeText = 'hoy';
 									if (timeAgo > 1) {
@@ -191,8 +206,12 @@ export default function StudentDashboard() {
 										timeText = 'ayer';
 									}
 
-									const actionText =
-										material.type === 'downloaded' ? 'Descargado' : 'Guardado';
+									const displayName =
+										material.nombre || material.name || 'Sin nombre';
+									const displaySubject =
+										material.tags?.[0] || material.subject || 'Sin categoría';
+									const actionText = 'Publicado';
+
 									return (
 										<div
 											key={material.id}
@@ -203,11 +222,9 @@ export default function StudentDashboard() {
 													<BookOpen className="w-4 h-4" />
 												</div>
 												<div>
-													<p className="font-semibold text-sm">
-														{material.name}
-													</p>
+													<p className="font-semibold text-sm">{displayName}</p>
 													<p className="text-small text-default-500">
-														{material.subject}
+														{displaySubject}
 													</p>
 													<p className="text-tiny text-default-400">
 														{actionText} {timeText}
@@ -217,18 +234,18 @@ export default function StudentDashboard() {
 											<div className="flex items-center gap-1">
 												<Star className="w-3 h-3 text-yellow-500 fill-current" />
 												<span className="text-tiny">
-													{material.rating.toFixed(1)}
+													{material.vistos || 0} vistas
 												</span>
 											</div>
 										</div>
 									);
-								})
-							) : (
-								<p className="text-center text-default-500 py-4">
-									No hay materiales recientes
-								</p>
-							)}
-						</div>
+								})}
+							</div>
+						) : (
+							<p className="text-center text-default-500 py-4">
+								No hay materiales recientes
+							</p>
+						)}
 					</CardBody>
 				</Card>
 
