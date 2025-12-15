@@ -109,8 +109,15 @@ const TutorCard: React.FC<TutorCardProps> = ({
 				<div className="flex gap-2 mt-auto pt-2 border-t border-default-200">
 					<button
 						type="button"
+						onClick={() => onOpen?.(tutor)}
+						className="flex-1 bg-red-800 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors text-center"
+					>
+						Agendar
+					</button>
+					<button
+						type="button"
 						onClick={() => onViewProfile?.(tutor.id.toString())}
-						className="w-full bg-red-800 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors text-center"
+						className="flex-1 bg-default-100 text-default-700 px-4 py-2 rounded-lg font-semibold hover:bg-default-200 transition-colors text-center border border-default-300"
 					>
 						Ver perfil
 					</button>
