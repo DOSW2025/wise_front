@@ -1,12 +1,5 @@
 import { Button, Card, CardBody, Spinner } from '@heroui/react';
-import {
-	AlertCircle,
-	BookOpen,
-	MessageSquare,
-	Star,
-	TrendingUp,
-	Users,
-} from 'lucide-react';
+import { AlertCircle, BookOpen, TrendingUp, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { RecommendedTutorsList } from '~/components/recommended-tutors-list';
@@ -48,8 +41,6 @@ export default function StudentDashboard() {
 			</div>
 		);
 	}
-
-	const { recentMaterials, recentActivity } = dashboardData || {};
 
 	return (
 		<div className="space-y-6">
@@ -152,153 +143,6 @@ export default function StudentDashboard() {
 							</Button>
 						</div>
 						<RecommendedTutorsList />
-					</CardBody>
-				</Card>
-			</div>
-
-			{/* Secondary Content Grid */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				{/* Materiales Recientes */}
-				<Card>
-					<CardBody className="gap-4">
-						<div className="flex items-center justify-between">
-							<h2 className="text-xl font-semibold flex items-center gap-2 font-heading">
-								<BookOpen className="w-5 h-5 text-primary" />
-								Materiales Recientes
-							</h2>
-							<Button
-								as={Link}
-								to="/dashboard/student/materials"
-								size="sm"
-								variant="light"
-								color="primary"
-								className="font-nav"
-							>
-								Ver todos
-							</Button>
-						</div>
-						<div className="space-y-3">
-							{recentMaterials?.length ? (
-								recentMaterials.slice(0, 2).map((material) => {
-									const timeAgo = new Date(
-										Date.now() - new Date(material.downloadedAt).getTime(),
-									).getDate();
-
-									let timeText = 'hoy';
-									if (timeAgo > 1) {
-										timeText = `hace ${timeAgo} días`;
-									} else if (timeAgo === 1) {
-										timeText = 'ayer';
-									}
-
-									const actionText =
-										material.type === 'downloaded' ? 'Descargado' : 'Guardado';
-									return (
-										<div
-											key={material.id}
-											className="flex items-center justify-between p-3 bg-default-100 rounded-lg"
-										>
-											<div className="flex items-center gap-3">
-												<div className="p-2 bg-secondary-50 text-primary rounded-lg">
-													<BookOpen className="w-4 h-4" />
-												</div>
-												<div>
-													<p className="font-semibold text-sm">
-														{material.name}
-													</p>
-													<p className="text-small text-default-500">
-														{material.subject}
-													</p>
-													<p className="text-tiny text-default-400">
-														{actionText} {timeText}
-													</p>
-												</div>
-											</div>
-											<div className="flex items-center gap-1">
-												<Star className="w-3 h-3 text-yellow-500 fill-current" />
-												<span className="text-tiny">
-													{material.rating.toFixed(1)}
-												</span>
-											</div>
-										</div>
-									);
-								})
-							) : (
-								<p className="text-center text-default-500 py-4">
-									No hay materiales recientes
-								</p>
-							)}
-						</div>
-					</CardBody>
-				</Card>
-
-				{/* Actividad Reciente */}
-				<Card>
-					<CardBody className="gap-4">
-						<div className="flex items-center justify-between">
-							<h2 className="text-xl font-semibold flex items-center gap-2 font-heading">
-								<MessageSquare className="w-5 h-5 text-primary" />
-								Actividad Reciente
-							</h2>
-							<Button
-								as={Link}
-								to="/dashboard/student/progress"
-								size="sm"
-								variant="light"
-								color="primary"
-								className="font-nav"
-							>
-								Ver progreso
-							</Button>
-						</div>
-						<div className="space-y-3">
-							{recentActivity?.length ? (
-								recentActivity.slice(0, 2).map((activity) => {
-									const timeAgo = new Date(
-										Date.now() - new Date(activity.createdAt).getTime(),
-									).getHours();
-
-									let timeText = 'Hace poco';
-									if (timeAgo > 24) {
-										timeText = 'Ayer';
-									} else if (timeAgo > 0) {
-										timeText = `Hace ${timeAgo} horas`;
-									}
-
-									const bgColor =
-										activity.type === 'tutoring_completed'
-											? 'bg-green-50 border border-green-200'
-											: 'bg-blue-50 border border-blue-200';
-									const dotColor =
-										activity.type === 'tutoring_completed'
-											? 'bg-green-500'
-											: 'bg-blue-500';
-									return (
-										<div
-											key={activity.id}
-											className={`p-3 rounded-lg ${bgColor}`}
-										>
-											<div className="flex items-center gap-2 mb-1">
-												<div
-													className={`w-2 h-2 rounded-full ${dotColor}`}
-												></div>
-												<span className="font-semibold text-sm">
-													{activity.title}
-												</span>
-											</div>
-											<p className="text-sm text-default-600">
-												{activity.description}
-											</p>
-											<p className="text-tiny text-default-400">{timeText}</p>
-										</div>
-									);
-								})
-							) : (
-								<p className="text-center text-default-500 py-4">
-									No hay actividad reciente
-								</p>
-							)}
-						</div>
 					</CardBody>
 				</Card>
 			</div>
