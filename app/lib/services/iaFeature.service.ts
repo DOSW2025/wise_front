@@ -27,7 +27,7 @@ export async function isIaEnabled(): Promise<boolean> {
 
 	try {
 		// Endpoint genérico del API Gateway de feature flags que devuelve { key: string, enabled: boolean }
-		const res = await fetch(`${API_BASE}/wise/feature-flags/enable_ia_chat`, {
+		const res = await fetch(`${API_BASE}wise/feature-flags/enable_ia_chat`, {
 			method: 'GET',
 			headers: { Accept: 'application/json' },
 		});
