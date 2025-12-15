@@ -43,7 +43,11 @@ import {
 	type Response,
 	type Thread,
 } from '~/lib/services/forums.service';
-import { TipoContenido } from '~/lib/services/reportes.services';
+import {
+	mapFrontendReasonToBackend,
+	reportesService,
+	TipoContenido,
+} from '~/lib/services/reportes.services';
 import { getStorageJSON, STORAGE_KEYS } from '~/lib/utils/storage';
 import ReportContentModal from './reportContentModal';
 
@@ -98,7 +102,7 @@ function TopicCard({
 	onLike: (id: string) => void;
 	edited?: boolean;
 	isLoading?: boolean;
-	onReport: (contentId: string, contentType: TipoContenido) => void;
+	onReport: (id: string) => void;
 }) {
 	return (
 		<Card
@@ -247,15 +251,6 @@ function TopicCard({
 						<ThumbsUp size={16} />
 						<span>{topic.counts.likes}</span>
 					</button>
-					<Button
-						size="sm"
-						variant="light"
-						color="danger"
-						startContent={<Flag size={16} />}
-						onPress={() => onReport(topic.id, TipoContenido.THREAD)}
-					>
-						Reportar
-					</Button>
 
 					<div className="flex items-center gap-1 text-default-600 text-sm">
 						<Eye size={16} />
@@ -263,6 +258,16 @@ function TopicCard({
 					</div>
 
 					<div className="ml-auto flex items-center gap-2">
+						<Button
+							size="sm"
+							color="danger"
+							variant="light"
+							startContent={<Flag size={16} />}
+							onPress={() => onReport(topic.id)}
+							isDisabled={isLoading}
+						>
+							Reportar
+						</Button>
 						<Button
 							size="sm"
 							color="primary"
@@ -375,6 +380,15 @@ export function CommunityForums() {
 	const [threadContent, setThreadContent] = useState('');
 	const [isLoadingThreads, setIsLoadingThreads] = useState(false);
 
+	//State para
+	// State para reportes
+	const [reportModalOpen, setReportModalOpen] = useState(false);
+	const [reportingContentId, setReportingContentId] = useState<string | null>(
+		null,
+	);
+	const [reportingContentType, setReportingContentType] =
+		useState<TipoContenido>(TipoContenido.THREAD);
+
 	// State para respuestas a hilos
 	const [respondingToThreadId, setRespondingToThreadId] = useState<
 		string | null
@@ -445,25 +459,6 @@ export function CommunityForums() {
 		} finally {
 			setIsLoadingForums(false);
 		}
-	};
-
-	// Estados para reportar
-	const [reportModalOpen, setReportModalOpen] = useState(false);
-	const [reportingContentId, setReportingContentId] = useState<string | null>(
-		null,
-	);
-	const [reportingContentType, setReportingContentType] =
-		useState<TipoContenido>(TipoContenido.THREAD);
-
-	const openReportModal = (contentId: string, contentType: TipoContenido) => {
-		setReportingContentId(contentId);
-		setReportingContentType(contentType);
-		setReportModalOpen(true);
-	};
-
-	const closeReportModal = () => {
-		setReportingContentId(null);
-		setReportModalOpen(false);
 	};
 
 	// Cargar foros y materias al montar el componente
@@ -588,6 +583,16 @@ export function CommunityForums() {
 				`Error al cambiar el estado del foro: ${getErrorMessage(error) || 'Error desconocido'}`,
 			);
 		}
+	};
+	const openReportModal = (contentId: string, contentType: TipoContenido) => {
+		setReportingContentId(contentId);
+		setReportingContentType(contentType);
+		setReportModalOpen(true);
+	};
+
+	const closeReportModal = () => {
+		setReportingContentId(null);
+		setReportModalOpen(false);
 	};
 
 	const likeForum = async (forumId: string) => {
@@ -848,11 +853,11 @@ export function CommunityForums() {
 										onEditTopic={openEditTopic}
 										onTogglePinned={togglePinned}
 										onLike={likeForum}
+										onReport={(id) => openReportModal(id, TipoContenido.THREAD)}
 										repliesCount={
 											threadsByForumId[t.id]?.length || t.counts.replies
 										}
 										edited={!!editedById[t.id]}
-										onReport={openReportModal}
 									/>
 									{replyingTo === t.id && (
 										<Card
@@ -1115,21 +1120,6 @@ export function CommunityForums() {
 					<GroupChatCard />
 				</div>
 			</div>
-			{/* Modal de reporte */}
-			{reportingContentId && (
-				<ReportContentModal
-					isOpen={reportModalOpen}
-					onClose={closeReportModal}
-					contenidoId={reportingContentId}
-					tipoContenido={reportingContentType}
-					nombreContenido={
-						reportingContentType === TipoContenido.THREAD
-							? 'este thread'
-							: 'esta respuesta'
-					}
-				/>
-			)}
-
 			{/* Modal para crear nuevo foro */}
 			<Modal isOpen={isOpen} onOpenChange={setIsOpen} size="lg">
 				<ModalContent>
@@ -1226,6 +1216,16 @@ export function CommunityForums() {
 					)}
 				</ModalContent>
 			</Modal>
+			{/* Modal de reporte */}
+			{reportingContentId && (
+				<ReportContentModal
+					isOpen={reportModalOpen}
+					onClose={closeReportModal}
+					contenidoId={reportingContentId}
+					tipoContenido={reportingContentType}
+					nombreContenido="este foro"
+				/>
+			)}
 
 			{/* Modal de edición de foro */}
 			<Modal

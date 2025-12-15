@@ -54,7 +54,6 @@ export default function ReportChatModal({
 		setIsSubmitting(true);
 
 		try {
-			// ← REEMPLAZAR la simulación por llamada real
 			const motivo = mapFrontendReasonToBackend(selectedReason);
 
 			await reportesService.createReport({
@@ -66,12 +65,12 @@ export default function ReportChatModal({
 
 			onSubmitReport(selectedReason, details);
 
+			alert('Reporte enviado exitosamente. Será revisado por nuestro equipo.');
+
 			// Resetear formulario
 			setSelectedReason('');
 			setDetails('');
 			onClose();
-
-			alert('Reporte enviado exitosamente. Será revisado por nuestro equipo.');
 		} catch (error) {
 			console.error('Error al crear reporte:', error);
 			alert('Error al enviar el reporte. Por favor, intenta nuevamente.');
