@@ -1,4 +1,4 @@
-import { Button, Card, CardBody } from '@heroui/react';
+import { Card, CardBody } from '@heroui/react';
 import {
 	BookOpen,
 	GraduationCap,
@@ -17,28 +17,24 @@ export default function AdminHelp() {
 			icon: <Shield className="w-6 h-6" />,
 			title: 'Guía de Administración',
 			description: 'Gestiona la plataforma de forma eficiente y segura',
-			action: 'Ver Guía',
 			color: 'danger',
 		},
 		{
 			icon: <Settings className="w-6 h-6" />,
 			title: 'Configuración del Sistema',
 			description: 'Aprende a configurar y personalizar ECIWISE+',
-			action: 'Configurar',
 			color: 'primary',
 		},
 		{
 			icon: <Users className="w-6 h-6" />,
 			title: 'Gestión de Usuarios',
 			description: 'Administra roles, permisos y usuarios de la plataforma',
-			action: 'Gestionar',
 			color: 'secondary',
 		},
 		{
 			icon: <MessageCircle className="w-6 h-6" />,
 			title: 'Soporte Técnico Premium',
 			description: 'Acceso prioritario al equipo de desarrollo',
-			action: 'Contactar',
 			color: 'success',
 		},
 	];
@@ -53,39 +49,34 @@ export default function AdminHelp() {
 			{/* Hero Section Administrativo */}
 			<Card className="overflow-hidden">
 				<CardBody className="p-0">
-					<div className="relative bg-secondary text-white">
-						{/* Imagen de la Universidad */}
-						<div className="absolute inset-0 opacity-20">
+					<div className="grid md:grid-cols-2 min-h-[400px]">
+						{/* Mitad Izquierda - Imagen de la Universidad */}
+						<div className="relative h-64 md:h-auto">
 							<img
-								src="/photos/eci-image-1.jpg"
+								src="/photos/eci-image-2.jpg"
 								alt="Escuela Colombiana de Ingeniería"
 								className="w-full h-full object-cover"
 							/>
-							<div className="absolute inset-0 bg-gradient-to-r from-secondary/90 to-primary/80"></div>
 						</div>
 
-						<div className="relative flex flex-col md:flex-row items-center gap-8 p-8 md:p-12">
-							{/* Logo Universidad */}
-							<div className="flex-shrink-0">
-								<div className="w-32 h-32 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-2xl border-4 border-white/30">
-									<GraduationCap className="w-20 h-20 text-white" />
+						{/* Mitad Derecha - Contenido */}
+						<div className="bg-primary-600 text-white flex items-center p-8 md:p-12">
+							<div className="space-y-4">
+								<div className="flex items-center gap-3 mb-6">
+									<Shield className="w-16 h-16 text-white/90" />
+									<h2 className="text-3xl md:text-4xl font-bold">
+										¿Necesitas ayuda? 🛡️
+									</h2>
 								</div>
-							</div>
-
-							{/* Contenido */}
-							<div className="flex-1 text-center md:text-left">
-								<div className="inline-block bg-white/20 backdrop-blur-sm px-4 py-1 rounded-full text-sm font-semibold mb-3">
-									🛡️ Panel Administrativo
+								<div className="inline-block bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-semibold mb-4">
+									💼 Panel Administrativo
 								</div>
-								<h2 className="text-3xl md:text-4xl font-bold mb-3">
-									¿Necesitas ayuda para administrar? 💼
-								</h2>
-								<p className="text-lg md:text-xl text-white/90 mb-4 leading-relaxed">
+								<p className="text-lg md:text-xl text-white/95 leading-relaxed">
 									Como administrador de <strong>ECIWISE+</strong>, tienes acceso
 									a herramientas poderosas. Estamos aquí para ayudarte a
 									aprovecharlas al máximo.
 								</p>
-								<p className="text-white/80 mb-6">
+								<p className="text-white/90 text-base md:text-lg leading-relaxed">
 									La{' '}
 									<strong>
 										Escuela Colombiana de Ingeniería Julio Garavito
@@ -93,24 +84,6 @@ export default function AdminHelp() {
 									confía en ti para liderar esta plataforma. Aquí encontrarás
 									todo el soporte que necesitas.
 								</p>
-								<div className="flex flex-wrap gap-3 justify-center md:justify-start">
-									<Button
-										color="default"
-										size="lg"
-										className="bg-white text-secondary font-semibold"
-										startContent={<Shield className="w-5 h-5" />}
-									>
-										Soporte Premium
-									</Button>
-									<Button
-										variant="bordered"
-										size="lg"
-										className="border-white text-white hover:bg-white/10 font-semibold"
-										startContent={<BookOpen className="w-5 h-5" />}
-									>
-										Documentación Admin
-									</Button>
-								</div>
 							</div>
 						</div>
 					</div>
@@ -134,17 +107,9 @@ export default function AdminHelp() {
 										<h4 className="text-lg font-semibold text-foreground mb-1">
 											{resource.title}
 										</h4>
-										<p className="text-default-500 text-sm mb-3">
+										<p className="text-default-500 text-sm">
 											{resource.description}
 										</p>
-										<Button
-											size="sm"
-											color="primary"
-											variant="flat"
-											className="font-medium"
-										>
-											{resource.action}
-										</Button>
 									</div>
 								</div>
 							</CardBody>
