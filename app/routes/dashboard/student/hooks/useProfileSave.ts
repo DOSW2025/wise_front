@@ -7,6 +7,8 @@ interface ProfileSaveData {
 	phone: string;
 	role?: string;
 	description: string;
+	interests?: string[];
+	semester?: string;
 }
 
 export function useProfileSave() {

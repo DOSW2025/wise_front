@@ -12,6 +12,7 @@ import { DeleteAccount } from '~/components/profile/DeleteAccount';
 import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
 import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
+import { getProfile } from '~/lib/services/student.service';
 import { deleteMyAccount } from '~/lib/services/user.service';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
@@ -45,7 +46,7 @@ export default function StudentProfile() {
 		setIsEditing,
 		validateForm,
 		resetForm,
-	} = useStudentProfileForm({
+	} = useProfileForm({
 		name: user?.name || '',
 		email: user?.email || '',
 		phone: '',
@@ -56,7 +57,7 @@ export default function StudentProfile() {
 		semester: '',
 	});
 
-	const { isSaving, error, success, saveProfile } = useStudentProfileSave();
+	const { isSaving, error, success, saveProfile } = useProfileSave();
 
 	// Cargar el perfil completo cuando el componente se monta
 	useEffect(() => {
