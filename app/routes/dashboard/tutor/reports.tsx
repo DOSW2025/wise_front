@@ -16,13 +16,19 @@ import {
 } from '@heroui/react';
 import {
 	Calendar,
+	CheckCircle2,
 	Clock,
 	FileText,
 	MessageSquare,
 	Star,
+	TrendingUp,
 	User,
+	XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '~/contexts/auth-context';
+import { useTutorReputacion } from './hooks/useTutorReputacion';
+import { useTutorStats } from './hooks/useTutorStats';
 
 interface CompletedSession {
 	id: string;
@@ -43,12 +49,28 @@ interface CompletedSession {
 }
 
 export default function TutorReports() {
+	const { user } = useAuth();
 	const { isOpen, onOpen, onClose } = useDisclosure();
 	const [selectedSession, setSelectedSession] =
 		useState<CompletedSession | null>(null);
 	const [responseText, setResponseText] = useState('');
 	const [activeTab, setActiveTab] = useState<'history' | 'ratings'>('history');
-	const [isLoading] = useState(false);
+
+	// Obtener estadísticas del tutor
+	const {
+		data: tutorStats,
+		isLoading: isLoadingStats,
+		error: statsError,
+	} = useTutorStats(user?.id || '', !!user?.id);
+
+	// Obtener reputación del tutor
+	const {
+		data: tutorReputacion,
+		isLoading: isLoadingReputacion,
+		error: reputacionError,
+	} = useTutorReputacion(user?.id || '', !!user?.id);
+
+	const isLoading = isLoadingStats || isLoadingReputacion;
 
 	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
 	const [completedSessions, setCompletedSessions] = useState<
@@ -110,7 +132,7 @@ export default function TutorReports() {
 			<div className="flex flex-col gap-4">
 				<div>
 					<h1 className="text-3xl font-bold text-foreground">
-						Reportes y métricas de Tutorías
+						Reportes y métricas de tutorías
 					</h1>
 					<p className="text-default-500">
 						Revisa tus rendimientos como tutos, historial de sesiones y
@@ -129,59 +151,167 @@ export default function TutorReports() {
 					<div className="flex justify-center items-center h-64">
 						<Spinner size="lg" label="Cargando estadísticas..." />
 					</div>
+				) : statsError || reputacionError ? (
+					<Card>
+						<CardBody className="text-center py-8">
+							<p className="text-danger">
+								Error al cargar las estadísticas. Por favor, intenta nuevamente.
+							</p>
+						</CardBody>
+					</Card>
 				) : (
 					<div className="space-y-6">
 						{/* Estadísticas generales */}
-						<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-							<Card>
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+							{/* Total de Sesiones */}
+							<Card className="border-l-4 border-l-primary">
 								<CardBody className="text-center">
-									<div className="text-2xl font-bold text-primary">
-										{completedSessions.length}
+									<TrendingUp className="w-8 h-8 text-primary mx-auto mb-2" />
+									<div className="text-3xl font-bold text-primary">
+										{tutorStats?.totalSesiones || 0}
 									</div>
-									<div className="text-sm text-default-500">
-										Tutorías Realizadas
+									<div className="text-sm text-default-500 font-medium">
+										Total de Sesiones
 									</div>
 								</CardBody>
 							</Card>
-							<Card>
+
+							{/* Calificación Promedio */}
+							<Card className="border-l-4 border-l-warning">
 								<CardBody className="text-center">
-									<div className="text-2xl font-bold text-warning">
-										{ratedSessions.length > 0
-											? (
-													ratedSessions.reduce(
-														(sum, session) => sum + (session.rating || 0),
-														0,
-													) / ratedSessions.length
-												).toFixed(1)
-											: '0.0'}
+									<div className="flex items-center justify-center gap-1 mb-2">
+										<Star className="w-8 h-8 text-warning fill-warning" />
 									</div>
-									<div className="text-sm text-default-500">
+									<div className="text-3xl font-bold text-warning">
+										{tutorReputacion?.reputacion
+											? tutorReputacion.reputacion.toFixed(2)
+											: '0.00'}
+									</div>
+									<div className="text-sm text-default-500 font-medium">
 										Calificación Promedio
 									</div>
-								</CardBody>
-							</Card>
-							<Card>
-								<CardBody className="text-center">
-									<div className="text-2xl font-bold text-success">
-										{ratedSessions.length}
-									</div>
-									<div className="text-sm text-default-500">
-										Evaluaciones Recibidas
+									<div className="text-xs text-default-400 mt-1">
+										{tutorReputacion?.totalRatings || 0} calificaciones
 									</div>
 								</CardBody>
 							</Card>
-							<Card>
+
+							{/* Horas de Tutoría */}
+							<Card className="border-l-4 border-l-success">
 								<CardBody className="text-center">
-									<div className="text-2xl font-bold text-danger">
-										{
-											ratedSessions.filter((s) => !s.hasResponse && s.comment)
-												.length
-										}
+									<Clock className="w-8 h-8 text-success mx-auto mb-2" />
+									<div className="text-3xl font-bold text-success">
+										{tutorStats?.horasDeTutoria
+											? tutorStats.horasDeTutoria.toFixed(1)
+											: '0.0'}
 									</div>
-									<div className="text-sm text-default-500">Sin Responder</div>
+									<div className="text-sm text-default-500 font-medium">
+										Horas Impartidas
+									</div>
+								</CardBody>
+							</Card>
+
+							{/* Sesiones Completadas */}
+							<Card className="border-l-4 border-l-secondary">
+								<CardBody className="text-center">
+									<CheckCircle2 className="w-8 h-8 text-secondary mx-auto mb-2" />
+									<div className="text-3xl font-bold text-secondary">
+										{tutorStats?.sesionesCompletadas || 0}
+									</div>
+									<div className="text-sm text-default-500 font-medium">
+										Sesiones Completadas
+									</div>
 								</CardBody>
 							</Card>
 						</div>
+
+						{/* Estadísticas Detalladas */}
+						<Card>
+							<CardHeader>
+								<h3 className="text-lg font-semibold">Desglose de Sesiones</h3>
+							</CardHeader>
+							<CardBody>
+								<div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+									<div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+										<div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+											<Clock className="w-5 h-5 text-white" />
+										</div>
+										<div>
+											<div className="text-2xl font-bold text-blue-600">
+												{tutorStats?.sesionesPendientes || 0}
+											</div>
+											<div className="text-xs text-default-600">Pendientes</div>
+										</div>
+									</div>
+
+									<div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+										<div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+											<CheckCircle2 className="w-5 h-5 text-white" />
+										</div>
+										<div>
+											<div className="text-2xl font-bold text-green-600">
+												{tutorStats?.sesionesConfirmadas || 0}
+											</div>
+											<div className="text-xs text-default-600">
+												Confirmadas
+											</div>
+										</div>
+									</div>
+
+									<div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+										<div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center">
+											<CheckCircle2 className="w-5 h-5 text-white" />
+										</div>
+										<div>
+											<div className="text-2xl font-bold text-purple-600">
+												{tutorStats?.sesionesCompletadas || 0}
+											</div>
+											<div className="text-xs text-default-600">
+												Completadas
+											</div>
+										</div>
+									</div>
+
+									<div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
+										<div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
+											<XCircle className="w-5 h-5 text-white" />
+										</div>
+										<div>
+											<div className="text-2xl font-bold text-orange-600">
+												{tutorStats?.sesionesCanceladas || 0}
+											</div>
+											<div className="text-xs text-default-600">Canceladas</div>
+										</div>
+									</div>
+
+									<div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
+										<div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
+											<XCircle className="w-5 h-5 text-white" />
+										</div>
+										<div>
+											<div className="text-2xl font-bold text-red-600">
+												{tutorStats?.sesionesRechazadas || 0}
+											</div>
+											<div className="text-xs text-default-600">Rechazadas</div>
+										</div>
+									</div>
+
+									<div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
+										<div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center">
+											<Star className="w-5 h-5 text-white" />
+										</div>
+										<div>
+											<div className="text-2xl font-bold text-yellow-600">
+												{tutorStats?.totalCalificaciones || 0}
+											</div>
+											<div className="text-xs text-default-600">
+												Calificaciones
+											</div>
+										</div>
+									</div>
+								</div>
+							</CardBody>
+						</Card>
 
 						{/* Tabs secundarios */}
 						<div className="flex gap-2">
