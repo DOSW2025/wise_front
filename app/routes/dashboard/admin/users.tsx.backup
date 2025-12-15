@@ -23,12 +23,9 @@ import {
 	TableColumn,
 	TableHeader,
 	TableRow,
-	Textarea,
 	useDisclosure,
 } from '@heroui/react';
 import {
-	BookOpen,
-	CheckCircle,
 	Edit,
 	Eye,
 	MoreVertical,
@@ -39,10 +36,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { toast } from 'sonner';
 import { PageHeader } from '~/components/page-header';
-import apiClient from '~/lib/api/client';
-import { materiasApi } from '~/lib/api/materias';
 import {
 	activateUser,
 	getUsers,
@@ -50,7 +44,6 @@ import {
 	updateUserRole,
 } from '~/lib/services/user.service';
 import type { AdminUserDto, PaginationParams } from '~/lib/types/api.types';
-import type { Subject } from '~/lib/types/materias.types';
 
 type RoleChangeModalData = {
 	user: AdminUserDto;
@@ -59,12 +52,6 @@ type RoleChangeModalData = {
 
 type SuspendModalData = {
 	user: AdminUserDto;
-};
-
-type CreateTutorData = {
-	usuarioId: string;
-	bio?: string;
-	materiaCodigos?: string[];
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -104,24 +91,11 @@ export default function AdminUsers() {
 	const roleModal = useDisclosure();
 	const suspendModal = useDisclosure();
 	const activateModal = useDisclosure();
-	const tutorProfileModal = useDisclosure();
 
 	const [roleChangeData, setRoleChangeData] =
 		useState<RoleChangeModalData | null>(null);
 	const [suspendData, setSuspendData] = useState<SuspendModalData | null>(null);
 	const [activateData, setActivateData] = useState<AdminUserDto | null>(null);
-
-	// Tutor profile form state
-	const [tutorFormData, setTutorFormData] = useState<CreateTutorData>({
-		usuarioId: '',
-		bio: '',
-		materiaCodigos: [],
-	});
-	const [availableMaterias, setAvailableMaterias] = useState<Subject[]>([]);
-	const [selectedMaterias, setSelectedMaterias] = useState<Set<string>>(
-		new Set(),
-	);
-	const [materiaSearchQuery, setMateriaSearchQuery] = useState('');
 
 	// Action loading states
 	const [actionLoading, setActionLoading] = useState(false);
@@ -130,50 +104,79 @@ export default function AdminUsers() {
 	// Fetch users
 	const fetchUsers = useCallback(async () => {
 		setLoading(true);
-		setError(null);
-
 		try {
 			const params: PaginationParams = {
 				page,
 				limit: ITEMS_PER_PAGE,
+				search: searchTerm || undefined,
+				role:
+					roleFilter && roleFilter !== ''
+						? (roleFilter as 'estudiante' | 'tutor' | 'admin')
+						: undefined,
+				status:
+					statusFilter && statusFilter !== ''
+						? (statusFilter as 'active' | 'suspended')
+						: undefined,
 			};
-
-			// Solo agregar parámetros si tienen valor
-			if (searchTerm && searchTerm.trim() !== '') {
-				params.search = searchTerm.trim();
-			}
-
-			if (roleFilter && roleFilter !== '') {
-				params.role = roleFilter as 'estudiante' | 'tutor' | 'admin';
-			}
-
-			if (statusFilter && statusFilter !== '') {
-				params.status = statusFilter as 'active' | 'suspended';
-			}
-
-			console.log('📤 Requesting users with params:', params);
 
 			const response = await getUsers(params);
 
-			console.log('📥 Received response:', response);
+			// Normalize API user objects to expected AdminUserDto shape
+			const normalize = (u: any) => {
+				return {
+					id: u.id ?? u._id ?? String(u.userId ?? ''),
+					nombre:
+						u.nombre ??
+						u.firstName ??
+						u.name ??
+						(u.nombreCompleto ? String(u.nombreCompleto).split(' ')[0] : ''),
+					apellido:
+						u.apellido ??
+						u.lastName ??
+						u.surname ??
+						(u.nombreCompleto
+							? String(u.nombreCompleto).split(' ').slice(1).join(' ')
+							: ''),
+					email: u.email ?? u.correo ?? u.emailAddress ?? '',
+					rol: {
+						id: u.rol?.id ?? u.role?.id ?? u.roleId ?? null,
+						nombre: u.rol?.nombre ?? u.role?.name ?? u.role ?? u.rol ?? '',
+					},
+					estado: {
+						id: u.estado?.id ?? u.status?.id ?? u.estadoId ?? null,
+						nombre:
+							u.estado?.nombre ?? u.status?.name ?? u.status ?? u.estado ?? '',
+					},
+					avatar_url: u.avatar_url ?? u.avatarUrl ?? u.avatar ?? null,
+					createdAt:
+						u.createdAt ??
+						u.created_at ??
+						u.created ??
+						new Date().toISOString(),
+					updatedAt:
+						u.updatedAt ??
+						u.updated_at ??
+						u.updated ??
+						new Date().toISOString(),
+				} as AdminUserDto;
+			};
 
-			setUsers(response.data || []);
+			setUsers((response.data || []).map(normalize));
 			setTotalPages(response.pagination.totalPages);
 			setTotalItems(response.pagination.totalItems);
 		} catch (error: any) {
-			console.error('❌ Error loading users:', error);
-
+			console.error('Error loading users:', error);
+			if (error.config) {
+				console.error('Failed request URL:', error.config.url);
+				console.error('Failed request baseURL:', error.config.baseURL);
+			}
 			let message =
 				'Error al cargar la lista de usuarios. Por favor intente nuevamente.';
-
 			if (error.response?.data?.message) {
 				message = Array.isArray(error.response.data.message)
 					? error.response.data.message.join(', ')
 					: error.response.data.message;
-			} else if (error.message) {
-				message = error.message;
 			}
-
 			setError(message);
 		} finally {
 			setLoading(false);
@@ -183,19 +186,6 @@ export default function AdminUsers() {
 	useEffect(() => {
 		fetchUsers();
 	}, [fetchUsers]);
-
-	// Load available materias for tutor creation
-	useEffect(() => {
-		const loadMaterias = async () => {
-			try {
-				const materias = await materiasApi.getAll();
-				setAvailableMaterias(materias);
-			} catch (error) {
-				console.error('Error loading materias:', error);
-			}
-		};
-		loadMaterias();
-	}, []);
 
 	// Handle search
 	const handleSearch = useCallback((value: string) => {
@@ -222,19 +212,6 @@ export default function AdminUsers() {
 			await updateUserRole(roleChangeData.user.id, roleChangeData.newRole);
 			await fetchUsers();
 			roleModal.onClose();
-
-			// If changing to tutor, open tutor profile creation modal
-			if (roleChangeData.newRole === 'tutor') {
-				setTutorFormData({
-					usuarioId: roleChangeData.user.id,
-					bio: '',
-					materiaCodigos: [],
-				});
-				setSelectedMaterias(new Set());
-				setMateriaSearchQuery('');
-				tutorProfileModal.onOpen();
-			}
-
 			setRoleChangeData(null);
 		} catch (error) {
 			console.error('Error updating role:', error);
@@ -242,7 +219,7 @@ export default function AdminUsers() {
 		} finally {
 			setActionLoading(false);
 		}
-	}, [roleChangeData, fetchUsers, roleModal, tutorProfileModal]);
+	}, [roleChangeData, fetchUsers, roleModal]);
 
 	// Handle suspend
 	const openSuspendModal = useCallback(
@@ -300,83 +277,13 @@ export default function AdminUsers() {
 		}
 	}, [activateData, fetchUsers, activateModal]);
 
-	// Handle create tutor profile
-	const handleCreateTutorProfile = useCallback(async () => {
-		if (!tutorFormData.usuarioId || selectedMaterias.size === 0) {
-			toast.error('Debe seleccionar al menos una materia');
-			return;
-		}
-
-		setActionLoading(true);
-		try {
-			const data = {
-				...tutorFormData,
-				materiaCodigos: Array.from(selectedMaterias),
-			};
-
-			await apiClient.post('/wise/tutorias/create-tutor', data);
-			toast.success('Perfil de tutor creado exitosamente');
-			tutorProfileModal.onClose();
-			setTutorFormData({ usuarioId: '', bio: '', materiaCodigos: [] });
-			setSelectedMaterias(new Set());
-			await fetchUsers();
-		} catch (error: any) {
-			console.error('Error creating tutor profile:', error);
-			const errorMessage =
-				error.response?.data?.message || 'Error al crear el perfil de tutor';
-			toast.error(errorMessage);
-		} finally {
-			setActionLoading(false);
-		}
-	}, [tutorFormData, selectedMaterias, tutorProfileModal, fetchUsers]);
-
-	// Handle materia selection toggle
-	const toggleMateriaSelection = useCallback((codigo: string) => {
-		setSelectedMaterias((prev) => {
-			const newSet = new Set(prev);
-			if (newSet.has(codigo)) {
-				newSet.delete(codigo);
-			} else {
-				newSet.add(codigo);
-			}
-			return newSet;
-		});
-	}, []);
-
-	// Get color for materia card
-	const getMateriaColor = useCallback((codigo: string) => {
-		const colors = [
-			'bg-primary',
-			'bg-secondary',
-			'bg-success',
-			'bg-warning',
-			'bg-danger',
-		];
-		const index = codigo
-			.split('')
-			.reduce((acc, char) => acc + char.charCodeAt(0), 0);
-		return colors[index % colors.length];
-	}, []);
-
-	// Filter materias based on search query
-	const filteredMaterias = useMemo(() => {
-		if (!materiaSearchQuery.trim()) return availableMaterias;
-
-		const query = materiaSearchQuery.toLowerCase();
-		return availableMaterias.filter(
-			(materia) =>
-				materia.nombre.toLowerCase().includes(query) ||
-				materia.codigo.toLowerCase().includes(query),
-		);
-	}, [availableMaterias, materiaSearchQuery]);
-
 	// Table columns
 	const columns = [
-		{ key: 'user', label: 'USUARIO', width: '40%' },
-		{ key: 'role', label: 'ROL', width: '15%' },
-		{ key: 'status', label: 'ESTADO', width: '15%' },
-		{ key: 'createdAt', label: 'REGISTRO', width: '20%' },
-		{ key: 'actions', label: 'ACCIONES', width: '10%' },
+		{ key: 'user', label: 'USUARIO' },
+		{ key: 'role', label: 'ROL' },
+		{ key: 'status', label: 'ESTADO' },
+		{ key: 'createdAt', label: 'REGISTRO' },
+		{ key: 'actions', label: 'ACCIONES' },
 	];
 
 	// Render cell content
@@ -387,7 +294,7 @@ export default function AdminUsers() {
 				case 'user':
 					return (
 						<div className="flex flex-col">
-							<p className="text-base font-semibold">{`${user.nombre} ${user.apellido}`}</p>
+							<p className="text-sm font-semibold">{`${user.nombre} ${user.apellido}`}</p>
 							<p className="text-tiny text-default-400">{user.email}</p>
 						</div>
 					);
@@ -530,14 +437,12 @@ export default function AdminUsers() {
 				description="Administra los usuarios registrados en la plataforma"
 			/>
 
-			{/* Error Display */}
-			{error && (
+			{/* Filters */}
+			{error && !actionLoading && (
 				<div className="bg-danger-50 text-danger-600 p-4 rounded-lg text-sm">
 					{error}
 				</div>
 			)}
-
-			{/* Filters */}
 			<Card>
 				<CardBody>
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -548,17 +453,14 @@ export default function AdminUsers() {
 							onValueChange={handleSearch}
 							isClearable
 							onClear={() => handleSearch('')}
-							size="lg"
 						/>
 						<Select
-							label="Filtrar por rol"
-							placeholder="Todos los roles"
+							placeholder="Filtrar por rol"
 							selectedKeys={roleFilter ? [roleFilter] : []}
 							onChange={(e) => {
 								setRoleFilter(e.target.value);
 								setPage(1);
 							}}
-							size="sm"
 						>
 							<SelectItem key="">Todos los roles</SelectItem>
 							<SelectItem key="estudiante">Estudiante</SelectItem>
@@ -566,14 +468,12 @@ export default function AdminUsers() {
 							<SelectItem key="admin">Administrador</SelectItem>
 						</Select>
 						<Select
-							label="Filtrar por estado"
-							placeholder="Todos los estados"
+							placeholder="Filtrar por estado"
 							selectedKeys={statusFilter ? [statusFilter] : []}
 							onChange={(e) => {
 								setStatusFilter(e.target.value);
 								setPage(1);
 							}}
-							size="sm"
 						>
 							<SelectItem key="">Todos los estados</SelectItem>
 							<SelectItem key="active">Activos</SelectItem>
@@ -589,7 +489,6 @@ export default function AdminUsers() {
 				bottomContent={bottomContent}
 				classNames={{
 					wrapper: 'min-h-[400px]',
-					table: 'table-fixed',
 				}}
 			>
 				<TableHeader columns={columns}>
@@ -597,8 +496,6 @@ export default function AdminUsers() {
 						<TableColumn
 							key={column.key}
 							align={column.key === 'actions' ? 'center' : 'start'}
-							className="whitespace-nowrap"
-							style={{ width: column.width }}
 						>
 							{column.label}
 						</TableColumn>
@@ -610,27 +507,15 @@ export default function AdminUsers() {
 					loadingContent={<Spinner label="Cargando usuarios..." />}
 					emptyContent={
 						<div className="text-center py-10">
-							<p className="text-default-500">
-								{error
-									? 'Error al cargar usuarios'
-									: 'No se encontraron usuarios'}
-							</p>
+							<p className="text-default-500">No se encontraron usuarios</p>
 						</div>
 					}
 				>
 					{(user) => (
 						<TableRow key={user.id}>
-							{(columnKey) => {
-								const column = columns.find((c) => c.key === columnKey);
-								return (
-									<TableCell
-										className="whitespace-nowrap"
-										style={{ width: column?.width }}
-									>
-										{renderCell(user, columnKey as string)}
-									</TableCell>
-								);
-							}}
+							{(columnKey) => (
+								<TableCell>{renderCell(user, columnKey as string)}</TableCell>
+							)}
 						</TableRow>
 					)}
 				</TableBody>
@@ -771,141 +656,6 @@ export default function AdminUsers() {
 							isLoading={actionLoading}
 						>
 							Activar Usuario
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
-
-			{/* Tutor Profile Creation Modal */}
-			<Modal
-				isOpen={tutorProfileModal.isOpen}
-				onClose={tutorProfileModal.onClose}
-				size="3xl"
-				isDismissable={false}
-				hideCloseButton
-				scrollBehavior="inside"
-			>
-				<ModalContent className="max-h-[90vh]">
-					<ModalHeader className="flex flex-col gap-1 sticky top-0 bg-content1 z-10 pb-4">
-						<h3 className="text-xl font-bold">Crear Perfil de Tutor</h3>
-						<p className="text-sm text-default-500 font-normal">
-							Complete la información del perfil de tutor. Debe seleccionar al
-							menos una materia.
-						</p>
-					</ModalHeader>
-					<ModalBody className="overflow-y-auto">
-						<div className="space-y-4">
-							{/* Bio */}
-							<Textarea
-								label="Biografía (opcional)"
-								placeholder="Describe la experiencia y habilidades del tutor..."
-								value={tutorFormData.bio}
-								onChange={(e) =>
-									setTutorFormData({ ...tutorFormData, bio: e.target.value })
-								}
-								maxLength={500}
-								description={`${tutorFormData.bio?.length || 0}/500 caracteres`}
-							/>
-
-							{/* Materias Selection */}
-							<div>
-								<p className="text-sm font-semibold mb-2">
-									Materias que puede impartir *
-								</p>
-
-								{/* Search Bar */}
-								<Input
-									placeholder="Buscar materias..."
-									value={materiaSearchQuery}
-									onValueChange={setMateriaSearchQuery}
-									startContent={<Search className="w-4 h-4 text-default-400" />}
-									isClearable
-									onClear={() => setMateriaSearchQuery('')}
-									className="mb-4"
-								/>
-
-								{availableMaterias.length === 0 ? (
-									<p className="text-sm text-default-400">
-										Cargando materias disponibles...
-									</p>
-								) : filteredMaterias.length === 0 ? (
-									<p className="text-sm text-default-400 text-center py-8">
-										No se encontraron materias que coincidan con tu búsqueda
-									</p>
-								) : (
-									<div className="max-h-96 overflow-y-auto pr-2">
-										<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-											{filteredMaterias.map((materia) => {
-												const isSelected = selectedMaterias.has(materia.codigo);
-												const colorGradient = getMateriaColor(materia.codigo);
-												return (
-													<div
-														key={materia.codigo}
-														onClick={() =>
-															toggleMateriaSelection(materia.codigo)
-														}
-														onKeyDown={(e) => {
-															if (e.key === 'Enter' || e.key === ' ') {
-																toggleMateriaSelection(materia.codigo);
-															}
-														}}
-														className={`relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 ${
-															isSelected
-																? 'ring-2 ring-primary shadow-lg'
-																: 'hover:shadow-md'
-														}`}
-													>
-														{/* Color Header */}
-														<div
-															className={`${colorGradient} p-4 flex items-center justify-between`}
-														>
-															<BookOpen className="w-8 h-8 text-white" />
-															{isSelected && (
-																<CheckCircle className="w-6 h-6 text-white" />
-															)}
-														</div>
-
-														{/* Content */}
-														<div className="bg-white dark:bg-gray-800 p-4">
-															<h3 className="font-bold text-base mb-1">
-																{materia.codigo}
-															</h3>
-															<p className="text-sm text-default-600 line-clamp-2">
-																{materia.nombre}
-															</p>
-														</div>
-													</div>
-												);
-											})}
-										</div>
-									</div>
-								)}
-
-								{/* Selected count */}
-								{selectedMaterias.size > 0 && (
-									<p className="text-sm text-success mt-2">
-										{selectedMaterias.size} materia
-										{selectedMaterias.size !== 1 ? 's' : ''} seleccionada
-										{selectedMaterias.size !== 1 ? 's' : ''}
-									</p>
-								)}
-
-								{selectedMaterias.size === 0 && (
-									<p className="text-xs text-danger mt-2">
-										Debe seleccionar al menos una materia
-									</p>
-								)}
-							</div>
-						</div>
-					</ModalBody>
-					<ModalFooter className="sticky bottom-0 bg-content1 z-10 pt-4">
-						<Button
-							color="primary"
-							onPress={handleCreateTutorProfile}
-							isLoading={actionLoading}
-							isDisabled={selectedMaterias.size === 0}
-						>
-							Crear Perfil de Tutor
 						</Button>
 					</ModalFooter>
 				</ModalContent>

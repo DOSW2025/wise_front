@@ -397,3 +397,15 @@ export async function getUserGrowth(
 		throw error;
 	}
 }
+
+/**
+ * Eliminar mi propia cuenta
+ */
+export async function deleteMyAccount(): Promise<void> {
+	try {
+		await apiClient.delete(API_ENDPOINTS.USERS.DELETE_MY_ACCOUNT);
+	} catch (error) {
+		console.error('Error deleting account:', error);
+		throw error;
+	}
+}

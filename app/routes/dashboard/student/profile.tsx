@@ -12,9 +12,9 @@ import { DeleteAccount } from '~/components/profile/DeleteAccount';
 import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
 import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
-import { getProfile } from '~/lib/services/student.service';
-import { useStudentProfileForm } from './hooks/useStudentProfileForm';
-import { useStudentProfileSave } from './hooks/useStudentProfileSave';
+import { deleteMyAccount } from '~/lib/services/user.service';
+import { useProfileForm } from './hooks/useProfileForm';
+import { useProfileSave } from './hooks/useProfileSave';
 
 export default function StudentProfile() {
 	const { user } = useAuth();
@@ -129,7 +129,7 @@ export default function StudentProfile() {
 
 	const handleDeleteAccount = async () => {
 		try {
-			// TODO: Integrar eliminación real cuando el backend lo permita
+			await deleteMyAccount();
 			navigate('/login');
 		} catch (error) {
 			console.error('Error al eliminar cuenta:', error);
