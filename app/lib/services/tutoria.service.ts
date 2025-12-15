@@ -623,6 +623,42 @@ export async function getTutorProfile(
 	}
 }
 
+/**
+ * Obtiene el historial completo de sesiones de un tutor
+ */
+export async function getTutorSessions(
+	tutorId: string,
+): Promise<import('../types/tutoria.types').TutorSessionHistoryResponse> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.TUTOR_SESSIONS.replace(
+			'{tutorId}',
+			tutorId,
+		);
+		console.log('Fetching tutor session history:', { tutorId, url });
+
+		const response =
+			await apiClient.get<
+				import('../types/tutoria.types').TutorSessionHistoryResponse
+			>(url);
+
+		console.log('Tutor session history received:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al obtener historial de sesiones del tutor:', error);
+
+		if (axios.isAxiosError(error)) {
+			console.error('Error details:', {
+				status: error.response?.status,
+				data: error.response?.data,
+			});
+		}
+
+		throw new Error(
+			'No se pudo obtener el historial de sesiones. Verifica tu conexión.',
+		);
+	}
+}
+
 // Exportar todas las funciones como un objeto de servicio
 export const tutoriaService = {
 	getTutores,
@@ -643,4 +679,5 @@ export const tutoriaService = {
 	updateAvailability,
 	getTutorReputacion,
 	getTutorProfile,
+	getTutorSessions,
 };

@@ -329,3 +329,44 @@ export interface TutorProfileResponse {
 	ratings: Rating[];
 	tutorMaterias: TutorMateria[];
 }
+
+/**
+ * Rating object dentro de una sesión de tutor
+ */
+export interface SessionRating {
+	id: number;
+	sessionId: string;
+	tutorId: string;
+	raterId: string;
+	score: number; // 1-5
+	comment: string;
+	createdAt: string; // ISO 8601
+}
+
+/**
+ * Sesión del tutor con rating incluido (para historial)
+ */
+export interface TutorSessionWithRating {
+	id: string;
+	tutorId: string;
+	studentId: string;
+	materiaId: string;
+	codigoMateria: string;
+	scheduledAt: string; // ISO 8601
+	day: WeekDay;
+	startTime: string; // Formato: "HH:mm"
+	endTime: string; // Formato: "HH:mm"
+	mode: SessionMode;
+	status: SessionStatus;
+	linkConexion: string | null;
+	lugar: string | null;
+	comentarios: string | null;
+	createdAt: string; // ISO 8601
+	rating: SessionRating | null;
+	rated: boolean;
+}
+
+/**
+ * Respuesta del historial de sesiones del tutor
+ */
+export type TutorSessionHistoryResponse = TutorSessionWithRating[];

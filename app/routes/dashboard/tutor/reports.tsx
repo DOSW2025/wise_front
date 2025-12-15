@@ -1,59 +1,129 @@
 import {
-	Avatar,
+	Badge,
 	Button,
 	Card,
 	CardBody,
 	CardHeader,
 	Chip,
-	Modal,
-	ModalBody,
-	ModalContent,
-	ModalFooter,
-	ModalHeader,
+	Skeleton,
 	Spinner,
-	Textarea,
-	useDisclosure,
+	Table,
+	TableBody,
+	TableCell,
+	TableColumn,
+	TableHeader,
+	TableRow,
 } from '@heroui/react';
 import {
-	Calendar,
+	AlertCircle,
+	Ban,
+	CalendarOff,
+	CheckCheck,
+	CheckCircle,
 	CheckCircle2,
 	Clock,
-	FileText,
-	MessageSquare,
 	Star,
+	StarOff,
 	TrendingUp,
 	User,
 	XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '~/contexts/auth-context';
+import type { TutorSessionWithRating } from '~/lib/types/tutoria.types';
 import { useTutorReputacion } from './hooks/useTutorReputacion';
+import { useTutorSessionHistory } from './hooks/useTutorSessionHistory';
 import { useTutorStats } from './hooks/useTutorStats';
 
-interface CompletedSession {
-	id: string;
-	studentName: string;
-	studentAvatar?: string;
-	subject: string;
-	topic: string;
-	date: string;
-	time: string;
-	duration: number;
-	modality: 'presencial' | 'virtual';
-	location?: string;
-	status: 'completed';
-	rating?: number;
-	comment?: string;
-	hasResponse?: boolean;
-	responseText?: string;
-}
+// Helper: Formatear fecha a español
+const formatDateToSpanish = (isoDate: string): string => {
+	const date = new Date(isoDate);
+	const dayNames = [
+		'Domingo',
+		'Lunes',
+		'Martes',
+		'Miércoles',
+		'Jueves',
+		'Viernes',
+		'Sábado',
+	];
+	const monthNames = [
+		'Ene',
+		'Feb',
+		'Mar',
+		'Abr',
+		'May',
+		'Jun',
+		'Jul',
+		'Ago',
+		'Sep',
+		'Oct',
+		'Nov',
+		'Dic',
+	];
+	const dayName = dayNames[date.getDay()];
+	const day = date.getDate();
+	const month = monthNames[date.getMonth()];
+	const year = date.getFullYear();
+	return `${dayName}, ${day} ${month}, ${year}`;
+};
+
+// Helper: Renderizar estrellas de calificación
+const renderStars = (score: number) => {
+	return Array.from({ length: 5 }, (_, i) => {
+		if (i < score) {
+			return (
+				<Star key={i} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+			);
+		}
+		return <StarOff key={i} className="w-4 h-4 text-default-300" />;
+	});
+};
+
+// Helper: Obtener configuración de badge según estado
+const getStatusConfig = (status: string) => {
+	switch (status) {
+		case 'PENDIENTE':
+			return {
+				color: 'warning' as const,
+				icon: <Clock className="w-3 h-3" />,
+				label: 'Pendiente',
+			};
+		case 'CONFIRMADA':
+			return {
+				color: 'primary' as const,
+				icon: <CheckCircle className="w-3 h-3" />,
+				label: 'Confirmada',
+			};
+		case 'COMPLETADA':
+			return {
+				color: 'success' as const,
+				icon: <CheckCheck className="w-3 h-3" />,
+				label: 'Completada',
+			};
+		case 'CANCELADA':
+			return {
+				color: 'danger' as const,
+				icon: <XCircle className="w-3 h-3" />,
+				label: 'Cancelada',
+			};
+		case 'RECHAZADA':
+			return {
+				color: 'danger' as const,
+				icon: <Ban className="w-3 h-3" />,
+				label: 'Rechazada',
+			};
+		default:
+			return {
+				color: 'default' as const,
+				icon: <Clock className="w-3 h-3" />,
+				label: status,
+			};
+	}
+};
 
 export default function TutorReports() {
 	const { user } = useAuth();
-	const { isOpen, onOpen, onClose } = useDisclosure();
-	const [selectedSession, setSelectedSession] =
-		useState<CompletedSession | null>(null);
-	const [responseText, setResponseText] = useState('');
 	const [activeTab, setActiveTab] = useState<'history' | 'ratings'>('history');
 
 	// Obtener estadísticas del tutor
@@ -70,62 +140,26 @@ export default function TutorReports() {
 		error: reputacionError,
 	} = useTutorReputacion(user?.id || '', !!user?.id);
 
-	const isLoading = isLoadingStats || isLoadingReputacion;
+	// Obtener historial de sesiones
+	const {
+		data: sessionHistory,
+		isLoading: isLoadingHistory,
+		error: historyError,
+	} = useTutorSessionHistory(user?.id || '', !!user?.id);
 
-	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
-	const [completedSessions, setCompletedSessions] = useState<
-		CompletedSession[]
-	>([
-		{
-			id: '-1',
-			studentName: 'Estudiante Ejemplo (Sin conexión)',
-			subject: 'Sin datos de API',
-			topic: 'Esperando conexión',
-			date: '1900-01-01',
-			time: '00:00',
-			duration: -1,
-			modality: 'virtual',
-			status: 'completed',
-			rating: -1,
-			comment: 'Comentario de ejemplo. Conectar con API para ver datos reales.',
-			hasResponse: false,
-		},
-	]);
+	const isLoading = isLoadingStats || isLoadingReputacion || isLoadingHistory;
+	const hasError = statsError || reputacionError || historyError;
 
-	const handleResponse = (session: CompletedSession) => {
-		setSelectedSession(session);
-		setResponseText(session.responseText || '');
-		onOpen();
-	};
+	// Ordenar sesiones por fecha (más recientes primero)
+	const sortedSessions = sessionHistory
+		? [...sessionHistory].sort(
+				(a, b) =>
+					new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime(),
+			)
+		: [];
 
-	const saveResponse = () => {
-		if (selectedSession && responseText.trim()) {
-			setCompletedSessions(
-				completedSessions.map((session) =>
-					session.id === selectedSession.id
-						? {
-								...session,
-								hasResponse: true,
-								responseText: responseText.trim(),
-							}
-						: session,
-				),
-			);
-			onClose();
-			setResponseText('');
-		}
-	};
-
-	const renderStars = (rating: number) => {
-		return Array.from({ length: 5 }, (_, i) => (
-			<Star
-				key={i}
-				className={`w-4 h-4 ${i < rating ? 'fill-warning text-warning' : 'text-default-300'}`}
-			/>
-		));
-	};
-
-	const ratedSessions = completedSessions.filter((session) => session.rating);
+	// Filtrar sesiones calificadas para la pestaña de evaluaciones
+	const ratedSessions = sortedSessions.filter((session) => session.rated);
 
 	return (
 		<div className="space-y-6">
@@ -146,12 +180,12 @@ export default function TutorReports() {
 					<h2 className="text-xl font-bold text-foreground">
 						Estadísticas generales de tus sesiones de tutoría
 					</h2>
-				</div>{' '}
+				</div>
 				{isLoading ? (
 					<div className="flex justify-center items-center h-64">
 						<Spinner size="lg" label="Cargando estadísticas..." />
 					</div>
-				) : statsError || reputacionError ? (
+				) : hasError ? (
 					<Card>
 						<CardBody className="text-center py-8">
 							<p className="text-danger">
@@ -183,9 +217,7 @@ export default function TutorReports() {
 										<Star className="w-8 h-8 text-warning fill-warning" />
 									</div>
 									<div className="text-3xl font-bold text-warning">
-										{tutorReputacion?.reputacion
-											? tutorReputacion.reputacion.toFixed(2)
-											: '0.00'}
+										{tutorReputacion?.reputacion?.toFixed(2) || '0.00'}
 									</div>
 									<div className="text-sm text-default-500 font-medium">
 										Calificación Promedio
@@ -201,9 +233,7 @@ export default function TutorReports() {
 								<CardBody className="text-center">
 									<Clock className="w-8 h-8 text-success mx-auto mb-2" />
 									<div className="text-3xl font-bold text-success">
-										{tutorStats?.horasDeTutoria
-											? tutorStats.horasDeTutoria.toFixed(1)
-											: '0.0'}
+										{tutorStats?.horasDeTutoria?.toFixed(1) || '0.0'}
 									</div>
 									<div className="text-sm text-default-500 font-medium">
 										Horas Impartidas
@@ -334,64 +364,143 @@ export default function TutorReports() {
 						{/* Historial de Tutorías */}
 						{activeTab === 'history' && (
 							<div className="space-y-4">
-								<h2 className="text-xl font-semibold">Tutorías Completadas</h2>
-								<div className="grid gap-4">
-									{completedSessions.map((session) => (
-										<Card key={session.id}>
-											<CardBody>
-												<div className="flex items-start justify-between">
-													<div className="flex items-center gap-3">
-														<Avatar
-															src={session.studentAvatar}
-															name={session.studentName}
-															size="md"
-															showFallback
-														/>
-														<div className="space-y-1">
-															<h3 className="font-semibold">
-																{session.studentName}
-															</h3>
-															<div className="flex items-center gap-2">
-																<Chip size="sm" color="primary" variant="flat">
-																	{session.subject}
-																</Chip>
-																<span className="text-sm text-default-600">
-																	{session.topic}
-																</span>
-															</div>
-															<div className="flex items-center gap-4 text-sm text-default-500">
-																<div className="flex items-center gap-1">
-																	<Calendar className="w-4 h-4" />
-																	{new Date(session.date).toLocaleDateString()}
-																</div>
-																<div className="flex items-center gap-1">
-																	<Clock className="w-4 h-4" />
-																	{session.time} ({session.duration}min)
-																</div>
-																<span className="capitalize">
-																	{session.modality}
-																</span>
-															</div>
-														</div>
+								<h2 className="text-xl font-semibold">
+									Historial Completo de Sesiones
+								</h2>
+
+								{isLoadingHistory ? (
+									<Card>
+										<CardBody className="space-y-3">
+											{Array.from({ length: 6 }).map((_, i) => (
+												<div key={i} className="flex items-center gap-4">
+													<Skeleton className="w-12 h-12 rounded-full" />
+													<div className="flex-1 space-y-2">
+														<Skeleton className="h-4 w-3/4" />
+														<Skeleton className="h-3 w-1/2" />
 													</div>
-													<div className="flex items-center gap-2">
-														{session.rating && (
-															<div className="flex items-center gap-1">
-																{renderStars(session.rating)}
-																<span className="text-sm font-medium ml-1">
-																	{session.rating}/5
-																</span>
-															</div>
-														)}
-														<Chip size="sm" color="success" variant="flat">
-															Completada
-														</Chip>
-													</div>
+													<Skeleton className="h-8 w-24" />
 												</div>
-											</CardBody>
-										</Card>
-									))}
-								</div>
+											))}
+										</CardBody>
+									</Card>
+								) : historyError ? (
+									<Card>
+										<CardBody className="text-center py-12">
+											<AlertCircle className="w-12 h-12 text-danger mx-auto mb-4" />
+											<h3 className="text-lg font-semibold text-danger mb-2">
+												No pudimos cargar tu historial
+											</h3>
+											<p className="text-default-500">
+												Ocurrió un error al obtener tus sesiones. Por favor,
+												intenta nuevamente.
+											</p>
+										</CardBody>
+									</Card>
+								) : sortedSessions.length === 0 ? (
+									<Card>
+										<CardBody className="text-center py-12">
+											<CalendarOff className="w-12 h-12 text-default-400 mx-auto mb-4" />
+											<h3 className="text-lg font-semibold text-default-700 mb-2">
+												Aún no tienes sesiones en tu historial
+											</h3>
+											<p className="text-default-500">
+												Cuando realices tutorías, aparecerán aquí.
+											</p>
+										</CardBody>
+									</Card>
+								) : (
+									<Card>
+										<CardBody className="p-0">
+											<Table
+												aria-label="Historial de sesiones de tutoría"
+												removeWrapper
+												className="min-w-full"
+											>
+												<TableHeader>
+													<TableColumn>ESTUDIANTE</TableColumn>
+													<TableColumn>MATERIA</TableColumn>
+													<TableColumn>ESTADO</TableColumn>
+													<TableColumn>FECHA</TableColumn>
+													<TableColumn>HORA</TableColumn>
+													<TableColumn>CALIFICACIÓN</TableColumn>
+												</TableHeader>
+												<TableBody>
+													{sortedSessions.map((session) => {
+														const statusConfig = getStatusConfig(
+															session.status,
+														);
+														return (
+															<TableRow key={session.id}>
+																{/* Estudiante */}
+																<TableCell>
+																	<div className="flex items-center gap-2">
+																		<User className="w-4 h-4 text-default-400" />
+																		<span className="text-sm">Estudiante</span>
+																	</div>
+																</TableCell>
+
+																{/* Materia */}
+																<TableCell>
+																	<Chip
+																		size="sm"
+																		variant="flat"
+																		color="default"
+																	>
+																		{session.codigoMateria}
+																	</Chip>
+																</TableCell>
+
+																{/* Estado */}
+																<TableCell>
+																	<Chip
+																		size="sm"
+																		color={statusConfig.color}
+																		variant="flat"
+																		startContent={statusConfig.icon}
+																	>
+																		{statusConfig.label}
+																	</Chip>
+																</TableCell>
+
+																{/* Fecha */}
+																<TableCell>
+																	<div className="text-sm">
+																		{formatDateToSpanish(session.scheduledAt)}
+																	</div>
+																</TableCell>
+
+																{/* Hora */}
+																<TableCell>
+																	<div className="text-sm font-mono">
+																		{session.startTime} - {session.endTime}
+																	</div>
+																</TableCell>
+
+																{/* Calificación */}
+																<TableCell>
+																	{session.rated && session.rating ? (
+																		<div className="flex items-center gap-2">
+																			<div className="flex items-center gap-0.5">
+																				{renderStars(session.rating.score)}
+																			</div>
+																			<span className="text-sm font-medium text-yellow-600">
+																				{session.rating.score}/5
+																			</span>
+																		</div>
+																	) : (
+																		<span className="text-sm text-default-400">
+																			Sin calificar
+																		</span>
+																	)}
+																</TableCell>
+															</TableRow>
+														);
+													})}
+												</TableBody>
+											</Table>
+										</CardBody>
+									</Card>
+								)}
 							</div>
 						)}
 
@@ -401,137 +510,95 @@ export default function TutorReports() {
 								<h2 className="text-xl font-semibold">
 									Evaluaciones Recibidas
 								</h2>
-								<div className="grid gap-4">
-									{ratedSessions.map((session) => (
-										<Card
-											key={session.id}
-											className={
-												!session.hasResponse && session.comment
-													? 'border-warning'
-													: ''
-											}
-										>
-											<CardHeader className="pb-2">
-												<div className="flex items-start justify-between w-full">
-													<div className="flex items-center gap-3">
-														<Avatar
-															src={session.studentAvatar}
-															name={session.studentName}
-															size="sm"
-															showFallback
-														/>
-														<div>
-															<h3 className="font-semibold">
-																{session.studentName}
-															</h3>
-															<p className="text-sm text-default-500">
-																{session.subject} -{' '}
-																{new Date(session.date).toLocaleDateString()}
-															</p>
-														</div>
-													</div>
-													<div className="flex items-center gap-2">
-														{renderStars(session.rating || 0)}
-														<span className="font-medium">
-															{session.rating}/5
-														</span>
-													</div>
-												</div>
-											</CardHeader>
-											<CardBody className="pt-0">
-												{session.comment && (
-													<div className="space-y-3">
-														<div className="p-3 bg-default-50 rounded-lg">
-															<p className="text-sm">{session.comment}</p>
-														</div>
 
-														{session.hasResponse && session.responseText ? (
-															<div className="p-3 bg-primary-50 rounded-lg border-l-4 border-primary">
-																<div className="flex items-center gap-2 mb-2">
-																	<User className="w-4 h-4 text-primary" />
-																	<span className="text-sm font-medium text-primary">
-																		Tu respuesta:
-																	</span>
-																</div>
-																<p className="text-sm">
-																	{session.responseText}
+								{isLoadingHistory ? (
+									<Card>
+										<CardBody className="space-y-4">
+											{Array.from({ length: 3 }).map((_, i) => (
+												<div key={i} className="space-y-3">
+													<div className="flex items-center gap-3">
+														<Skeleton className="w-10 h-10 rounded-full" />
+														<div className="flex-1 space-y-2">
+															<Skeleton className="h-4 w-1/3" />
+															<Skeleton className="h-3 w-1/4" />
+														</div>
+														<Skeleton className="h-6 w-20" />
+													</div>
+													<Skeleton className="h-16 w-full rounded-lg" />
+												</div>
+											))}
+										</CardBody>
+									</Card>
+								) : historyError ? (
+									<Card>
+										<CardBody className="text-center py-12">
+											<AlertCircle className="w-12 h-12 text-danger mx-auto mb-4" />
+											<h3 className="text-lg font-semibold text-danger mb-2">
+												No pudimos cargar las evaluaciones
+											</h3>
+											<p className="text-default-500">
+												Ocurrió un error al obtener las evaluaciones. Por favor,
+												intenta nuevamente.
+											</p>
+										</CardBody>
+									</Card>
+								) : ratedSessions.length === 0 ? (
+									<Card>
+										<CardBody className="text-center py-12">
+											<Star className="w-12 h-12 text-default-400 mx-auto mb-4" />
+											<h3 className="text-lg font-semibold text-default-700 mb-2">
+												Aún no tienes evaluaciones
+											</h3>
+											<p className="text-default-500">
+												Cuando los estudiantes califiquen tus tutorías,
+												aparecerán aquí.
+											</p>
+										</CardBody>
+									</Card>
+								) : (
+									<div className="grid gap-4">
+										{ratedSessions.map((session) => (
+											<Card key={session.id}>
+												<CardHeader className="pb-2">
+													<div className="flex items-start justify-between w-full">
+														<div className="flex items-center gap-3">
+															<User className="w-10 h-10 text-default-400 rounded-full bg-default-100 p-2" />
+															<div>
+																<h3 className="font-semibold">Estudiante</h3>
+																<p className="text-sm text-default-500">
+																	{session.codigoMateria} -{' '}
+																	{formatDateToSpanish(session.scheduledAt)}
 																</p>
 															</div>
-														) : (
-															<Button
-																size="sm"
-																color="primary"
-																variant="flat"
-																startContent={
-																	<MessageSquare className="w-4 h-4" />
-																}
-																onPress={() => handleResponse(session)}
-															>
-																Responder
-															</Button>
-														)}
+														</div>
+														<div className="flex items-center gap-2">
+															<div className="flex items-center gap-0.5">
+																{renderStars(session.rating?.score || 0)}
+															</div>
+															<span className="font-medium text-yellow-600">
+																{session.rating?.score || 0}/5
+															</span>
+														</div>
 													</div>
-												)}
-											</CardBody>
-										</Card>
-									))}
-								</div>
+												</CardHeader>
+												<CardBody className="pt-0">
+													{session.rating?.comment && (
+														<div className="p-3 bg-default-50 rounded-lg">
+															<p className="text-sm">
+																{session.rating.comment}
+															</p>
+														</div>
+													)}
+												</CardBody>
+											</Card>
+										))}
+									</div>
+								)}
 							</div>
 						)}
 					</div>
 				)}
 			</div>
-
-			{/* Modal para responder comentarios */}
-			<Modal isOpen={isOpen} onClose={onClose}>
-				<ModalContent>
-					<ModalHeader>Responder Comentario</ModalHeader>
-					<ModalBody>
-						{selectedSession && (
-							<div className="space-y-4">
-								<div className="p-3 bg-default-100 rounded-lg">
-									<div className="flex items-center gap-2 mb-2">
-										<Avatar
-											src={selectedSession.studentAvatar}
-											name={selectedSession.studentName}
-											size="sm"
-											showFallback
-										/>
-										<span className="font-medium">
-											{selectedSession.studentName}
-										</span>
-										<div className="flex items-center gap-1">
-											{renderStars(selectedSession.rating || 0)}
-										</div>
-									</div>
-									<p className="text-sm text-default-600">
-										{selectedSession.comment}
-									</p>
-								</div>
-								<Textarea
-									label="Tu respuesta"
-									placeholder="Escribe tu respuesta al comentario del estudiante..."
-									value={responseText}
-									onValueChange={setResponseText}
-									minRows={3}
-								/>
-							</div>
-						)}
-					</ModalBody>
-					<ModalFooter>
-						<Button variant="light" onPress={onClose}>
-							Cancelar
-						</Button>
-						<Button
-							color="primary"
-							onPress={saveResponse}
-							isDisabled={!responseText.trim()}
-						>
-							Enviar Respuesta
-						</Button>
-					</ModalFooter>
-				</ModalContent>
-			</Modal>
 		</div>
 	);
 }
