@@ -35,7 +35,6 @@ export default function PreviewModal({
 	onShare,
 	onReport,
 	onRate,
-	onComment,
 	onRatingChange,
 	onAddComment,
 }: PreviewModalProps) {
@@ -66,6 +65,17 @@ export default function PreviewModal({
 				</ModalHeader>
 
 				<ModalBody className="p-6">
+					{/* Tags del material */}
+					{material.tags && material.tags.length > 0 && (
+						<div className="flex flex-wrap gap-2 mb-4">
+							{material.tags.map((tag) => (
+								<Chip key={tag} size="sm" variant="flat" color="primary">
+									{tag}
+								</Chip>
+							))}
+						</div>
+					)}
+
 					{/* Información del archivo */}
 					<div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-lg">
 						<div className="flex items-center gap-4">

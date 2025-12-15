@@ -10,6 +10,7 @@ import {
 	ModalContent,
 	ModalFooter,
 	ModalHeader,
+	Spinner,
 	Textarea,
 	useDisclosure,
 } from '@heroui/react';
@@ -23,51 +24,58 @@ import {
 	X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { EmptyState, FeedbackModal } from '~/components';
+import { useAuth } from '~/contexts/auth-context';
+import { usePendingSessions } from '~/lib/hooks/usePendingSessions';
+import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
+import type { PendingSession } from '~/lib/types/tutoria.types';
+import { getErrorMessage } from '~/lib/utils/error-messages';
+import { useConfirmSession } from '~/routes/dashboard/tutor/hooks/useConfirmSession';
+import { useRejectSession } from '~/routes/dashboard/tutor/hooks/useRejectSession';
 
-interface SessionRequest {
-	id: string;
-	studentName: string;
-	studentAvatar?: string;
-	subject: string;
-	topic: string;
-	date: string;
-	time: string;
-	duration: number;
-	modality: 'presencial' | 'virtual';
-	location?: string;
-	description: string;
-	status: 'pending' | 'confirmed' | 'cancelled';
-	createdAt: string;
-}
+const DAY_LABELS: Record<string, string> = {
+	monday: 'Lunes',
+	tuesday: 'Martes',
+	wednesday: 'Miércoles',
+	thursday: 'Jueves',
+	friday: 'Viernes',
+	saturday: 'Sábado',
+	sunday: 'Domingo',
+};
 
 export default function TutorRequests() {
+	const { user } = useAuth();
 	const { isOpen, onOpen, onClose } = useDisclosure();
-	const [selectedRequest, setSelectedRequest] = useState<SessionRequest | null>(
+	const [selectedRequest, setSelectedRequest] = useState<PendingSession | null>(
 		null,
 	);
 	const [actionType, setActionType] = useState<'confirm' | 'cancel'>('confirm');
 	const [responseMessage, setResponseMessage] = useState('');
+	const [feedback, setFeedback] = useState<{
+		isOpen: boolean;
+		type: 'success' | 'error';
+		message: string;
+	}>({
+		isOpen: false,
+		type: 'success',
+		message: '',
+	});
 
-	// TODO: Conectar con API - Ejemplo con valores negativos para referencia
-	const [requests, setRequests] = useState<SessionRequest[]>([
-		{
-			id: '-1',
-			studentName: 'Estudiante Ejemplo (Sin conexión)',
-			subject: 'Sin datos de API',
-			topic: 'Esperando conexión',
-			date: '1900-01-01',
-			time: '00:00',
-			duration: -1,
-			modality: 'virtual',
-			description:
-				'Este es un ejemplo con valores negativos. Conectar con API.',
-			status: 'pending',
-			createdAt: '1900-01-01',
-		},
-	]);
+	const {
+		data: pendingSessions = [],
+		isLoading,
+		isError,
+	} = usePendingSessions(user?.id || '', !!user?.id);
+
+	const { data: stats } = useTutoriaStats(user?.id || '', !!user?.id);
+
+	const { mutate: confirmSession, isPending: isConfirming } =
+		useConfirmSession();
+
+	const { mutate: rejectSession, isPending: isRejecting } = useRejectSession();
 
 	const handleAction = (
-		request: SessionRequest,
+		request: PendingSession,
 		action: 'confirm' | 'cancel',
 	) => {
 		setSelectedRequest(request);
@@ -77,22 +85,88 @@ export default function TutorRequests() {
 	};
 
 	const confirmAction = () => {
-		if (selectedRequest) {
-			setRequests(
-				requests.map((req) =>
-					req.id === selectedRequest.id
-						? {
-								...req,
-								status: actionType === 'confirm' ? 'confirmed' : 'cancelled',
-							}
-						: req,
-				),
+		if (!selectedRequest || !user?.id) return;
+
+		if (actionType === 'confirm') {
+			confirmSession(
+				{
+					sessionId: selectedRequest.sessionId,
+					tutorId: user.id,
+				},
+				{
+					onSuccess: () => {
+						onClose();
+						setFeedback({
+							isOpen: true,
+							type: 'success',
+							message: `Tutoría con ${selectedRequest.studentName} confirmada exitosamente`,
+						});
+					},
+					onError: (error) => {
+						setFeedback({
+							isOpen: true,
+							type: 'error',
+							message: getErrorMessage(error),
+						});
+					},
+				},
 			);
-			onClose();
+		} else {
+			// Validar que se haya ingresado una razón
+			if (!responseMessage.trim()) {
+				setFeedback({
+					isOpen: true,
+					type: 'error',
+					message: 'Debes proporcionar una razón para rechazar la solicitud',
+				});
+				return;
+			}
+
+			rejectSession(
+				{
+					sessionId: selectedRequest.sessionId,
+					tutorId: user.id,
+					razon: responseMessage.trim(),
+				},
+				{
+					onSuccess: () => {
+						onClose();
+						setResponseMessage('');
+						setFeedback({
+							isOpen: true,
+							type: 'success',
+							message: `Solicitud de ${selectedRequest.studentName} rechazada`,
+						});
+					},
+					onError: (error) => {
+						setFeedback({
+							isOpen: true,
+							type: 'error',
+							message: getErrorMessage(error),
+						});
+					},
+				},
+			);
 		}
 	};
 
-	const pendingRequests = requests.filter((req) => req.status === 'pending');
+	if (isLoading) {
+		return (
+			<div className="flex items-center justify-center min-h-[400px]">
+				<Spinner size="lg" label="Cargando solicitudes..." />
+			</div>
+		);
+	}
+
+	if (isError) {
+		return (
+			<EmptyState
+				title="Error al cargar solicitudes"
+				description="No se pudieron obtener las solicitudes pendientes. Intenta recargar la página."
+				icon={<X className="w-12 h-12" />}
+			/>
+		);
+	}
 
 	return (
 		<div className="space-y-6">
@@ -110,7 +184,7 @@ export default function TutorRequests() {
 				<Card>
 					<CardBody className="text-center">
 						<div className="text-2xl font-bold text-warning">
-							{pendingRequests.length}
+							{stats?.sesionesPendientes ?? 0}
 						</div>
 						<div className="text-sm text-default-500">Pendientes</div>
 					</CardBody>
@@ -118,7 +192,7 @@ export default function TutorRequests() {
 				<Card>
 					<CardBody className="text-center">
 						<div className="text-2xl font-bold text-success">
-							{requests.filter((r) => r.status === 'confirmed').length}
+							{stats?.sesionesConfirmadas ?? 0}
 						</div>
 						<div className="text-sm text-default-500">Confirmadas</div>
 					</CardBody>
@@ -126,30 +200,25 @@ export default function TutorRequests() {
 				<Card>
 					<CardBody className="text-center">
 						<div className="text-2xl font-bold text-danger">
-							{requests.filter((r) => r.status === 'cancelled').length}
+							{stats?.sesionesRechazadas ?? 0}
 						</div>
-						<div className="text-sm text-default-500">Canceladas</div>
+						<div className="text-sm text-default-500">Rechazadas</div>
 					</CardBody>
 				</Card>
 			</div>
 
 			{/* Lista de solicitudes */}
 			<div className="space-y-4">
-				{pendingRequests.length > 0 ? (
-					pendingRequests.map((request) => (
+				{pendingSessions.length > 0 ? (
+					pendingSessions.map((request) => (
 						<Card
-							key={request.id}
+							key={request.sessionId}
 							className="hover:shadow-md transition-shadow"
 						>
 							<CardHeader className="pb-2">
 								<div className="flex items-start justify-between w-full">
 									<div className="flex items-center gap-3">
-										<Avatar
-											src={request.studentAvatar}
-											name={request.studentName}
-											size="md"
-											showFallback
-										/>
+										<Avatar name={request.studentName} size="md" showFallback />
 										<div>
 											<h3 className="font-semibold text-lg">
 												{request.studentName}
@@ -172,54 +241,58 @@ export default function TutorRequests() {
 										<div className="space-y-2">
 											<div className="flex items-center gap-2">
 												<User className="w-4 h-4 text-primary" />
-												<span className="font-medium">{request.subject}</span>
+												<span className="font-medium">
+													{request.subjectCode} - {request.subjectName}
+												</span>
 											</div>
 											<div className="flex items-center gap-2">
 												<Calendar className="w-4 h-4 text-default-500" />
 												<span className="text-sm">
-													{new Date(request.date).toLocaleDateString()} a las{' '}
-													{request.time}
+													{DAY_LABELS[request.day]} -{' '}
+													{new Date(request.scheduledAt).toLocaleDateString(
+														'es-ES',
+														{
+															day: '2-digit',
+															month: 'short',
+															year: 'numeric',
+														},
+													)}
 												</span>
 											</div>
 											<div className="flex items-center gap-2">
 												<Clock className="w-4 h-4 text-default-500" />
 												<span className="text-sm">
-													{request.duration} minutos
+													{request.startTime} - {request.endTime}
 												</span>
 											</div>
 										</div>
 										<div className="space-y-2">
 											<div className="flex items-center gap-2">
-												{request.modality === 'virtual' ? (
+												{request.mode === 'VIRTUAL' ? (
 													<Video className="w-4 h-4 text-success" />
 												) : (
 													<MapPin className="w-4 h-4 text-primary" />
 												)}
-												<span className="text-sm capitalize">
-													{request.modality}
+												<span className="text-sm">
+													{request.mode === 'VIRTUAL'
+														? 'Virtual'
+														: 'Presencial'}
 												</span>
-												{request.location && (
-													<span className="text-sm text-default-500">
-														- {request.location}
-													</span>
-												)}
 											</div>
 										</div>
 									</div>
 
-									{/* Tema y descripción */}
-									<div className="space-y-2">
-										<div>
-											<span className="font-medium text-sm">Tema: </span>
-											<span className="text-sm">{request.topic}</span>
-										</div>
-										<div>
-											<span className="font-medium text-sm">Descripción: </span>
-											<p className="text-sm text-default-600 mt-1">
-												{request.description}
+									{/* Comentarios del estudiante */}
+									{request.comentarios && (
+										<div className="bg-default-100 rounded-lg p-3">
+											<p className="text-sm font-medium mb-1">
+												Comentarios del estudiante:
+											</p>
+											<p className="text-sm text-default-600">
+												{request.comentarios}
 											</p>
 										</div>
-									</div>
+									)}
 
 									{/* Botones de acción */}
 									<div className="flex gap-2 pt-2">
@@ -245,15 +318,11 @@ export default function TutorRequests() {
 						</Card>
 					))
 				) : (
-					<Card>
-						<CardBody className="text-center py-12">
-							<CheckCircle className="w-12 h-12 text-success mx-auto mb-4" />
-							<h3 className="text-lg font-semibold mb-2">¡Todo al día!</h3>
-							<p className="text-default-500">
-								No tienes solicitudes pendientes por revisar.
-							</p>
-						</CardBody>
-					</Card>
+					<EmptyState
+						title="¡Todo al día!"
+						description="No tienes solicitudes pendientes por revisar."
+						icon={<CheckCircle className="w-12 h-12" />}
+					/>
 				)}
 			</div>
 
@@ -271,38 +340,47 @@ export default function TutorRequests() {
 								<div className="p-3 bg-default-100 rounded-lg">
 									<p className="font-medium">{selectedRequest.studentName}</p>
 									<p className="text-sm text-default-600">
-										{selectedRequest.subject} - {selectedRequest.topic}
+										{selectedRequest.subjectCode} -{' '}
+										{selectedRequest.subjectName}
 									</p>
 									<p className="text-sm text-default-500">
-										{new Date(selectedRequest.date).toLocaleDateString()} a las{' '}
-										{selectedRequest.time}
+										{DAY_LABELS[selectedRequest.day]} -{' '}
+										{new Date(selectedRequest.scheduledAt).toLocaleDateString(
+											'es-ES',
+											{
+												day: '2-digit',
+												month: 'short',
+												year: 'numeric',
+											},
+										)}{' '}
+										- {selectedRequest.startTime} a {selectedRequest.endTime}
 									</p>
 								</div>
-								<Textarea
-									label={
-										actionType === 'confirm'
-											? 'Mensaje de confirmación (opcional)'
-											: 'Motivo del rechazo'
-									}
-									placeholder={
-										actionType === 'confirm'
-											? 'Mensaje para el estudiante...'
-											: 'Explica brevemente el motivo del rechazo...'
-									}
-									value={responseMessage}
-									onValueChange={setResponseMessage}
-									minRows={3}
-								/>
+								{actionType === 'cancel' && (
+									<Textarea
+										label="Motivo del rechazo"
+										placeholder="Explica brevemente el motivo del rechazo..."
+										value={responseMessage}
+										onValueChange={setResponseMessage}
+										minRows={3}
+									/>
+								)}
 							</div>
 						)}
 					</ModalBody>
 					<ModalFooter>
-						<Button variant="light" onPress={onClose}>
+						<Button
+							variant="light"
+							onPress={onClose}
+							isDisabled={isConfirming || isRejecting}
+						>
 							Cancelar
 						</Button>
 						<Button
 							color={actionType === 'confirm' ? 'success' : 'danger'}
 							onPress={confirmAction}
+							isLoading={isConfirming || isRejecting}
+							isDisabled={isConfirming || isRejecting}
 						>
 							{actionType === 'confirm'
 								? 'Confirmar Tutoría'
@@ -311,6 +389,14 @@ export default function TutorRequests() {
 					</ModalFooter>
 				</ModalContent>
 			</Modal>
+
+			{/* Modal de Feedback */}
+			<FeedbackModal
+				isOpen={feedback.isOpen}
+				onClose={() => setFeedback({ ...feedback, isOpen: false })}
+				type={feedback.type}
+				message={feedback.message}
+			/>
 		</div>
 	);
 }

@@ -27,7 +27,6 @@ export function UploadMaterialForm({
 }: UploadMaterialFormProps) {
 	const [formData, setFormData] = useState({
 		nombre: '',
-		materia: '',
 		descripcion: '',
 	});
 	const [file, setFile] = useState<File | null>(null);
@@ -40,7 +39,7 @@ export function UploadMaterialForm({
 	const createMaterial = useCreateMaterial();
 
 	const allowedTypes = ['application/pdf'];
-	const maxSize = 10 * 1024 * 1024; // 10MB
+	const maxSize = 100 * 1024 * 1024; // 100MB
 
 	const validateFile = (selectedFile: File) => {
 		const newErrors: Record<string, string> = {};
@@ -55,7 +54,7 @@ export function UploadMaterialForm({
 		}
 
 		if (selectedFile.size > maxSize) {
-			newErrors.file = 'El archivo es demasiado grande. Máximo 10MB';
+			newErrors.file = 'El archivo es demasiado grande. Máximo 100MB';
 		}
 
 		if (selectedFile.size === 0) {
@@ -111,10 +110,6 @@ export function UploadMaterialForm({
 			newErrors.nombre = 'El título debe tener al menos 3 caracteres';
 		}
 
-		if (!formData.materia) {
-			newErrors.materia = 'La materia es requerida';
-		}
-
 		if (formData.descripcion.length > 300) {
 			newErrors.descripcion =
 				'La descripción no puede superar los 300 caracteres';
@@ -153,12 +148,12 @@ export function UploadMaterialForm({
 
 			await createMaterial.mutateAsync({
 				nombre: formData.nombre,
-				materia: formData.materia,
 				tipo: 'PDF',
 				semestre: 1,
 				descripcion: formData.descripcion,
 				file,
 				userId: user.id,
+				materia: undefined,
 			});
 
 			clearInterval(interval);
@@ -176,21 +171,8 @@ export function UploadMaterialForm({
 
 			if (error instanceof Error) {
 				console.error('Mensaje de error:', error.message);
+				// Usar el mensaje mapeado del servicio directamente
 				errorMessage = error.message;
-
-				// Mensajes más específicos según el tipo de error
-				if (error.message.includes('PDF falló la validación')) {
-					errorMessage =
-						'El PDF no pasó la validación de contenido. Verifique que el PDF sea válido.';
-				} else if (error.message.includes('extraction failed')) {
-					errorMessage = 'Error al procesar el PDF. Intente con otro archivo.';
-				} else if (error.message.includes('network')) {
-					errorMessage = 'Error de conexión. Verifique su internet.';
-				} else if (error.message.includes('size')) {
-					errorMessage = 'El archivo es demasiado grande. Máximo 10MB.';
-				} else if (error.message.includes('format')) {
-					errorMessage = 'Formato de archivo no válido. Solo se aceptan PDF.';
-				}
 			}
 
 			setErrors({ submit: errorMessage });
@@ -202,7 +184,7 @@ export function UploadMaterialForm({
 		<Card className="w-full max-w-2xl">
 			<CardBody className="p-6">
 				<div className="flex items-center justify-between mb-6">
-					<h3 className="text-xl font-semibold">Subir Material</h3>
+					<h3 className="font-heading text-xl font-semibold">Subir Material</h3>
 					<Button isIconOnly variant="light" onPress={onClose}>
 						<X className="w-4 h-4" />
 					</Button>
@@ -222,22 +204,6 @@ export function UploadMaterialForm({
 						}}
 						isInvalid={!!errors.nombre}
 						errorMessage={errors.nombre}
-						isRequired
-					/>
-
-					<Input
-						label="Materia/Asignatura"
-						placeholder="Ej: Matemáticas, Programación, Física..."
-						value={formData.materia}
-						onValueChange={(value) => {
-							setFormData((prev) => ({ ...prev, materia: value }));
-							// Clear error when user types
-							if (value.trim().length > 0 && errors.materia) {
-								setErrors((prev) => ({ ...prev, materia: '' }));
-							}
-						}}
-						isInvalid={!!errors.materia}
-						errorMessage={errors.materia}
 						isRequired
 					/>
 
@@ -262,9 +228,9 @@ export function UploadMaterialForm({
 							type="button"
 							className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors w-full ${
 								file
-									? 'border-[#8B1A1A] bg-red-50'
+									? 'border-danger bg-danger-50'
 									: isDragOver
-										? 'border-[#8B1A1A] bg-red-50'
+										? 'border-danger bg-danger-50'
 										: 'border-default-300 hover:border-default-400'
 							}`}
 							onDragOver={handleDragOver}
@@ -286,7 +252,7 @@ export function UploadMaterialForm({
 										<p className="text-sm text-[#8B1A1A] font-medium">
 											{file.name}
 										</p>
-										<p className="text-xs text-gray-500 mt-1">
+										<p className="text-xs text-default-500 mt-1">
 											Archivo seleccionado correctamente
 										</p>
 									</div>
@@ -323,9 +289,9 @@ export function UploadMaterialForm({
 					)}
 
 					{showSuccess && (
-						<div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-							<CheckCircle className="w-5 h-5 text-green-600" />
-							<p className="text-sm text-green-700 font-medium">
+						<div className="flex items-center gap-2 p-3 bg-success-50 border border-success-200 rounded-lg">
+							<CheckCircle className="w-5 h-5 text-success" />
+							<p className="text-sm text-success font-medium">
 								Material cargado exitosamente
 							</p>
 						</div>
@@ -337,7 +303,7 @@ export function UploadMaterialForm({
 
 					<div className="flex gap-3 pt-4">
 						<Button
-							className="bg-[#8B1A1A] text-white"
+							className="font-nav bg-[#8B1A1A] text-white"
 							type="submit"
 							isLoading={createMaterial.isPending}
 							isDisabled={uploadProgress > 0 && uploadProgress < 100}
@@ -345,6 +311,7 @@ export function UploadMaterialForm({
 							Subir Material
 						</Button>
 						<Button
+							className="font-nav"
 							variant="bordered"
 							onPress={onClose}
 							isDisabled={createMaterial.isPending}

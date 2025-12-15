@@ -1,6 +1,7 @@
 import { Avatar, Button } from '@heroui/react';
 import {
 	BarChart3,
+	BookMarked,
 	BookOpen,
 	Calendar,
 	CheckSquare,
@@ -12,8 +13,6 @@ import {
 	LogOut,
 	Menu,
 	MessageSquare,
-	Settings,
-	Sparkles,
 	TrendingUp,
 	UserCheck,
 	Users,
@@ -70,12 +69,12 @@ export function Sidebar({
 					icon: <BookOpen className="w-5 h-5" />,
 					path: '/dashboard/student/materials',
 				},
-				{
-					key: 'progress',
-					label: 'Mi Progreso',
-					icon: <TrendingUp className="w-5 h-5" />,
-					path: '/dashboard/student/progress',
-				},
+				// {
+				// 	key: 'progress',
+				// 	label: 'Mi Progreso',
+				// 	icon: <TrendingUp className="w-5 h-5" />,
+				// 	path: '/dashboard/student/progress',
+				// },
 				{
 					key: 'statistics',
 					label: 'Estadísticas',
@@ -123,12 +122,12 @@ export function Sidebar({
 					icon: <BookOpen className="w-5 h-5" />,
 					path: '/dashboard/tutor/materials',
 				},
-				{
-					key: 'performance',
-					label: 'Mi Desempeño',
-					icon: <BarChart3 className="w-5 h-5" />,
-					path: '/dashboard/tutor/performance',
-				},
+				// {
+				// 	key: 'performance',
+				// 	label: 'Mi Desempeño',
+				// 	icon: <BarChart3 className="w-5 h-5" />,
+				// 	path: '/dashboard/tutor/performance',
+				// },
 				{
 					key: 'reports',
 					label: 'Reportes y Métricas',
@@ -171,28 +170,22 @@ export function Sidebar({
 					path: '/dashboard/admin/users',
 				},
 				{
-					key: 'validation',
-					label: 'Validación de Materiales',
+					key: 'materials',
+					label: 'Gestor de Materiales',
 					icon: <FileText className="w-5 h-5" />,
-					path: '/dashboard/admin/validation',
+					path: '/dashboard/admin/materials',
 				},
 				{
-					key: 'gamification',
-					label: 'Gamificación',
-					icon: <Sparkles className="w-5 h-5" />,
-					path: '/dashboard/admin/gamification',
+					key: 'materias',
+					label: 'Gestión de Materias',
+					icon: <BookMarked className="w-5 h-5" />,
+					path: '/dashboard/admin/materias',
 				},
 				{
 					key: 'reports',
 					label: 'Reportes y Métricas',
 					icon: <TrendingUp className="w-5 h-5" />,
 					path: '/dashboard/admin/reports',
-				},
-				{
-					key: 'settings',
-					label: 'Configuración',
-					icon: <Settings className="w-5 h-5" />,
-					path: '/dashboard/admin/settings',
 				},
 				{
 					key: 'help',
@@ -219,7 +212,7 @@ export function Sidebar({
 			case 'student':
 				return 'Panel de Estudiante';
 			case 'tutor':
-				return 'Panel de Docente';
+				return 'Panel de Tutor';
 			case 'admin':
 				return 'Panel de Administrador';
 			default:
@@ -284,7 +277,10 @@ export function Sidebar({
 						onClick={() => setIsMobileMenuOpen(false)}
 					>
 						<img
-							src="/logo/logoeciwise.svg"
+							src="/logo/logo.png"
+							onError={(e) => {
+								e.currentTarget.src = '/logo/logo.png';
+							}}
 							alt="ECIWISE+ logo"
 							className="w-11 h-11"
 						/>
@@ -351,7 +347,7 @@ export function Sidebar({
 								to={item.path}
 								onClick={() => setIsMobileMenuOpen(false)}
 								className={`
-									flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+									flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors font-nav
 									${
 										isActive
 											? 'bg-primary text-primary-foreground'

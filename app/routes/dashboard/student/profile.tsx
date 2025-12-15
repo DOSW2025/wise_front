@@ -1,5 +1,6 @@
-import { Card, CardBody, Chip, Input } from '@heroui/react';
+import { Card, CardBody, Input } from '@heroui/react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
 import {
 	ProfileConfigurationSection,
@@ -7,17 +8,35 @@ import {
 	ProfileFormFields,
 	ProfileHeader,
 } from '~/components/profile';
+import { DeleteAccount } from '~/components/profile/DeleteAccount';
+import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
+import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 import { getProfile } from '~/lib/services/student.service';
+import { deleteMyAccount } from '~/lib/services/user.service';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
 
 export default function StudentProfile() {
 	const { user } = useAuth();
+	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
-	const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+	const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
-	// Custom hooks for managing complex state
+	// Fetch tutorías statistics
+	const { data: stats, isLoading: isLoadingStats } = useTutoriaStats(
+		user?.id ?? '',
+		!!user?.id,
+	);
+
+	// Calculate hours display value
+	let hoursValue = '...';
+	if (!isLoadingStats) {
+		hoursValue = stats?.horasDeTutoria
+			? `${stats.horasDeTutoria.toFixed(1)}h`
+			: '0h';
+	}
+
 	const {
 		profile,
 		setProfile,
@@ -33,12 +52,12 @@ export default function StudentProfile() {
 		phone: '',
 		role: user?.role || '',
 		description: '',
-		avatar: user?.avatarUrl,
+		avatarUrl: user?.avatarUrl,
 		interests: [],
 		semester: '',
 	});
 
-	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
+	const { isSaving, error, success, saveProfile } = useProfileSave();
 
 	// Cargar el perfil completo cuando el componente se monta
 	useEffect(() => {
@@ -52,27 +71,24 @@ export default function StudentProfile() {
 				// Actualizar el estado del perfil con los datos cargados del backend
 				setProfile((prev) => ({
 					...prev,
-					name: user.name, // Mantener nombre del contexto (no editable)
-					email: user.email, // Mantener email del contexto (no editable)
-					avatar: user.avatarUrl,
+					name: user.name,
+					email: user.email,
+					avatarUrl: user.avatarUrl,
 					phone: profileData.phone || '',
 					description: profileData.description || '',
 					role: profileData.role || user.role || '',
 					semester: profileData.semester || '',
-					// Nota: los intereses se mantienen localmente para futuro uso y no se persisten en backend
+					interests: profileData.interests || prev.interests || [],
 				}));
 			} catch (err) {
 				console.error('Error cargando perfil:', err);
-				const errorMessage =
-					err instanceof Error ? err.message : 'Error al cargar tu perfil';
-				setError(errorMessage);
 			} finally {
 				setIsLoadingProfile(false);
 			}
 		};
 
 		loadProfile();
-	}, [user, setProfile, setError]);
+	}, [user, setProfile]);
 
 	// Actualizar datos básicos del usuario desde el contexto
 	useEffect(() => {
@@ -81,14 +97,13 @@ export default function StudentProfile() {
 				...prev,
 				name: user.name,
 				email: user.email,
-				avatar: user.avatarUrl,
+				avatarUrl: user.avatarUrl,
 			}));
 		}
 	}, [user, setProfile]);
 
 	const handleSave = async () => {
 		if (!validateForm()) {
-			setError('Por favor corrige los errores en el formulario');
 			return;
 		}
 
@@ -96,8 +111,10 @@ export default function StudentProfile() {
 			name: profile.name,
 			email: profile.email,
 			phone: profile.phone,
-			role: profile.role,
+			role: profile.role || '',
 			description: profile.description,
+			interests: profile.interests || [],
+			semester: profile.semester || '',
 		});
 
 		if (saved) {
@@ -108,6 +125,15 @@ export default function StudentProfile() {
 	const handleCancel = () => {
 		if (user) {
 			resetForm(user);
+		}
+	};
+
+	const handleDeleteAccount = async () => {
+		try {
+			await deleteMyAccount();
+			navigate('/login');
+		} catch (error) {
+			console.error('Error al eliminar cuenta:', error);
 		}
 	};
 
@@ -130,11 +156,9 @@ export default function StudentProfile() {
 				description="Gestiona tu información personal y configuración"
 			/>
 
-			{/* Mensajes de error y éxito */}
 			{error && <AlertMessage message={error} type="error" />}
 			{success && <AlertMessage message={success} type="success" />}
 
-			{/* Información Personal */}
 			<Card>
 				<CardBody className="gap-6">
 					<div className="flex justify-between items-center">
@@ -149,7 +173,7 @@ export default function StudentProfile() {
 					</div>
 
 					<div className="flex flex-col md:flex-row gap-6">
-						<ProfileAvatar src={profile.avatar} name={profile.name} />
+						<ProfileAvatar src={profile.avatarUrl} name={profile.name} />
 						<ProfileFormFields
 							profile={profile}
 							isEditing={isEditing}
@@ -183,73 +207,42 @@ export default function StudentProfile() {
 						</ProfileFormFields>
 					</div>
 
-					<div className="space-y-2">
-						<span className="text-sm font-medium block">Áreas de Interés</span>
-						<div className="flex flex-wrap gap-2">
-							{profile.interests && profile.interests.length > 0 ? (
-								profile.interests.map((interest) => (
-									<Chip
-										key={interest}
-										onClose={
-											isEditing
-												? () =>
-														setProfile({
-															...profile,
-															interests:
-																profile.interests?.filter(
-																	(i) => i !== interest,
-																) || [],
-														})
-												: undefined
-										}
-										variant="flat"
-										color="primary"
-									>
-										{interest}
-									</Chip>
-								))
-							) : (
-								<p className="text-sm text-default-500">
-									No has agregado áreas de interés
-								</p>
-							)}
-							{isEditing && (
-								<Chip
-									variant="bordered"
-									className="cursor-pointer"
-									onClick={() => {
-										const newInterest = prompt('Ingresa un área de interés:');
-										if (newInterest) {
-											setProfile({
-												...profile,
-												interests: [...(profile.interests || []), newInterest],
-											});
-										}
-									}}
-								>
-									+ Agregar
-								</Chip>
-							)}
-						</div>
-					</div>
+					<InterestsChips
+						title="Áreas de Interés"
+						items={profile.interests || []}
+						isEditing={isEditing}
+						onRemove={(value) =>
+							setProfile({
+								...profile,
+								interests: (profile.interests || []).filter((i) => i !== value),
+							})
+						}
+						onAdd={(value) =>
+							setProfile({
+								...profile,
+								interests: [...(profile.interests || []), value],
+							})
+						}
+						emptyText="No has agregado áreas de interés"
+						addLabel="+ Agregar"
+					/>
 				</CardBody>
 			</Card>
 
-			{/* Estadísticas */}
 			<Card>
 				<CardBody className="gap-4">
 					<h2 className="text-xl font-semibold">Mis Estadísticas</h2>
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						<StatsCard
 							title="Tutorías Tomadas"
-							value={0}
+							value={isLoadingStats ? '...' : (stats?.sesionesCompletadas ?? 0)}
 							description="Total"
 							color="primary"
 						/>
 						<StatsCard
 							title="Horas de Estudio"
-							value={0}
-							description="Este mes"
+							value={hoursValue}
+							description="Total"
 							color="success"
 						/>
 						<StatsCard
@@ -268,7 +261,6 @@ export default function StudentProfile() {
 				</CardBody>
 			</Card>
 
-			{/* Configuración */}
 			<Card>
 				<CardBody className="gap-4">
 					<h2 className="text-xl font-semibold">Configuración de Cuenta</h2>
@@ -279,6 +271,8 @@ export default function StudentProfile() {
 					/>
 				</CardBody>
 			</Card>
+
+			<DeleteAccount onDelete={handleDeleteAccount} />
 		</div>
 	);
 }

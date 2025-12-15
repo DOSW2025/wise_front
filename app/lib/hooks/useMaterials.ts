@@ -49,7 +49,6 @@ export function useMaterial(id: string) {
 export function useSubjects() {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.subjects,
-		queryFn: () => materialsService.getSubjects(),
 		staleTime: 30 * 60 * 1000, // 30 minutos
 	});
 }
@@ -58,7 +57,6 @@ export function useSubjects() {
 export function useResourceTypes() {
 	return useQuery({
 		queryKey: MATERIALS_QUERY_KEYS.resourceTypes,
-		queryFn: () => materialsService.getResourceTypes(),
 		staleTime: 30 * 60 * 1000, // 30 minutos
 	});
 }
@@ -72,12 +70,62 @@ export function useUserMaterials(userId: string) {
 	});
 }
 
-// Hook para obtener materiales populares
-export function usePopularMaterials() {
+// Hook para obtener resumen de ratings del material
+export function useMaterialRatingSummary(materialId: string) {
 	return useQuery({
-		queryKey: MATERIALS_QUERY_KEYS.popular,
-		queryFn: () => materialsService.getPopularMaterials(),
-		staleTime: 10 * 60 * 1000, // 10 minutos
+		queryKey: MATERIALS_QUERY_KEYS.ratings(materialId),
+		queryFn: () => materialsService.getMaterialRatingSummary(materialId),
+		staleTime: 5 * 60 * 1000, // 5 minutos
+	});
+}
+
+// Hook para obtener comentarios del material
+export function useMaterialComments(materialId: string) {
+	return useQuery({
+		queryKey: [...MATERIALS_QUERY_KEYS.ratings(materialId), 'list'],
+		queryFn: () => materialsService.getMaterialComments(materialId),
+		staleTime: 5 * 60 * 1000, // 5 minutos
+		enabled: !!materialId,
+	});
+}
+
+// Hook para obtener estadísticas del usuario
+export function useUserStats(userId: string) {
+	return useQuery({
+		queryKey: ['user-stats', userId],
+		queryFn: () => materialsService.getUserStats(userId),
+		staleTime: 5 * 60 * 1000, // 5 minutos
+		enabled: !!userId,
+	});
+}
+
+// Hook para obtener top 3 materiales más vistos
+export function useTopViewedMaterials(userId: string) {
+	return useQuery({
+		queryKey: ['top-viewed', userId],
+		queryFn: () => materialsService.getTopViewedMaterials(userId),
+		staleTime: 5 * 60 * 1000, // 5 minutos
+		enabled: !!userId,
+	});
+}
+
+// Hook para obtener top 3 materiales más descargados
+export function useTopDownloadedMaterials(userId: string) {
+	return useQuery({
+		queryKey: ['top-downloaded', userId],
+		queryFn: () => materialsService.getTopDownloadedMaterials(userId),
+		staleTime: 5 * 60 * 1000, // 5 minutos
+		enabled: !!userId,
+	});
+}
+
+// Hook para obtener porcentaje de tags del usuario
+export function useTagsPercentage(userId: string) {
+	return useQuery({
+		queryKey: ['tags-percentage', userId],
+		queryFn: () => materialsService.getTagsPercentage(userId),
+		staleTime: 5 * 60 * 1000, // 5 minutos
+		enabled: !!userId,
 	});
 }
 
@@ -101,33 +149,30 @@ export function useUpdateMaterial() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: ({ id, data }: { id: string; data: UpdateMaterialRequest }) => {
-			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.updateMaterial(id, data);
-			// Simular PUT /api/materials/:id
-			console.log(`Actualizando material ${id}:`, data);
-			return Promise.resolve();
+		mutationFn: ({
+			id,
+			data,
+		}: {
+			id: string;
+			data: UpdateMaterialRequest | FormData;
+		}) => {
+			return materialsService.updateMaterial(id, data);
 		},
-		onSuccess: (_, { id, data }) => {
-			// Actualizar el material en el cache
-			queryClient.setQueryData(
-				MATERIALS_QUERY_KEYS.detail(id),
-				(oldData: any) => {
-					if (oldData) {
-						return {
-							...oldData,
-							...data,
-							updatedAt: new Date().toISOString(),
-						};
-					}
-					return oldData;
-				},
-			);
+		onSuccess: (_, { id }) => {
+			// Remover el material del cache de detalle
+			queryClient.removeQueries({ queryKey: MATERIALS_QUERY_KEYS.detail(id) });
 
-			// Invalidar listas para refrescar
-			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.lists() });
+			// Invalidar todas las queries de materiales del usuario
 			queryClient.invalidateQueries({
-				queryKey: MATERIALS_QUERY_KEYS.userMaterials('dev-tutor-1'),
+				queryKey: ['user-materials'],
 			});
+
+			// Invalidar otras queries
+			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.lists() });
+			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.popular });
+		},
+		onError: (error: unknown) => {
+			console.error('Error al actualizar material:', error);
 		},
 	});
 }
@@ -138,25 +183,16 @@ export function useDeleteMaterial() {
 
 	return useMutation({
 		mutationFn: (id: string) => {
-			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.deleteMaterial(id);
-			// Simular DELETE /api/materials/:id
-			console.log(`Eliminando material ${id}`);
-			return Promise.resolve();
+			return materialsService.deleteMaterial(id);
 		},
 		onSuccess: (_, id) => {
 			// Remover el material del cache inmediatamente
 			queryClient.removeQueries({ queryKey: MATERIALS_QUERY_KEYS.detail(id) });
 
-			// Actualizar listas removiendo el elemento
-			queryClient.setQueryData(
-				MATERIALS_QUERY_KEYS.userMaterials('dev-tutor-1'),
-				(oldData: any[]) => {
-					if (oldData) {
-						return oldData.filter((material) => material.id !== id);
-					}
-					return oldData;
-				},
-			);
+			// Invalidar todas las queries de materiales del usuario
+			queryClient.invalidateQueries({
+				queryKey: ['user-materials'],
+			});
 
 			// Invalidar otras queries
 			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.lists() });
@@ -184,11 +220,11 @@ export function useViewMaterial() {
 			// Actualizar el contador de vistas en el cache
 			queryClient.setQueryData(
 				MATERIALS_QUERY_KEYS.detail(id),
-				(oldData: any) => {
-					if (oldData) {
+				(oldData: unknown) => {
+					if (oldData && typeof oldData === 'object' && 'vistas' in oldData) {
 						return {
 							...oldData,
-							vistas: oldData.vistas + 1,
+							vistas: (oldData as { vistas: number }).vistas + 1,
 						};
 					}
 					return oldData;
@@ -216,10 +252,15 @@ export function useRateMaterial() {
 			// Actualizar calificación promedio en el cache
 			queryClient.setQueryData(
 				MATERIALS_QUERY_KEYS.detail(id),
-				(oldData: any) => {
-					if (oldData) {
+				(oldData: unknown) => {
+					if (
+						oldData &&
+						typeof oldData === 'object' &&
+						'calificacion' in oldData
+					) {
 						// Simular cálculo de nuevo promedio
-						const currentRating = oldData.calificacion;
+						const currentRating = (oldData as { calificacion: number })
+							.calificacion;
 						const newRating = (currentRating + rating) / 2; // Simplificado
 						return {
 							...oldData,
@@ -246,7 +287,7 @@ export function useDownloadMaterial() {
 			try {
 				await materialsService.downloadMaterial(id);
 				console.log('Hook: Servicio completó descarga');
-			} catch (error: any) {
+			} catch (error: unknown) {
 				console.error('Hook: Error del servicio:', error);
 				throw error;
 			}
@@ -256,11 +297,15 @@ export function useDownloadMaterial() {
 			// Actualizar el contador de descargas en el cache
 			queryClient.setQueryData(
 				MATERIALS_QUERY_KEYS.detail(id),
-				(oldData: any) => {
-					if (oldData) {
+				(oldData: unknown) => {
+					if (
+						oldData &&
+						typeof oldData === 'object' &&
+						'descargas' in oldData
+					) {
 						return {
 							...oldData,
-							descargas: oldData.descargas + 1,
+							descargas: (oldData as { descargas: number }).descargas + 1,
 						};
 					}
 					return oldData;
@@ -270,12 +315,15 @@ export function useDownloadMaterial() {
 			// Actualizar también en la lista
 			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.lists() });
 		},
-		onError: (error: any) => {
+		onError: (error: unknown) => {
 			console.error('Hook: Error en descarga:', error);
+			const response = (
+				error as { response?: { status?: unknown; statusText?: unknown } }
+			).response;
 			console.error('Hook: Error completo:', {
-				message: error?.message,
-				status: error?.response?.status,
-				statusText: error?.response?.statusText,
+				message: error instanceof Error ? error.message : String(error),
+				status: response?.status,
+				statusText: response?.statusText,
 			});
 		},
 	});

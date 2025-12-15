@@ -4,17 +4,53 @@ import {
 	BookOpen,
 	Clock,
 	MessageSquare,
+	Star,
 	TrendingUp,
 	Users,
 } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router';
+import { RecentComments } from '~/components/recent-comments';
 import { StatsCard } from '~/components/stats-card';
+import { useAuth } from '~/contexts/auth-context';
 import { useTutorDashboard } from '~/lib/hooks/useTutorDashboard';
+import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
+import { usePendingSessions } from './hooks/usePendingSessions';
+import { useTutorProfile } from './hooks/useTutorProfile';
+import { useTutorReputacion } from './hooks/useTutorReputacion';
+import { useUpcomingSessions } from './hooks/useUpcomingSessions';
 
 export default function TutorDashboard() {
 	const location = useLocation();
 	const isMainDashboard = location.pathname === '/dashboard/tutor';
+	const { user } = useAuth();
 	const { data: dashboardData, isLoading, error } = useTutorDashboard();
+
+	// Obtener estadísticas reales desde el backend
+	const { data: tutoriaStats, isLoading: isLoadingStats } = useTutoriaStats(
+		user?.id || '',
+		!!user?.id,
+	);
+
+	// Obtener reputación del tutor desde el backend
+	const { data: reputacionData, isLoading: isLoadingReputacion } =
+		useTutorReputacion(user?.id || '', !!user?.id);
+
+	// Obtener perfil del tutor con ratings/comentarios
+	const {
+		data: tutorProfile,
+		isLoading: isLoadingProfile,
+		isError: isErrorProfile,
+	} = useTutorProfile(user?.id || '', !!user?.id);
+	const {
+		data: upcomingSessions,
+		isLoading: isLoadingSessions,
+		error: sessionsError,
+	} = useUpcomingSessions();
+	const {
+		data: pendingSessions,
+		isLoading: isLoadingPending,
+		error: pendingError,
+	} = usePendingSessions();
 
 	if (!isMainDashboard) {
 		return <Outlet />;
@@ -43,13 +79,23 @@ export default function TutorDashboard() {
 		);
 	}
 
-	const {
-		stats,
-		upcomingSessions,
-		recentRequests,
-		popularMaterials,
-		recentReviews,
-	} = dashboardData || {};
+	const { stats, recentRequests, popularMaterials, recentReviews } =
+		dashboardData || {};
+
+	const formatDate = (dateString: string) => {
+		const date = new Date(dateString);
+		const today = new Date();
+		const tomorrow = new Date(today);
+		tomorrow.setDate(tomorrow.getDate() + 1);
+
+		if (date.toDateString() === today.toDateString()) return 'Hoy';
+		if (date.toDateString() === tomorrow.toDateString()) return 'Mañana';
+		return date.toLocaleDateString('es-ES', {
+			weekday: 'short',
+			day: 'numeric',
+			month: 'short',
+		});
+	};
 
 	return (
 		<div className="space-y-6">
@@ -65,8 +111,10 @@ export default function TutorDashboard() {
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 				<StatsCard
 					title="Tutorías Realizadas"
-					value={stats?.tutoriasRealizadas || 0}
-					description="Este semestre"
+					value={
+						isLoadingStats ? '...' : (tutoriaStats?.sesionesCompletadas ?? 0)
+					}
+					description="Sesiones completadas"
 					color="success"
 					icon={
 						<svg
@@ -88,51 +136,37 @@ export default function TutorDashboard() {
 				/>
 				<StatsCard
 					title="Calificación Promedio"
-					value={stats?.calificacionPromedio?.toFixed(1) || '0.0'}
-					description="De 5.0 estrellas"
-					color="warning"
-					icon={
-						<svg
-							className="w-6 h-6"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-							aria-label="Star icon"
-						>
-							<title>Calificación promedio</title>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-							/>
-						</svg>
+					value={
+						isLoadingReputacion
+							? '...'
+							: reputacionData && reputacionData.totalRatings > 0
+								? reputacionData.reputacion.toFixed(1)
+								: 'Sin calificaciones'
 					}
+					description={
+						reputacionData && reputacionData.totalRatings > 0
+							? `${reputacionData.totalRatings} ${reputacionData.totalRatings === 1 ? 'valoración' : 'valoraciones'}`
+							: 'Aún no ha recibido valoraciones'
+					}
+					color="warning"
+					icon={<Star className="w-6 h-6" />}
 				/>
 				<StatsCard
-					title="Estudiantes Atendidos"
-					value={stats?.estudiantesAtendidos || 0}
-					description="Únicos este mes"
-					color="primary"
-					icon={
-						<svg
-							className="w-6 h-6"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-							/>
-						</svg>
+					title="Horas de Tutoría"
+					value={
+						isLoadingStats
+							? '...'
+							: `${tutoriaStats?.horasDeTutoria?.toFixed(1) ?? 0}h`
 					}
+					description="Tiempo total dedicado"
+					color="primary"
+					icon={<Clock className="w-6 h-6" />}
 				/>
 				<StatsCard
 					title="Solicitudes Pendientes"
-					value={stats?.solicitudesPendientes || 0}
+					value={
+						isLoadingStats ? '...' : (tutoriaStats?.sesionesPendientes ?? 0)
+					}
 					description="Requieren atención"
 					color="danger"
 					icon={<AlertCircle className="w-6 h-6" />}
@@ -160,53 +194,47 @@ export default function TutorDashboard() {
 							</Button>
 						</div>
 						<div className="space-y-3">
-							{upcomingSessions?.length ? (
-								upcomingSessions.slice(0, 2).map((session) => {
+							{isLoadingSessions ? (
+								<div className="flex justify-center py-4">
+									<Spinner size="sm" />
+								</div>
+							) : sessionsError ? (
+								<p className="text-center text-danger py-4 text-sm">
+									Error al cargar sesiones
+								</p>
+							) : upcomingSessions?.length ? (
+								upcomingSessions.slice(0, 2).map((session, index) => {
 									const initials = session.studentName
 										.split(' ')
 										.map((n) => n[0])
 										.join('')
-										.toUpperCase();
-									const isToday =
-										new Date(session.date).toDateString() ===
-										new Date().toDateString();
+										.toUpperCase()
+										.slice(0, 2);
 									return (
 										<div
-											key={session.id}
+											key={index}
 											className="flex items-start justify-between p-3 bg-default-100 rounded-lg"
 										>
 											<div className="flex items-center gap-3">
 												<Avatar
-													src={session.studentAvatar}
 													name={initials}
 													size="sm"
 													className="bg-primary text-white"
 												/>
 												<div className="flex flex-col gap-1">
 													<p className="font-semibold text-sm">
-														{session.subject}
+														{session.subjectName}
 													</p>
 													<p className="text-small text-default-500">
 														{session.studentName}
 													</p>
 													<p className="text-tiny text-default-400">
-														{isToday ? 'Hoy' : 'Mañana'} {session.time} -{' '}
-														{session.modality === 'virtual'
-															? 'Virtual'
-															: 'Presencial'}
+														{formatDate(session.date)} a las {session.startTime}
 													</p>
 												</div>
 											</div>
-											<Chip
-												size="sm"
-												color={
-													session.status === 'confirmed' ? 'success' : 'warning'
-												}
-												variant="flat"
-											>
-												{session.status === 'confirmed'
-													? 'Confirmada'
-													: 'Pendiente'}
+											<Chip size="sm" color="success" variant="flat">
+												Confirmada
 											</Chip>
 										</div>
 									);
@@ -239,60 +267,53 @@ export default function TutorDashboard() {
 							</Button>
 						</div>
 						<div className="space-y-3">
-							{recentRequests?.length ? (
-								recentRequests.slice(0, 2).map((request) => {
+							{isLoadingPending ? (
+								<div className="flex justify-center py-4">
+									<Spinner size="sm" />
+								</div>
+							) : pendingError ? (
+								<p className="text-center text-danger py-4 text-sm">
+									Error al cargar solicitudes
+								</p>
+							) : pendingSessions?.length ? (
+								pendingSessions.slice(0, 2).map((request, index) => {
 									const initials = request.studentName
 										.split(' ')
 										.map((n) => n[0])
 										.join('')
-										.toUpperCase();
-									const timeAgo = new Date(
-										Date.now() - new Date(request.createdAt).getTime(),
-									).getHours();
-									const bgColor =
-										request.status === 'pending'
-											? 'bg-orange-50 border border-orange-200'
-											: 'bg-green-50 border border-green-200';
-									const avatarColor =
-										request.status === 'pending'
-											? 'bg-orange-500'
-											: 'bg-green-500';
+										.toUpperCase()
+										.slice(0, 2);
+									const timeAgo = Math.floor(
+										(Date.now() - new Date(request.createdAt).getTime()) /
+											(1000 * 60 * 60),
+									);
 									return (
 										<div
-											key={request.id}
-											className={`flex items-center justify-between p-3 rounded-lg ${bgColor}`}
+											key={index}
+											className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg"
 										>
 											<div className="flex items-center gap-3">
 												<Avatar
-													src={request.studentAvatar}
 													name={initials}
 													size="sm"
-													className={`${avatarColor} text-white`}
+													className="bg-warning text-white"
 												/>
-												<div>
+												<div className="flex flex-col gap-1">
 													<p className="font-semibold text-sm">
 														{request.studentName}
 													</p>
 													<p className="text-small text-default-600">
-														{request.subject}
+														{request.subjectName}
 													</p>
 													<p className="text-tiny text-default-400">
 														{timeAgo > 0
-															? `Hace ${timeAgo} horas`
+															? `Hace ${timeAgo} hora${timeAgo > 1 ? 's' : ''}`
 															: 'Hace poco'}
 													</p>
 												</div>
 											</div>
-											<Chip
-												size="sm"
-												color={
-													request.status === 'pending' ? 'warning' : 'success'
-												}
-												variant="flat"
-											>
-												{request.status === 'pending'
-													? 'Pendiente'
-													: 'Confirmada'}
+											<Chip size="sm" color="warning" variant="flat">
+												Pendiente
 											</Chip>
 										</div>
 									);
@@ -366,77 +387,11 @@ export default function TutorDashboard() {
 				</Card>
 
 				{/* Comentarios Recientes */}
-				<Card>
-					<CardBody className="gap-4">
-						<div className="flex items-center justify-between">
-							<h2 className="text-xl font-semibold flex items-center gap-2">
-								<MessageSquare className="w-5 h-5 text-primary" />
-								Comentarios Recientes
-							</h2>
-							<Button
-								as={Link}
-								to="/dashboard/tutor/reports"
-								size="sm"
-								variant="light"
-								color="primary"
-							>
-								Ver todos
-							</Button>
-						</div>
-						<div className="space-y-3">
-							{recentReviews?.length ? (
-								recentReviews.slice(0, 2).map((review) => {
-									const initials = review.studentName
-										.split(' ')
-										.map((n) => n[0])
-										.join('')
-										.toUpperCase();
-									const timeAgo = new Date(
-										Date.now() - new Date(review.createdAt).getTime(),
-									).getHours();
-									const stars = '⭐'.repeat(review.rating);
-									return (
-										<div
-											key={review.id}
-											className="p-3 bg-default-100 rounded-lg"
-										>
-											<div className="flex items-center justify-between mb-2">
-												<div className="flex items-center gap-2">
-													<Avatar
-														src={review.studentAvatar}
-														name={initials}
-														size="sm"
-														className="bg-blue-500 text-white"
-													/>
-													<span className="font-semibold text-sm">
-														{review.studentName}
-													</span>
-												</div>
-												<div className="flex items-center gap-1">
-													<span className="text-yellow-500">{stars}</span>
-												</div>
-											</div>
-											<p className="text-sm text-default-600 mb-1">
-												"{review.comment}"
-											</p>
-											<p className="text-tiny text-default-400">
-												{timeAgo > 24
-													? 'Ayer'
-													: timeAgo > 0
-														? `Hace ${timeAgo} horas`
-														: 'Hace poco'}
-											</p>
-										</div>
-									);
-								})
-							) : (
-								<p className="text-center text-default-500 py-4">
-									No hay comentarios recientes
-								</p>
-							)}
-						</div>
-					</CardBody>
-				</Card>
+				<RecentComments
+					ratings={tutorProfile?.ratings ?? []}
+					isLoading={isLoadingProfile}
+					isError={isErrorProfile}
+				/>
 			</div>
 		</div>
 	);
