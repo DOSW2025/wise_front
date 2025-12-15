@@ -43,45 +43,14 @@ export const API_ENDPOINTS = {
 		ME: '/wise/auth/me',
 	},
 	TUTOR: {
-		BASE: '/wise/tutor',
-		PROFILE: '/wise/tutor/profile',
-		STATS: '/wise/tutor/stats',
-		SESSIONS: {
-			UPCOMING: '/wise/tutor/sessions/upcoming',
-			SCHEDULED: '/wise/tutor/sessions/scheduled',
-		},
-		REQUESTS: {
-			RECENT: '/wise/tutor/requests/recent',
-			PENDING: '/wise/tutor/requests/pending',
-		},
-		MATERIALS: {
-			POPULAR: '/wise/tutor/materials/popular',
-			MY_MATERIALS: '/wise/tutor/materials/mine',
-		},
 		REVIEWS: {
-			RECENT: '/wise/tutor/reviews/recent',
+			RATINGS: (tutorId: string) => `/wise/tutorias/${tutorId}/ratings`,
+			REPUTACION: (tutorId: string) => `/wise/tutorias/${tutorId}/reputacion`,
 		},
 	},
-	STUDENT: {
-		BASE: '/wise/student',
-		STATS: '/wise/student/stats',
+	ADMIN: {
 		PROFILE: '/wise/gestion-usuarios/me/info-personal',
 		GET_PROFILE: '/wise/gestion-usuarios/me',
-		TUTORING: {
-			UPCOMING: '/wise/student/tutoring/upcoming',
-			HISTORY: '/wise/student/tutoring/history',
-		},
-		TUTORS: {
-			RECOMMENDED: '/wise/student/tutors/recommended',
-			SEARCH: '/wise/student/tutors/search',
-		},
-		MATERIALS: {
-			RECENT: '/wise/student/materials/recent',
-			SAVED: '/wise/student/materials/saved',
-		},
-		ACTIVITY: {
-			RECENT: '/wise/student/activity/recent',
-		},
 	},
 
 	MATERIALS: {

@@ -623,7 +623,7 @@ export async function getTutorProfile(
 }
 
 /**
- * Obtiene el historial completo de sesiones de un tutor
+ *  Obtiene el historial completo de sesiones de un tutor
  */
 export async function getTutorSessions(
 	tutorId: string,
