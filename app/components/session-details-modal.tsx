@@ -13,7 +13,6 @@ import {
 	ModalHeader,
 } from '@heroui/react';
 import { Calendar, Clock } from 'lucide-react';
-import React from 'react';
 import type { UpcomingSession } from '~/lib/types/tutoria.types';
 
 interface SessionDetailsModalProps {

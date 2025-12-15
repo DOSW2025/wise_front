@@ -1,12 +1,5 @@
 import { Card, CardBody } from '@heroui/react';
-import {
-	BookOpen,
-	GraduationCap,
-	Mail,
-	MessageCircle,
-	Phone,
-	Users,
-} from 'lucide-react';
+import { GraduationCap, Mail, Phone, Users } from 'lucide-react';
 
 export default function TutorHelp() {
 	const helpResources = [

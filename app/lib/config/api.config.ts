@@ -60,11 +60,7 @@ export const API_ENDPOINTS = {
 		},
 		REVIEWS: {
 			RECENT: '/wise/tutor/reviews/recent',
-			RATINGS: (tutorId: string) => `/wise/tutorias/${tutorId}/ratings`,
-			REPUTACION: (tutorId: string) => `/wise/tutorias/${tutorId}/reputacion`,
 		},
-		RATINGS: '/wise/tutorias/:id/ratings',
-		REPUTACION: '/wise/tutorias/:id/reputacion',
 	},
 	STUDENT: {
 		BASE: '/wise/student',
@@ -87,10 +83,6 @@ export const API_ENDPOINTS = {
 			RECENT: '/wise/student/activity/recent',
 		},
 	},
-	ADMIN: {
-		PROFILE: '/wise/gestion-usuarios/me/info-personal',
-		GET_PROFILE: '/wise/gestion-usuarios/me',
-	},
 
 	MATERIALS: {
 		BASE: '/wise/materiales',
@@ -109,7 +101,13 @@ export const API_ENDPOINTS = {
 		GET_RATINGS_LIST: (id: string) => `/wise/materiales/${id}/ratings/list`,
 		GET_TAGS_PERCENTAGE: (userId: string) =>
 			`/wise/materiales/user/${userId}/tags-percentage`,
+		GET_AVERAGE_RATING: (userId: string) =>
+			`/wise/materiales/user/${userId}/average-rating`,
+		GET_TOP: (userId: string) => `/wise/materiales/user/${userId}/top`,
 		SEARCH: '/wise/materiales/search',
+		STATS_COUNT: '/wise/materiales/stats/count',
+		STATS_TAGS_PERCENTAGE: '/wise/materiales/stats/tags-percentage',
+		STATS_BY_DATE: '/wise/materiales/stats/by-date',
 	},
 	PDF_EXPORT: {
 		STATS: (id: string) => `/wise/pdf-export/${id}/stats/export`,
@@ -120,29 +118,9 @@ export const API_ENDPOINTS = {
 		UPDATE_ROLE: '/wise/gestion-usuarios/:id/rol',
 		SUSPEND: '/wise/gestion-usuarios/:id/estado',
 		ACTIVATE: '/wise/gestion-usuarios/:id/estado',
-		DELETE_MY_ACCOUNT: '/wise/gestion-usuarios/me/cuenta',
 		STATISTICS: '/wise/gestion-usuarios/estadisticas/usuarios',
 		ROLE_STATISTICS: '/wise/gestion-usuarios/estadisticas/roles',
 		GROWTH_STATISTICS: '/wise/gestion-usuarios/estadisticas/crecimiento',
-	},
-	TUTORIAS: {
-		TUTORES: '/wise/tutorias/tutores',
-		STUDENT_SESSIONS: '/wise/tutorias/sessions/student/:studentId',
-		UPCOMING_SESSIONS: '/wise/tutorias/upcoming/{userId}',
-		TUTORIA_STATS: '/wise/tutorias/stats/{userId}',
-		TUTOR_NAME: '/wise/tutorias/nombre/{id}',
-		MATERIA: '/wise/tutorias/materia/{codigo}',
-		TUTOR_MATERIAS: '/wise/tutorias/{id}/materias',
-		CREATE_SESSION: '/wise/tutorias/sessions',
-		CANCEL_SESSION: '/wise/tutorias/sessions/{id}/cancelar',
-		CONFIRM_SESSION: '/wise/tutorias/sessions/{id}/confirmar',
-		REJECT_SESSION: '/wise/tutorias/sessions/{id}/rechazar',
-		PENDING_SESSIONS: '/wise/tutorias/{id}/pending-sessions',
-		CONFIRMED_SESSIONS: '/wise/tutorias/{id}/confirmed-sessions',
-		COMPLETE_SESSION: '/wise/tutorias/sessions/{id}/completar',
-		GET_AVAILABILITY: '/wise/tutorias/disponibilidad/id/{id}',
-		UPDATE_AVAILABILITY: '/wise/tutorias/id/{id}/availability',
-		RATINGS: '/wise/tutorias/ratings',
 	},
 	COMUNIDAD: {
 		CHATS: '/chats',
@@ -158,9 +136,5 @@ export const API_ENDPOINTS = {
 		MARK_ALL_READ: (userId: string) =>
 			`/wise/notificaciones/read-all/${userId}`,
 		DELETE: (id: string) => `/wise/notificaciones/${id}`,
-	},
-	IA: {
-		RECOMMENDATIONS: '/wise/ia/chat/recommendations',
-		NAVIGATION_CHAT: '/wise/ia/chat/nav',
 	},
 } as const;

@@ -6,15 +6,12 @@
 import { Avatar, Button, Card, CardBody, Skeleton } from '@heroui/react';
 import {
 	AlertCircle,
-	ArrowRight,
 	Clock,
 	MessageSquare,
 	MessageSquareOff,
 	Star,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { getUserName } from '~/lib/services/tutoria.service';
 import type { Rating } from '~/lib/types/tutoria.types';
 
 interface RecentCommentsProps {
