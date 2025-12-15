@@ -614,6 +614,32 @@ export class MaterialsService {
 			return [];
 		}
 	}
+
+	// Obtener porcentaje de tags global (para admin)
+	async getGlobalTagsPercentage(): Promise<
+		Array<{
+			tag: string;
+			porcentaje: number;
+		}>
+	> {
+		try {
+			const endpoint = API_ENDPOINTS.MATERIALS.STATS_TAGS_PERCENTAGE;
+			console.log('Obteniendo porcentaje de tags global desde:', endpoint);
+
+			const response = await apiClient.get<{
+				tags?: Array<{
+					tag: string;
+					porcentaje: number;
+				}>;
+			}>(endpoint);
+
+			console.log('API GET Global Tags Percentage Response:', response.data);
+			return response.data.tags || [];
+		} catch (error) {
+			console.error('Error al obtener porcentaje de tags global:', error);
+			return [];
+		}
+	}
 }
 
 export const materialsService = new MaterialsService();

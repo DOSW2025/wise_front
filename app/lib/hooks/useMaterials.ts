@@ -129,6 +129,15 @@ export function useTagsPercentage(userId: string) {
 	});
 }
 
+// Hook para obtener porcentaje de tags global (admin)
+export function useGlobalTagsPercentage() {
+	return useQuery({
+		queryKey: ['tags-percentage-global'],
+		queryFn: () => materialsService.getGlobalTagsPercentage(),
+		staleTime: 5 * 60 * 1000, // 5 minutos
+	});
+}
+
 // Hook para crear material
 export function useCreateMaterial() {
 	const queryClient = useQueryClient();
@@ -326,5 +335,13 @@ export function useDownloadMaterial() {
 				statusText: response?.statusText,
 			});
 		},
+	});
+}
+// Hook para obtener el conteo total de materiales
+export function useMaterialsCount() {
+	return useQuery({
+		queryKey: ['materials-count'],
+		queryFn: () => materialsService.getMaterialsCount(),
+		staleTime: 5 * 60 * 1000, // 5 minutos
 	});
 }
