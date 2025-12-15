@@ -33,6 +33,7 @@ import { MaterialDetailModal } from '~/components/material-detail-modal';
 import { MaterialStatsModal } from '~/components/material-stats-modal';
 import { MyMaterialsList } from '~/components/my-materials-list';
 import { PopularMaterials } from '~/components/popular-materials';
+import { UploadMaterialForm } from '~/components/upload-material-form';
 import { useAuth } from '~/contexts/auth-context';
 import { useDebounce } from '~/lib/hooks/useDebounce';
 import { useMaterials, useUserMaterials } from '~/lib/hooks/useMaterials';
@@ -72,7 +73,6 @@ export default function TutorMaterials() {
 		onOpen: onStatsOpen,
 		onClose: onStatsClose,
 	} = useDisclosure();
-	const { onOpen } = useDisclosure();
 	const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(
 		null,
 	);
@@ -175,7 +175,10 @@ export default function TutorMaterials() {
 					className="font-nav"
 					color="primary"
 					startContent={<Plus className="w-4 h-4" />}
-					onPress={onOpen}
+					onPress={() => {
+						setSelectedMaterialId(null);
+						onEditOpen();
+					}}
 				>
 					Subir Material
 				</Button>
@@ -561,7 +564,7 @@ export default function TutorMaterials() {
 				</ModalContent>
 			</Modal>
 
-			{/* Modal de subir material */}
+			{/* Modal de subir/editar material */}
 			<Modal
 				isOpen={isEditOpen}
 				onClose={onEditClose}
@@ -569,12 +572,21 @@ export default function TutorMaterials() {
 				scrollBehavior="inside"
 			>
 				<ModalContent>
-					{selectedMaterialId && (
+					{selectedMaterialId ? (
 						<EditMaterialForm
 							materialId={selectedMaterialId}
 							onClose={onEditClose}
 							onSuccess={() => {
 								console.log('Material actualizado correctamente');
+								onEditClose();
+							}}
+						/>
+					) : (
+						<UploadMaterialForm
+							onClose={onEditClose}
+							onSuccess={() => {
+								console.log('Material subido correctamente');
+								onEditClose();
 							}}
 						/>
 					)}
