@@ -21,7 +21,7 @@ interface ReportChatModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	tutorName: string;
-	messageId: string;
+	messageId?: string;
 	onSubmitReport: (reason: string, details: string) => void;
 	isMessageReport?: boolean;
 }
@@ -56,12 +56,18 @@ export default function ReportChatModal({
 		try {
 			const motivo = mapFrontendReasonToBackend(selectedReason);
 
-			await reportesService.createReport({
-				contenido_id: messageId, // ← Necesitarás agregar messageId como prop
-				tipo_contenido: TipoContenido.MENSAJE_CHAT,
-				motivo,
-				descripcion: details || undefined,
-			});
+			// ✅ Solo hacer el reporte real si existe messageId
+			if (messageId) {
+				await reportesService.createReport({
+					contenido_id: messageId,
+					tipo_contenido: TipoContenido.MENSAJE_CHAT,
+					motivo,
+					descripcion: details || undefined,
+				});
+			} else {
+				// Fallback: si no hay messageId, solo ejecuta el callback
+				console.warn('No messageId provided, skipping API call');
+			}
 
 			onSubmitReport(selectedReason, details);
 
