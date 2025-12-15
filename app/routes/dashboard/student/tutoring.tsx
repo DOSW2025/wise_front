@@ -14,7 +14,6 @@ import {
 } from '@heroui/react';
 import { Calendar, Clock, MapPin, Search, Star, Video, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router';
 import { FeedbackModal } from '~/components';
 import { PageHeader } from '~/components/page-header';
 import { RatingModal } from '~/components/rating-modal';
@@ -939,10 +938,6 @@ const StudentTutoringPage: React.FC = () => {
 		onClose: onCloseRating,
 	} = useDisclosure();
 
-	const { onOpenChat } = useOutletContext<{
-		onOpenChat: (tutor: Tutor) => void;
-	}>();
-
 	// Ordenar todas las sesiones por fecha (más recientes primero)
 	const getAllSessionsSortedByDate = useCallback((list: StudentSession[]) => {
 		return [...list].sort((a, b) => {
@@ -1115,7 +1110,6 @@ const StudentTutoringPage: React.FC = () => {
 									<TutorCard
 										key={tutor.id}
 										tutor={tutor}
-										onOpenChat={onOpenChat}
 										onOpen={(t) => {
 											setSelectedTutor(t);
 											setIsScheduleOpen(true);

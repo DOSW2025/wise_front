@@ -1,4 +1,4 @@
-import { Calendar, MessageCircle, Star } from 'lucide-react';
+import { Calendar, Star } from 'lucide-react';
 import type React from 'react';
 import type { TutorProfile } from '~/lib/types/tutoria.types';
 
@@ -21,7 +21,6 @@ interface Tutor {
 
 interface TutorCardProps {
 	tutor: Tutor;
-	onOpenChat?: (tutor: Tutor) => void;
 	onOpen?: (tutor: Tutor) => void;
 	onViewProfile?: (tutorId: string) => void;
 }
@@ -41,7 +40,6 @@ const getAvatarBg = (avatarColor?: string): string => {
 
 const TutorCard: React.FC<TutorCardProps> = ({
 	tutor,
-	onOpenChat,
 	onOpen,
 	onViewProfile,
 }) => {
@@ -108,24 +106,13 @@ const TutorCard: React.FC<TutorCardProps> = ({
 					<Calendar className="w-4 h-4 mr-2 text-default-500" />
 					{tutor.availability}
 				</p>
-
-				{/* Acciones */}
 				<div className="flex gap-2 mt-auto pt-2 border-t border-default-200">
 					<button
 						type="button"
 						onClick={() => onViewProfile?.(tutor.id.toString())}
-						className="flex-grow bg-red-800 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors text-center"
+						className="w-full bg-red-800 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors text-center"
 					>
 						Ver perfil
-					</button>
-
-					<button
-						type="button"
-						onClick={() => onOpenChat?.(tutor)}
-						className="w-10 h-10 border border-default-300 rounded-lg flex items-center justify-center hover:bg-default-100 transition-colors"
-						aria-label="Enviar Mensaje"
-					>
-						<MessageCircle className="w-5 h-5" />
 					</button>
 				</div>
 			</div>
