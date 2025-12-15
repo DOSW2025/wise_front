@@ -31,21 +31,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { DateRangeFilter } from '~/components';
-import {
-	MonthlyStatsChart,
-	PerformanceMetricCard,
-	RecentSessionsTable,
-	StudentFeedbackList,
-	SubjectExpertiseList,
-} from '~/components/tutor';
 import { useDateFilter } from '~/lib/hooks/useDateFilter';
-import {
-	mockMonthlyStats,
-	mockRecentSessions,
-	mockStudentFeedback,
-	mockSubjectExpertise,
-	mockTutorPerformance,
-} from '~/lib/mocks/tutor-performance.mock';
 
 interface CompletedSession {
 	id: string;
@@ -424,89 +410,6 @@ export default function TutorReports() {
 								</CardBody>
 							</Card>
 						</div>
-					</div>
-				</Tab>
-
-				{/* Tab 2: Análisis de Desempeño */}
-				<Tab
-					key="performance"
-					title={
-						<div className="flex items-center gap-2">
-							<BarChart3 className="w-4 h-4" />
-							<span>Análisis de Desempeño</span>
-						</div>
-					}
-				>
-					<div className="mt-6 space-y-6">
-						{/* Performance Metrics Grid */}
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-							<PerformanceMetricCard
-								title="Sesiones Totales"
-								value={mockTutorPerformance.totalSessions}
-								subtitle="En los últimos 3 meses"
-								trend="up"
-								trendValue="+12%"
-								icon={<Users className="w-5 h-5" />}
-								color="primary"
-							/>
-							<PerformanceMetricCard
-								title="Calificación Promedio"
-								value={mockTutorPerformance.averageRating.toFixed(1)}
-								subtitle="De 5.0 estrellas"
-								trend="up"
-								trendValue="+0.2"
-								icon={<Star className="w-5 h-5" />}
-								color="warning"
-							/>
-							<PerformanceMetricCard
-								title="Horas Impartidas"
-								value={`${mockTutorPerformance.totalHours}h`}
-								subtitle="Tiempo total de enseñanza"
-								trend="up"
-								trendValue="+8h"
-								icon={<Clock className="w-5 h-5" />}
-								color="success"
-							/>
-							<PerformanceMetricCard
-								title="Tasa de Asistencia"
-								value={`${mockTutorPerformance.completionRate}%`}
-								subtitle="Estudiantes que asistieron"
-								trend="stable"
-								trendValue="0%"
-								icon={<Award className="w-5 h-5" />}
-								color="secondary"
-							/>
-						</div>
-
-						{/* Additional Metrics */}
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<PerformanceMetricCard
-								title="Estudiantes Únicos"
-								value={mockTutorPerformance.totalStudents}
-								subtitle="Diferentes estudiantes atendidos"
-								icon={<Users className="w-5 h-5" />}
-								color="primary"
-							/>
-							<PerformanceMetricCard
-								title="Tiempo de Respuesta"
-								value={`${mockTutorPerformance.responseTime}h`}
-								subtitle="Promedio de respuesta a solicitudes"
-								icon={<Clock className="w-5 h-5" />}
-								color="success"
-							/>
-						</div>
-
-						{/* Recent Sessions */}
-						<RecentSessionsTable sessions={mockRecentSessions} />
-
-						{/* Subjects and Monthly Stats */}
-						<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-							<SubjectExpertiseList subjects={mockSubjectExpertise} />
-							<MonthlyStatsChart stats={mockMonthlyStats} />
-						</div>
-
-						{/* Student Feedback */}
-						<StudentFeedbackList feedback={mockStudentFeedback} />
 					</div>
 				</Tab>
 
