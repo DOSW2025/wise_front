@@ -7,7 +7,6 @@ import {
 	ModalHeader,
 } from '@heroui/react';
 import { AlertCircle, CheckCircle } from 'lucide-react';
-import type React from 'react';
 
 interface FeedbackModalProps {
 	isOpen: boolean;

@@ -1,7 +1,6 @@
 ﻿'use client';
 
 import {
-	Badge,
 	Button,
 	Card,
 	CardBody,
@@ -34,7 +33,6 @@ import {
 	RotateCcw,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { type ChatGroup, chatsService } from '~/lib/services/chats.service';
 import {
 	type Forum,
 	forumsService,
@@ -1214,7 +1212,7 @@ export function CommunityForums() {
  */
 function formatTimeAgo(dateString: string): string {
 	const date = new Date(dateString);
-	if (isNaN(date.getTime())) return 'Recientemente';
+	if (Number.isNaN(date.getTime())) return 'Recientemente';
 	const now = new Date();
 	const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 

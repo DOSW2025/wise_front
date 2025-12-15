@@ -58,7 +58,7 @@ export function useProfileSave() {
 			setSuccess('Contraseña actualizada exitosamente');
 			setTimeout(() => setSuccess(null), 3000);
 			return true;
-		} catch (err) {
+		} catch (_err) {
 			// En este mock no usamos el error específico, pero mantenemos consistencia con saveProfile
 			setError('Error al cambiar la contraseña');
 			return false;

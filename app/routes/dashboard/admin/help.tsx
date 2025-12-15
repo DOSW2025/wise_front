@@ -1,10 +1,8 @@
 import { Card, CardBody } from '@heroui/react';
 import {
 	BookOpen,
-	GraduationCap,
 	Mail,
 	MessageCircle,
-	Phone,
 	Settings,
 	Shield,
 	Users,

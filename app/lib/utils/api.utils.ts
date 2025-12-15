@@ -3,8 +3,6 @@
  * Proporciona funciones reutilizables para manejo de respuestas y errores
  */
 
-import type { ApiResponse } from '../types/api.types';
-
 /**
  * Extraer datos de respuesta API
  */

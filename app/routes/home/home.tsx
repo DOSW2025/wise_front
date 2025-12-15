@@ -5,7 +5,6 @@ import {
 	CardFooter,
 	CardHeader,
 	Chip,
-	Divider,
 	Link,
 	Navbar,
 	NavbarBrand,

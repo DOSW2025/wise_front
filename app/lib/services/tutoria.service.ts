@@ -12,7 +12,6 @@ import type {
 	CreateSessionRequest,
 	CreateSessionResponse,
 	MateriaResponse,
-	Rating,
 	StudentSession,
 	TutoriaStats,
 	TutorMateriasResponse,

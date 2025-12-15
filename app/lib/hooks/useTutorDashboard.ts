@@ -5,9 +5,11 @@
 
 import { useQuery } from '@tanstack/react-query';
 import {
+	getAverageRating,
 	getPopularMaterials,
 	getRecentRequests,
 	getRecentReviews,
+	getTopMaterials,
 	getTutorDashboardData,
 	getTutorStats,
 	getUpcomingSessions,
@@ -77,5 +79,28 @@ export function useRecentReviews() {
 		queryKey: ['recent-reviews'],
 		queryFn: getRecentReviews,
 		staleTime: 10 * 60 * 1000, // 10 minutos
+	});
+}
+/**
+ * Hook para obtener calificación promedio de materiales del tutor
+ */
+export function useAverageRating(userId: string) {
+	return useQuery({
+		queryKey: ['average-rating', userId],
+		queryFn: () => getAverageRating(userId),
+		staleTime: 5 * 60 * 1000, // 5 minutos
+		enabled: !!userId,
+	});
+}
+
+/**
+ * Hook para obtener materiales top del tutor
+ */
+export function useTopMaterials(userId: string) {
+	return useQuery({
+		queryKey: ['top-materials', userId],
+		queryFn: () => getTopMaterials(userId),
+		staleTime: 5 * 60 * 1000, // 5 minutos
+		enabled: !!userId,
 	});
 }
