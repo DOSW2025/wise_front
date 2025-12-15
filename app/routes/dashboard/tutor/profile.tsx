@@ -24,6 +24,7 @@ import {
 import { DeleteAccount } from '~/components/profile/DeleteAccount';
 import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
+import { getProfile } from '~/lib/services/tutor.service';
 import { deleteMyAccount } from '~/lib/services/user.service';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
@@ -159,7 +160,9 @@ export default function TutorProfile() {
 			navigate('/login');
 		} catch (error) {
 			console.error('Error al eliminar cuenta:', error);
-			setError('Error al eliminar la cuenta. Por favor intenta nuevamente.');
+			setLocalError(
+				'Error al eliminar la cuenta. Por favor intenta nuevamente.',
+			);
 		}
 	};
 
