@@ -17,11 +17,15 @@ export const recommendationsService = {
 	async getRecommendations(
 		payload: RecommendationsRequestDto,
 	): Promise<AssistantResponse> {
-		try {
-			const { data } = await apiClient.post(
-				API_ENDPOINTS.IA.RECOMMENDATIONS,
-				payload,
+		const endpoint = API_ENDPOINTS.IA?.RECOMMENDATIONS;
+		if (!endpoint) {
+			throw new Error(
+				'Las recomendaciones IA están deshabilitadas en la configuración.',
 			);
+		}
+
+		try {
+			const { data } = await apiClient.post(endpoint, payload);
 			return data;
 		} catch (error) {
 			// Capturar específicamente errores 502 del servicio de IA
@@ -32,7 +36,6 @@ export const recommendationsService = {
 				);
 			}
 
-			// Re-lanzar errores conocidos
 			if (error instanceof Error) {
 				throw error;
 			}
