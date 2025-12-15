@@ -9,7 +9,7 @@ import {
 	RadioGroup,
 	Textarea,
 } from '@heroui/react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 import {
 	mapFrontendReasonToBackend,
@@ -37,6 +37,8 @@ export default function ReportChatModal({
 	const [selectedReason, setSelectedReason] = useState('');
 	const [details, setDetails] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [successMessage, setSuccessMessage] = useState('');
+	const [errorMessage, setErrorMessage] = useState('');
 
 	const reportReasons = [
 		{ value: 'harassment', label: 'Acoso o intimidación' },
@@ -52,11 +54,11 @@ export default function ReportChatModal({
 		if (!selectedReason) return;
 
 		setIsSubmitting(true);
+		setErrorMessage('');
 
 		try {
 			const motivo = mapFrontendReasonToBackend(selectedReason);
 
-			// ✅ Solo hacer el reporte real si existe messageId
 			if (messageId) {
 				await reportesService.createReport({
 					contenido_id: messageId,
@@ -71,12 +73,16 @@ export default function ReportChatModal({
 
 			onSubmitReport(selectedReason, details);
 
-			alert('Reporte enviado exitosamente. Será revisado por nuestro equipo.');
+			setSuccessMessage(
+				'Reporte enviado exitosamente. Será revisado por nuestro equipo.',
+			);
 
-			// Resetear formulario
-			setSelectedReason('');
-			setDetails('');
-			onClose();
+			setTimeout(() => {
+				setSelectedReason('');
+				setDetails('');
+				setSuccessMessage('');
+				onClose();
+			}, 2000);
 		} catch (error) {
 			console.error('Error al crear reporte:', error);
 			alert('Error al enviar el reporte. Por favor, intenta nuevamente.');
@@ -88,6 +94,8 @@ export default function ReportChatModal({
 	const handleClose = () => {
 		setSelectedReason('');
 		setDetails('');
+		setSuccessMessage('');
+		setErrorMessage('');
 		onClose();
 	};
 
@@ -107,50 +115,75 @@ export default function ReportChatModal({
 					{isMessageReport ? 'Reportar mensaje' : 'Reportar conversación'}
 				</ModalHeader>
 				<ModalBody>
-					<p className="text-sm text-gray-600 mb-4">
-						{isMessageReport ? (
-							<>
-								Estás reportando un mensaje de <strong>{tutorName}</strong>.
-								Esta acción será revisada por nuestro equipo de moderación.
-							</>
-						) : (
-							<>
-								Estás reportando tu conversación completa con{' '}
-								<strong>{tutorName}</strong>. Esta acción será revisada por
-								nuestro equipo de moderación.
-							</>
-						)}
-					</p>
+					{/* Mensaje de éxito */}
+					{successMessage && (
+						<div className="bg-success-50 border border-success-200 rounded-lg p-4 mb-4">
+							<p className="text-sm text-success-800 font-medium flex items-center gap-2">
+								<CheckCircle className="w-4 h-4" />
+								{successMessage}
+							</p>
+						</div>
+					)}
 
-					<RadioGroup
-						label="Motivo del reporte"
-						value={selectedReason}
-						onValueChange={setSelectedReason}
-						isRequired
-					>
-						{reportReasons.map((reason) => (
-							<Radio key={reason.value} value={reason.value}>
-								{reason.label}
-							</Radio>
-						))}
-					</RadioGroup>
+					{/* Mensaje de error */}
+					{errorMessage && (
+						<div className="bg-danger-50 border border-danger-200 rounded-lg p-4 mb-4">
+							<p className="text-sm text-danger-800 font-medium flex items-center gap-2">
+								<AlertTriangle className="w-4 h-4" />
+								{errorMessage}
+							</p>
+						</div>
+					)}
 
-					<Textarea
-						label="Detalles adicionales (opcional)"
-						placeholder="Describe brevemente la situación..."
-						value={details}
-						onValueChange={setDetails}
-						minRows={3}
-						maxRows={6}
-						className="mt-4"
-					/>
+					{/* Solo mostrar el formulario si no hay mensaje de éxito */}
+					{!successMessage && (
+						<>
+							<p className="text-sm text-gray-600 mb-4">
+								{isMessageReport ? (
+									<>
+										Estás reportando un mensaje de <strong>{tutorName}</strong>.
+										Esta acción será revisada por nuestro equipo de moderación.
+									</>
+								) : (
+									<>
+										Estás reportando tu conversación completa con{' '}
+										<strong>{tutorName}</strong>. Esta acción será revisada por
+										nuestro equipo de moderación.
+									</>
+								)}
+							</p>
 
-					<div className="bg-warning-50 border border-warning-200 rounded-lg p-3 mt-4">
-						<p className="text-xs text-warning-800">
-							<strong>Nota:</strong> Los reportes falsos pueden resultar en
-							sanciones para tu cuenta.
-						</p>
-					</div>
+							<RadioGroup
+								label="Motivo del reporte"
+								value={selectedReason}
+								onValueChange={setSelectedReason}
+								isRequired
+							>
+								{reportReasons.map((reason) => (
+									<Radio key={reason.value} value={reason.value}>
+										{reason.label}
+									</Radio>
+								))}
+							</RadioGroup>
+
+							<Textarea
+								label="Detalles adicionales (opcional)"
+								placeholder="Describe brevemente la situación..."
+								value={details}
+								onValueChange={setDetails}
+								minRows={3}
+								maxRows={6}
+								className="mt-4"
+							/>
+
+							<div className="bg-warning-50 border border-warning-200 rounded-lg p-3 mt-4">
+								<p className="text-xs text-warning-800">
+									<strong>Nota:</strong> Los reportes falsos pueden resultar en
+									sanciones para tu cuenta.
+								</p>
+							</div>
+						</>
+					)}
 				</ModalBody>
 				<ModalFooter>
 					<Button
