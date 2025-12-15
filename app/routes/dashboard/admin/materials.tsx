@@ -14,19 +14,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
 	ChevronDown,
 	ChevronUp,
-	Download,
-	Edit2,
-	Eye,
 	FileText,
 	Filter,
 	Grid3X3,
 	List,
 	Search,
-	Star,
-	Trash2,
 	X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { MaterialCard } from '~/components/admin/material-card';
 import { DeleteConfirmationModal } from '~/components/delete-confirmation-modal';
 import { EditMaterialForm } from '~/components/edit-material-form';
 import { MaterialDetailModal } from '~/components/material-detail-modal';
@@ -85,85 +81,115 @@ export default function AdminMaterials() {
 		viewMode === 'list' ? ITEMS_PER_PAGE_LIST : ITEMS_PER_PAGE_GRID;
 
 	// Combinar filtros con búsqueda debounced y paginación
-	const combinedFilters = {
-		...filters,
-		search: debouncedSearch || undefined,
-		skip: currentSkip,
-		take: itemsPerPage,
-	};
+	const combinedFilters = useMemo(
+		() => ({
+			...filters,
+			search: debouncedSearch || undefined,
+			skip: currentSkip,
+			take: itemsPerPage,
+		}),
+		[filters, debouncedSearch, currentSkip, itemsPerPage],
+	);
 
 	const { data: materialsResponse, isLoading } = useMaterials(combinedFilters);
-	let materials = materialsResponse?.data || [];
 
-	// Filtrar materiales por tags seleccionados
-	if (selectedTags.length > 0) {
-		materials = materials.filter((material) =>
-			selectedTags.some((tag) =>
-				material.tags?.some(
-					(materialTag) => materialTag.toLowerCase() === tag.toLowerCase(),
+	// Filtrar materiales por tags seleccionados con useMemo
+	const materials = useMemo(() => {
+		let filteredMaterials = materialsResponse?.data || [];
+
+		if (selectedTags.length > 0) {
+			filteredMaterials = filteredMaterials.filter((material) =>
+				selectedTags.some((tag) =>
+					material.tags?.some(
+						(materialTag) => materialTag.toLowerCase() === tag.toLowerCase(),
+					),
 				),
-			),
-		);
-	}
+			);
+		}
+
+		return filteredMaterials;
+	}, [materialsResponse?.data, selectedTags]);
 
 	const totalPages = materialsResponse?.pagination?.totalPages || 1;
 	const totalItems = materialsResponse?.pagination?.totalItems || 0;
 	const currentPage = Math.floor(currentSkip / itemsPerPage) + 1;
 
-	const handleAddTag = () => {
+	// Handlers memoizados con useCallback
+	const handleAddTag = useCallback(() => {
 		if (tagInput.trim() && !selectedTags.includes(tagInput.trim())) {
-			setSelectedTags([...selectedTags, tagInput.trim()]);
+			setSelectedTags((prev) => [...prev, tagInput.trim()]);
 			setTagInput('');
 			setCurrentSkip(0);
 		}
-	};
+	}, [tagInput, selectedTags]);
 
-	const handleRemoveTag = (tagToRemove: string) => {
-		setSelectedTags(selectedTags.filter((tag) => tag !== tagToRemove));
+	const handleRemoveTag = useCallback((tagToRemove: string) => {
+		setSelectedTags((prev) => prev.filter((tag) => tag !== tagToRemove));
 		setCurrentSkip(0);
-	};
+	}, []);
 
-	const handleKeyDown = (e: React.KeyboardEvent) => {
-		if (e.key === 'Enter') {
-			e.preventDefault();
-			handleAddTag();
-		}
-	};
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent) => {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				handleAddTag();
+			}
+		},
+		[handleAddTag],
+	);
 
-	const clearFilters = () => {
+	const clearFilters = useCallback(() => {
 		setFilters({});
 		setSearchTerm('');
 		setSelectedTags([]);
 		setTagInput('');
 		setCurrentSkip(0);
-	};
+	}, []);
 
-	const handleSearch = (value: string) => {
+	const handleSearch = useCallback((value: string) => {
 		setSearchTerm(value);
 		setCurrentSkip(0);
-	};
+	}, []);
 
 	const hasActiveFilters = selectedTags.length > 0 || searchTerm;
 
-	const handleOpenDetail = (materialId: string) => {
-		setSelectedMaterialId(materialId);
-		onDetailOpen();
-	};
+	const handleOpenDetail = useCallback(
+		(materialId: string) => {
+			setSelectedMaterialId(materialId);
+			onDetailOpen();
+		},
+		[onDetailOpen],
+	);
 
-	const handleOpenStats = (material: Material) => {
-		setSelectedMaterialForStats(material);
-		onStatsOpen();
-	};
+	const handleOpenStats = useCallback(
+		(material: Material) => {
+			setSelectedMaterialForStats(material);
+			onStatsOpen();
+		},
+		[onStatsOpen],
+	);
 
-	const handleOpenEdit = (material: Material) => {
-		setSelectedMaterialForEdit(material);
-		onEditOpen();
-	};
+	const handleOpenEdit = useCallback(
+		(material: Material) => {
+			setSelectedMaterialForEdit(material);
+			onEditOpen();
+		},
+		[onEditOpen],
+	);
 
-	const handleOpenDelete = (material: Material) => {
-		setSelectedMaterialForDelete(material);
-		onDeleteOpen();
-	};
+	const handleOpenDelete = useCallback(
+		(material: Material) => {
+			setSelectedMaterialForDelete(material);
+			onDeleteOpen();
+		},
+		[onDeleteOpen],
+	);
+
+	// Handler para cuando se completa exitosamente una edición o eliminación
+	const handleSuccess = useCallback(() => {
+		// Invalidar todas las queries de materiales para refrescar la lista
+		queryClient.invalidateQueries({ queryKey: ['materials'] });
+	}, []);
 
 	return (
 		<div className="space-y-6">
@@ -324,194 +350,15 @@ export default function AdminMaterials() {
 						}
 					>
 						{materials.map((material) => (
-							<Card
+							<MaterialCard
 								key={material.id}
-								className="hover:shadow-md transition-shadow cursor-pointer"
-								isPressable
-								onPress={() => handleOpenDetail(material.id)}
-							>
-								<CardBody className={viewMode === 'grid' ? 'p-4' : 'p-6'}>
-									{viewMode === 'list' ? (
-										<div className="flex justify-between items-start">
-											<div className="flex-1">
-												<div className="flex items-start justify-between mb-3">
-													<div>
-														<h3 className="text-lg font-semibold mb-1">
-															{material.nombre}
-														</h3>
-														<p className="text-sm text-default-600">
-															Por: {material.tutor}
-														</p>
-													</div>
-													<div className="flex items-center gap-1">
-														<Star className="w-4 h-4 text-yellow-500 fill-current" />
-														<span className="text-sm font-medium">
-															{material.calificacion
-																? material.calificacion.toFixed(1)
-																: '0.0'}
-														</span>
-													</div>
-												</div>
-												<div className="flex flex-wrap gap-2 mb-3">
-													{material.tags && material.tags.length > 0 ? (
-														material.tags.map((tag) => (
-															<Chip
-																key={tag}
-																size="sm"
-																variant="flat"
-																color="primary"
-															>
-																{tag}
-															</Chip>
-														))
-													) : (
-														<Chip size="sm" variant="flat" color="primary">
-															{material.materia}
-														</Chip>
-													)}
-												</div>
-												<div className="flex items-center gap-4 text-sm text-default-500">
-													<div className="flex items-center gap-1">
-														<Eye className="w-4 h-4" />
-														<span>{material.vistas} vistas</span>
-													</div>
-													<div className="flex items-center gap-1">
-														<Download className="w-4 h-4" />
-														<span>{material.descargas} descargas</span>
-													</div>
-												</div>
-											</div>
-											<div className="flex flex-col gap-2">
-												<Button
-													isIconOnly
-													variant="light"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleOpenStats(material);
-													}}
-													title="Estadísticas"
-												>
-													<FileText className="w-4 h-4" />
-												</Button>
-												<Button
-													isIconOnly
-													variant="light"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleOpenEdit(material);
-													}}
-													title="Editar"
-												>
-													<Edit2 className="w-4 h-4" />
-												</Button>
-												<Button
-													isIconOnly
-													variant="light"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleOpenDelete(material);
-													}}
-													title="Eliminar"
-												>
-													<Trash2 className="w-4 h-4 text-danger" />
-												</Button>
-											</div>
-										</div>
-									) : (
-										<div className="text-center space-y-3">
-											<FileText className="w-12 h-12 text-[#8B1A1A] mx-auto" />
-											<div>
-												<h3 className="font-semibold text-sm mb-1 line-clamp-2">
-													{material.nombre}
-												</h3>
-												<p className="text-xs text-default-600 mb-2">
-													{material.tutor}
-												</p>
-											</div>
-											<div className="flex flex-wrap gap-1 justify-center mb-2">
-												{material.tags && material.tags.length > 0 ? (
-													material.tags.slice(0, 2).map((tag) => (
-														<Chip
-															key={tag}
-															size="sm"
-															variant="flat"
-															color="primary"
-															className="text-xs"
-														>
-															{tag}
-														</Chip>
-													))
-												) : (
-													<Chip
-														size="sm"
-														variant="flat"
-														color="primary"
-														className="text-xs"
-													>
-														{material.materia}
-													</Chip>
-												)}
-											</div>
-											<div className="flex items-center justify-center gap-2 text-xs text-default-500 mb-3">
-												<div className="flex items-center gap-1">
-													<Eye className="w-3 h-3" />
-													<span>{material.vistas}</span>
-												</div>
-												<div className="flex items-center gap-1">
-													<Download className="w-3 h-3" />
-													<span>{material.descargas}</span>
-												</div>
-												<div className="flex items-center gap-1">
-													<Star className="w-3 h-3 text-yellow-500 fill-current" />
-													<span>
-														{material.calificacion
-															? material.calificacion.toFixed(1)
-															: '0.0'}
-													</span>
-												</div>
-											</div>
-											<div className="flex gap-2 justify-center">
-												<Button
-													isIconOnly
-													size="sm"
-													variant="light"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleOpenStats(material);
-													}}
-													title="Estadísticas"
-												>
-													<FileText className="w-4 h-4" />
-												</Button>
-												<Button
-													isIconOnly
-													size="sm"
-													variant="light"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleOpenEdit(material);
-													}}
-													title="Editar"
-												>
-													<Edit2 className="w-4 h-4" />
-												</Button>
-												<Button
-													isIconOnly
-													size="sm"
-													variant="light"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleOpenDelete(material);
-													}}
-													title="Eliminar"
-												>
-													<Trash2 className="w-4 h-4 text-danger" />
-												</Button>
-											</div>
-										</div>
-									)}
-								</CardBody>
-							</Card>
+								material={material}
+								viewMode={viewMode}
+								onOpenDetail={handleOpenDetail}
+								onOpenStats={handleOpenStats}
+								onOpenEdit={handleOpenEdit}
+								onOpenDelete={handleOpenDelete}
+							/>
 						))}
 					</div>
 
@@ -596,7 +443,10 @@ export default function AdminMaterials() {
 							<EditMaterialForm
 								materialId={selectedMaterialForEdit.id}
 								onClose={onClose}
-								onSuccess={onClose}
+								onSuccess={() => {
+									handleSuccess();
+									onClose();
+								}}
 							/>
 						)}
 					</ModalContent>
@@ -612,7 +462,10 @@ export default function AdminMaterials() {
 								materialId={selectedMaterialForDelete.id}
 								materialName={selectedMaterialForDelete.nombre}
 								onClose={onClose}
-								onSuccess={onClose}
+								onSuccess={() => {
+									handleSuccess();
+									onClose();
+								}}
 							/>
 						)}
 					</ModalContent>

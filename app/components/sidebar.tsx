@@ -13,7 +13,6 @@ import {
 	LogOut,
 	Menu,
 	MessageSquare,
-	Settings,
 	TrendingUp,
 	UserCheck,
 	Users,
@@ -180,19 +179,13 @@ export function Sidebar({
 					key: 'materias',
 					label: 'Gestión de Materias',
 					icon: <BookMarked className="w-5 h-5" />,
-					path: '/dashboard/admin/gamification',
+					path: '/dashboard/admin/materias',
 				},
 				{
 					key: 'reports',
 					label: 'Reportes y Métricas',
 					icon: <TrendingUp className="w-5 h-5" />,
 					path: '/dashboard/admin/reports',
-				},
-				{
-					key: 'settings',
-					label: 'Configuración',
-					icon: <Settings className="w-5 h-5" />,
-					path: '/dashboard/admin/settings',
 				},
 				{
 					key: 'help',

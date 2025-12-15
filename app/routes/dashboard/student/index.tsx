@@ -1,12 +1,5 @@
 import { Button, Card, CardBody, Spinner } from '@heroui/react';
-import {
-	AlertCircle,
-	BookOpen,
-	MessageSquare,
-	Star,
-	TrendingUp,
-	Users,
-} from 'lucide-react';
+import { AlertCircle, BookOpen, TrendingUp, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { RecommendedTutorsList } from '~/components/recommended-tutors-list';
@@ -53,8 +46,6 @@ export default function StudentDashboard() {
 			</div>
 		);
 	}
-
-	const { recentMaterials, recentActivity } = dashboardData || {};
 
 	return (
 		<div className="space-y-6">

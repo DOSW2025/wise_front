@@ -170,7 +170,7 @@ export function MateriasManagement({
 							startContent={
 								<MagnifyingGlassIcon className="w-5 h-5 text-default-400" />
 							}
-							className="max-w-xs"
+							className="w-full max-w-lg"
 						/>
 						<Button
 							color="primary"

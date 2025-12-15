@@ -37,7 +37,13 @@ import {
 	ShieldCheck,
 	UserCheck,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	useCallback,
+	useDeferredValue,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { PageHeader } from '~/components/page-header';
@@ -65,6 +71,11 @@ type CreateTutorData = {
 	usuarioId: string;
 	bio?: string;
 	materiaCodigos?: string[];
+};
+
+type PendingTutorProfile = {
+	bio?: string;
+	materiaCodigos: string[];
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -97,6 +108,7 @@ export default function AdminUsers() {
 	// State for filters and pagination
 	const [page, setPage] = useState(1);
 	const [searchTerm, setSearchTerm] = useState('');
+	const [searchInput, setSearchInput] = useState('');
 	const [roleFilter, setRoleFilter] = useState<string>('');
 	const [statusFilter, setStatusFilter] = useState<string>('');
 
@@ -117,11 +129,14 @@ export default function AdminUsers() {
 		bio: '',
 		materiaCodigos: [],
 	});
+	const [pendingTutorProfile, setPendingTutorProfile] =
+		useState<PendingTutorProfile | null>(null);
 	const [availableMaterias, setAvailableMaterias] = useState<Subject[]>([]);
 	const [selectedMaterias, setSelectedMaterias] = useState<Set<string>>(
 		new Set(),
 	);
 	const [materiaSearchQuery, setMateriaSearchQuery] = useState('');
+	const deferredMateriaQuery = useDeferredValue(materiaSearchQuery);
 
 	// Action loading states
 	const [actionLoading, setActionLoading] = useState(false);
@@ -199,18 +214,36 @@ export default function AdminUsers() {
 
 	// Handle search
 	const handleSearch = useCallback((value: string) => {
-		setSearchTerm(value);
-		setPage(1); // Reset to first page on search
+		setSearchInput(value);
+		setPage(1);
 	}, []);
+
+	// Debounce applying search term to reduce frequent requests
+	useEffect(() => {
+		const t = setTimeout(() => setSearchTerm(searchInput.trim()), 300);
+		return () => clearTimeout(t);
+	}, [searchInput]);
 
 	// Handle role change
 	const openRoleChangeModal = useCallback(
 		(user: AdminUserDto, newRole: 'estudiante' | 'tutor' | 'admin') => {
-			setRoleChangeData({ user, newRole });
 			setError(null);
+
+			// If changing to tutor, open the tutor profile modal FIRST
+			if (newRole === 'tutor') {
+				setTutorFormData({ usuarioId: user.id, bio: '', materiaCodigos: [] });
+				setSelectedMaterias(new Set());
+				setMateriaSearchQuery('');
+				setRoleChangeData({ user, newRole });
+				tutorProfileModal.onOpen();
+				return;
+			}
+
+			// For other roles, keep existing confirmation flow
+			setRoleChangeData({ user, newRole });
 			roleModal.onOpen();
 		},
-		[roleModal],
+		[roleModal, tutorProfileModal],
 	);
 
 	const handleRoleChange = useCallback(async () => {
@@ -219,30 +252,64 @@ export default function AdminUsers() {
 		setActionLoading(true);
 		setError(null);
 		try {
-			await updateUserRole(roleChangeData.user.id, roleChangeData.newRole);
-			await fetchUsers();
-			roleModal.onClose();
-
-			// If changing to tutor, open tutor profile creation modal
+			// For tutor, also create profile using the data captured earlier
 			if (roleChangeData.newRole === 'tutor') {
-				setTutorFormData({
+				if (
+					!pendingTutorProfile ||
+					pendingTutorProfile.materiaCodigos.length === 0
+				) {
+					toast.error('Falta la información del perfil de tutor');
+					setActionLoading(false);
+					return;
+				}
+
+				await updateUserRole(roleChangeData.user.id, roleChangeData.newRole);
+				await apiClient.post('/wise/tutorias/create-tutor', {
 					usuarioId: roleChangeData.user.id,
-					bio: '',
-					materiaCodigos: [],
+					bio: pendingTutorProfile.bio,
+					materiaCodigos: pendingTutorProfile.materiaCodigos,
 				});
-				setSelectedMaterias(new Set());
-				setMateriaSearchQuery('');
-				tutorProfileModal.onOpen();
+				toast.success('Rol actualizado y perfil de tutor creado');
+			} else {
+				await updateUserRole(roleChangeData.user.id, roleChangeData.newRole);
 			}
 
+			await fetchUsers();
+			roleModal.onClose();
 			setRoleChangeData(null);
-		} catch (error) {
+			setPendingTutorProfile(null);
+			setTutorFormData({ usuarioId: '', bio: '', materiaCodigos: [] });
+			setSelectedMaterias(new Set());
+		} catch (error: any) {
 			console.error('Error updating role:', error);
-			setError('Error al cambiar el rol del usuario');
+			const message =
+				error?.response?.data?.message ||
+				error?.message ||
+				'Error al cambiar el rol del usuario';
+
+			const isConflict =
+				error?.response?.status === 409 ||
+				String(message).toLowerCase().includes('perfil de tutor') ||
+				String(message).toLowerCase().includes('ya tiene un perfil');
+
+			// If tutor profile already exists, treat as a soft success: keep role change and finish flow
+			if (roleChangeData?.newRole === 'tutor' && isConflict) {
+				toast.info('El usuario ya tiene un perfil de tutor');
+				await fetchUsers();
+				roleModal.onClose();
+				setRoleChangeData(null);
+				setPendingTutorProfile(null);
+				setTutorFormData({ usuarioId: '', bio: '', materiaCodigos: [] });
+				setSelectedMaterias(new Set());
+				setError(null);
+				return;
+			}
+
+			setError(Array.isArray(message) ? message.join(', ') : message);
 		} finally {
 			setActionLoading(false);
 		}
-	}, [roleChangeData, fetchUsers, roleModal, tutorProfileModal]);
+	}, [roleChangeData, fetchUsers, roleModal, pendingTutorProfile]);
 
 	// Handle suspend
 	const openSuspendModal = useCallback(
@@ -307,28 +374,16 @@ export default function AdminUsers() {
 			return;
 		}
 
-		setActionLoading(true);
-		try {
-			const data = {
-				...tutorFormData,
-				materiaCodigos: Array.from(selectedMaterias),
-			};
+		// Store data and proceed to confirmation modal; actual API calls happen on confirm
+		const data: PendingTutorProfile = {
+			bio: tutorFormData.bio,
+			materiaCodigos: Array.from(selectedMaterias),
+		};
 
-			await apiClient.post('/wise/tutorias/create-tutor', data);
-			toast.success('Perfil de tutor creado exitosamente');
-			tutorProfileModal.onClose();
-			setTutorFormData({ usuarioId: '', bio: '', materiaCodigos: [] });
-			setSelectedMaterias(new Set());
-			await fetchUsers();
-		} catch (error: any) {
-			console.error('Error creating tutor profile:', error);
-			const errorMessage =
-				error.response?.data?.message || 'Error al crear el perfil de tutor';
-			toast.error(errorMessage);
-		} finally {
-			setActionLoading(false);
-		}
-	}, [tutorFormData, selectedMaterias, tutorProfileModal, fetchUsers]);
+		setPendingTutorProfile(data);
+		tutorProfileModal.onClose();
+		roleModal.onOpen();
+	}, [tutorFormData, selectedMaterias, tutorProfileModal, roleModal]);
 
 	// Handle materia selection toggle
 	const toggleMateriaSelection = useCallback((codigo: string) => {
@@ -360,15 +415,15 @@ export default function AdminUsers() {
 
 	// Filter materias based on search query
 	const filteredMaterias = useMemo(() => {
-		if (!materiaSearchQuery.trim()) return availableMaterias;
+		if (!deferredMateriaQuery.trim()) return availableMaterias;
 
-		const query = materiaSearchQuery.toLowerCase();
+		const query = deferredMateriaQuery.toLowerCase();
 		return availableMaterias.filter(
 			(materia) =>
 				materia.nombre.toLowerCase().includes(query) ||
 				materia.codigo.toLowerCase().includes(query),
 		);
-	}, [availableMaterias, materiaSearchQuery]);
+	}, [availableMaterias, deferredMateriaQuery]);
 
 	// Table columns
 	const columns = [
@@ -544,7 +599,7 @@ export default function AdminUsers() {
 						<Input
 							placeholder="Buscar por nombre o correo..."
 							startContent={<Search className="w-4 h-4 text-default-400" />}
-							value={searchTerm}
+							value={searchInput}
 							onValueChange={handleSearch}
 							isClearable
 							onClear={() => handleSearch('')}
@@ -781,19 +836,39 @@ export default function AdminUsers() {
 				isOpen={tutorProfileModal.isOpen}
 				onClose={tutorProfileModal.onClose}
 				size="3xl"
-				isDismissable={false}
+				isDismissable={true}
 				hideCloseButton
 				scrollBehavior="inside"
 			>
-				<ModalContent className="max-h-[90vh]">
-					<ModalHeader className="flex flex-col gap-1 sticky top-0 bg-content1 z-10 pb-4">
+				<ModalContent className="max-h-[90vh] rounded-2xl">
+					<ModalHeader className="flex flex-col gap-1 sticky top-0 bg-content1 z-10 pb-4 rounded-t-2xl">
 						<h3 className="text-xl font-bold">Crear Perfil de Tutor</h3>
 						<p className="text-sm text-default-500 font-normal">
 							Complete la información del perfil de tutor. Debe seleccionar al
 							menos una materia.
 						</p>
 					</ModalHeader>
-					<ModalBody className="overflow-y-auto">
+					<ModalBody className="overflow-y-auto bg-white dark:bg-content1 px-4 py-3">
+						{/* Inline scrollbar styles for this modal */}
+						<style>{`
+							.tutor-scroll {
+								scrollbar-width: thin;
+								scrollbar-color: #cbd5e1 #ffffff; /* thumb, track */
+							}
+							.tutor-scroll::-webkit-scrollbar {
+								width: 10px;
+								height: 10px;
+							}
+							.tutor-scroll::-webkit-scrollbar-track {
+								background: #ffffff;
+								border-radius: 12px;
+							}
+							.tutor-scroll::-webkit-scrollbar-thumb {
+								background-color: #cbd5e1; /* slate-300 */
+								border-radius: 12px;
+								border: 2px solid #ffffff;
+							}
+						`}</style>
 						<div className="space-y-4">
 							{/* Bio */}
 							<Textarea
@@ -833,7 +908,7 @@ export default function AdminUsers() {
 										No se encontraron materias que coincidan con tu búsqueda
 									</p>
 								) : (
-									<div className="max-h-96 overflow-y-auto pr-2">
+									<div className="max-h-96 overflow-y-auto p-3 bg-white dark:bg-content1 rounded-xl tutor-scroll">
 										<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
 											{filteredMaterias.map((materia) => {
 												const isSelected = selectedMaterias.has(materia.codigo);
@@ -849,15 +924,11 @@ export default function AdminUsers() {
 																toggleMateriaSelection(materia.codigo);
 															}
 														}}
-														className={`relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 ${
-															isSelected
-																? 'ring-2 ring-primary shadow-lg'
-																: 'hover:shadow-md'
-														}`}
+														className={`relative overflow-hidden rounded-xl cursor-pointer transition-transform duration-200 ease-out hover:scale-[1.03] shadow-sm hover:shadow-md ${isSelected ? 'ring-2 ring-primary' : ''}`}
 													>
 														{/* Color Header */}
 														<div
-															className={`${colorGradient} p-4 flex items-center justify-between`}
+															className={`${colorGradient} p-4 flex items-center justify-between rounded-t-xl`}
 														>
 															<BookOpen className="w-8 h-8 text-white" />
 															{isSelected && (
@@ -866,7 +937,7 @@ export default function AdminUsers() {
 														</div>
 
 														{/* Content */}
-														<div className="bg-white dark:bg-gray-800 p-4">
+														<div className="bg-white dark:bg-gray-800 p-4 rounded-b-xl">
 															<h3 className="font-bold text-base mb-1">
 																{materia.codigo}
 															</h3>
@@ -898,7 +969,7 @@ export default function AdminUsers() {
 							</div>
 						</div>
 					</ModalBody>
-					<ModalFooter className="sticky bottom-0 bg-content1 z-10 pt-4">
+					<ModalFooter className="sticky bottom-0 bg-content1 z-10 pt-4 rounded-b-2xl">
 						<Button
 							color="primary"
 							onPress={handleCreateTutorProfile}
