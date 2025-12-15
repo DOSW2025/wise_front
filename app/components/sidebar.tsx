@@ -75,12 +75,12 @@ export function Sidebar({
 				// 	icon: <TrendingUp className="w-5 h-5" />,
 				// 	path: '/dashboard/student/progress',
 				// },
-				{
-					key: 'statistics',
-					label: 'Estadísticas',
-					icon: <BarChart3 className="w-5 h-5" />,
-					path: '/dashboard/student/statistics',
-				},
+				// {
+				// 	key: 'statistics',
+				// 	label: 'Estadísticas',
+				// 	icon: <BarChart3 className="w-5 h-5" />,
+				// 	path: '/dashboard/student/statistics',
+				// },
 				{
 					key: 'community',
 					label: 'Comunidad',
