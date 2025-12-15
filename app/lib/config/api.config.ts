@@ -101,6 +101,9 @@ export const API_ENDPOINTS = {
 		GET_RATINGS_LIST: (id: string) => `/wise/materiales/${id}/ratings/list`,
 		GET_TAGS_PERCENTAGE: (userId: string) =>
 			`/wise/materiales/user/${userId}/tags-percentage`,
+		GET_AVERAGE_RATING: (userId: string) =>
+			`/wise/materiales/user/${userId}/average-rating`,
+		GET_TOP: (userId: string) => `/wise/materiales/user/${userId}/top`,
 		SEARCH: '/wise/materiales/search',
 		STATS_COUNT: '/wise/materiales/stats/count',
 		STATS_TAGS_PERCENTAGE: '/wise/materiales/stats/tags-percentage',

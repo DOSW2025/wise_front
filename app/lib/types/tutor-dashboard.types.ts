@@ -42,10 +42,18 @@ export interface UpcomingSession {
 export interface PopularMaterial {
 	id: string;
 	nombre: string;
-	materia: string;
+	userId: string;
+	url: string;
+	descripcion?: any;
+	vistos: number;
 	descargas: number;
-	calificacion: number;
-	weeklyGrowth: number;
+	createdAt: string;
+	updatedAt: string;
+	userName: string;
+	tags: string[];
+	calificacionPromedio: number;
+	totalComentarios: number;
+	extension: string;
 }
 
 export interface RecentReview {
