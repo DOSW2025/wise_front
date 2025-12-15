@@ -943,25 +943,19 @@ const StudentTutoringPage: React.FC = () => {
 		onOpenChat: (tutor: Tutor) => void;
 	}>();
 
-	const getFutureSessionsSortedByProximity = useCallback(
-		(list: StudentSession[]) => {
-			const now = Date.now();
+	// Ordenar todas las sesiones por fecha (más recientes primero)
+	const getAllSessionsSortedByDate = useCallback((list: StudentSession[]) => {
+		return [...list].sort((a, b) => {
+			const timeA = new Date(a.scheduledAt).getTime();
+			const timeB = new Date(b.scheduledAt).getTime();
+			// Ordenar descendente: las más recientes primero
+			return timeB - timeA;
+		});
+	}, []);
 
-			return [...list]
-				.filter((session) => new Date(session.scheduledAt).getTime() >= now)
-				.sort((a, b) => {
-					const timeA = new Date(a.scheduledAt).getTime();
-					const timeB = new Date(b.scheduledAt).getTime();
-
-					return timeA - now - (timeB - now);
-				});
-		},
-		[], // la función no depende de nada externo
-	);
-
-	const futureSessions = useMemo(
-		() => getFutureSessionsSortedByProximity(sessions),
-		[sessions, getFutureSessionsSortedByProximity],
+	const allSessions = useMemo(
+		() => getAllSessionsSortedByDate(sessions),
+		[sessions, getAllSessionsSortedByDate],
 	);
 
 	const handleSearch = (_filters: TutorFilters) => {};
@@ -1166,27 +1160,27 @@ const StudentTutoringPage: React.FC = () => {
 					{/* Content */}
 					{!isLoadingSessions &&
 						!sessionsError &&
-						(futureSessions.length === 0 ? (
+						(allSessions.length === 0 ? (
 							<Card>
 								<CardBody className="text-center py-12">
 									<Calendar className="w-12 h-12 text-default-300 mx-auto mb-4" />
 									<h3 className="text-lg font-semibold mb-2">
-										No tienes tutorias programadas
+										No tienes tutorías registradas
 									</h3>
 									<p className="text-default-500 mb-4">
-										Cuando confirmes una tutoria aparecera aqui.
+										Cuando agentes una tutoría aparecerá aquí.
 									</p>
 									<Button
 										color="primary"
 										onPress={() => setActiveTab('search')}
 									>
-										Agendar tutoria
+										Agendar tutoría
 									</Button>
 								</CardBody>
 							</Card>
 						) : (
 							<div className="grid gap-4">
-								{futureSessions.map((session) => (
+								{allSessions.map((session) => (
 									<SessionCardItem
 										key={session.id}
 										session={session}
