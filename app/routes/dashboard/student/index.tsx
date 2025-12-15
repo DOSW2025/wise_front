@@ -2,8 +2,8 @@ import { Button, Card, CardBody, Spinner } from '@heroui/react';
 import {
 	AlertCircle,
 	BookOpen,
+	Eye,
 	MessageSquare,
-	Star,
 	TrendingUp,
 	Users,
 } from 'lucide-react';
@@ -231,7 +231,7 @@ export default function StudentDashboard() {
 												</div>
 											</div>
 											<div className="flex items-center gap-1">
-												<Star className="w-3 h-3 text-yellow-500 fill-current" />
+												<Eye className="w-3 h-3 text-default-400" />
 												<span className="text-tiny">
 													{material.vistos || 0} vistas
 												</span>
