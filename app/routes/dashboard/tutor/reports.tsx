@@ -382,10 +382,6 @@ export default function TutorReports() {
 						{/* Historial de Tutorías */}
 						{activeTab === 'history' && (
 							<div className="space-y-4">
-								<h2 className="text-xl font-semibold">
-									Historial Completo de Sesiones
-								</h2>
-
 								{isLoadingHistory ? (
 									<Card>
 										<CardBody className="space-y-3">
@@ -529,10 +525,6 @@ export default function TutorReports() {
 						{/* Evaluaciones y Comentarios */}
 						{activeTab === 'ratings' && (
 							<div className="space-y-4">
-								<h2 className="text-xl font-semibold">
-									Evaluaciones Recibidas
-								</h2>
-
 								{isLoadingHistory ? (
 									<Card>
 										<CardBody className="space-y-4">
