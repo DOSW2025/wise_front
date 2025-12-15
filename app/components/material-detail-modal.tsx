@@ -60,7 +60,7 @@ export function MaterialDetailModal({
 			<Card className="w-full max-w-2xl">
 				<CardBody className="p-6">
 					<div className="flex items-center justify-between mb-6">
-						<h3 className="text-xl font-semibold">Error</h3>
+						<h3 className="font-heading text-xl font-semibold">Error</h3>
 						<Button isIconOnly variant="light" onPress={onClose}>
 							<X className="w-4 h-4" />
 						</Button>
@@ -88,7 +88,9 @@ export function MaterialDetailModal({
 		<Card className="w-full max-w-2xl">
 			<CardBody className="p-6">
 				<div className="flex items-center justify-between mb-6">
-					<h3 className="text-xl font-semibold">Detalle del Material</h3>
+					<h3 className="font-heading text-xl font-semibold">
+						Detalle del Material
+					</h3>
 					<Button isIconOnly variant="light" onPress={onClose}>
 						<X className="w-4 h-4" />
 					</Button>
@@ -97,7 +99,7 @@ export function MaterialDetailModal({
 				<div className="space-y-6">
 					{/* Vista previa del archivo */}
 					{material.fileUrl ? (
-						<div className="border rounded-lg overflow-hidden bg-gray-50">
+						<div className="border rounded-lg overflow-hidden bg-default-50">
 							<iframe
 								src={`https://docs.google.com/gview?url=${encodeURIComponent(material.fileUrl)}&embedded=true`}
 								className="w-full h-96 border-0"
@@ -106,10 +108,10 @@ export function MaterialDetailModal({
 							/>
 						</div>
 					) : (
-						<div className="bg-gray-50 rounded-lg p-8 text-center">
+						<div className="bg-default-50 rounded-lg p-8 text-center">
 							<FileText className="w-16 h-16 text-[#8B1A1A] mx-auto mb-3" />
-							<p className="text-gray-600 text-sm mb-1">Archivo PDF</p>
-							<p className="text-xs text-gray-500">{material.nombre}.pdf</p>
+							<p className="text-default-600 text-sm mb-1">Archivo PDF</p>
+							<p className="text-xs text-default-500">{material.nombre}.pdf</p>
 						</div>
 					)}
 					<div>
@@ -119,24 +121,25 @@ export function MaterialDetailModal({
 						<p className="text-default-600 mb-4">Por: {material.tutor}</p>
 
 						<div className="flex flex-wrap gap-2 mb-4">
-							<Chip
-								size="sm"
-								variant="flat"
-								className="bg-gray-100 text-gray-700"
-							>
-								{material.materia}
-							</Chip>
-							<Chip
-								size="sm"
-								variant="flat"
-								className="bg-gray-100 text-gray-700"
-							>
-								Semestre {material.semestre}
-							</Chip>
+							{material.tags && material.tags.length > 0 ? (
+								material.tags.map((tag) => (
+									<Chip key={tag} size="sm" variant="flat" color="primary">
+										{tag}
+									</Chip>
+								))
+							) : (
+								<Chip
+									size="sm"
+									variant="flat"
+									className="bg-default-100 text-default-700"
+								>
+									{material.materia}
+								</Chip>
+							)}
 						</div>
 
 						{material.descripcion && (
-							<p className="text-default-700 bg-gray-50 p-3 rounded-lg text-sm">
+							<p className="text-default-700 bg-default-50 p-3 rounded-lg text-sm">
 								{material.descripcion}
 							</p>
 						)}
@@ -147,11 +150,11 @@ export function MaterialDetailModal({
 					{/* Calificación */}
 					<div>
 						<div className="flex items-center gap-2">
-							<Star className="w-5 h-5 text-yellow-500 fill-current" />
+							<Star className="w-5 h-5 text-warning fill-current" />
 							<span className="font-semibold">
-								{material.calificacion.toFixed(1)}
+								{(material.calificacion ?? 0).toFixed(1)}
 							</span>
-							<span className="text-sm text-gray-500">
+							<span className="text-sm text-default-500">
 								calificación promedio
 							</span>
 						</div>
@@ -161,26 +164,26 @@ export function MaterialDetailModal({
 
 					{/* Estadísticas */}
 					<div>
-						<h5 className="font-semibold mb-3">Estadísticas</h5>
+						<h5 className="font-heading font-semibold mb-3">Estadísticas</h5>
 						<div className="grid grid-cols-2 gap-4">
-							<div className="text-center p-3 bg-gray-50 rounded-lg">
+							<div className="text-center p-3 bg-default-50 rounded-lg">
 								<div className="flex items-center justify-center gap-1 mb-1">
-									<Eye className="w-4 h-4 text-gray-600" />
-									<span className="font-semibold text-gray-700">
+									<Eye className="w-4 h-4 text-default-600" />
+									<span className="font-semibold text-default-700">
 										{material.vistas}
 									</span>
 								</div>
-								<p className="text-xs text-gray-600">Vistas</p>
+								<p className="text-xs text-default-600">Vistas</p>
 							</div>
 
-							<div className="text-center p-3 bg-gray-50 rounded-lg">
+							<div className="text-center p-3 bg-default-50 rounded-lg">
 								<div className="flex items-center justify-center gap-1 mb-1">
-									<Download className="w-4 h-4 text-gray-600" />
-									<span className="font-semibold text-gray-700">
+									<Download className="w-4 h-4 text-default-600" />
+									<span className="font-semibold text-default-700">
 										{material.descargas}
 									</span>
 								</div>
-								<p className="text-xs text-gray-600">Descargas</p>
+								<p className="text-xs text-default-600">Descargas</p>
 							</div>
 						</div>
 					</div>
@@ -189,7 +192,7 @@ export function MaterialDetailModal({
 
 					{/* Información adicional */}
 					<div>
-						<h5 className="font-semibold mb-3">Información</h5>
+						<h5 className="font-heading font-semibold mb-3">Información</h5>
 						<div className="space-y-2 text-sm">
 							<div className="flex justify-between">
 								<span className="text-default-600">Fecha de subida:</span>
@@ -205,7 +208,7 @@ export function MaterialDetailModal({
 					{/* Botones de acción */}
 					<div className="flex gap-3 pt-4">
 						<Button
-							className="bg-[#8B1A1A] text-white"
+							className="font-nav bg-[#8B1A1A] text-white"
 							startContent={<Download className="w-4 h-4" />}
 							onPress={() => {
 								downloadMaterial.mutate(material.id, {
@@ -226,6 +229,7 @@ export function MaterialDetailModal({
 						{isOwner && (
 							<>
 								<Button
+									className="font-nav"
 									variant="bordered"
 									startContent={<Edit className="w-4 h-4" />}
 									onPress={() => onEdit?.(material)}
@@ -233,8 +237,8 @@ export function MaterialDetailModal({
 									Editar
 								</Button>
 								<Button
+									className="font-nav text-danger border-danger hover:bg-danger-50"
 									variant="bordered"
-									className="text-red-600 border-red-600 hover:bg-red-50"
 									startContent={<Trash2 className="w-4 h-4" />}
 									onPress={() => onDelete?.(material.id)}
 								>

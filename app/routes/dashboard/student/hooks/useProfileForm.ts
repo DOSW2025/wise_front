@@ -6,7 +6,7 @@ interface ProfileData {
 	phone: string;
 	role: string;
 	description: string;
-	avatar?: string;
+	avatarUrl?: string;
 	interests: string[];
 	semester: string;
 }

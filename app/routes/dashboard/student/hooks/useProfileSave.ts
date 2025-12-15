@@ -7,6 +7,8 @@ interface ProfileSaveData {
 	phone: string;
 	role?: string;
 	description: string;
+	interests?: string[];
+	semester?: string;
 }
 
 export function useProfileSave() {
@@ -41,7 +43,7 @@ export function useProfileSave() {
 					errorMessage.includes('no está disponible')
 				) {
 					errorMessage =
-						'El endpoint de actualización de perfil no está disponible en el backend. Por favor, contacta al equipo de desarrollo.';
+						'El servicio no está disponible temporalmente. Por favor, intenta más tarde.';
 				}
 			}
 
@@ -59,7 +61,8 @@ export function useProfileSave() {
 			setSuccess('Contraseña actualizada exitosamente');
 			setTimeout(() => setSuccess(null), 3000);
 			return true;
-		} catch {
+		} catch (err) {
+			// En este mock no usamos el error específico, pero mantenemos consistencia con saveProfile
 			setError('Error al cambiar la contraseña');
 			return false;
 		}

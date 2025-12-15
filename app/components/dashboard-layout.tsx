@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router';
+import { useIaFeature } from '~/lib/hooks/useIaFeature';
 import ChatOverlay from './chat/chatOverlay';
 import { ChatDropdown } from './chat-dropdown';
 import { ChatbotWidget } from './chatbot-widget';
@@ -31,6 +32,8 @@ export function DashboardLayout({
 	const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(
 		undefined,
 	);
+
+	const iaEnabled = useIaFeature(5000);
 
 	const handleOpenChat = (data: {
 		id: number;
@@ -86,8 +89,8 @@ export function DashboardLayout({
 				onClose={handleCloseChat}
 			/>
 
-			{/* Chatbot Widget */}
-			<ChatbotWidget isChatOpen={!!selectedTutor} />
+			{/* Chatbot Widget (hidden when IA is disabled by API gateway) */}
+			{iaEnabled && <ChatbotWidget isChatOpen={!!selectedTutor} />}
 		</div>
 	);
 }

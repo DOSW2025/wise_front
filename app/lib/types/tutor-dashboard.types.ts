@@ -8,6 +8,7 @@ export interface TutorStats {
 	calificacionPromedio: number;
 	estudiantesAtendidos: number;
 	solicitudesPendientes: number;
+	totalRatings: number;
 }
 
 export interface SessionRequest {

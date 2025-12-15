@@ -6,7 +6,8 @@ interface ProfileData {
 	phone: string;
 	location: string;
 	description: string;
-	avatar?: string;
+	role: string;
+	avatarUrl?: string;
 	availability: {
 		monday: boolean;
 		tuesday: boolean;

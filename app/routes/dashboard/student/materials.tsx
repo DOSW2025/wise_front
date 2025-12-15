@@ -30,6 +30,7 @@ import type {
 } from '~/components/materials/types';
 import { sortOptions } from '~/components/materials/types';
 import { recommendationsService } from '~/lib/api/recommendations';
+import { useIaFeature } from '~/lib/hooks/useIaFeature';
 import { useDownloadMaterial, useMaterials } from '~/lib/hooks/useMaterials';
 import type {
 	AssistantResponse,
@@ -158,23 +159,24 @@ function adaptMaterialForCard(apiMaterial: Material): MaterialCardType {
 			month: 'short',
 			year: 'numeric',
 		}),
-		rating: apiMaterial.calificacion,
+		rating: (apiMaterial.calificacion ?? 0) as number,
 		ratingsCount: 0, // No viene en respuesta
 		downloads: apiMaterial.descargas,
-		comments: 0, // No viene en respuesta
+		comments: apiMaterial.totalComentarios || 0,
 		description: apiMaterial.descripcion || 'Sin descripción disponible.',
 		commentsList: [],
 		fileUrl: apiMaterial.fileUrl, // URL del archivo para vista previa
+		tags: apiMaterial.tags, // Tags del material
 	};
 }
 
 export default function StudentMaterials() {
 	// Estados
+	const iaEnabledState = useIaFeature(5000);
 	const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 	const [searchQuery, setSearchQuery] = useState('');
-	const [selectedSubject, setSelectedSubject] = useState('Todos');
-	const [selectedSemester, setSelectedSemester] = useState('Todos');
+	const [selectedTags, setSelectedTags] = useState<string[]>([]);
 	const [sortBy, setSortBy] = useState('Todos');
 	const [previewMaterial, setPreviewMaterial] =
 		useState<MaterialCardType | null>(null);
@@ -191,6 +193,7 @@ export default function StudentMaterials() {
 	const [assistError, setAssistError] = useState<string | null>(null);
 	const [isAssistLoading, setIsAssistLoading] = useState(false);
 	const [currentSkip, setCurrentSkip] = useState(0);
+	const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
 
 	// Calcular items por página - ambos modos usan 15
 	const itemsPerPage = 15;
@@ -216,19 +219,65 @@ export default function StudentMaterials() {
 		? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
 		: 'space-y-4';
 	const gridButtonVariant = isGridView ? 'solid' : 'flat';
+
 	const gridButtonClass = isGridView ? 'bg-[#8B1A1A] text-white' : '';
 	const listButtonVariant = isGridView ? 'flat' : 'solid';
 	const listButtonClass = isGridView ? '' : 'bg-[#8B1A1A] text-white';
 
+	// Handler for clicking on AI recommendations
+	const handleRecommendationClick = (rec: RecommendationItem) => {
+		setIsLoadingRecommendation(true);
+
+		// Intentar buscar en los materiales actuales
+		const foundMaterial = allMaterials.find((m) => {
+			// Buscar por coincidencia exacta de título
+			if (m.title === rec.fileName) return true;
+
+			// Buscar por coincidencia parcial (el título contiene el fileName o viceversa)
+			if (m.title.toLowerCase().includes(rec.fileName.toLowerCase()))
+				return true;
+			if (rec.fileName.toLowerCase().includes(m.title.toLowerCase()))
+				return true;
+
+			// Buscar por docId si está disponible
+			if (rec.docId && m.id === rec.docId) return true;
+
+			return false;
+		});
+
+		if (foundMaterial) {
+			// Si está en la lista actual, abrir directamente
+			setPreviewMaterial(foundMaterial);
+		} else {
+			// Si no está, actualizar la búsqueda con el nombre del archivo
+			// Extraer el nombre limpio del archivo (sin UUID si existe)
+			const cleanFileName = rec.fileName
+				.replace(
+					/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}-/,
+					'',
+				)
+				.replace(/\.[^.]+$/, '');
+			setSearchQuery(cleanFileName || rec.fileName);
+			setSelectedSubject('Todos');
+			setSelectedSemester('Todos');
+			setCurrentSkip(0);
+		}
+
+		setIsLoadingRecommendation(false);
+	};
+
 	// Filtrar y ordenar materiales
 	const filteredMaterials = useMemo(() => {
 		const filtered = allMaterials.filter((material) => {
-			const matchesSubject =
-				selectedSubject === 'Todos' || material.subject === selectedSubject;
-			const matchesSemester =
-				selectedSemester === 'Todos' || material.semester === selectedSemester;
+			// Si no hay tags seleccionados, mostrar todos
+			if (selectedTags.length === 0) return true;
 
-			return matchesSubject && matchesSemester;
+			// Si hay tags seleccionados, el material debe tener al menos uno de ellos
+			return selectedTags.some((tag) =>
+				material.tags?.some(
+					(materialTag) => materialTag.toLowerCase() === tag.toLowerCase(),
+				),
+			);
 		});
 
 		// Ordenar
@@ -252,7 +301,7 @@ export default function StudentMaterials() {
 		}
 
 		return filtered;
-	}, [allMaterials, selectedSubject, selectedSemester, sortBy]);
+	}, [allMaterials, selectedTags, sortBy]);
 
 	// Los materiales ya vienen paginados de la API
 	const paginatedMaterials = filteredMaterials;
@@ -448,13 +497,13 @@ export default function StudentMaterials() {
 			{/* Header SIN botón Subir material */}
 			<div className="flex items-start justify-between">
 				<div className="flex flex-col gap-2">
-					<h1 className="text-3xl font-bold text-foreground">
+					<h1 className="text-3xl font-bold text-foreground font-heading">
 						Repositorio de Materiales
 					</h1>
 					<p className="text-default-500">
 						{filteredMaterials.length} materiales disponibles
 						{filteredMaterials.length > itemsPerPage && (
-							<span className="text-sm text-gray-500 ml-2">
+							<span className="text-sm text-default-500 ml-2">
 								(Mostrando {(currentPage - 1) * itemsPerPage + 1}-
 								{Math.min(currentPage * itemsPerPage, filteredMaterials.length)}
 								)
@@ -467,23 +516,25 @@ export default function StudentMaterials() {
 			{/* Barra de búsqueda y botón filtros */}
 			<div className="flex gap-4">
 				<Input
-					placeholder="Buscar por título, autor o materia..."
+					placeholder="Buscar por nombre de material"
 					startContent={<Search size={20} />}
 					value={searchQuery}
 					onValueChange={setSearchQuery}
 					className="flex-1"
 					endContent={
-						<Button
-							isIconOnly
-							variant="light"
-							className="min-w-10 h-10 rounded-full bg-[#8B1A1A] text-white shadow-sm flex items-center justify-center px-2 mr-2"
-							title="Busqueda inteligente"
-							aria-label="Busqueda inteligente"
-							onClick={() => setIsAssistOpen((prev) => !prev)}
-							type="button"
-						>
-							<Stars size={18} className="w-5 h-5" />
-						</Button>
+						iaEnabledState ? (
+							<Button
+								isIconOnly
+								variant="light"
+								className="min-w-10 h-10 rounded-full bg-[#8B1A1A] text-white shadow-sm flex items-center justify-center px-2 mr-2"
+								title="Busqueda inteligente"
+								aria-label="Busqueda inteligente"
+								onClick={() => setIsAssistOpen((prev) => !prev)}
+								type="button"
+							>
+								<Stars size={18} className="w-5 h-5" />
+							</Button>
+						) : null
 					}
 				/>
 
@@ -491,12 +542,13 @@ export default function StudentMaterials() {
 					variant="bordered"
 					startContent={<Filter size={20} />}
 					onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+					className="font-nav"
 				>
 					Filtros
 				</Button>
 			</div>
 
-			{isAssistOpen && (
+			{iaEnabledState && isAssistOpen && (
 				<div className="border rounded-lg p-4 shadow-sm bg-white/60 backdrop-blur-sm space-y-4">
 					<div className="flex items-center justify-between gap-3">
 						<div>
@@ -512,6 +564,7 @@ export default function StudentMaterials() {
 							variant="light"
 							onClick={() => setIsAssistOpen(false)}
 							type="button"
+							className="font-nav"
 						>
 							Cerrar
 						</Button>
@@ -563,7 +616,7 @@ export default function StudentMaterials() {
 						<Button
 							color="primary"
 							onClick={handleAssistSubmit}
-							className="sm:ml-auto"
+							className="sm:ml-auto font-nav"
 							isLoading={isAssistLoading}
 						>
 							Enviar
@@ -606,41 +659,17 @@ export default function StudentMaterials() {
 													<button
 														key={rec.docId || idx}
 														type="button"
-														onClick={() => {
-															// Buscar el material completo en allMaterials
-															const fullMaterial = allMaterials.find(
-																(m) =>
-																	m.id === rec.docId ||
-																	m.title === rec.fileName,
-															);
-															if (fullMaterial) {
-																setPreviewMaterial(fullMaterial);
-															} else {
-																// Si no está en la página actual, actualizar la búsqueda
-																setSearchQuery(rec.fileName);
-																setCurrentSkip(0); // Resetear a la primera página
-															}
-														}}
+														onClick={() => handleRecommendationClick(rec)}
 														onKeyDown={(e) => {
 															// Permitir Enter y Space para activar el botón
 															if (e.key === 'Enter' || e.key === ' ') {
 																e.preventDefault();
-																const fullMaterial = allMaterials.find(
-																	(m) =>
-																		m.id === rec.docId ||
-																		m.title === rec.fileName,
-																);
-																if (fullMaterial) {
-																	setPreviewMaterial(fullMaterial);
-																} else {
-																	// Si no está en la página actual, actualizar la búsqueda
-																	setSearchQuery(rec.fileName);
-																	setCurrentSkip(0); // Resetear a la primera página
-																}
+																handleRecommendationClick(rec);
 															}
 														}}
 														className="bg-default-50 border border-default-200 rounded-lg p-3 space-y-2 hover:bg-default-100 transition text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary w-full"
 														aria-label={`Ver material recomendado: ${rec.fileName}`}
+														disabled={isLoadingRecommendation}
 													>
 														<div className="flex justify-between items-start gap-2">
 															<h4 className="text-sm font-semibold text-foreground">
@@ -672,17 +701,17 @@ export default function StudentMaterials() {
 			{/* Panel de filtros */}
 			<FiltersPanel
 				isOpen={isFiltersOpen}
-				selectedSubject={selectedSubject}
-				selectedSemester={selectedSemester}
-				onSubjectChange={setSelectedSubject}
-				onSemesterChange={setSelectedSemester}
+				selectedTags={selectedTags}
+				onTagsChange={setSelectedTags}
 			/>
 
 			{/* Ordenar por y cambiar vista */}
 			<div className="flex items-center justify-between">
 				<Dropdown>
 					<DropdownTrigger>
-						<Button variant="flat">Ordenar por: {sortBy}</Button>
+						<Button variant="flat" className="font-nav">
+							Ordenar por: {sortBy}
+						</Button>
 					</DropdownTrigger>
 					<DropdownMenu
 						aria-label="Ordenar por"
@@ -764,7 +793,7 @@ export default function StudentMaterials() {
 			{totalPages > 1 && (
 				<div className="flex flex-col sm:flex-row justify-center items-center gap-4 py-6 border-t">
 					{/* Información de página */}
-					<div className="text-sm text-gray-600">
+					<div className="text-sm text-default-600">
 						Página {currentPage} de {totalPages}
 					</div>
 
@@ -809,7 +838,7 @@ export default function StudentMaterials() {
 							{totalPages > 5 &&
 								currentPage > 3 &&
 								currentPage < totalPages - 2 && (
-									<span className="flex items-center px-2 text-gray-500">
+									<span className="flex items-center px-2 text-default-500">
 										...
 									</span>
 								)}
@@ -868,7 +897,7 @@ export default function StudentMaterials() {
 					</div>
 
 					{/* Información de rango */}
-					<div className="text-sm text-gray-500">
+					<div className="text-sm text-default-500">
 						{(currentPage - 1) * itemsPerPage + 1} -{' '}
 						{Math.min(currentPage * itemsPerPage, filteredMaterials.length)} de{' '}
 						{filteredMaterials.length}

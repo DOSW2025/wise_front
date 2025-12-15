@@ -14,14 +14,18 @@ import {
 } from '@heroui/react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { AlertMessage, ProfileAvatar, StatsCard } from '~/components';
+import { AlertMessage, ProfileAvatar } from '~/components';
 import {
 	ProfileConfigurationSection,
 	ProfileEditButtons,
 	ProfileFormFields,
 	ProfileHeader,
 } from '~/components/profile';
+import { DeleteAccount } from '~/components/profile/DeleteAccount';
+import { InterestsChips } from '~/components/profile/InterestsChips';
 import { useAuth } from '~/contexts/auth-context';
+import { getProfile } from '~/lib/services/tutor.service';
+import { deleteMyAccount } from '~/lib/services/user.service';
 import { useProfileForm } from './hooks/useProfileForm';
 import { useProfileSave } from './hooks/useProfileSave';
 
@@ -29,6 +33,9 @@ export default function TutorProfile() {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
+	const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+	const [localError, setLocalError] = useState<string | null>(null);
+	const { onClose: onDeleteClose } = useDisclosure();
 
 	// Custom hooks for managing complex state
 	const {
@@ -38,9 +45,7 @@ export default function TutorProfile() {
 		setFormErrors,
 		isEditing,
 		setIsEditing,
-		avatarPreview,
 		validateForm,
-		handleImageUpload,
 		toggleDay,
 		resetForm,
 	} = useProfileForm({
@@ -49,7 +54,8 @@ export default function TutorProfile() {
 		phone: '',
 		location: '',
 		description: '',
-		avatar: user?.avatarUrl,
+		role: user?.role || 'TUTOR',
+		avatarUrl: user?.avatarUrl,
 		availability: {
 			monday: false,
 			tuesday: false,
@@ -62,7 +68,7 @@ export default function TutorProfile() {
 		subjects: [],
 	});
 
-	const { isSaving, error, success, setError, saveProfile } = useProfileSave();
+	const { isSaving, error, success, saveProfile } = useProfileSave();
 
 	const { isOpen: isAvailabilityModalOpen, onClose: onAvailabilityModalClose } =
 		useDisclosure();
@@ -74,13 +80,41 @@ export default function TutorProfile() {
 				name: user.name,
 				email: user.email,
 				avatarUrl: user.avatarUrl,
+				role: user.role || prev.role,
 			}));
 		}
 	}, [user, setProfile]);
 
+	useEffect(() => {
+		const loadProfile = async () => {
+			if (!user) return;
+			setIsLoadingProfile(true);
+			try {
+				const profileData = await getProfile();
+				setProfile((prev) => ({
+					...prev,
+					name: user.name,
+					email: user.email,
+					avatarUrl: user.avatarUrl,
+					role: user.role || prev.role,
+					phone: profileData.phone || '',
+					description: profileData.description || '',
+				}));
+			} catch (err) {
+				console.error('Error cargando perfil de tutor:', err);
+				setLocalError('No se pudo cargar tu perfil');
+			} finally {
+				setIsLoadingProfile(false);
+			}
+		};
+
+		loadProfile();
+	}, [user, setProfile]);
+
 	const handleSave = async () => {
+		setLocalError(null);
 		if (!validateForm()) {
-			setError('Por favor corrige los errores en el formulario');
+			setLocalError('Por favor corrige los errores en el formulario');
 			return;
 		}
 
@@ -99,14 +133,36 @@ export default function TutorProfile() {
 
 	const handleCancel = () => {
 		if (user) {
-			resetForm(user);
+			resetForm({
+				name: user.name,
+				email: user.email,
+				avatarUrl: user.avatarUrl,
+			});
 		}
 	};
 
-	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const result = handleImageUpload(event);
-		if (result?.error) {
-			setError(result.error);
+	if (isLoadingProfile) {
+		return (
+			<div className="flex items-center justify-center min-h-screen">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+					<p className="text-lg">Cargando perfil...</p>
+				</div>
+			</div>
+		);
+	}
+
+	const handleDeleteAccount = async () => {
+		try {
+			await deleteMyAccount();
+			onDeleteClose();
+			// Redirigir al login después de eliminar
+			navigate('/login');
+		} catch (error) {
+			console.error('Error al eliminar cuenta:', error);
+			setLocalError(
+				'Error al eliminar la cuenta. Por favor intenta nuevamente.',
+			);
 		}
 	};
 
@@ -120,6 +176,8 @@ export default function TutorProfile() {
 		{ key: 'sunday', label: 'Domingo' },
 	] as const;
 
+	const displayError = localError || error;
+
 	return (
 		<div className="space-y-6">
 			<ProfileHeader
@@ -128,7 +186,7 @@ export default function TutorProfile() {
 			/>
 
 			{/* Mensajes de error y éxito */}
-			{error && <AlertMessage message={error} type="error" />}
+			{displayError && <AlertMessage message={displayError} type="error" />}
 			{success && <AlertMessage message={success} type="success" />}
 
 			{/* Información Personal */}
@@ -146,13 +204,7 @@ export default function TutorProfile() {
 					</div>
 
 					<div className="flex flex-col md:flex-row gap-6">
-						<ProfileAvatar
-							src={profile.avatar}
-							name={profile.name}
-							isEditing={isEditing}
-							onImageChange={handleImageChange}
-							preview={avatarPreview}
-						/>{' '}
+						<ProfileAvatar src={profile.avatarUrl} name={profile.name} />{' '}
 						<ProfileFormFields
 							profile={profile}
 							isEditing={isEditing}
@@ -169,43 +221,25 @@ export default function TutorProfile() {
 					</div>
 
 					{isEditing && (
-						<div className="space-y-2">
-							<span className="text-sm font-medium block">
-								Materias que enseñas
-							</span>
-							<div className="flex flex-wrap gap-2">
-								{profile.subjects.map((subject) => (
-									<Chip
-										key={subject}
-										onClose={() =>
-											setProfile({
-												...profile,
-												subjects: profile.subjects.filter((s) => s !== subject),
-											})
-										}
-										variant="flat"
-										color="primary"
-									>
-										{subject}
-									</Chip>
-								))}
-								<Chip
-									variant="bordered"
-									className="cursor-pointer"
-									onClick={() => {
-										const newSubject = prompt('Ingresa una nueva materia:');
-										if (newSubject) {
-											setProfile({
-												...profile,
-												subjects: [...profile.subjects, newSubject],
-											});
-										}
-									}}
-								>
-									+ Agregar
-								</Chip>
-							</div>
-						</div>
+						<InterestsChips
+							title="Materias que enseñas"
+							items={profile.subjects}
+							isEditing={isEditing}
+							onRemove={(value) =>
+								setProfile({
+									...profile,
+									subjects: profile.subjects.filter((s) => s !== value),
+								})
+							}
+							onAdd={(value) =>
+								setProfile({
+									...profile,
+									subjects: [...profile.subjects, value],
+								})
+							}
+							emptyText="No has agregado materias"
+							addLabel="+ Agregar"
+						/>
 					)}
 				</CardBody>
 			</Card>
@@ -296,6 +330,8 @@ export default function TutorProfile() {
 					</ModalFooter>
 				</ModalContent>
 			</Modal>
+
+			<DeleteAccount onDelete={handleDeleteAccount} />
 		</div>
 	);
 }
