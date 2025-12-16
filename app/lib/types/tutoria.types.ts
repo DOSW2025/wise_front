@@ -329,3 +329,95 @@ export interface TutorProfileResponse {
 	ratings: Rating[];
 	tutorMaterias: TutorMateria[];
 }
+
+/**
+ * Rating object dentro de una sesión de tutor
+ */
+export interface SessionRating {
+	id: number;
+	sessionId: string;
+	tutorId: string;
+	raterId: string;
+	score: number; // 1-5
+	comment: string;
+	createdAt: string; // ISO 8601
+}
+
+/**
+ * Sesión del tutor con rating incluido (para historial)
+ */
+export interface TutorSessionWithRating {
+	id: string;
+	tutorId: string;
+	studentId: string;
+	materiaId: string;
+	codigoMateria: string;
+	scheduledAt: string; // ISO 8601
+	day: WeekDay;
+	startTime: string; // Formato: "HH:mm"
+	endTime: string; // Formato: "HH:mm"
+	mode: SessionMode;
+	status: SessionStatus;
+	linkConexion: string | null;
+	lugar: string | null;
+	comentarios: string | null;
+	createdAt: string; // ISO 8601
+	rating: SessionRating | null;
+	rated: boolean;
+}
+
+/**
+ * Respuesta del historial de sesiones del tutor
+ */
+export type TutorSessionHistoryResponse = TutorSessionWithRating[];
+
+/**
+ * Respuesta de reputación del tutor
+ */
+export interface TutorReputacionResponse {
+	tutorId: string;
+	nombreTutor: string;
+	reputacion: number;
+	totalRatings: number;
+}
+
+/**
+ * Perfil completo del tutor (para modal de estudiante)
+ */
+export interface TutorFullProfile {
+	usuarioId: string;
+	bio: string;
+	reputacion: number;
+	totalRatings: number;
+	usuario: {
+		id: string;
+		email: string;
+		nombre: string;
+		apellido: string;
+		rolId: number;
+		rol: Rol;
+		estadoId: number;
+		estado: Estado;
+		disponibilidad: DisponibilidadSemanal;
+		createdAt: string;
+		updatedAt: string;
+	};
+	tutorMaterias: Array<{
+		id: number;
+		tutorId: string;
+		materiaId: string;
+		materia: {
+			id: string;
+			codigo: string;
+			nombre: string;
+		};
+	}>;
+	ratings: Array<{
+		id: number;
+		sessionId: string;
+		raterId: string;
+		score: number;
+		comment: string | null;
+		createdAt: string;
+	}>;
+}

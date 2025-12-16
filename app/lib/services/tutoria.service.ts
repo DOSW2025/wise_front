@@ -12,14 +12,15 @@ import type {
 	CreateSessionRequest,
 	CreateSessionResponse,
 	MateriaResponse,
-	Rating,
 	StudentSession,
+	TutorFullProfile,
 	TutoriaStats,
 	TutorMateriasResponse,
 	TutorNameResponse,
 	TutorProfile,
 	TutorProfileResponse,
 	TutorReputacion,
+	TutorReputacionResponse,
 	UpcomingSessionsResponse,
 } from '../types/tutoria.types';
 
@@ -89,7 +90,7 @@ export async function getUserName(userId: string): Promise<string> {
 		const response = await apiClient.get<TutorNameResponse>(url);
 		console.log('✅ User name received:', response.data);
 
-		if (!response.data || !response.data.nombreCompleto) {
+		if (!response.data?.nombreCompleto) {
 			console.error('❌ Invalid response structure:', response.data);
 			throw new Error('Respuesta inválida del servidor');
 		}
@@ -623,6 +624,89 @@ export async function getTutorProfile(
 	}
 }
 
+/**
+ *  Obtiene el historial completo de sesiones de un tutor
+ */
+export async function getTutorSessions(
+	tutorId: string,
+): Promise<import('../types/tutoria.types').TutorSessionHistoryResponse> {
+	try {
+		const url = API_ENDPOINTS.TUTORIAS.TUTOR_SESSIONS.replace(
+			'{tutorId}',
+			tutorId,
+		);
+		console.log('Fetching tutor session history:', { tutorId, url });
+
+		const response =
+			await apiClient.get<
+				import('../types/tutoria.types').TutorSessionHistoryResponse
+			>(url);
+
+		console.log('Tutor session history received:', response.data);
+		return response.data;
+	} catch (error) {
+		console.error('Error al obtener historial de sesiones del tutor:', error);
+
+		if (axios.isAxiosError(error)) {
+			console.error('Error details:', {
+				status: error.response?.status,
+				data: error.response?.data,
+			});
+		}
+
+		throw new Error(
+			'No se pudo obtener el historial de sesiones. Verifica tu conexión.',
+		);
+	}
+}
+
+/**
+ * Obtiene el perfil completo del tutor para el modal
+ */
+export async function getTutorFullProfile(
+	tutorId: string,
+): Promise<TutorFullProfile> {
+	try {
+		const profileUrl = API_ENDPOINTS.TUTORIAS.TUTOR_PROFILE.replace(
+			'{id}',
+			tutorId,
+		);
+		const reputacionUrl = API_ENDPOINTS.TUTOR.REVIEWS.REPUTACION(tutorId);
+
+		console.log('Fetching tutor full profile and reputation:', {
+			tutorId,
+			profileUrl,
+			reputacionUrl,
+		});
+
+		// Obtener perfil y reputación en paralelo
+		const [profileResponse, reputacionResponse] = await Promise.all([
+			apiClient.get<Omit<TutorFullProfile, 'totalRatings'>>(profileUrl),
+			apiClient.get<TutorReputacionResponse>(reputacionUrl),
+		]);
+
+		console.log('Tutor full profile received:', profileResponse.data);
+		console.log('Tutor reputation received:', reputacionResponse.data);
+
+		// Combinar datos del perfil con la reputación
+		const fullProfile: TutorFullProfile = {
+			...profileResponse.data,
+			reputacion: reputacionResponse.data.reputacion,
+			totalRatings: reputacionResponse.data.totalRatings,
+		};
+
+		return fullProfile;
+	} catch (error) {
+		console.error('Error al obtener perfil completo del tutor:', error);
+		if (axios.isAxiosError(error)) {
+			throw new Error(
+				error.response?.data?.message ||
+					'No se pudo obtener el perfil del tutor',
+			);
+		}
+		throw new Error('No se pudo obtener el perfil del tutor');
+	}
+}
 // Exportar todas las funciones como un objeto de servicio
 export const tutoriaService = {
 	getTutores,
@@ -643,4 +727,6 @@ export const tutoriaService = {
 	updateAvailability,
 	getTutorReputacion,
 	getTutorProfile,
+	getTutorSessions,
+	getTutorFullProfile,
 };

@@ -1,5 +1,12 @@
 import { Button, Card, CardBody, Spinner } from '@heroui/react';
-import { AlertCircle, BookOpen, TrendingUp, Users } from 'lucide-react';
+import {
+	AlertCircle,
+	BookOpen,
+	Eye,
+	MessageSquare,
+	TrendingUp,
+	Users,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { RecommendedTutorsList } from '~/components/recommended-tutors-list';
@@ -7,16 +14,22 @@ import { StatsCard } from '~/components/stats-card';
 import { StudentUpcomingTutoringsCard } from '~/components/student-upcoming-tutorings-card';
 import { TutorProfileModal } from '~/components/tutor-profile-modal';
 import { useAuth } from '~/contexts/auth-context';
-import { useStudentDashboard } from '~/lib/hooks/useStudentDashboard';
+import {
+	useMaterialsByDate,
+	useStudentDashboard,
+} from '~/lib/hooks/useStudentDashboard';
 import { useTutoriaStats } from '~/lib/hooks/useTutoriaStats';
 
 export default function StudentDashboard() {
 	const { user } = useAuth();
 	const { data: dashboardData, isLoading, error } = useStudentDashboard();
+	const recentActivity = dashboardData?.recentActivity || [];
 	const { data: stats, isLoading: isLoadingStats } = useTutoriaStats(
 		user?.id || '',
 		!!user?.id,
 	);
+	const { data: materialsByDate = [], isLoading: isLoadingMaterialsByDate } =
+		useMaterialsByDate();
 	const [selectedTutorId, setSelectedTutorId] = useState<string | null>(null);
 
 	if (isLoading) {
@@ -143,6 +156,165 @@ export default function StudentDashboard() {
 							</Button>
 						</div>
 						<RecommendedTutorsList />
+					</CardBody>
+				</Card>
+			</div>
+
+			{/* Secondary Content Grid */}
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				{/* Materiales Recientes */}
+				<Card>
+					<CardBody className="gap-4">
+						<div className="flex items-center justify-between">
+							<h2 className="text-xl font-semibold flex items-center gap-2 font-heading">
+								<BookOpen className="w-5 h-5 text-primary" />
+								Materiales Recientes
+							</h2>
+							<Button
+								as={Link}
+								to="/dashboard/student/materials"
+								size="sm"
+								variant="light"
+								color="primary"
+								className="font-nav"
+							>
+								Ver todos
+							</Button>
+						</div>
+						{isLoadingMaterialsByDate ? (
+							<div className="flex justify-center py-8">
+								<Spinner size="sm" />
+							</div>
+						) : materialsByDate.length > 0 ? (
+							<div className="space-y-3 max-h-96 overflow-y-auto pr-4 [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent scrollbar-hide">
+								{materialsByDate.map((material) => {
+									const timeAgo = Math.floor(
+										(Date.now() -
+											new Date(
+												material.createdAt ||
+													material.downloadedAt ||
+													new Date(),
+											).getTime()) /
+											(1000 * 60 * 60 * 24),
+									);
+
+									let timeText = 'hoy';
+									if (timeAgo > 1) {
+										timeText = `hace ${timeAgo} días`;
+									} else if (timeAgo === 1) {
+										timeText = 'ayer';
+									}
+
+									const displayName =
+										material.nombre || material.name || 'Sin nombre';
+									const displaySubject =
+										material.tags?.[0] || material.subject || 'Sin categoría';
+									const actionText = 'Publicado';
+
+									return (
+										<div
+											key={material.id}
+											className="flex items-center justify-between p-3 bg-default-100 rounded-lg"
+										>
+											<div className="flex items-center gap-3">
+												<div className="p-2 bg-secondary-50 text-primary rounded-lg">
+													<BookOpen className="w-4 h-4" />
+												</div>
+												<div>
+													<p className="font-semibold text-sm">{displayName}</p>
+													<p className="text-small text-default-500">
+														{displaySubject}
+													</p>
+													<p className="text-tiny text-default-400">
+														{actionText} {timeText}
+													</p>
+												</div>
+											</div>
+											<div className="flex items-center gap-1">
+												<Eye className="w-3 h-3 text-default-400" />
+												<span className="text-tiny">
+													{material.vistos || 0} vistas
+												</span>
+											</div>
+										</div>
+									);
+								})}
+							</div>
+						) : (
+							<p className="text-center text-default-500 py-4">
+								No hay materiales recientes
+							</p>
+						)}
+					</CardBody>
+				</Card>
+
+				{/* Actividad Reciente */}
+				<Card>
+					<CardBody className="gap-4">
+						<div className="flex items-center justify-between">
+							<h2 className="text-xl font-semibold flex items-center gap-2 font-heading">
+								<MessageSquare className="w-5 h-5 text-primary" />
+								Actividad Reciente
+							</h2>
+							<Button
+								as={Link}
+								to="/dashboard/student/progress"
+								size="sm"
+								variant="light"
+								color="primary"
+								className="font-nav"
+							>
+								Ver progreso
+							</Button>
+						</div>
+						<div className="space-y-3">
+							{recentActivity?.length ? (
+								recentActivity.slice(0, 2).map((activity) => {
+									const timeAgo = new Date(
+										Date.now() - new Date(activity.createdAt).getTime(),
+									).getHours();
+
+									let timeText = 'Hace poco';
+									if (timeAgo > 24) {
+										timeText = 'Ayer';
+									} else if (timeAgo > 0) {
+										timeText = `Hace ${timeAgo} horas`;
+									}
+
+									const bgColor =
+										activity.type === 'tutoring_completed'
+											? 'bg-green-50 border border-green-200'
+											: 'bg-blue-50 border border-blue-200';
+									const dotColor =
+										activity.type === 'tutoring_completed'
+											? 'bg-green-500'
+											: 'bg-blue-500';
+									return (
+										<div
+											key={activity.id}
+											className={`p-3 rounded-lg ${bgColor}`}
+										>
+											<div className="flex items-center gap-2 mb-1">
+												<div
+													className={`w-2 h-2 rounded-full ${dotColor}`}
+												></div>
+												<span className="font-semibold text-sm">
+													{activity.title}
+												</span>
+											</div>
+											<p className="text-sm text-default-600">
+												{activity.description}
+											</p>
+											<p className="text-tiny text-default-400">{timeText}</p>
+										</div>
+									);
+								})
+							) : (
+								<p className="text-center text-default-500 py-4">
+									No hay actividad reciente
+								</p>
+							)}
+						</div>
 					</CardBody>
 				</Card>
 			</div>

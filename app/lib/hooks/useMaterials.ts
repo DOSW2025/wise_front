@@ -129,6 +129,15 @@ export function useTagsPercentage(userId: string) {
 	});
 }
 
+// Hook para obtener porcentaje de tags global (admin)
+export function useGlobalTagsPercentage() {
+	return useQuery({
+		queryKey: ['tags-percentage-global'],
+		queryFn: () => materialsService.getGlobalTagsPercentage(),
+		staleTime: 5 * 60 * 1000, // 5 minutos
+	});
+}
+
 // Hook para crear material
 export function useCreateMaterial() {
 	const queryClient = useQueryClient();
@@ -242,11 +251,18 @@ export function useRateMaterial() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: ({ id, rating }: { id: string; rating: number }) => {
-			// TODO: PRODUCCIÓN - Reemplazar con: return materialsService.rateMaterial(id, rating);
-			// Simular POST /api/materials/:id/ratings
-			console.log(`Calificando material ${id} con ${rating} estrellas`);
-			return Promise.resolve();
+		mutationFn: ({
+			id,
+			rating,
+			userId,
+			comentario,
+		}: {
+			id: string;
+			rating: number;
+			userId: string;
+			comentario?: string;
+		}) => {
+			return materialsService.rateMaterial(id, rating, userId, comentario);
 		},
 		onSuccess: (_, { id, rating }) => {
 			// Actualizar calificación promedio en el cache
@@ -270,6 +286,11 @@ export function useRateMaterial() {
 					return oldData;
 				},
 			);
+
+			// Invalidar comentarios para refrescar la lista
+			queryClient.invalidateQueries({
+				queryKey: [...MATERIALS_QUERY_KEYS.ratings(id), 'list'],
+			});
 
 			// Actualizar también en la lista
 			queryClient.invalidateQueries({ queryKey: MATERIALS_QUERY_KEYS.lists() });
@@ -326,5 +347,13 @@ export function useDownloadMaterial() {
 				statusText: response?.statusText,
 			});
 		},
+	});
+}
+// Hook para obtener el conteo total de materiales
+export function useMaterialsCount() {
+	return useQuery({
+		queryKey: ['materials-count'],
+		queryFn: () => materialsService.getMaterialsCount(),
+		staleTime: 5 * 60 * 1000, // 5 minutos
 	});
 }

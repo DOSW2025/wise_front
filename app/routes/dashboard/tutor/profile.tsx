@@ -154,7 +154,8 @@ export default function TutorProfile() {
 
 	const handleDeleteAccount = async () => {
 		try {
-			await deleteMyAccount();
+			if (!user?.id) return;
+			await deleteMyAccount(user.id);
 			onDeleteClose();
 			// Redirigir al login después de eliminar
 			navigate('/login');

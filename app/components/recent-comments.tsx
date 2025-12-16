@@ -6,15 +6,12 @@
 import { Avatar, Button, Card, CardBody, Skeleton } from '@heroui/react';
 import {
 	AlertCircle,
-	ArrowRight,
 	Clock,
 	MessageSquare,
 	MessageSquareOff,
 	Star,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { getUserName } from '~/lib/services/tutoria.service';
 import type { Rating } from '~/lib/types/tutoria.types';
 
 interface RecentCommentsProps {
@@ -82,10 +79,11 @@ function CommentCard({ rating }: { readonly rating: Rating }) {
 
 	// Truncar comentario si es muy largo
 	const MAX_COMMENT_LENGTH = 100;
-	const shouldTruncate = rating.comment.length > MAX_COMMENT_LENGTH;
+	const comment = rating.comment || '';
+	const shouldTruncate = comment.length > MAX_COMMENT_LENGTH;
 	const displayComment = shouldTruncate
-		? `${rating.comment.substring(0, MAX_COMMENT_LENGTH)}...`
-		: rating.comment;
+		? `${comment.substring(0, MAX_COMMENT_LENGTH)}...`
+		: comment;
 
 	return (
 		<div className="space-y-3">

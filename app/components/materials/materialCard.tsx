@@ -8,8 +8,7 @@ interface MaterialCardProps {
 	viewMode: 'grid' | 'list';
 	onPreview: (material: Material) => void;
 	onDownload: (materialId: string) => void;
-	onRate: (material: Material) => void;
-	onComment: (material: Material) => void;
+	onInteract: (material: Material) => void;
 }
 
 export default function MaterialCard({
@@ -17,8 +16,7 @@ export default function MaterialCard({
 	viewMode,
 	onPreview,
 	onDownload,
-	onRate,
-	onComment,
+	onInteract,
 }: MaterialCardProps) {
 	if (viewMode === 'grid') {
 		return (
@@ -95,26 +93,15 @@ export default function MaterialCard({
 						</Button>
 					</div>
 
-					<div className="flex gap-2 w-full">
-						<Button
-							variant="light"
-							className="flex-1"
-							startContent={<Star size={16} />}
-							onClick={() => onRate(material)}
-							type="button"
-						>
-							Valorar
-						</Button>
-						<Button
-							variant="light"
-							className="flex-1"
-							startContent={<MessageSquare size={16} />}
-							onClick={() => onComment(material)}
-							type="button"
-						>
-							Comentar
-						</Button>
-					</div>
+					<Button
+						variant="light"
+						className="w-full"
+						startContent={<MessageSquare size={16} />}
+						onClick={() => onInteract(material)}
+						type="button"
+					>
+						Valorar y comentar
+					</Button>
 				</CardFooter>
 			</Card>
 		);
@@ -174,17 +161,10 @@ export default function MaterialCard({
 					<div className="flex items-center gap-2">
 						<Button
 							variant="light"
-							startContent={<Star size={16} />}
-							onClick={() => onRate(material)}
-						>
-							Valorar
-						</Button>
-						<Button
-							variant="light"
 							startContent={<MessageSquare size={16} />}
-							onClick={() => onComment(material)}
+							onClick={() => onInteract(material)}
 						>
-							Comentar
+							Valorar y comentar
 						</Button>
 						<Button
 							variant="flat"

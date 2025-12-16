@@ -44,7 +44,6 @@ export default [
 		'tutoring',
 		'materials',
 		'progress',
-		'statistics',
 		'community',
 		'profile',
 	]),

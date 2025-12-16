@@ -5,6 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import {
+	getMaterialsByDate,
 	getRecentActivity,
 	getRecentMaterials,
 	getRecommendedTutors,
@@ -77,5 +78,15 @@ export function useRecentActivity() {
 		queryKey: ['recent-activity'],
 		queryFn: getRecentActivity,
 		staleTime: 3 * 60 * 1000, // 3 minutos (frecuente para actividad)
+	});
+}
+/**
+ * Hook para obtener materiales recientes ordenados por fecha
+ */
+export function useMaterialsByDate() {
+	return useQuery({
+		queryKey: ['materials-by-date'],
+		queryFn: getMaterialsByDate,
+		staleTime: 5 * 60 * 1000, // 5 minutos
 	});
 }

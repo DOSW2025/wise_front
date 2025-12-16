@@ -14,7 +14,6 @@ import {
 } from '@heroui/react';
 import { Calendar, Clock, MapPin, Search, Star, Video, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router';
 import { FeedbackModal } from '~/components';
 import { PageHeader } from '~/components/page-header';
 import { RatingModal } from '~/components/rating-modal';
@@ -23,6 +22,7 @@ import ScheduledTutoringsModal, {
 } from '~/components/scheduled-tutorings-modal';
 import TutorCard from '~/components/tutor-card';
 import TutorFilter from '~/components/tutor-filter';
+import { TutorProfileFullModal } from '~/components/tutor-profile-full-modal';
 import TutorScheduleModal from '~/components/tutor-schedule-modal';
 import { useAuth } from '~/contexts/auth-context';
 import { useCancelSession } from '~/lib/hooks/useCancelSession';
@@ -910,6 +910,9 @@ const StudentTutoringPage: React.FC = () => {
 		null,
 	);
 	const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
+	const [selectedTutorForProfile, setSelectedTutorForProfile] = useState<
+		string | null
+	>(null);
 	const [scheduledTutorings, setScheduledTutorings] = useState<
 		ScheduledTutoring[]
 	>(mockScheduledTutorings);
@@ -939,29 +942,25 @@ const StudentTutoringPage: React.FC = () => {
 		onClose: onCloseRating,
 	} = useDisclosure();
 
-	const { onOpenChat } = useOutletContext<{
-		onOpenChat: (tutor: Tutor) => void;
-	}>();
+	const {
+		isOpen: isProfileOpen,
+		onOpen: onOpenProfile,
+		onClose: onCloseProfile,
+	} = useDisclosure();
 
-	const getFutureSessionsSortedByProximity = useCallback(
-		(list: StudentSession[]) => {
-			const now = Date.now();
+	// Ordenar todas las sesiones por fecha (más recientes primero)
+	const getAllSessionsSortedByDate = useCallback((list: StudentSession[]) => {
+		return [...list].sort((a, b) => {
+			const timeA = new Date(a.scheduledAt).getTime();
+			const timeB = new Date(b.scheduledAt).getTime();
+			// Ordenar descendente: las más recientes primero
+			return timeB - timeA;
+		});
+	}, []);
 
-			return [...list]
-				.filter((session) => new Date(session.scheduledAt).getTime() >= now)
-				.sort((a, b) => {
-					const timeA = new Date(a.scheduledAt).getTime();
-					const timeB = new Date(b.scheduledAt).getTime();
-
-					return timeA - now - (timeB - now);
-				});
-		},
-		[], // la función no depende de nada externo
-	);
-
-	const futureSessions = useMemo(
-		() => getFutureSessionsSortedByProximity(sessions),
-		[sessions, getFutureSessionsSortedByProximity],
+	const allSessions = useMemo(
+		() => getAllSessionsSortedByDate(sessions),
+		[sessions, getAllSessionsSortedByDate],
 	);
 
 	const handleSearch = (_filters: TutorFilters) => {};
@@ -1047,6 +1046,16 @@ const StudentTutoringPage: React.FC = () => {
 		setSessionToRate(null);
 	};
 
+	const handleOpenProfile = (tutorId: string) => {
+		setSelectedTutorForProfile(tutorId);
+		onOpenProfile();
+	};
+
+	const handleCloseProfile = () => {
+		onCloseProfile();
+		setSelectedTutorForProfile(null);
+	};
+
 	return (
 		<div className="">
 			<PageHeader title="Tutorias" description="Panel de Estudiante" />
@@ -1121,11 +1130,11 @@ const StudentTutoringPage: React.FC = () => {
 									<TutorCard
 										key={tutor.id}
 										tutor={tutor}
-										onOpenChat={onOpenChat}
 										onOpen={(t) => {
 											setSelectedTutor(t);
 											setIsScheduleOpen(true);
 										}}
+										onViewProfile={() => handleOpenProfile(tutor.tutorId)}
 									/>
 								))}
 							</div>
@@ -1166,27 +1175,27 @@ const StudentTutoringPage: React.FC = () => {
 					{/* Content */}
 					{!isLoadingSessions &&
 						!sessionsError &&
-						(futureSessions.length === 0 ? (
+						(allSessions.length === 0 ? (
 							<Card>
 								<CardBody className="text-center py-12">
 									<Calendar className="w-12 h-12 text-default-300 mx-auto mb-4" />
 									<h3 className="text-lg font-semibold mb-2">
-										No tienes tutorias programadas
+										No tienes tutorías registradas
 									</h3>
 									<p className="text-default-500 mb-4">
-										Cuando confirmes una tutoria aparecera aqui.
+										Cuando agentes una tutoría aparecerá aquí.
 									</p>
 									<Button
 										color="primary"
 										onPress={() => setActiveTab('search')}
 									>
-										Agendar tutoria
+										Agendar tutoría
 									</Button>
 								</CardBody>
 							</Card>
 						) : (
 							<div className="grid gap-4">
-								{futureSessions.map((session) => (
+								{allSessions.map((session) => (
 									<SessionCardItem
 										key={session.id}
 										session={session}
@@ -1259,6 +1268,14 @@ const StudentTutoringPage: React.FC = () => {
 				title={feedback.title}
 				message={feedback.message}
 			/>
+			{/* Modal de perfil completo del tutor */}
+			{selectedTutorForProfile && (
+				<TutorProfileFullModal
+					tutorId={selectedTutorForProfile}
+					isOpen={isProfileOpen}
+					onClose={handleCloseProfile}
+				/>
+			)}
 		</div>
 	);
 };

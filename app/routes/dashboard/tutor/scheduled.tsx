@@ -3,7 +3,6 @@ import {
 	Button,
 	Card,
 	CardBody,
-	CardHeader,
 	Chip,
 	Modal,
 	ModalBody,

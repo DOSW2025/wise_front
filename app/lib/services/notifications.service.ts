@@ -8,7 +8,6 @@ import { API_ENDPOINTS } from '../config/api.config';
 import type {
 	ApiResponse,
 	NotificationDto,
-	NotificationsResponse,
 	UnreadCountResponse,
 } from '../types/api.types';
 import { getStorageItem, STORAGE_KEYS } from '../utils/storage';
@@ -49,7 +48,7 @@ export const notificationsService = {
 				'[Notifications Service] Unread count:',
 				response.data?.Count,
 			);
-			return response.data!.Count;
+			return response.data?.Count;
 		} catch (error) {
 			console.error(
 				'[Notifications Service] Error getting unread count:',

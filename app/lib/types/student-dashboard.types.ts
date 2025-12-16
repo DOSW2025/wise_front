@@ -35,11 +35,24 @@ export interface RecommendedTutor {
 
 export interface RecentMaterial {
 	id: string;
-	name: string;
-	subject: string;
-	rating: number;
-	downloadedAt: string;
-	type: 'downloaded' | 'saved';
+	nombre: string;
+	name?: string; // para compatibilidad hacia atrás
+	userId: string;
+	userName: string;
+	extension: string;
+	url: string;
+	descripcion: string;
+	vistos: number;
+	descargas: number;
+	createdAt: string;
+	updatedAt: string;
+	tags: string[];
+	totalComentarios: number;
+	subject?: string; // para compatibilidad hacia atrás
+	rating?: number; // para compatibilidad hacia atrás
+	calificacionPromedio?: number; // para compatibilidad hacia atrás
+	downloadedAt?: string; // para compatibilidad hacia atrás
+	type?: 'downloaded' | 'saved'; // para compatibilidad hacia atrás
 }
 
 export interface RecentActivity {
