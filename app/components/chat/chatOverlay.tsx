@@ -382,8 +382,8 @@ export default function ChatOverlay({
 				classNames={{
 					backdrop: 'bg-transparent pointer-events-none',
 					wrapper:
-						'!justify-end !items-end !pr-0 !pb-0 !m-0 pointer-events-none',
-					base: 'rounded-t-3xl !mb-0 !m-0 max-h-[90vh] w-[450px] shadow-2xl pointer-events-auto fixed bottom-0 right-20',
+						'!justify-end !items-end !p-0 !m-0 pointer-events-none md:!pr-0 md:!pb-0',
+					base: 'rounded-t-3xl md:rounded-t-3xl !mb-0 !m-0 max-h-[100vh] md:max-h-[90vh] w-full md:w-[450px] lg:w-[480px] shadow-2xl pointer-events-auto fixed bottom-0 right-0 md:right-20',
 					body: 'rounded-t-3xl',
 				}}
 				motionProps={{
@@ -408,33 +408,36 @@ export default function ChatOverlay({
 				}}
 			>
 				<ModalContent>
-					<ModalBody className="p-0 flex flex-col h-[600px] rounded-t-3xl overflow-hidden">
+					<ModalBody className="p-0 flex flex-col h-[100vh] md:h-[600px] rounded-t-3xl overflow-hidden">
 						{/* Header del chat */}
-						<div className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-primary/5 to-secondary/5">
-							<div className="flex items-center gap-3 flex-1">
-								<div className="relative">
+						<div className="flex justify-between items-center px-4 md:px-6 py-3 md:py-4 bg-gradient-to-r from-primary/5 to-secondary/5">
+							<div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+								<div className="relative flex-shrink-0">
 									<Avatar
 										name={tutor.avatarInitials}
 										color="primary"
 										size="md"
+										className="w-10 h-10 md:w-12 md:h-12"
 									/>
 									{isConnected && (
 										<span
-											className="absolute bottom-0 right-0 w-3 h-3 bg-success border-2 border-white rounded-full"
+											className="absolute bottom-0 right-0 w-2.5 h-2.5 md:w-3 md:h-3 bg-success border-2 border-white rounded-full"
 											title="En línea"
 										/>
 									)}
 								</div>
-								<div>
-									<h2 className="font-semibold text-gray-900">{tutor.name}</h2>
-									<p className="text-xs text-gray-600">
+								<div className="min-w-0 flex-1">
+									<h2 className="font-semibold text-gray-900 text-sm md:text-base truncate">
+										{tutor.name}
+									</h2>
+									<p className="text-xs text-gray-600 truncate">
 										{isConnected ? 'En línea' : tutor.title}
 									</p>
 								</div>
 							</div>
 
 							{/* Botones alineados */}
-							<div className="flex items-center gap-1">
+							<div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
 								<Dropdown>
 									<DropdownTrigger>
 										<Button
@@ -442,8 +445,9 @@ export default function ChatOverlay({
 											variant="light"
 											size="sm"
 											aria-label="Opciones"
+											className="min-w-8 w-8 h-8 md:min-w-10 md:w-10 md:h-10"
 										>
-											<MoreVertical className="w-5 h-5 text-gray-600" />
+											<MoreVertical className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
 										</Button>
 									</DropdownTrigger>
 									<DropdownMenu aria-label="Opciones del chat">
@@ -479,8 +483,9 @@ export default function ChatOverlay({
 									size="sm"
 									onPress={onClose}
 									aria-label="Cerrar"
+									className="min-w-8 w-8 h-8 md:min-w-10 md:w-10 md:h-10"
 								>
-									<X className="w-5 h-5 text-gray-600" />
+									<X className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
 								</Button>
 							</div>
 						</div>
@@ -521,27 +526,28 @@ export default function ChatOverlay({
 				size="sm"
 			>
 				<ModalContent>
-					<ModalBody className="p-6">
-						<div className="flex flex-col items-center text-center gap-4">
-							<div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-								<Trash2 className="w-6 h-6 text-red-600" />
+					<ModalBody className="p-4 md:p-6">
+						<div className="flex flex-col items-center text-center gap-3 md:gap-4">
+							<div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-red-100 flex items-center justify-center">
+								<Trash2 className="w-5 h-5 md:w-6 md:h-6 text-red-600" />
 							</div>
 							<div>
-								<h3 className="text-lg font-semibold text-gray-900">
+								<h3 className="text-base md:text-lg font-semibold text-gray-900">
 									¿Eliminar chat?
 								</h3>
-								<p className="text-sm text-gray-500 mt-2">
+								<p className="text-xs md:text-sm text-gray-500 mt-2">
 									¿Estás seguro de que quieres eliminar este chat con{' '}
 									<span className="font-medium">{tutor?.name}</span>? Esta
 									acción no se puede deshacer.
 								</p>
 							</div>
-							<div className="flex gap-3 w-full mt-2">
+							<div className="flex gap-2 md:gap-3 w-full mt-2">
 								<Button
 									variant="light"
 									onPress={() => setIsDeleteModalOpen(false)}
 									className="flex-1"
 									isDisabled={deleteChatMutation.isPending}
+									size="sm"
 								>
 									Cancelar
 								</Button>
@@ -550,6 +556,7 @@ export default function ChatOverlay({
 									onPress={confirmDeleteChat}
 									className="flex-1"
 									isLoading={deleteChatMutation.isPending}
+									size="sm"
 								>
 									Eliminar
 								</Button>
@@ -568,28 +575,31 @@ export default function ChatOverlay({
 				placement="top-center"
 				classNames={{
 					backdrop: 'bg-transparent pointer-events-none',
-					wrapper: 'pointer-events-none !items-start !justify-end pr-24 pt-20',
-					base: 'pointer-events-auto max-h-[80vh] w-[380px]',
+					wrapper:
+						'pointer-events-none !items-start !justify-end md:pr-24 pr-0 pt-20',
+					base: 'pointer-events-auto max-h-[80vh] w-full md:w-[380px]',
 				}}
 			>
 				<ModalContent>
-					<ModalHeader className="flex flex-col gap-1">
+					<ModalHeader className="flex flex-col gap-1 px-4 md:px-6">
 						<div className="flex items-center gap-2">
-							<Users className="w-5 h-5 text-primary" />
-							<h3 className="text-lg font-semibold">Miembros del grupo</h3>
+							<Users className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+							<h3 className="text-base md:text-lg font-semibold">
+								Miembros del grupo
+							</h3>
 						</div>
 					</ModalHeader>
-					<ModalBody className="p-4">
-						<div className="flex flex-col gap-3">
+					<ModalBody className="p-3 md:p-4">
+						<div className="flex flex-col gap-2 md:gap-3">
 							{members.length === 0 ? (
-								<p className="text-center text-gray-500 py-4">
+								<p className="text-center text-gray-500 py-4 text-sm md:text-base">
 									No hay miembros para mostrar
 								</p>
 							) : (
 								members.map((member) => (
 									<div
 										key={member.id}
-										className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+										className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg hover:bg-gray-50 transition-colors"
 									>
 										<Avatar
 											src={member.usuario?.avatar_url}
@@ -604,14 +614,15 @@ export default function ChatOverlay({
 											imgProps={{
 												referrerPolicy: 'no-referrer' as const,
 											}}
+											className="w-10 h-10 md:w-12 md:h-12"
 										/>
-										<div className="flex-1">
-											<p className="font-semibold text-gray-900">
+										<div className="flex-1 min-w-0">
+											<p className="font-semibold text-gray-900 text-sm md:text-base truncate">
 												{member.usuario
 													? `${member.usuario.nombre} ${member.usuario.apellido}`
 													: 'Usuario'}
 											</p>
-											<p className="text-sm text-gray-500">
+											<p className="text-xs md:text-sm text-gray-500 truncate">
 												{member.usuario?.email || 'Sin email'}
 											</p>
 										</div>

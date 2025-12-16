@@ -53,7 +53,7 @@ export default function MessageItem({ message, tutorName }: MessageItemProps) {
 
 	return (
 		<div
-			className={`flex gap-2 ${isStudent ? 'justify-end' : 'justify-start'} px-2 ${shouldAnimate ? 'opacity-0 animate-[fadeIn_0.3s_ease-out_forwards]' : ''}`}
+			className={`flex gap-1.5 md:gap-2 ${isStudent ? 'justify-end' : 'justify-start'} px-2 md:px-3 ${shouldAnimate ? 'opacity-0 animate-[fadeIn_0.3s_ease-out_forwards]' : ''}`}
 			style={shouldAnimate ? { animationDelay: '0.05s' } : undefined}
 		>
 			{!isStudent && (
@@ -61,12 +61,12 @@ export default function MessageItem({ message, tutorName }: MessageItemProps) {
 					{...getAvatarProps()}
 					color="danger"
 					size="md"
-					className="flex-shrink-0"
+					className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10"
 				/>
 			)}
 
 			<div
-				className={`flex flex-col ${isStudent ? 'items-end' : 'items-start'} w-auto min-w-[180px] max-w-[90%]`}
+				className={`flex flex-col ${isStudent ? 'items-end' : 'items-start'} w-auto min-w-[140px] md:min-w-[180px] max-w-[85%] md:max-w-[90%]`}
 			>
 				{/* Burbuja integrada con header */}
 				<div
@@ -75,16 +75,16 @@ export default function MessageItem({ message, tutorName }: MessageItemProps) {
 					}`}
 				>
 					{/* Header con nombre del usuario */}
-					<div className="px-3 py-0.5 bg-primary">
-						<span className="text-xs font-semibold text-white">
+					<div className="px-2 md:px-3 py-0.5 bg-primary">
+						<span className="text-xs font-semibold text-white truncate block">
 							{message.userName || tutorName}
 						</span>
 					</div>
 
 					{/* Contenido del mensaje */}
-					<div className="px-4 py-2.5 bg-gray-50">
+					<div className="px-3 md:px-4 py-2 md:py-2.5 bg-gray-50">
 						{message.type === 'text' && (
-							<p className="text-sm break-words text-black">
+							<p className="text-xs md:text-sm break-words text-black">
 								{message.content}
 							</p>
 						)}
@@ -94,14 +94,14 @@ export default function MessageItem({ message, tutorName }: MessageItemProps) {
 								href={message.content}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="flex items-center gap-2 underline text-sm text-black"
+								className="flex items-center gap-1.5 md:gap-2 underline text-xs md:text-sm text-black"
 							>
-								<Paperclip className="w-4 h-4" />
-								{message.name}
+								<Paperclip className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
+								<span className="truncate">{message.name}</span>
 							</a>
 						)}
 
-						<span className="text-xs mt-1 block opacity-60 text-black">
+						<span className="text-[10px] md:text-xs mt-1 block opacity-60 text-black">
 							{message.timestamp.toLocaleTimeString('es-ES', {
 								hour: '2-digit',
 								minute: '2-digit',
@@ -116,7 +116,7 @@ export default function MessageItem({ message, tutorName }: MessageItemProps) {
 					{...getAvatarProps()}
 					color="default"
 					size="md"
-					className="flex-shrink-0"
+					className="flex-shrink-0 w-8 h-8 md:w-10 md:h-10"
 				/>
 			)}
 		</div>
