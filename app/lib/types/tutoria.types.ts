@@ -370,3 +370,54 @@ export interface TutorSessionWithRating {
  * Respuesta del historial de sesiones del tutor
  */
 export type TutorSessionHistoryResponse = TutorSessionWithRating[];
+
+/**
+ * Respuesta de reputación del tutor
+ */
+export interface TutorReputacionResponse {
+	tutorId: string;
+	nombreTutor: string;
+	reputacion: number;
+	totalRatings: number;
+}
+
+/**
+ * Perfil completo del tutor (para modal de estudiante)
+ */
+export interface TutorFullProfile {
+	usuarioId: string;
+	bio: string;
+	reputacion: number;
+	totalRatings: number;
+	usuario: {
+		id: string;
+		email: string;
+		nombre: string;
+		apellido: string;
+		rolId: number;
+		rol: Rol;
+		estadoId: number;
+		estado: Estado;
+		disponibilidad: DisponibilidadSemanal;
+		createdAt: string;
+		updatedAt: string;
+	};
+	tutorMaterias: Array<{
+		id: number;
+		tutorId: string;
+		materiaId: string;
+		materia: {
+			id: string;
+			codigo: string;
+			nombre: string;
+		};
+	}>;
+	ratings: Array<{
+		id: number;
+		sessionId: string;
+		raterId: string;
+		score: number;
+		comment: string | null;
+		createdAt: string;
+	}>;
+}

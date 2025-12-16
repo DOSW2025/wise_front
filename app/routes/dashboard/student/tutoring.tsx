@@ -14,7 +14,6 @@ import {
 } from '@heroui/react';
 import { Calendar, Clock, MapPin, Search, Star, Video, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router';
 import { FeedbackModal } from '~/components';
 import { PageHeader } from '~/components/page-header';
 import { RatingModal } from '~/components/rating-modal';
@@ -23,6 +22,7 @@ import ScheduledTutoringsModal, {
 } from '~/components/scheduled-tutorings-modal';
 import TutorCard from '~/components/tutor-card';
 import TutorFilter from '~/components/tutor-filter';
+import { TutorProfileFullModal } from '~/components/tutor-profile-full-modal';
 import TutorScheduleModal from '~/components/tutor-schedule-modal';
 import { useAuth } from '~/contexts/auth-context';
 import { useCancelSession } from '~/lib/hooks/useCancelSession';
@@ -910,6 +910,9 @@ const StudentTutoringPage: React.FC = () => {
 		null,
 	);
 	const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
+	const [selectedTutorForProfile, setSelectedTutorForProfile] = useState<
+		string | null
+	>(null);
 	const [scheduledTutorings, setScheduledTutorings] = useState<
 		ScheduledTutoring[]
 	>(mockScheduledTutorings);
@@ -939,9 +942,11 @@ const StudentTutoringPage: React.FC = () => {
 		onClose: onCloseRating,
 	} = useDisclosure();
 
-	const { onOpenChat } = useOutletContext<{
-		onOpenChat: (tutor: Tutor) => void;
-	}>();
+	const {
+		isOpen: isProfileOpen,
+		onOpen: onOpenProfile,
+		onClose: onCloseProfile,
+	} = useDisclosure();
 
 	// Ordenar todas las sesiones por fecha (más recientes primero)
 	const getAllSessionsSortedByDate = useCallback((list: StudentSession[]) => {
@@ -1041,6 +1046,16 @@ const StudentTutoringPage: React.FC = () => {
 		setSessionToRate(null);
 	};
 
+	const handleOpenProfile = (tutorId: string) => {
+		setSelectedTutorForProfile(tutorId);
+		onOpenProfile();
+	};
+
+	const handleCloseProfile = () => {
+		onCloseProfile();
+		setSelectedTutorForProfile(null);
+	};
+
 	return (
 		<div className="">
 			<PageHeader title="Tutorias" description="Panel de Estudiante" />
@@ -1115,11 +1130,11 @@ const StudentTutoringPage: React.FC = () => {
 									<TutorCard
 										key={tutor.id}
 										tutor={tutor}
-										onOpenChat={onOpenChat}
 										onOpen={(t) => {
 											setSelectedTutor(t);
 											setIsScheduleOpen(true);
 										}}
+										onViewProfile={() => handleOpenProfile(tutor.tutorId)}
 									/>
 								))}
 							</div>
@@ -1253,6 +1268,14 @@ const StudentTutoringPage: React.FC = () => {
 				title={feedback.title}
 				message={feedback.message}
 			/>
+			{/* Modal de perfil completo del tutor */}
+			{selectedTutorForProfile && (
+				<TutorProfileFullModal
+					tutorId={selectedTutorForProfile}
+					isOpen={isProfileOpen}
+					onClose={handleCloseProfile}
+				/>
+			)}
 		</div>
 	);
 };
