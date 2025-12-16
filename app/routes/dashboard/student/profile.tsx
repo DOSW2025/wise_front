@@ -21,6 +21,7 @@ export default function StudentProfile() {
 	const navigate = useNavigate();
 	const [emailNotifications, setEmailNotifications] = useState(true);
 	const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+	const [localError, setLocalError] = useState<string | null>(null);
 
 	const {
 		profile,
@@ -42,7 +43,7 @@ export default function StudentProfile() {
 		semester: '',
 	});
 
-	const { isSaving, error, success, saveProfile } = useProfileSave();
+	const { isSaving, error, success, saveProfile, setError } = useProfileSave();
 
 	// Cargar el perfil completo cuando el componente se monta
 	useEffect(() => {
@@ -67,6 +68,7 @@ export default function StudentProfile() {
 				}));
 			} catch (err) {
 				console.error('Error cargando perfil:', err);
+				setLocalError('Error al cargar tu perfil');
 			} finally {
 				setIsLoadingProfile(false);
 			}
@@ -88,7 +90,9 @@ export default function StudentProfile() {
 	}, [user, setProfile]);
 
 	const handleSave = async () => {
+		setLocalError(null);
 		if (!validateForm()) {
+			setLocalError('Por favor corrige los errores en el formulario');
 			return;
 		}
 
@@ -142,7 +146,10 @@ export default function StudentProfile() {
 				description="Gestiona tu información personal y configuración"
 			/>
 
-			{error && <AlertMessage message={error} type="error" />}
+			{/* Mensajes de error y éxito */}
+			{(localError || error) && (
+				<AlertMessage message={localError || error} type="error" />
+			)}
 			{success && <AlertMessage message={success} type="success" />}
 
 			<Card>

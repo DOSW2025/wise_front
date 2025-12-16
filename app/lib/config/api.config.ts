@@ -52,6 +52,14 @@ export const API_ENDPOINTS = {
 		PROFILE: '/wise/gestion-usuarios/me/info-personal',
 		GET_PROFILE: '/wise/gestion-usuarios/me',
 	},
+	STUDENT: {
+		PROFILE: '/wise/gestion-usuarios/me/info-personal',
+		GET_PROFILE: '/wise/gestion-usuarios/me',
+	},
+	TUTOR_PROFILE: {
+		PROFILE: '/wise/gestion-usuarios/me/info-personal',
+		GET_PROFILE: '/wise/gestion-usuarios/me',
+	},
 
 	MATERIALS: {
 		BASE: '/wise/materiales',
