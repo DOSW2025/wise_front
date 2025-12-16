@@ -1,6 +1,5 @@
 import {
 	MagnifyingGlassIcon,
-	PencilIcon,
 	PlusIcon,
 	TrashIcon,
 } from '@heroicons/react/24/outline';
@@ -204,7 +203,7 @@ export function MateriasManagement({
 								onPress={() => onEdit(materia)}
 							>
 								<CardHeader
-									className={`${getMateriaColor(materia.codigo)} text-white p-6 flex flex-col items-center justify-center gap-2`}
+									className={`${getMateriaColor()} text-white p-6 flex flex-col items-center justify-center gap-2`}
 								>
 									{getMateriaIcon(materia.codigo, materia.nombre)}
 									<h3 className="text-2xl font-bold">{materia.codigo}</h3>
@@ -219,20 +218,8 @@ export function MateriasManagement({
 										isIconOnly
 										size="sm"
 										variant="flat"
-										color="warning"
-										onPress={(e) => {
-											e.stopPropagation();
-											onEdit(materia);
-										}}
-									>
-										<PencilIcon className="w-4 h-4" />
-									</Button>
-									<Button
-										isIconOnly
-										size="sm"
-										variant="flat"
 										color="danger"
-										onPress={(e) => {
+										onClick={(e: React.MouseEvent) => {
 											e.stopPropagation();
 											if (
 												confirm(

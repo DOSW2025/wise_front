@@ -112,7 +112,7 @@ export async function updateProfile(
 		};
 
 		const response = await apiClient.patch<ApiResponse<unknown>>(
-			API_ENDPOINTS.STUDENT.PROFILE,
+			API_ENDPOINTS.TUTOR_PROFILE.PROFILE,
 			updateDto,
 		);
 
@@ -139,13 +139,16 @@ export async function updateProfile(
 export async function getProfile(): Promise<TutorProfile> {
 	try {
 		const response = await apiClient.get<Record<string, unknown>>(
-			API_ENDPOINTS.STUDENT.GET_PROFILE,
+			API_ENDPOINTS.TUTOR_PROFILE.GET_PROFILE,
 		);
 
 		const backendData = response.data as Record<string, unknown>;
 
+		const name =
+			`${(backendData.nombre as string) ?? ''} ${(backendData.apellido as string) ?? ''}`.trim();
+
 		return {
-			name: (backendData.nombre as string) ?? '',
+			name: name || '',
 			email: (backendData.email as string) ?? '',
 			phone: (backendData.telefono as string) ?? '',
 			location: '',
