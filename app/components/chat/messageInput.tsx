@@ -69,8 +69,8 @@ export default function MessageInput({
 	}
 
 	return (
-		<div className="p-4 bg-gradient-to-r from-primary/5 to-secondary/5">
-			<div className="flex gap-2 items-end max-w-4xl mx-auto">
+		<div className="p-3 md:p-4 bg-gradient-to-r from-primary/5 to-secondary/5">
+			<div className="flex gap-1.5 md:gap-2 items-end max-w-4xl mx-auto">
 				<input
 					type="file"
 					id="file-input"
@@ -84,8 +84,10 @@ export default function MessageInput({
 					variant="light"
 					aria-label="Adjuntar archivo"
 					onPress={() => document.getElementById('file-input')?.click()}
+					className="min-w-8 w-8 h-8 md:min-w-10 md:w-10 md:h-10 flex-shrink-0"
+					size="sm"
 				>
-					<Paperclip className="w-5 h-5 text-gray-600" />
+					<Paperclip className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
 				</Button>
 
 				<input
@@ -93,7 +95,7 @@ export default function MessageInput({
 					value={text}
 					onChange={handleTextChange}
 					onKeyDown={handleKey}
-					className="flex-1 border-2 border-primary/20 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+					className="flex-1 min-w-0 border-2 border-primary/20 rounded-full px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
 					placeholder="Escribe un mensaje…"
 				/>
 
@@ -103,8 +105,10 @@ export default function MessageInput({
 					aria-label="Enviar"
 					onPress={handleSend}
 					isDisabled={!text.trim()}
+					className="min-w-8 w-8 h-8 md:min-w-10 md:w-10 md:h-10 flex-shrink-0"
+					size="sm"
 				>
-					<Send className="w-5 h-5" />
+					<Send className="w-4 h-4 md:w-5 md:h-5" />
 				</Button>
 			</div>
 		</div>
