@@ -862,44 +862,25 @@ export function CommunityForums() {
 															key={thread.id}
 															className="rounded-medium border-1 border-default-200 p-4 space-y-3"
 														>
-															<div className="flex items-start justify-between">
-																<div className="flex-1">
-																	<p className="font-medium text-default-700">
-																		{thread.title}
-																	</p>
-																	<div className="flex items-center gap-2 text-xs text-default-500 mt-1">
-																		<span>
-																			{thread.author?.nombre || 'Anónimo'}
-																		</span>
-																		<span>•</span>
-																		<span>
-																			{thread.created_at
-																				? new Date(
-																						thread.created_at,
-																					).toLocaleDateString()
-																				: 'Recientemente'}
-																		</span>
-																	</div>
+															<div>
+																<p className="font-medium text-default-700">
+																	{thread.title}
+																</p>
+																<div className="flex items-center gap-2 text-xs text-default-500 mt-1">
+																	<span>
+																		{thread.author?.nombre || 'Anónimo'}
+																	</span>
+																	<span>•</span>
+																	<span>
+																		{thread.created_at
+																			? new Date(
+																					thread.created_at,
+																				).toLocaleDateString()
+																			: 'Recientemente'}
+																	</span>
 																</div>
-																<Button
-																	isIconOnly
-																	variant="light"
-																	size="sm"
-																	onPress={() =>
-																		loadResponsesForThread(thread.id)
-																	}
-																>
-																	<ChevronDown
-																		size={16}
-																		className={`transition-transform ${
-																			showThreadsFor === thread.id
-																				? 'rotate-180'
-																				: ''
-																		}`}
-																	/>
-																</Button>
 															</div>
-															<p className="text-default-600 text-sm">
+															<p className="text-default-600 text-sm ">
 																{thread.content}
 															</p>
 															<div className="flex items-center gap-4 mt-2">
@@ -910,20 +891,6 @@ export function CommunityForums() {
 																>
 																	<PartyPopper size={14} />
 																	<span>{thread.likes_count || 0}</span>
-																</button>
-																<button
-																	type="button"
-																	className="flex items-center gap-1 text-default-500 text-xs hover:text-primary transition-colors cursor-pointer"
-																	onClick={() =>
-																		setRespondingToThreadId(thread.id)
-																	}
-																>
-																	<MessageCircle size={14} />
-																	<span>
-																		{(responsesByThreadId[thread.id] ?? [])
-																			.length || 0}{' '}
-																		respuestas
-																	</span>
 																</button>
 															</div>
 															{showThreadsFor === thread.id && (
