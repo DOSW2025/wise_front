@@ -90,7 +90,6 @@ function TopicCard({
 	onLike,
 	edited,
 	isLoading,
-	onReport,
 }: {
 	topic: LocalTopic;
 	onReply: (id: string) => void;
@@ -102,7 +101,6 @@ function TopicCard({
 	onLike: (id: string) => void;
 	edited?: boolean;
 	isLoading?: boolean;
-	onReport: (id: string) => void;
 }) {
 	return (
 		<Card
@@ -258,16 +256,6 @@ function TopicCard({
 					</div>
 
 					<div className="ml-auto flex items-center gap-2">
-						<Button
-							size="sm"
-							color="danger"
-							variant="light"
-							startContent={<Flag size={16} />}
-							onPress={() => onReport(topic.id)}
-							isDisabled={isLoading}
-						>
-							Reportar
-						</Button>
 						<Button
 							size="sm"
 							color="primary"
@@ -812,7 +800,6 @@ export function CommunityForums() {
 										onEditTopic={openEditTopic}
 										onTogglePinned={togglePinned}
 										onLike={likeForum}
-										onReport={(id) => openReportModal(id, TipoContenido.THREAD)}
 										repliesCount={
 											threadsByForumId[t.id]?.length || t.counts.replies
 										}
@@ -966,6 +953,21 @@ export function CommunityForums() {
 																			.length || 0}{' '}
 																		respuestas
 																	</span>
+																</button>
+																{/*BOTÓN */}
+																<button
+																	type="button"
+																	className="flex items-center gap-1 text-danger text-xs hover:text-danger-600 transition-colors cursor-pointer"
+																	onClick={(e) => {
+																		e.stopPropagation();
+																		openReportModal(
+																			thread.id,
+																			TipoContenido.THREAD,
+																		);
+																	}}
+																>
+																	<Flag size={14} />
+																	<span>Reportar</span>
 																</button>
 															</div>
 															{showThreadsFor === thread.id && (
