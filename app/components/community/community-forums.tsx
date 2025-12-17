@@ -25,6 +25,7 @@ import {
 	CheckCircle2,
 	ChevronDown,
 	Eye,
+	Flag,
 	MessageCircle,
 	PartyPopper,
 	Pencil,
@@ -40,7 +41,13 @@ import {
 	type Response,
 	type Thread,
 } from '~/lib/services/forums.service';
+import {
+	mapFrontendReasonToBackend,
+	reportesService,
+	TipoContenido,
+} from '~/lib/services/reportes.services';
 import { getStorageJSON, STORAGE_KEYS } from '~/lib/utils/storage';
+import ReportContentModal from './reportContentModal';
 
 type LocalTopic = {
 	id: string;
@@ -240,6 +247,7 @@ function TopicCard({
 						<PartyPopper size={16} />
 						<span>{topic.counts.likes}</span>
 					</button>
+
 					<div className="flex items-center gap-1 text-default-600 text-sm">
 						<Eye size={16} />
 						<span>{topic.counts.views}</span>
@@ -306,6 +314,15 @@ export function CommunityForums() {
 	const [threadTitle, setThreadTitle] = useState('');
 	const [threadContent, setThreadContent] = useState('');
 	const [isLoadingThreads, setIsLoadingThreads] = useState(false);
+
+	//State para
+	// State para reportes
+	const [reportModalOpen, setReportModalOpen] = useState(false);
+	const [reportingContentId, setReportingContentId] = useState<string | null>(
+		null,
+	);
+	const [reportingContentType, setReportingContentType] =
+		useState<TipoContenido>(TipoContenido.THREAD);
 
 	// State para respuestas a hilos
 	const [respondingToThreadId, setRespondingToThreadId] = useState<
@@ -511,6 +528,16 @@ export function CommunityForums() {
 				`Error al cambiar el estado del foro: ${getErrorMessage(error) || 'Error desconocido'}`,
 			);
 		}
+	};
+	const openReportModal = (contentId: string, contentType: TipoContenido) => {
+		setReportingContentId(contentId);
+		setReportingContentType(contentType);
+		setReportModalOpen(true);
+	};
+
+	const closeReportModal = () => {
+		setReportingContentId(null);
+		setReportModalOpen(false);
 	};
 
 	const likeForum = async (forumId: string) => {
@@ -892,6 +919,35 @@ export function CommunityForums() {
 																	<PartyPopper size={14} />
 																	<span>{thread.likes_count || 0}</span>
 																</button>
+																<button
+																	type="button"
+																	className="flex items-center gap-1 text-default-500 text-xs hover:text-primary transition-colors cursor-pointer"
+																	onClick={() =>
+																		setRespondingToThreadId(thread.id)
+																	}
+																>
+																	<MessageCircle size={14} />
+																	<span>
+																		{(responsesByThreadId[thread.id] ?? [])
+																			.length || 0}{' '}
+																		respuestas
+																	</span>
+																</button>
+																{/*BOTÓN */}
+																<button
+																	type="button"
+																	className="flex items-center gap-1 text-danger text-xs hover:text-danger-600 transition-colors cursor-pointer"
+																	onClick={(e) => {
+																		e.stopPropagation();
+																		openReportModal(
+																			thread.id,
+																			TipoContenido.THREAD,
+																		);
+																	}}
+																>
+																	<Flag size={14} />
+																	<span>Reportar</span>
+																</button>
 															</div>
 															{showThreadsFor === thread.id && (
 																<div className="mt-3 pt-3 border-t border-default-200 space-y-3">
@@ -1000,7 +1056,7 @@ export function CommunityForums() {
 					)}
 				</div>
 			</div>
-
+			{/* Modal para crear nuevo foro */}
 			<Modal isOpen={isOpen} onOpenChange={setIsOpen} size="lg">
 				<ModalContent>
 					{(onClose) => (
@@ -1096,6 +1152,16 @@ export function CommunityForums() {
 					)}
 				</ModalContent>
 			</Modal>
+			{/* Modal de reporte */}
+			{reportingContentId && (
+				<ReportContentModal
+					isOpen={reportModalOpen}
+					onClose={closeReportModal}
+					contenidoId={reportingContentId}
+					tipoContenido={reportingContentType}
+					nombreContenido="este foro"
+				/>
+			)}
 
 			{/* Modal de edición de foro */}
 			<Modal
