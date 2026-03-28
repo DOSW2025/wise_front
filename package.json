@@ -20,7 +20,7 @@
 		"react-router": "^7.9.2"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.3.5",
+		"@biomejs/biome": "^2.4.9",
 		"@react-router/dev": "^7.9.2",
 		"@tailwindcss/vite": "^4.1.13",
 		"@types/node": "^22",
